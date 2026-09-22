@@ -21,7 +21,7 @@
   border-top: var(--border-width-thin) solid var(--color-border);
 }
 
-/* Kompakt: opsummeringsrækkerne i opret-flowet (44 px, 13 px tekst). */
+/* Compact: the summary rows in the creation flow (44 px, 13 px text). */
 :host(.ui-row-button--compact) {
   min-height: var(--size-control-sm);
   padding: 0 var(--space-3) 0 var(--space-4);

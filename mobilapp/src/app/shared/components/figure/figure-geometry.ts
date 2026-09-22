@@ -1,13 +1,14 @@
 import { clamp, roundTo } from '../../../core/utils/math';
 
 /**
- * Figurens (maskottens) geometri – en nøjagtig port af designets `figure(w, h, mood)`.
+ * The figure's (mascot's) geometry – an exact port of the design's `figure(w, h, mood)`.
  *
- * Alle mål er SVG-enheder i en `viewBox="0 0 200 300"`: figuren står centreret om x = 100 med
- * skoene på gulvet ved y ≈ 290. Vægten styrer bredden, højden styrer ben og torso, og `mood`
- * (−1 ked af det … 0 neutral … 1 glad) styrer smilet og hvor højt højre arm løfter håndvægten.
+ * All measurements are SVG units in a `viewBox="0 0 200 300"`: the figure stands centered on
+ * x = 100 with the shoes on the floor at y ≈ 290. Weight drives the width, height drives legs
+ * and torso, and `mood` (−1 sad … 0 neutral … 1 happy) drives the smile and how high the right
+ * arm lifts the dumbbell.
  *
- * Talkonstanterne er designets egne tuningværdier og ændres ikke – specs'en låser outputtet.
+ * The numeric constants are the design's own tuning values and are not changed – the spec locks the output.
  */
 export interface FigureGeometry {
   readonly legH: number;
@@ -24,9 +25,9 @@ export interface FigureGeometry {
   readonly beltX: number;
   readonly beltY: number;
   readonly beltW: number;
-  /** SVG-path for venstre arm. */
+  /** SVG path for the left arm. */
   readonly armL: string;
-  /** SVG-path for højre arm (løfter håndvægten ved positiv `mood`). */
+  /** SVG path for the right arm (lifts the dumbbell at positive `mood`). */
   readonly armR: string;
   readonly dbX: number;
   readonly dbY: number;
@@ -36,10 +37,10 @@ export interface FigureGeometry {
   readonly bandY: number;
   readonly eyeY: number;
   readonly cheekY: number;
-  /** SVG-path for munden som streg (smil eller sur mund). */
+  /** SVG path for the mouth as a line (smile or frown). */
   readonly smile: string;
   readonly shadowRx: number;
-  /** 1 når smilet vises, 0 når den åbne mund (≥ 180 kg) tager over. */
+  /** 1 when the smile is shown, 0 when the open mouth (≥ 180 kg) takes over. */
   readonly smileOp: number;
   readonly mouthY: number;
   readonly mouthRx: number;
@@ -50,30 +51,30 @@ export interface FigureGeometry {
   readonly browRot: number;
   readonly browRotR: number;
   readonly browOp: number;
-  /** 0..1 – hvor tydeligt loftet og lampen vises (fra 212 cm). */
+  /** 0..1 – how clearly the ceiling and lamp are shown (from 212 cm). */
   readonly ceilOp: number;
   readonly ceilY: number;
   readonly lampY: number;
   readonly lampY2: number;
   readonly lampRot: number;
-  /** Hovedets hældning i grader, når figuren dukker sig under loftet (fra 230 cm). */
+  /** The head's tilt in degrees when the figure ducks under the ceiling (from 230 cm). */
   readonly headRot: number;
-  /** Håndens y-position – bruges af scener, der tegner egne arme eller rekvisitter. */
+  /** The hand's y position – used by scenes that draw their own arms or props. */
   readonly handY: number;
 }
 
-/** Gulvlinjen i figurens viewBox. */
+/** The floor line in the figure's viewBox. */
 const FLOOR_Y = 290;
-/** Figurens midterlinje. */
+/** The figure's centerline. */
 const CENTRE_X = 100;
-/** Hovedets radius. */
+/** The head's radius. */
 const HEAD_RADIUS = 26;
-/** Loftets y-position (loftet vises fra 212 cm). */
+/** The ceiling's y position (the ceiling is shown from 212 cm). */
 const CEILING_Y = 92;
 
 /**
- * Beregner figurens geometri ud fra vægt (kg), højde (cm) og humør (−1..1).
- * Eksakt port af designets `figure(w, h, mood)`; se `figure-geometry.spec.ts` for låste værdier.
+ * Computes the figure's geometry from weight (kg), height (cm) and mood (−1..1).
+ * Exact port of the design's `figure(w, h, mood)`; see `figure-geometry.spec.ts` for the locked values.
  */
 export function computeFigureGeometry(
   weightKg: number,
@@ -94,7 +95,7 @@ export function computeFigureGeometry(
     headY = ceilY + HEAD_RADIUS + (headY - HEAD_RADIUS - ceilY) * 0.15;
   }
   const handY = bodyY + torsoH * 0.72;
-  /** Alle udledte mål rundes til én decimal, som designet gør. */
+  /** All derived measurements are rounded to one decimal, as the design does. */
   const r = (value: number): number => roundTo(value, 1);
   const lift = Math.max(0, m) * (torsoH * 0.9);
   const open = clamp((weightKg - 180) / 60, 0, 1);

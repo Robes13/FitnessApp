@@ -16,11 +16,11 @@ const DEFAULT_STROKE_WIDTH = 4;
 const PERCENT_MAX = 100;
 
 /**
- * Cirkulær fremdriftsring (dagsringe, kaloriering, trin-tæller, badges).
+ * Circular progress ring (day rings, calorie ring, step counter, badges).
  *
- * Ringen tegnes med `stroke-dasharray` = omkredsen og `stroke-dashoffset` =
- * omkreds × (1 − value), roteret −90° så den starter i toppen. Indhold i midten
- * projiceres via `<ng-content>`. Størrelsen bindes som `--ring-size`.
+ * The ring is drawn with `stroke-dasharray` = the circumference and `stroke-dashoffset` =
+ * circumference × (1 − value), rotated −90° so it starts at the top. Content in the center
+ * is projected via `<ng-content>`. The size is bound as `--ring-size`.
  */
 @Component({
   selector: 'app-ui-progress-ring',
@@ -37,11 +37,11 @@ const PERCENT_MAX = 100;
   },
 })
 export class UiProgressRing {
-  /** Andel 0..1 (klemmes fast). */
+  /** Fraction 0..1 (clamped). */
   readonly value = input(0);
-  /** Ydre diameter i px – bruges både som viewBox og som CSS-størrelse. */
+  /** Outer diameter in px – used both as the viewBox and as the CSS size. */
   readonly diameter = input(DEFAULT_DIAMETER, { transform: numberAttribute });
-  /** Stregtykkelse i px (= SVG-enheder, da viewBox følger diameteren). */
+  /** Stroke width in px (= SVG units, since the viewBox follows the diameter). */
   readonly strokeWidth = input(DEFAULT_STROKE_WIDTH, { transform: numberAttribute });
   readonly tone = input<Tone>('accent');
   readonly trackTone = input<ProgressRingTrackTone>('line');
@@ -52,10 +52,10 @@ export class UiProgressRing {
 
   readonly percent = computed(() => Math.round(clampFraction(this.value()) * PERCENT_MAX));
   readonly center = computed(() => this.diameter() / 2);
-  /** Radius til stregens midte, så stregen holder sig inden for viewBox. */
+  /** Radius to the stroke's center, so the stroke stays within the viewBox. */
   readonly radius = computed(() => Math.max(0, (this.diameter() - this.strokeWidth()) / 2));
   readonly circumference = computed(() => 2 * Math.PI * this.radius());
-  /** Den del af omkredsen, der *ikke* tegnes: omkreds × (1 − value). */
+  /** The part of the circumference that is *not* drawn: circumference × (1 − value). */
   readonly dashOffset = computed(() => this.circumference() * (1 - clampFraction(this.value())));
 
   protected readonly viewBox = computed(() => `0 0 ${this.diameter()} ${this.diameter()}`);

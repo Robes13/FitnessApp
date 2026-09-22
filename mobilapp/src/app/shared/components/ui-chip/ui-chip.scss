@@ -1,4 +1,4 @@
-/* Værten er selve `<button>`; kun `:host(…)` rammer den under emuleret encapsulation. */
+/* The host is the `<button>` itself; only `:host(…)` targets it under emulated encapsulation. */
 :host {
   display: inline-flex;
   align-items: center;

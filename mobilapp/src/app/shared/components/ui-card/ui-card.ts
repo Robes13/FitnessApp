@@ -4,8 +4,8 @@ export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 export type CardTone = 'surface' | 'soft' | 'accent';
 
 /**
- * Standardkort: glas-fyld, blød hairline og 16 px radius. `accent` er det orange
- * gradient-kort ("Til mål") med mørk tekst.
+ * Standard card: glass fill, soft hairline and 16 px radius. `accent` is the orange
+ * gradient card ("Til mål") with dark text.
  */
 @Component({
   selector: 'app-ui-card',

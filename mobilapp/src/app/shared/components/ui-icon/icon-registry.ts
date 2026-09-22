@@ -3,7 +3,7 @@ import {
   CollectionIconName,
 } from '../../../core/constants/collection-icons';
 
-/** UI-ikoner ud over samlingernes ikoner. Stierne er kopieret fra designet. */
+/** UI icons beyond the collection icons. Paths are copied from the design. */
 export const UI_ICON_NAMES = [
   'chevron-left',
   'chevron-right',
@@ -30,12 +30,12 @@ export const UI_ICON_NAMES = [
 
 export type UiIconName = (typeof UI_ICON_NAMES)[number];
 
-/** Alle ikonnavne `app-ui-icon` kan tegne: de 30 samlingsikoner plus UI-ikonerne. */
+/** All icon names `app-ui-icon` can render: the 30 collection icons plus the UI icons. */
 export type IconName = CollectionIconName | UiIconName;
 
 export const ICON_NAMES: readonly IconName[] = [...COLLECTION_ICON_NAMES, ...UI_ICON_NAMES];
 
-/** Samlingsikoner – designets `colIconDefs` (Lucide-stier, 24×24 viewBox). */
+/** Collection icons – the design's `colIconDefs` (Lucide paths, 24×24 viewBox). */
 const COLLECTION_ICON_PATHS: Record<CollectionIconName, readonly string[]> = {
   egg: [
     'M12 22c6.23-.05 7.87-5.57 7.5-10-.36-4.34-3.95-9.96-7.5-10-3.55.04-7.14 5.66-7.5 10-.37 4.43 1.27 9.95 7.5 10z',
@@ -114,9 +114,9 @@ const COLLECTION_ICON_PATHS: Record<CollectionIconName, readonly string[]> = {
 };
 
 /**
- * UI-ikoner. `rect`/`circle`-elementer fra designet er skrevet om til stier, så
- * `app-ui-icon` kun skal tegne `<path>`-elementer. Tab-ikonerne har to stier (designets
- * `tabDefs`), `eye` er designets `pwLoginPath` plus pupillen.
+ * UI icons. `rect`/`circle` elements from the design have been rewritten as paths, so
+ * `app-ui-icon` only ever needs to render `<path>` elements. The tab icons have two paths
+ * (the design's `tabDefs`), `eye` is the design's `pwLoginPath` plus the pupil.
  */
 const UI_ICON_PATHS: Record<UiIconName, readonly string[]> = {
   'chevron-left': ['m15 18-6-6 6-6'],
@@ -158,7 +158,7 @@ const UI_ICON_PATHS: Record<UiIconName, readonly string[]> = {
   'tab-history': ['M12 7v5l3.5 2', 'M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9z'],
 };
 
-/** Alle ikoners `<path d>`-værdier, ét array pr. ikon. */
+/** All icons' `<path d>` values, one array per icon. */
 export const ICON_PATHS: Record<IconName, readonly string[]> = {
   ...COLLECTION_ICON_PATHS,
   ...UI_ICON_PATHS,

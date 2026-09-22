@@ -1,12 +1,12 @@
 @use 'mixins';
 
-/* Værten er kun en beholder; overlay og ark lægger sig over app-roden. */
+/* The host is just a container; the overlay and sheets sit above the app root. */
 :host {
   display: contents;
 }
 
 .barcode-scanner {
-  /* Kameraoverlay */
+  /* Camera overlay */
 
   &__overlay {
     position: absolute;
@@ -18,11 +18,11 @@
     padding: var(--layout-page-padding-top-lg) var(--layout-page-padding-x)
       calc(var(--safe-area-bottom) + var(--space-10));
 
-    /* Et kamerabillede er mørkt i begge temaer. */
+    /* A camera image is dark in both themes. */
     background: var(--color-background-scanner);
     color: var(--color-white);
 
-    /* Overlayet får fokus programmatisk; det er ikke en kontrol, så ingen fokusring. */
+    /* The overlay receives focus programmatically; it isn't a control, so no focus ring. */
     outline: none;
   }
 
@@ -47,7 +47,7 @@
     text-transform: uppercase;
   }
 
-  /* Holder titlen centreret over for luk-knappen. */
+  /* Keeps the title centered opposite the close button. */
   &__header-spacer {
     width: var(--size-control-sm);
   }
@@ -62,7 +62,7 @@
     gap: var(--space-6);
   }
 
-  /* Rammens geometri (--scan-*) bindes fra TypeScript; se SCAN_FRAME i barcode-scanner.ts. */
+  /* The frame's geometry (--scan-*) is bound from TypeScript; see SCAN_FRAME in barcode-scanner.ts. */
   &__frame {
     position: relative;
     width: var(--scan-frame-width);
@@ -151,7 +151,7 @@
     gap: var(--space-2-5);
   }
 
-  /* Resultat-ark */
+  /* Result sheet */
 
   &__result {
     display: flex;
@@ -277,7 +277,7 @@
     flex: 1;
   }
 
-  /* Ukendt vare-ark */
+  /* Unknown item sheet */
 
   &__badge {
     display: inline-flex;

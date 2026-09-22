@@ -10,7 +10,7 @@
 }
 
 .ui-page-header {
-  /* Venstre og højre plads er lige brede (44 px), så titlen står centreret. */
+  /* Left and right slots are equally wide (44 px), so the title stays centered. */
   &__lead,
   &__action {
     display: flex;

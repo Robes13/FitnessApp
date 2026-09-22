@@ -10,8 +10,8 @@ import {
 export type UiChipSize = 'md' | 'sm';
 
 /**
- * Filter-/valg-chip (Alle · Vejning · Mad, måltider, vægt-intervaller). Bruges som attribut på
- * en native `<button>`; indholdet projiceres. Valgt = orange kant, orange skær og orange tekst.
+ * Filter/selection chip (All · Weight · Food, meals, weight ranges). Used as an attribute on
+ * a native `<button>`; the content is projected. Selected = orange border, orange tint and orange text.
  */
 @Component({
   selector: 'button[app-ui-chip]',
@@ -29,7 +29,7 @@ export type UiChipSize = 'md' | 'sm';
 export class UiChip {
   readonly selected = input(false, { transform: booleanAttribute });
   readonly size = input<UiChipSize>('md');
-  /** Uvalgt chip får glas-fyld i stedet for at være gennemsigtig (ikon-gitteret i Ny samling). */
+  /** An unselected chip gets a glass fill instead of being transparent (the icon grid in New collection). */
   readonly filled = input(false, { transform: booleanAttribute });
 
   protected readonly hostClasses = computed(() => `ui-chip ui-chip--${this.size()}`);

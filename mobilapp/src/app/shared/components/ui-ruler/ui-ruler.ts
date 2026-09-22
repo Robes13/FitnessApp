@@ -19,7 +19,7 @@ import {
 } from './ruler-geometry';
 import { clamp } from '../../../core/utils/math';
 
-/** 84 / 96 px høj – `--size-ruler-h` / `--size-ruler-h-lg`. */
+/** 84 / 96 px tall – `--size-ruler-h` / `--size-ruler-h-lg`. */
 export type UiRulerSize = 'md' | 'lg';
 
 interface RulerTickView extends RulerTick {
@@ -28,7 +28,7 @@ interface RulerTickView extends RulerTick {
 
 interface DragStart {
   readonly clientX: number;
-  /** Værdien under fingeren ved nedtryk – træk måles relativt til den. */
+  /** The value under the finger at touch-down – dragging is measured relative to it. */
   readonly base: number;
 }
 
@@ -38,7 +38,7 @@ const DEFAULT_PX_PER_TICK = 8;
 const DEFAULT_MAJOR_EVERY = 10;
 const DEFAULT_MID_EVERY = 5;
 const DEFAULT_LABEL_EVERY = 10;
-/** Designet runder den committede værdi til tre decimaler (`Math.round(q * 1000) / 1000`). */
+/** The design rounds the committed value to three decimals (`Math.round(q * 1000) / 1000`). */
 const COMMIT_PRECISION = 1000;
 
 const KEY_STEP_DIRECTION: Record<string, number> = {
@@ -60,13 +60,14 @@ function tickClass(tick: RulerTick): string {
 }
 
 /**
- * Designets lineal: et spor af streger, der trækkes vandret under en fast orange midterlinje.
- * Brugeren trækker direkte i linealen (pointer capture) eller bruger piletasterne
- * (`role="slider"`). `value` committes i `step`-trin og klemmes fast til `min..max`;
- * `dragging` rapporterer, om der trækkes (gløden bliver kraftigere, og forælderen kan reagere).
+ * The design's ruler: a track of ticks that is dragged horizontally under a fixed orange
+ * center line. The user drags the ruler directly (pointer capture) or uses the arrow keys
+ * (`role="slider"`). `value` is committed in `step` increments and clamped to `min..max`;
+ * `dragging` reports whether dragging is in progress (the glow gets stronger, and the parent
+ * can react).
  *
- * Værten er `display: block` med `overflow: hidden`; forælderen sætter margin, baggrund og
- * radius efter behov (vægt-siden lægger den i et kort med `--color-surface-3`).
+ * The host is `display: block` with `overflow: hidden`; the parent sets margin, background and
+ * radius as needed (the weight page places it in a card with `--color-surface-3`).
  */
 @Component({
   selector: 'app-ui-ruler',
@@ -83,25 +84,25 @@ export class UiRuler {
   readonly min = input.required<number>();
   readonly max = input.required<number>();
   readonly value = model.required<number>();
-  /** Opløsning for den committede værdi (1 kg, 5 min, 100 skridt, 0,1 kg …). */
+  /** Resolution for the committed value (1 kg, 5 min, 100 steps, 0.1 kg …). */
   readonly step = input(DEFAULT_STEP);
-  /** Værdi pr. streg. */
+  /** Value per tick. */
   readonly tickUnit = input(DEFAULT_TICK_UNIT);
-  /** Pixel pr. streg. */
+  /** Pixels per tick. */
   readonly pxPerTick = input(DEFAULT_PX_PER_TICK);
   readonly majorEvery = input(DEFAULT_MAJOR_EVERY);
   readonly midEvery = input(DEFAULT_MID_EVERY);
   readonly labelEvery = input(DEFAULT_LABEL_EVERY);
   readonly labelFormatter = input<RulerLabelFormatter>(formatRulerLabel);
-  /** Hvor mange streger gløden rækker (designet: 6 for kg/cm, 8 for skridt). */
+  /** How many ticks the glow reaches (the design: 6 for kg/cm, 8 for steps). */
   readonly glowReach = input(RULER_DEFAULT_GLOW_REACH);
   /**
-   * Glødens styrke i hvile, 0..1 (designet: .35 på opsummeringen, .4 på vægt, højde og
-   * skridt). Under træk er den altid 1.
+   * The glow's strength at rest, 0..1 (the design: .35 on the summary, .4 on weight, height and
+   * steps). While dragging it's always 1.
    */
   readonly glowStrength = input(RULER_BLEED_IDLE, { transform: numberAttribute });
   readonly size = input<UiRulerSize>('md');
-  /** Skærmlæser-navn for slideren, fx "Vægt i kilo". */
+  /** Screen reader name for the slider, e.g. "Weight in kilos". */
   readonly ariaLabel = input('');
   readonly dragging = model(false);
 
@@ -147,8 +148,9 @@ export class UiRuler {
     try {
       element.setPointerCapture(event.pointerId);
     } catch {
-      // Pointer capture er en forbedring (trækket fortsætter uden for elementet), ikke et krav –
-      // ældre WebViews og testmiljøer uden Pointer Events skal stadig kunne bruge linealen.
+      // Pointer capture is an enhancement (dragging continues outside the element), not a
+      // requirement – older WebViews and test environments without Pointer Events must still
+      // be able to use the ruler.
     }
   }
 
@@ -183,7 +185,7 @@ export class UiRuler {
     this.commit(this.value() + direction * this.step());
   }
 
-  /** Runder til nærmeste `step`, fjerner flydende-tal-støj og klemmer fast til `min..max`. */
+  /** Rounds to the nearest `step`, removes floating-point noise and clamps to `min..max`. */
   private commit(raw: number): void {
     const step = this.step();
     const quantised = Math.round(raw / step) * step;

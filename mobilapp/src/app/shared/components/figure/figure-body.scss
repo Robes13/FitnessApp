@@ -1,7 +1,7 @@
 /*
- * Figurens krop. Alle farver er figur-tokens (ens i begge temaer); geometrien bindes som
- * SVG-attributter fra TypeScript. Dele, der skal skifte farve efter tilstand (pandebånd,
- * kinder), får en BEM-modifier.
+ * The figure's body. All colors are figure tokens (the same in both themes); the geometry is
+ * bound as SVG attributes from TypeScript. Parts that need to change color based on state
+ * (headband, cheeks) get a BEM modifier.
  */
 .figure-body {
   &__shadow {
@@ -104,7 +104,7 @@
   &__cheek {
     fill: var(--color-figure-cheek);
 
-    /* Lysere kinder, når ingen intensitet er valgt eller ved "mildt". */
+    /* Lighter cheeks when no intensity is selected or for "mild". */
     &--accent-soft {
       fill: var(--color-figure-cheek-soft);
     }
@@ -128,8 +128,8 @@
 }
 
 /*
- * Scenen interpolerer alle koordinater samlet via animatedFigure. CSS må kun animere
- * farver og opacitet, ellers får enkelte kropsdele endnu en forsinkelse efter hvert frame.
+ * The scene interpolates all coordinates together via animatedFigure. CSS must only animate
+ * colors and opacity, otherwise individual body parts get yet another delay after each frame.
  */
 :host(.figure-body--animated) .figure-body__part {
   transition:

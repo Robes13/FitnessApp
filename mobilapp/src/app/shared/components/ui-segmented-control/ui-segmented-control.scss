@@ -1,9 +1,9 @@
 /*
- * Værten bærer `ui-segmented-control ui-segmented-control--{variant}`; kun `:host(…)`
- * rammer den under emuleret encapsulation. `--segment-padding` arves af knop og segmenter.
+ * The host carries `ui-segmented-control ui-segmented-control--{variant}`; only `:host(…)`
+ * targets it under emulated encapsulation. `--segment-padding` is inherited by the knob and segments.
  */
 :host {
-  /* Indre luft; knoppens bredde og position afledes af den og af --segment-count/-index. */
+  /* Inner padding; the knob's width and position are derived from it and from --segment-count/-index. */
   --segment-padding: var(--space-1-5);
 
   position: relative;
@@ -15,7 +15,7 @@
   background: var(--color-surface-2);
 }
 
-/* Kompakte faner: ingen glidende knop, den aktive fane er fyldt. */
+/* Compact tabs: no sliding knob, the active tab is filled. */
 :host(.ui-segmented-control--compact) {
   --segment-padding: var(--space-1);
 

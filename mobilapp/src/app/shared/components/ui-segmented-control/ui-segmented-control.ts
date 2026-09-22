@@ -14,12 +14,12 @@ export interface SegmentOption<T> {
 }
 
 /**
- * `pill` = 52 px høj, uppercase, glidende orange knop (Ja tak / Nej tak).
- * `compact` = 36 px faner med fyldt aktiv fane (Varer / Samlinger).
+ * `pill` = 52 px tall, uppercase, sliding orange knob (Yes please / No thanks).
+ * `compact` = 36 px tabs with a filled active tab (Items / Collections).
  */
 export type SegmentedControlVariant = 'pill' | 'compact';
 
-/** Piletaster flytter valget som i en native radiogruppe. */
+/** Arrow keys move the selection as in a native radio group. */
 const KEY_DELTAS: Readonly<Record<string, number>> = {
   ArrowLeft: -1,
   ArrowUp: -1,
@@ -28,10 +28,11 @@ const KEY_DELTAS: Readonly<Record<string, number>> = {
 };
 
 /**
- * Segmenteret valg med radiogruppe-semantik. `value` er en two-way `model`, der er `null`,
- * indtil brugeren har valgt – i `pill`-varianten er knoppen først synlig, når der er et valg.
+ * Segmented selection with radio-group semantics. `value` is a two-way `model` that is `null`
+ * until the user has selected – in the `pill` variant the knob is only visible once there's a
+ * selection.
  *
- * Knoppens position er ren CSS: antal segmenter og valgt indeks bindes som CSS-variabler.
+ * The knob's position is pure CSS: the segment count and selected index are bound as CSS variables.
  */
 @Component({
   selector: 'app-ui-segmented-control',
@@ -55,7 +56,7 @@ export class UiSegmentedControl<T extends string | number | boolean> {
 
   private readonly segments = viewChildren<ElementRef<HTMLButtonElement>>('segment');
 
-  /** Indeks for det valgte segment, −1 når intet er valgt. */
+  /** Index of the selected segment, −1 when nothing is selected. */
   readonly selectedIndex = computed(() =>
     this.options().findIndex((option) => option.value === this.value()),
   );
@@ -70,7 +71,7 @@ export class UiSegmentedControl<T extends string | number | boolean> {
     return index === this.selectedIndex();
   }
 
-  /** Kun det valgte segment (eller det første, når intet er valgt) er i tab-rækkefølgen. */
+  /** Only the selected segment (or the first, when nothing is selected) is in the tab order. */
   protected tabIndexFor(index: number): number {
     const selected = this.selectedIndex();
     const focusable = selected < 0 ? index === 0 : index === selected;

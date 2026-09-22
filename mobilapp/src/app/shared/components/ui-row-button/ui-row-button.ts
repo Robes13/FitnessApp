@@ -5,8 +5,8 @@ export type RowButtonValueTone = 'default' | 'muted' | 'accent';
 export type RowButtonDensity = 'regular' | 'compact';
 
 /**
- * Række med label til venstre, værdi + chevron til højre (Profil → "Min plan",
- * opsummeringen i opret-flowet). Bruges som attribut på en `<button>`.
+ * Row with a label on the left, value + chevron on the right (Profile → "My plan",
+ * the summary in the creation flow). Used as an attribute on a `<button>`.
  */
 @Component({
   selector: 'button[app-ui-row-button]',
@@ -23,7 +23,7 @@ export type RowButtonDensity = 'regular' | 'compact';
 })
 export class UiRowButton {
   readonly label = input.required<string>();
-  /** Erstatter rækkens oplæste navn, fx "Ret vægt" på opsummeringens rækker. */
+  /** Overrides the row's announced name, e.g. "Edit weight" on the summary rows. */
   readonly ariaLabel = input<string | null>(null);
   readonly value = input('');
   readonly valueTone = input<RowButtonValueTone>('default');

@@ -1,9 +1,9 @@
 @use 'mixins';
 
 /*
- * Værten er en flex-kolonne, der højst fylder sin forælder (arkets krop). Det lader
- * resultatlisten og formularens felter scrolle inde i komponenten, mens overskrift og
- * knapper bliver stående – designets "min-height: 0"-regel.
+ * The host is a flex column that fills at most its parent (the sheet's body). This lets the
+ * results list and the form's fields scroll inside the component, while the heading and
+ * buttons stay put – the design's "min-height: 0" rule.
  */
 :host {
   display: flex;
@@ -24,7 +24,7 @@
     }
   }
 
-  /* Søgning */
+  /* Search */
 
   &__search-row {
     display: flex;
@@ -82,7 +82,7 @@
     font-weight: var(--font-weight-semibold);
   }
 
-  /* "Egen vare"-pillen: grøn 9 px caps. */
+  /* The "Custom item" pill: green 9 px caps. */
   &__own {
     flex: none;
     padding: var(--space-0-5) var(--space-2);
@@ -112,7 +112,7 @@
     font-weight: var(--font-weight-bold);
   }
 
-  /* Den lille orange plus-cirkel (28 px). */
+  /* The small orange plus circle (28 px). */
   &__result-add {
     display: flex;
     align-items: center;
@@ -169,7 +169,7 @@
     font-size: var(--font-size-sm);
   }
 
-  /* Overskrift med tilbage-knap (ny vare + portion) */
+  /* Heading with back button (new item + portion) */
 
   &__heading {
     display: flex;
@@ -201,7 +201,7 @@
     }
   }
 
-  /* Ny egen vare */
+  /* New custom item */
 
   &__fields {
     @include mixins.hide-scrollbar;
@@ -211,7 +211,7 @@
     gap: var(--space-3);
     min-height: 0;
 
-    /* Lidt luft, så fokusringen på felterne ikke klippes af scroll-containeren. */
+    /* A bit of room so the fields' focus ring isn't clipped by the scroll container. */
     margin: 0 calc(-1 * var(--space-1));
     padding: var(--space-0-5) var(--space-1);
     overflow-y: auto;
@@ -289,7 +289,7 @@
     gap: var(--space-3);
   }
 
-  /* Tallet kan trækkes til siden; kun feltet selv reagerer på almindelig indtastning. */
+  /* The number can be dragged sideways; only the field itself responds to regular typing. */
   &__amount {
     display: flex;
     flex: 1;
@@ -342,7 +342,7 @@
   }
 
   &__hint {
-    /* Designet trækker hjælpeteksten 6 px tættere på tallet. */
+    /* The design pulls the hint text 6 px closer to the number. */
     margin-top: calc(-1 * var(--space-1-5));
     color: var(--color-text-muted);
     font-size: var(--font-size-xs);

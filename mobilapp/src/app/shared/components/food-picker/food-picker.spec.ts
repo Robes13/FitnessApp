@@ -6,12 +6,12 @@ import { FoodPicker, FoodPickerCtaVerb, FoodPickerSelection, FoodPickerStep } fr
 import { provideComponentTestEnvironment } from '../../../core/testing/test-providers';
 
 /**
- * Komponenttests bruger `provideComponentTestEnvironment()`: jsdom's rigtige `DOCUMENT`,
- * fastfrosset `NOW` og 0 ms mock-forsinkelser. Browserens storage ryddes pr. test.
+ * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`,
+ * a frozen `NOW` and 0 ms mock delays. The browser's storage is cleared per test.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
-/** 250 g-basis, så halvdelen (125 g) halverer alle makroer uden afrunding. */
+/** 250 g base, so half (125 g) halves all macros without rounding. */
 const SALAD: FoodItem = {
   id: 'food-salat',
   name: 'Kyllingesalat',
@@ -21,6 +21,27 @@ const SALAD: FoodItem = {
   carbs: 20,
   fat: 10,
 };
+
+/**
+ * Items to search for. The app has no item database – search only finds the user's own items,
+ * so specs insert them themselves. They're added in reverse, because the newest item comes first.
+ */
+const OWN_FOODS: readonly Omit<FoodItem, 'id' | 'isCustom'>[] = [
+  { name: 'Havregryn', quantity: '60 g', kcal: 222, protein: 8, carbs: 38, fat: 4 },
+  { name: 'Skyr naturel', quantity: '200 g', kcal: 128, protein: 22, carbs: 8, fat: 0 },
+  { name: 'Banan', quantity: '1 stk', kcal: 105, protein: 1, carbs: 27, fat: 0 },
+  { name: 'Kyllingebryst', quantity: '150 g', kcal: 248, protein: 46, carbs: 0, fat: 5 },
+  { name: 'Rugbrød', quantity: '1 skive', kcal: 90, protein: 3, carbs: 16, fat: 1 },
+  { name: 'Æg', quantity: '1 stk', kcal: 78, protein: 6, carbs: 1, fat: 5 },
+  { name: 'Proteinbar', quantity: '55 g', kcal: 210, protein: 20, carbs: 22, fat: 7 },
+];
+
+function seedOwnFoods(): void {
+  const log = TestBed.inject(FoodLogService);
+  for (const food of [...OWN_FOODS].reverse()) {
+    log.addCustomFood(food);
+  }
+}
 
 @Component({
   imports: [FoodPicker],
@@ -68,9 +89,9 @@ function normalize(value: string | null | undefined): string {
 }
 
 interface SetupOptions {
-  /** Kører efter `configureTestingModule`, før komponenten oprettes (fx seed af egne varer). */
+  /** Runs after `configureTestingModule`, before the component is created (e.g. seeding custom items). */
   readonly prepare?: () => void;
-  /** Sætter host-inputs, før første change detection. */
+  /** Sets host inputs before the first change detection. */
   readonly configure?: (host: Host) => void;
 }
 
@@ -87,7 +108,7 @@ describe('FoodPicker', () => {
     options.configure?.(host);
     const root = fixture.nativeElement as HTMLElement;
 
-    /** Lader effekter køre, den 0 ms lange søgetimer udløbe og viewet tegne igen. */
+    /** Lets effects run, the 0 ms search timer fire and the view re-render. */
     const settle = async (): Promise<void> => {
       await fixture.whenStable();
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -126,17 +147,17 @@ describe('FoodPicker', () => {
   }
 
   describe('search step', () => {
-    it('shows the first six foods for an empty query and the blank create row', async () => {
-      const { host, texts, text } = await setup();
+    it('shows the first six of the user own foods and the blank create row', async () => {
+      const { host, texts, text } = await setup({ prepare: seedOwnFoods });
 
       expect(host.steps).toEqual([]);
       expect(texts('.food-picker__result-name')).toEqual([
-        'Havregryn',
-        'Skyr naturel',
-        'Banan',
-        'Kyllingebryst',
-        'Rugbrød',
-        'Æg',
+        'Havregryn Egen vare',
+        'Skyr naturel Egen vare',
+        'Banan Egen vare',
+        'Kyllingebryst Egen vare',
+        'Rugbrød Egen vare',
+        'Æg Egen vare',
       ]);
       expect(text('.food-picker__result-meta')).toBe('60 g · P 8 · K 38 · F 4');
       expect(text('.food-picker__result-kcal')).toBe('222 kcal');
@@ -145,7 +166,7 @@ describe('FoodPicker', () => {
     });
 
     it('shows a spinner while searching and then only the matching foods', async () => {
-      const { fixture, root, settle, texts, text } = await setup();
+      const { fixture, root, settle, texts, text } = await setup({ prepare: seedOwnFoods });
       const field = searchField(root);
       if (!field) {
         throw new Error('Søgefeltet findes ikke.');
@@ -161,7 +182,7 @@ describe('FoodPicker', () => {
       await settle();
 
       expect(root.querySelector('app-ui-spinner')).toBeNull();
-      expect(texts('.food-picker__result-name')).toEqual(['Havregryn']);
+      expect(texts('.food-picker__result-name')).toEqual(['Havregryn Egen vare']);
       expect(text('.food-picker__create-title')).toBe('Opret "havre" som ny vare');
     });
 
@@ -175,22 +196,14 @@ describe('FoodPicker', () => {
       expect(root.querySelector('.food-picker__create')).not.toBeNull();
     });
 
-    it('prefills the query from initialQuery and marks custom foods', async () => {
+    it('prefills the query from initialQuery and marks the user own foods', async () => {
       const { root, texts } = await setup({
-        prepare: () =>
-          TestBed.inject(FoodLogService).addCustomFood({
-            name: 'Min bar',
-            quantity: '1 stk',
-            kcal: 200,
-            protein: 20,
-            carbs: 20,
-            fat: 5,
-          }),
+        prepare: seedOwnFoods,
         configure: (host) => host.initialQuery.set('bar'),
       });
 
       expect(searchField(root)?.value).toBe('bar');
-      expect(texts('.food-picker__result-name')).toEqual(['Min bar Egen vare', 'Proteinbar']);
+      expect(texts('.food-picker__result-name')).toEqual(['Proteinbar Egen vare']);
       expect(root.querySelectorAll('.food-picker__own')).toHaveLength(1);
     });
 
@@ -208,9 +221,9 @@ describe('FoodPicker', () => {
 
   describe('portion step', () => {
     it('opens the portion step for a result with its base quantity and step', async () => {
-      const { host, root, click, text, texts } = await setup();
+      const { host, root, click, text, texts } = await setup({ prepare: seedOwnFoods });
 
-      await click('.food-picker__result', 2); // Banan, 1 stk
+      await click('.food-picker__result', 2); // Banana, 1 pc
 
       expect(host.steps).toEqual(['portion']);
       expect(text('.food-picker__title')).toBe('Banan');
@@ -219,7 +232,7 @@ describe('FoodPicker', () => {
       expect(texts('.food-picker__chip')).toEqual(['1 stk', '2 stk', '3 stk', '4 stk']);
       expect(text('.food-picker__confirm')).toBe('Tilføj 1 stk');
 
-      await click('.food-picker__stepper', 1); // Mere
+      await click('.food-picker__stepper', 1); // More
       expect(text('.food-picker__confirm')).toBe('Tilføj 2 stk');
     });
 
@@ -280,7 +293,7 @@ describe('FoodPicker', () => {
     });
 
     it('goes back to the search from the back button when not editing', async () => {
-      const { host, root, click } = await setup();
+      const { host, root, click } = await setup({ prepare: seedOwnFoods });
 
       await click('.food-picker__result');
       await click('.food-picker__back');

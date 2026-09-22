@@ -47,7 +47,7 @@ describe('photo-crop', () => {
   });
 
   it('moves the crop opposite the drag direction', () => {
-    // Zoom 1 → 40 px svarer til hele billedet, så 10 px er 25 %.
+    // Zoom 1 → 40 px corresponds to the whole image, so 10 px is 25%.
     expect(movePhotoCrop({ zoom: 1, x: 50, y: 50 }, 10, -4)).toEqual({ x: 25, y: 60 });
   });
 

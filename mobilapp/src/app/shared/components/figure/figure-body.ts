@@ -7,16 +7,16 @@ import {
 } from '@angular/core';
 import { FigureGeometry } from './figure-geometry';
 
-/** Pandebåndets farve – køn, fremgang og træningsintensitet farver det forskelligt. */
+/** The headband's color – gender, progress and training intensity color it differently. */
 export type FigureBandTone =
   'accent' | 'pink' | 'white' | 'positive' | 'negative' | 'muted' | 'accent-strong' | 'accent-deep';
 
-/** Kindernes farve – bliver rødere ved højere intensitet. */
+/** The cheeks' color – gets redder at higher intensity. */
 export type FigureCheekTone = 'accent' | 'accent-soft' | 'negative' | 'negative-strong';
 
 /**
- * Ansigtsudtrykket. Alle felter har standardværdier fra geometrien (smil, åben mund og bryn
- * følger vægten), så en scene kun overskriver det, den vil styre.
+ * The facial expression. All fields have default values from the geometry (smile, open mouth
+ * and brows follow the weight), so a scene only overrides what it wants to control.
  */
 export interface FigureExpression {
   readonly smileOpacity: number;
@@ -24,17 +24,17 @@ export interface FigureExpression {
   readonly mouthRy: number;
   readonly tongueRx: number;
   readonly tongueRy: number;
-  /** Venstre bryns rotation i grader. */
+  /** The left brow's rotation in degrees. */
   readonly browRotation: number;
-  /** Højre bryns rotation i grader. */
+  /** The right brow's rotation in degrees. */
   readonly browRotationRight: number;
   readonly browOpacity: number;
   readonly cheekTone: FigureCheekTone;
   readonly cheekRadius: number;
-  /** Pupillernes forskydning i SVG-enheder (figuren "kigger" til siden / ned). */
+  /** The pupils' offset in SVG units (the figure "looks" sideways / down). */
   readonly pupilOffsetX: number;
   readonly pupilOffsetY: number;
-  /** Lukkede øjne (to buer) i stedet for øjne med pupiller. */
+  /** Closed eyes (two arcs) instead of eyes with pupils. */
   readonly eyesClosed: boolean;
 }
 
@@ -47,7 +47,7 @@ const EYELID_LEFT_X = 84;
 const EYELID_RIGHT_X = 104;
 const DEFAULT_CHEEK_RADIUS = 3.5;
 
-/** Standardudtrykket: designets grundfigur, hvor mund og bryn styres af geometrien. */
+/** The default expression: the design's base figure, where mouth and brows are driven by the geometry. */
 export function defaultFigureExpression(geometry: FigureGeometry): FigureExpression {
   return {
     smileOpacity: geometry.smileOp,
@@ -67,16 +67,16 @@ export function defaultFigureExpression(geometry: FigureGeometry): FigureExpress
 }
 
 /**
- * Figurens krop som attribut-komponent på et SVG `<g>`:
+ * The figure's body as an attribute component on an SVG `<g>`:
  *
  * ```html
  * <svg viewBox="0 0 200 300"><g app-figure-body [geometry]="geometry()" /></svg>
  * ```
  *
- * Tegner skygge, ben, sko, arme, krop, bælte, (håndvægt) og hoved i designets rækkefølge.
- * Alle farver er `--color-figure-*`-tokens via klasser; scener slår enkeltdele fra
- * (`showLeftArm`, `showRightArm`, `showHead`, `showShadow`) og tegner deres egne animerede
- * varianter ovenpå. `expression` overskriver ansigtets standardudtryk felt for felt.
+ * Draws shadow, legs, shoes, arms, body, belt, (dumbbell) and head in the design's order.
+ * All colors are `--color-figure-*` tokens via classes; scenes turn off individual parts
+ * (`showLeftArm`, `showRightArm`, `showHead`, `showShadow`) and draw their own animated
+ * variants on top. `expression` overrides the face's default expression field by field.
  */
 @Component({
   selector: 'g[app-figure-body]',
@@ -96,13 +96,13 @@ export class FigureBody {
   readonly showRightArm = input(true, { transform: booleanAttribute });
   readonly showHead = input(true, { transform: booleanAttribute });
   readonly showShadow = input(true, { transform: booleanAttribute });
-  /** Dybdeskygge som i træningsscenerne: venstre ben/arm/sko mørkere, højre arm lysere. */
+  /** Depth shading as in the training scenes: left leg/arm/shoe darker, right arm lighter. */
   readonly shaded = input(false, { transform: booleanAttribute });
-  /** Farve- og opacitetsovergange; scenen styrer geometrien med animatedFigure. */
+  /** Color and opacity transitions; the scene drives the geometry with animatedFigure. */
   readonly animated = input(true, { transform: booleanAttribute });
   readonly expression = input<Partial<FigureExpression>>({});
 
-  /** Det fulde udtryk: standardværdier fra geometrien overskrevet af `expression`. */
+  /** The full expression: default values from the geometry overridden by `expression`. */
   protected readonly resolvedExpression = computed<FigureExpression>(() => {
     const base = defaultFigureExpression(this.geometry());
     const override = this.expression();

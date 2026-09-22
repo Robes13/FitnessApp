@@ -84,7 +84,7 @@
   --color-background: var(--palette-background-dark);
   --color-background-deep: var(--palette-background-deep);
 
-  /* Kameraoverlayet i scanneren er mørkt i begge temaer. */
+  /* The scanner's camera overlay is dark in both themes. */
   --color-background-scanner: var(--palette-background-abyss);
   --color-surface: rgb(255 255 255 / 5%);
   --color-surface-2: rgb(255 255 255 / 6%);
@@ -94,7 +94,7 @@
   --color-control: rgb(255 255 255 / 8%);
   --color-control-hover: rgb(255 255 255 / 14%);
 
-  /* Mørk 55 % bund til felter oven på fotos – fotoet er mørkt i begge temaer. */
+  /* Dark 55% background for fields on top of photos – the photo is dark in both themes. */
   --color-surface-translucent: rgb(15 23 42 / 55%);
   --color-track: rgb(255 255 255 / 15%);
   --color-sheet: var(--palette-slate-800);
@@ -106,7 +106,7 @@
   --color-border-strong: rgb(255 255 255 / 12%);
   --color-border-stronger: rgb(255 255 255 / 14%);
 
-  /* Stiplede kanter (18 / 20 %) og fluebenets lyse kant (25 %). */
+  /* Dashed borders (18 / 20%) and the checkmark's light border (25%). */
   --color-border-dashed-soft: rgb(255 255 255 / 18%);
   --color-border-dashed: rgb(255 255 255 / 20%);
   --color-border-light: rgb(255 255 255 / 25%);
@@ -120,7 +120,7 @@
   --color-text-inverse: var(--palette-background-dark);
   --color-text-on-accent: var(--palette-background-dark);
 
-  /* Endnu ikke indtruffet (ugeringenes kommende dage) — svagere end `muted`. */
+  /* Not yet occurred (the week rings' upcoming days) — weaker than `muted`. */
   --color-text-inactive: var(--palette-slate-600);
 
   /* Accent (orange) — action and emphasis. */
@@ -138,7 +138,7 @@
   --color-accent-border-strong: rgb(249 115 22 / 50%);
   --color-accent-ring: rgb(249 115 22 / 25%);
 
-  /* Den kraftige orange ring om beskæringscirklen i fotoarket. */
+  /* The strong orange ring around the crop circle in the photo sheet. */
   --color-accent-ring-strong: rgb(249 115 22 / 70%);
 
   /* Selected (blue) — chosen option, active filter. */
@@ -202,20 +202,20 @@
   --color-figure-band-pink: var(--palette-pink);
   --color-figure-band-white: var(--palette-background-light);
 
-  /* Det stiplede omrids af kroppen "i dag" på opsummeringstrinnet. */
+  /* The dashed outline of the body "today" on the summary step. */
   --color-figure-ghost: var(--palette-slate-400);
 
   /* ---------------------------------------------------------------------
    * Scene colours — props in the figure scenes. Constant in both themes.
    * ------------------------------------------------------------------ */
 
-  /* Tv-ramme, fod og stativ i doven-scenen (solid slate-600). */
+  /* TV frame, base and stand in the couch-potato scene (solid slate-600). */
   --color-scene-frame: var(--palette-slate-600);
 
-  /* Digital visning på vægten — mørk i begge temaer, som designet. */
+  /* Digital display on the scale — dark in both themes, as in the design. */
   --color-display-dark: var(--palette-background-dark);
 
-  /* Fødselsdagskagen. */
+  /* The birthday cake. */
   --color-cake-tier: var(--palette-secondary-brown);
   --color-cake-tier-dark: var(--palette-secondary-brown-dark);
   --color-candle-0: var(--palette-background-light);
@@ -224,7 +224,7 @@
   --color-candle-3: var(--palette-green-light);
   --color-candle-4: var(--palette-amber-light);
 
-  /* Medaljen i gå-scenen (fra 25.000 skridt). */
+  /* The medal in the walking scene (from 25,000 steps). */
   --color-medal-gold: var(--palette-warning-strong);
   --color-medal-ring: var(--palette-amber);
   --color-medal-ribbon: var(--palette-danger-strong);
@@ -241,15 +241,15 @@
   --space-0: 0;
   --space-px: 1px;
   --space-0-5: 0.125rem;
-  --space-0-75: 0.1875rem; /* 3px – mellemrum mellem tal og enhed */
+  --space-0-75: 0.1875rem; /* 3px – gap between number and unit */
   --space-1: 0.25rem;
-  --space-1-25: 0.3125rem; /* 5px – lodret padding i små badges */
+  --space-1-25: 0.3125rem; /* 5px – vertical padding in small badges */
   --space-1-5: 0.375rem;
   --space-2: 0.5rem;
-  --space-2-25: 0.5625rem; /* 9px – rækkepadding i historik */
+  --space-2-25: 0.5625rem; /* 9px – row padding in history */
   --space-2-5: 0.625rem;
   --space-3: 0.75rem;
-  --space-3-25: 0.8125rem; /* 13px – rækkepadding i vejningslisten */
+  --space-3-25: 0.8125rem; /* 13px – row padding in the weigh-in list */
   --space-3-5: 0.875rem;
   --space-4: 1rem;
   --space-4-5: 1.125rem;
@@ -258,7 +258,7 @@
   --space-6: 1.5rem;
   --space-7: 1.75rem;
   --space-8: 2rem;
-  --space-8-5: 2.125rem; /* 34px – fade i chips-masken */
+  --space-8-5: 2.125rem; /* 34px – fade in the chips mask */
   --space-9: 2.25rem;
   --space-10: 2.5rem;
   --space-15: 3.75rem;
@@ -266,7 +266,7 @@
   /* ---------------------------------------------------------------------
    * Sizes — controls, icons, avatars, dots and fixed-size widgets.
    * ------------------------------------------------------------------ */
-  --size-control-4xs: 1.625rem; /* 26px – lille fjern-/genlog-knap */
+  --size-control-4xs: 1.625rem; /* 26px – small remove/re-log button */
   --size-control-3xs: 1.75rem; /* 28px */
   --size-control-2xs: 2.25rem; /* 36px */
   --size-control-xs: 2.5rem; /* 40px */
@@ -276,7 +276,7 @@
   --size-control-xl: 3.5rem; /* 56px */
   --size-control-2xl: 4.25rem; /* 68px */
 
-  /* Fotoarkets sekundære knapper ("Centrér igen", "Fjern foto"). */
+  /* The photo sheet's secondary buttons ("Re-center", "Remove photo"). */
   --size-button-secondary: 2.875rem; /* 46px */
 
   --size-icon-2xs: 0.75rem; /* 12px */
@@ -305,20 +305,20 @@
   --size-ruler-h-lg: 6rem; /* 96px */
   --size-progress-thin: 0.25rem; /* 4px */
   --size-progress: 0.375rem; /* 6px */
-  --size-option-tile-min-height: 6.5rem; /* 104px – intensitets-flisen */
-  --size-option-row-compact: 3.625rem; /* 58px – valgkort i redigeringsarket */
-  --size-portion-field: 6rem; /* 96px – talfeltet i portionstrinnet */
-  --size-field-number: 7.5rem; /* 120px – talfeltet i redigeringsarket */
+  --size-option-tile-min-height: 6.5rem; /* 104px – the intensity tile */
+  --size-option-row-compact: 3.625rem; /* 58px – option card in the edit sheet */
+  --size-portion-field: 6rem; /* 96px – the number field in the portion step */
+  --size-field-number: 7.5rem; /* 120px – the number field in the edit sheet */
 
-  /* Nutrify-logoet på login- og glemt-adgangskode-skærmene. */
+  /* The Nutrify logo on the login and forgot-password screens. */
   --size-brand-logo-sm: 1.75rem; /* 28px */
   --size-brand-logo-md: 2.25rem; /* 36px */
 
-  --size-tile-md: 2.625rem; /* 42px – afrundet ikonflise i gøremålskortet */
-  --size-badge-md: 2.125rem; /* 34px – flueben i fejrings-toasten */
-  --size-calendar-cell: 1.875rem; /* 30px – dag i fødselsdagskalenderen */
-  --size-recipe-hero: 9.375rem; /* 150px – opskriftsskærmens ikon-hero */
-  --size-scene-width: 12.5rem; /* 200px – figur-scenernes maksbredde */
+  --size-tile-md: 2.625rem; /* 42px – rounded icon tile in the to-do card */
+  --size-badge-md: 2.125rem; /* 34px – checkmark in the celebration toast */
+  --size-calendar-cell: 1.875rem; /* 30px – day in the birthday calendar */
+  --size-recipe-hero: 9.375rem; /* 150px – the recipe screen's icon hero */
+  --size-scene-width: 12.5rem; /* 200px – the figure scenes' max width */
 
   /* ---------------------------------------------------------------------
    * Typography — Archivo Variable (self-hosted, width axis 62–125%).
@@ -364,7 +364,7 @@
   --font-size-display-10xl: 5.5rem; /* 88px */
   --font-size-display-11xl: 5.75rem; /* 92px */
 
-  /* Initialen i den store avatar i fotoarket (mellem 6xl og 7xl). */
+  /* The initial in the large avatar in the photo sheet (between 6xl and 7xl). */
   --font-size-avatar-initial: 3.5rem; /* 56px */
 
   --line-height-none: 0.9;
@@ -425,17 +425,17 @@
   --duration-slower: 400ms;
   --duration-slowest: 500ms;
 
-  /* Scannerens linje fejer langsomt over rammen (designet: .9s). */
+  /* The scanner's line sweeps slowly across the frame (the design: .9s). */
   --duration-scan-sweep: 900ms;
 
-  /* Designets egne tempi til scener, ringe og toasts — længere end skalaen ovenfor. */
+  /* The design's own timings for scenes, rings and toasts — longer than the scale above. */
   --duration-scene-swap: 550ms;
   --duration-badge-pop: 600ms;
   --duration-ring-close: 700ms;
   --duration-confetti: 1000ms;
   --duration-ring-halo: 1400ms;
 
-  /* Hvor længe fejrings-toasten bliver stående, før den glider ud. */
+  /* How long the celebration toast stays before it slides out. */
   --duration-toast-hold: 2900ms;
 
   --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -468,10 +468,10 @@
   --layout-tab-bar-clearance: calc(var(--safe-area-bottom) + 5.25rem); /* 84px + home indicator */
   --layout-touch-target-min: 2.75rem;
 
-  /* Maksbredde på en brødtekstspalte (designets 300 px på glemt-adgangskode). */
+  /* Max width of a body text column (the design's 300 px on forgot-password). */
   --layout-text-measure: 18.75rem; /* 300px */
 
-  /* Fotoskærmenes forløb ned over billedet — mørkt i begge temaer. */
+  /* The photo screens' gradient over the image — dark in both themes. */
   --gradient-photo-overlay: linear-gradient(
     180deg,
     rgb(15 23 42 / 30%),

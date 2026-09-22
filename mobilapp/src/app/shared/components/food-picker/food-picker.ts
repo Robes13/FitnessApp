@@ -36,18 +36,18 @@ import { UiSpinner } from '../ui-spinner/ui-spinner';
 import { UiTextInput } from '../ui-text-input/ui-text-input';
 
 export type FoodPickerStep = 'search' | 'new-food' | 'portion';
-/** Trin, en forælder kan starte i. `portion` startes kun via `editItem`. */
+/** Step a parent can start on. `portion` is only started via `editItem`. */
 export type FoodPickerStartStep = Exclude<FoodPickerStep, 'portion'>;
 export type FoodPickerCtaVerb = 'Tilføj' | 'Gem';
 
-/** Resultatet af et valg: varen med makroer skaleret til `amount` `unit`. */
+/** The result of a selection: the item with macros scaled to `amount` `unit`. */
 export interface FoodPickerSelection {
   item: FoodItem;
   amount: number;
   unit: string;
 }
 
-/** Enheder i "Ny egen vare" – designets `nfUnits`. */
+/** Units in "New custom item" – design's `nfUnits`. */
 type FoodUnitId = 'g' | 'stk' | 'portion';
 
 interface FoodUnitOption {
@@ -85,17 +85,17 @@ const FOOD_UNITS: readonly FoodUnitOption[] = [
   { id: 'portion', label: 'port.' },
 ];
 const DEFAULT_FOOD_UNIT: FoodUnitId = 'g';
-/** Mængde, når feltet "Portion" står tomt (designets `parseFloat(nfAmt) || 1`). */
+/** Amount when the "Portion" field is left empty (design's `parseFloat(nfAmt) || 1`). */
 const DEFAULT_NEW_FOOD_AMOUNT = 1;
 
-/** Trin for −/+ og træk: 5 for gram, ellers 1 (designets `pickStep`). */
+/** Step for −/+ and drag: 5 for grams, otherwise 1 (design's `pickStep`). */
 const GRAM_STEP = 5;
 const PIECE_STEP = 1;
-/** Piksler pr. trin, når tallet trækkes til siden (designets `pickDragMove`). */
+/** Pixels per step when the number is dragged sideways (design's `pickDragMove`). */
 const DRAG_PX_PER_STEP = 8;
-/** Hurtigvalg for stykvarer (designets `pickChipVals`). */
+/** Quick picks for piece-based items (design's `pickChipVals`). */
 const PIECE_CHIP_VALUES: readonly number[] = [1, 2, 3, 4];
-/** Hurtigvalg for gram: ½, 1×, 2× og 3× standardportionen. */
+/** Quick picks for grams: ½, 1×, 2× and 3× the default portion. */
 const GRAM_CHIP_MULTIPLIERS: readonly number[] = [2, 3];
 const HALF = 2;
 
@@ -119,20 +119,20 @@ interface DragState {
   readonly startAmount: number;
 }
 
-/** `Validators.required` godtager mellemrum – designet kræver et navn med indhold. */
+/** `Validators.required` accepts whitespace – the design requires a name with actual content. */
 function notBlank(control: AbstractControl<string>): ValidationErrors | null {
   return control.value.trim() === '' ? { blank: true } : null;
 }
 
 /**
- * Vare-vælgeren fra "Tilføj mad" (designets `addFoodsOpen` / `newFoodOpen` / `pickOpen`):
- * søg → vælg portion, eller opret en egen vare. Komponenten ejer trinnet og annoncerer det
- * i `currentStep` (og med `stepChange` ved skift), så forælderen kan skjule måltidsvalg og
- * faner uden for søgetrinnet.
+ * The item picker from "Add food" (design's `addFoodsOpen` / `newFoodOpen` / `pickOpen`):
+ * search → pick a portion, or create a custom item. The component owns the step and announces
+ * it via `currentStep` (and with `stepChange` on change), so the parent can hide the meal
+ * selector and tabs outside the search step.
  *
- * Søgningen går gennem `FoodSearchService`; skalering og portionsparsing gennem
- * `NutritionCalculator`. Makroerne i `picked.item` er allerede skaleret, og `quantity` er
- * `${amount} ${unit}`, så forælderen kan logge varen direkte.
+ * Search goes through `FoodSearchService`; scaling and portion parsing through
+ * `NutritionCalculator`. The macros in `picked.item` are already scaled, and `quantity` is
+ * `${amount} ${unit}`, so the parent can log the item directly.
  */
 @Component({
   selector: 'app-food-picker',
@@ -152,23 +152,23 @@ function notBlank(control: AbstractControl<string>): ValidationErrors | null {
   host: { class: 'food-picker' },
 })
 export class FoodPicker {
-  /** Forudfyldt søgetekst. */
+  /** Pre-filled search text. */
   readonly initialQuery = input('');
-  /** Start i søgningen eller direkte i "Ny egen vare" (scannerens "Varen har ingen stregkode"). */
+  /** Start on the search or directly on "New custom item" (the scanner's "The item has no barcode"). */
   readonly startStep = input<FoodPickerStartStep>('search');
-  /** Redigér en allerede logget vare: starter i portionstrinnet med varens egen mængde. */
+  /** Edit an already logged item: starts on the portion step with the item's own amount. */
   readonly editItem = input<FoodItem | null>(null);
   readonly ctaVerb = input<FoodPickerCtaVerb>('Tilføj');
-  /** Primær knap i "Ny egen vare", fx `'Gem og log under morgenmad'`. */
+  /** Primary button on "New custom item", e.g. `'Save and log under breakfast'`. */
   readonly saveAndLogLabel = input.required<string>();
   readonly showScan = input(true, { transform: booleanAttribute });
 
   readonly picked = output<FoodPickerSelection>();
-  /** Ny egen vare – både ved "Gem uden at logge" og "Gem og log …" (her følger `picked` efter). */
+  /** New custom item – both for "Save without logging" and "Save and log …" (here `picked` follows after). */
   readonly customFoodCreated = output<FoodItem>();
   readonly scanRequested = output<void>();
   readonly stepChange = output<FoodPickerStep>();
-  /** Tilbage fra portionstrinnet, når der ikke er en søgning at vende tilbage til (redigering). */
+  /** Back from the portion step when there's no search to return to (editing). */
   readonly cancelled = output<void>();
 
   private readonly foodSearch = inject(FoodSearchService);
@@ -178,16 +178,16 @@ export class FoodPicker {
     this.editItem() ? 'portion' : this.startStep(),
   );
   /**
-   * Trinnet, vælgeren står på – også det første. `stepChange` udsendes kun ved skift, så en
-   * forælder, der skal kende trinnet fra start, læser dette signal i stedet for at gætte.
+   * The step the picker is on – including the first one. `stepChange` is only emitted on
+   * change, so a parent that needs to know the step from the start reads this signal instead of guessing.
    */
   readonly currentStep: Signal<FoodPickerStep> = this.step.asReadonly();
 
-  // --- Søgning -----------------------------------------------------------------------------
+  // --- Search --------------------------------------------------------------------------------
 
   protected readonly queryControl = new FormControl('', { nonNullable: true });
   private readonly query = toSignal(this.queryControl.valueChanges, { initialValue: '' });
-  /** Tæller op, når resultaterne skal hentes igen med samme søgetekst (ny egen vare gemt). */
+  /** Counts up when the results need to be fetched again with the same search text (new custom item saved). */
   private readonly searchVersion = signal(0);
   private readonly searchRequest = computed(
     () => ({ query: this.query(), version: this.searchVersion() }),
@@ -220,7 +220,7 @@ export class FoodPicker {
     return query === '' ? CREATE_LABEL.blank : CREATE_LABEL.named(query);
   });
 
-  // --- Ny egen vare ------------------------------------------------------------------------
+  // --- New custom item -------------------------------------------------------------------
 
   protected readonly units = FOOD_UNITS;
   protected readonly form = new FormGroup<NewFoodForm>({
@@ -249,7 +249,7 @@ export class FoodPicker {
     this.showMore() ? MORE_ICON.expanded : MORE_ICON.collapsed,
   );
 
-  // --- Portion -----------------------------------------------------------------------------
+  // --- Portion -------------------------------------------------------------------------------
 
   protected readonly portionItem = linkedSignal<FoodItem | null>(() => this.editItem());
   private readonly baseQuantity = computed(() =>
@@ -261,8 +261,8 @@ export class FoodPicker {
     this.unit() === DEFAULT_QUANTITY_UNIT ? GRAM_STEP : PIECE_STEP,
   );
   /**
-   * Valgt mængde. `null` = feltet er tømt under indtastning. Nulstilles til
-   * standardportionen, hver gang der vælges en ny vare (kilden er selve varen).
+   * The selected amount. `null` = the field is cleared while typing. Resets to the default
+   * portion every time a new item is selected (the source is the item itself).
    */
   protected readonly amount = linkedSignal<FoodItem | null, number | null>({
     source: this.portionItem,
@@ -313,7 +313,7 @@ export class FoodPicker {
     });
   }
 
-  // --- Søgning -----------------------------------------------------------------------------
+  // --- Search --------------------------------------------------------------------------------
 
   protected pick(item: FoodItem): void {
     this.portionItem.set(item);
@@ -338,7 +338,7 @@ export class FoodPicker {
     this.goTo('new-food');
   }
 
-  // --- Ny egen vare ------------------------------------------------------------------------
+  // --- New custom item -------------------------------------------------------------------
 
   protected closeNewFood(): void {
     this.goTo('search');
@@ -372,7 +372,7 @@ export class FoodPicker {
     this.finishNewFood();
   }
 
-  // --- Portion -----------------------------------------------------------------------------
+  // --- Portion -------------------------------------------------------------------------------
 
   protected backFromPortion(): void {
     if (this.editItem()) {
@@ -449,7 +449,7 @@ export class FoodPicker {
     }
   }
 
-  // --- Fælles ------------------------------------------------------------------------------
+  // --- Shared --------------------------------------------------------------------------------
 
   private goTo(step: FoodPickerStep): void {
     if (this.step() === step) {
@@ -459,14 +459,14 @@ export class FoodPicker {
     this.stepChange.emit(step);
   }
 
-  /** Efter en gemt egen vare: tilbage til en tom søgning, der henter resultaterne igen. */
+  /** After a saved custom item: back to an empty search that fetches the results again. */
   private finishNewFood(): void {
     this.queryControl.setValue('');
     this.searchVersion.update((version) => version + 1);
     this.goTo('search');
   }
 
-  /** Designets `ownFood`: navn og kalorier er krævet, resten rundes (tomt = 0). */
+  /** Design's `ownFood`: name and calories are required, the rest is rounded (empty = 0). */
   private buildCustomFood(): FoodItem | null {
     const value = this.form.getRawValue();
     const name = value.name.trim();

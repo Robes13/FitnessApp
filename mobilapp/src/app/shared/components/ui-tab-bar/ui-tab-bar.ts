@@ -14,13 +14,13 @@ import { UiIcon } from '../ui-icon/ui-icon';
 export interface TabBarItem {
   readonly label: string;
   readonly icon: IconName;
-  /** Absolut sti fra `APP_PATH`. */
+  /** Absolute path from `APP_PATH`. */
   readonly path: string;
 }
 
 const DEFAULT_ARIA_LABEL = 'Hovednavigation';
 
-/** Et punkt er aktivt, når dets sti er et præfiks af den aktuelle URL (`/samling/x` → Samling). */
+/** An item is active when its path is a prefix of the current URL (`/collection/x` → Collection). */
 const ACTIVE_MATCH: IsActiveMatchOptions = {
   paths: 'subset',
   queryParams: 'ignored',
@@ -29,11 +29,11 @@ const ACTIVE_MATCH: IsActiveMatchOptions = {
 };
 
 /**
- * Bundnavigationen: en pille med fem lige brede celler og en orange knop, der glider bag
- * den aktive celle. Det aktive ikon bliver mørkt, og dens label klappes sammen.
+ * The bottom navigation: a pill with five equally wide cells and an orange knob that slides
+ * behind the active cell. The active icon turns dark, and its label collapses.
  *
- * Knoppens position er ren CSS ud fra `--tab-count` og `--tab-index`, som beregnes af
- * `Router.isActive` efter hver navigation.
+ * The knob's position is pure CSS based on `--tab-count` and `--tab-index`, which are computed by
+ * `Router.isActive` after each navigation.
  */
 @Component({
   selector: 'app-ui-tab-bar',
@@ -55,7 +55,7 @@ export class UiTabBar {
 
   private readonly router = inject(Router);
 
-  /** Seneste URL efter en afsluttet navigation – kun brugt som trigger for `activeIndex`. */
+  /** The latest URL after a completed navigation – used only as a trigger for `activeIndex`. */
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -64,9 +64,9 @@ export class UiTabBar {
     { initialValue: this.router.url },
   );
 
-  /** Indeks for det aktive punkt, −1 når ingen sti matcher. */
+  /** Index of the active item, −1 when no path matches. */
   readonly activeIndex = computed(() => {
-    // Læses for at genberegne efter hver navigation; selve matchet laver routeren.
+    // Read to recompute after each navigation; the router does the actual matching.
     this.currentUrl();
     return this.items().findIndex((item) => this.router.isActive(item.path, ACTIVE_MATCH));
   });

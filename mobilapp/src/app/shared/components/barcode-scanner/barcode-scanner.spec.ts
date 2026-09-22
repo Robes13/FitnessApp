@@ -1,19 +1,22 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, map, timer } from 'rxjs';
-import { SCANNED_DEMO_ITEM } from '../../../core/constants/demo-data';
 import { FoodItem, ScanResult } from '../../../core/models/food';
 import { BarcodeScannerService } from '../../../core/services/barcode-scanner';
+import { TEST_FOOD } from '../../../core/testing/fixtures';
 import { BarcodeScanner, buildScanVerdict } from './barcode-scanner';
 
-/** Designets tempi: start efter 500 ms, linjen ved 700/1500 ms, svar ved 2300 ms, genstart efter 300 ms. */
+/** Design's timings: start after 500 ms, the line at 700/1500 ms, response at 2300 ms, retry after 300 ms. */
 const START_DELAY_MS = 500;
 const SWEEP_SECOND_STEP_MS = 700;
 const SWEEP_THIRD_STEP_MS = 1500;
 const RETRY_DELAY_MS = 300;
 
+/** The item the fake scanner "finds" – real lookups need a backend. */
+const SCANNED_ITEM: FoodItem = { ...TEST_FOOD, name: 'Proteinbar Choko', brand: 'Nutrify Select' };
+
 class FakeBarcodeScannerService {
-  result: ScanResult = { status: 'found', item: SCANNED_DEMO_ITEM };
+  result: ScanResult = { status: 'found', item: SCANNED_ITEM };
   scanCalls = 0;
 
   scan(): Observable<ScanResult> {
@@ -47,7 +50,7 @@ class Host {
   noBarcodeCount = 0;
 }
 
-/** Scannerens svartid (`SCAN_DELAY_MS`-tokenets standard). */
+/** The scanner's response time (`SCAN_DELAY_MS` token's default). */
 const SCAN_MS = 2300;
 
 describe('BarcodeScanner', () => {
@@ -67,7 +70,7 @@ describe('BarcodeScanner', () => {
     fixture.detectChanges();
   }
 
-  /** Spoler tiden frem og lader komponenten tegne om. */
+  /** Advances time and lets the component re-render. */
   function tick(ms: number): void {
     vi.advanceTimersByTime(ms);
     fixture.detectChanges();
@@ -135,7 +138,7 @@ describe('BarcodeScanner', () => {
     fixture.detectChanges();
   }
 
-  /** Åbner og spoler frem til servicen har svaret. */
+  /** Opens and advances until the service has responded. */
   function scanToResult(): void {
     tick(START_DELAY_MS + SCAN_MS);
   }
@@ -215,7 +218,7 @@ describe('BarcodeScanner', () => {
 
     expect(host.found).toEqual([
       {
-        ...SCANNED_DEMO_ITEM,
+        ...SCANNED_ITEM,
         quantity: '28 g',
         kcal: 105,
         protein: 10,
@@ -385,18 +388,18 @@ describe('BarcodeScanner', () => {
     expect(first).toBeDefined();
     expect(last).toBeDefined();
 
-    // Tab fra det sidste element ruller rundt til det første i stedet for ud af overlayet.
+    // Tab from the last element wraps around to the first instead of out of the overlay.
     last?.focus();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
     expect(document.activeElement).toBe(first);
 
-    // Shift+Tab fra det første ruller baglæns til det sidste.
+    // Shift+Tab from the first wraps backward to the last.
     document.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }),
     );
     expect(document.activeElement).toBe(last);
 
-    // Fokus uden for overlayet trækkes tilbage ind.
+    // Focus outside the overlay is pulled back in.
     outside.focus();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
     expect(document.activeElement).toBe(first);
@@ -414,7 +417,7 @@ describe('BarcodeScanner', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
     fixture.detectChanges();
 
-    // Scanneren har ikke revet fokus tilbage til kameraoverlayet.
+    // The scanner has not yanked focus back to the camera overlay.
     const overlay = root.querySelector<HTMLElement>('.barcode-scanner__overlay');
     expect(overlay?.contains(document.activeElement)).toBe(false);
   });
@@ -422,15 +425,15 @@ describe('BarcodeScanner', () => {
 
 describe('buildScanVerdict', () => {
   it('matches the design copy for the three cases', () => {
-    expect(buildScanVerdict(150, SCANNED_DEMO_ITEM)).toEqual({
+    expect(buildScanVerdict(150, SCANNED_ITEM)).toEqual({
       tone: 'negative',
       text: 'Den skubber dig 60 kcal over dagens mål. Overvej en halv, eller gem den til efter træning.',
     });
-    expect(buildScanVerdict(500, SCANNED_DEMO_ITEM)).toEqual({
+    expect(buildScanVerdict(500, SCANNED_ITEM)).toEqual({
       tone: 'positive',
       text: 'God proteinkilde – 20 g protein. Du har 290 kcal tilbage bagefter.',
     });
-    expect(buildScanVerdict(500, { ...SCANNED_DEMO_ITEM, protein: 10 })).toEqual({
+    expect(buildScanVerdict(500, { ...SCANNED_ITEM, protein: 10 })).toEqual({
       tone: 'neutral',
       text: 'Passer fint ind. 290 kcal tilbage bagefter.',
     });

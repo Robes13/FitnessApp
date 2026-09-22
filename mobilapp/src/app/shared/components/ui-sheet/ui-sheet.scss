@@ -1,6 +1,6 @@
 @use 'mixins';
 
-/* Værten er kun en beholder; scrimmen er det lag, der ligger over app-roden. */
+/* The host is just a container; the scrim is the layer that sits over the app root. */
 :host {
   display: contents;
 }
@@ -43,7 +43,7 @@
     color: var(--color-text);
     box-shadow: var(--shadow-sheet);
 
-    /* Panelet får fokus programmatisk; det er ikke en kontrol, så ingen fokusring. */
+    /* The panel receives focus programmatically; it's not a control, so no focus ring. */
     outline: none;
 
     &--medium {
@@ -59,7 +59,7 @@
     }
   }
 
-  /* Indhold over overskriften (designets ikon-cirkel og log-ud-mærke). */
+  /* Content above the heading (the design's icon circle and log-out badge). */
   &__leading {
     display: flex;
     flex: none;
@@ -102,7 +102,7 @@
     }
   }
 
-  /* Eget indhold i titlens plads (badge, egen overskrift), når arket ikke har en `title`. */
+  /* Custom content in the title's spot (badge, own heading), when the sheet has no `title`. */
   &__title-slot {
     display: flex;
     flex: 1;
@@ -131,8 +131,8 @@
     min-height: 0;
 
     /*
-     * Gør indholdet til en flex-kolonne, så et barn kan eje sit eget scroll-område
-     * (fx faste chips + faner over en scrollende liste) i stedet for at hele panelet scroller.
+     * Makes the content a flex column, so a child can own its own scroll area
+     * (e.g. fixed chips + tabs above a scrolling list) instead of the whole panel scrolling.
      */
     &--column {
       display: flex;

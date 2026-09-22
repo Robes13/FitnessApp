@@ -1,6 +1,6 @@
 /*
- * Værten er selve baren (`ui-tab-bar`), absolut placeret i bunden af den nærmeste
- * positionerede forælder (shell'en). Kun `:host` rammer den under emuleret encapsulation.
+ * The host is the bar itself (`ui-tab-bar`), absolutely positioned at the bottom of the
+ * nearest positioned ancestor (the shell). Only `:host` targets it under emulated encapsulation.
  */
 :host {
   position: absolute;
@@ -19,7 +19,7 @@
 }
 
 .ui-tab-bar {
-  /* Designet: left = 8px + i * (100% − 16px) / 5, bredde = (100% − 16px) / 5. */
+  /* The design: left = 8px + i * (100% − 16px) / 5, width = (100% − 16px) / 5. */
   &__pill {
     position: absolute;
     top: var(--space-2);
@@ -73,7 +73,7 @@
       opacity var(--duration-quick) ease;
   }
 
-  /* Den aktive celle viser kun ikonet – labelen klappes sammen. */
+  /* The active cell shows only the icon – the label collapses. */
   &__item--active &__label {
     height: 0;
     opacity: 0;

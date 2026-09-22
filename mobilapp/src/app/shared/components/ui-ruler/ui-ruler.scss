@@ -1,6 +1,6 @@
 /*
- * Lineal. Geometrien (stregernes x, højde og glød samt sporets forskydning) bindes fra
- * TypeScript som px og CSS-variabler; alt andet er tokens.
+ * Ruler. The geometry (ticks' x, height and glow, plus the track's offset) is bound from
+ * TypeScript as px and CSS variables; everything else is tokens.
  */
 :host {
   position: relative;
@@ -26,7 +26,7 @@
     pointer-events: none;
   }
 
-  /* Sporet: 40 px højt, sidder i bunden og trækkes med `--ruler-offset` fra værten. */
+  /* The track: 40 px tall, sits at the bottom and is shifted with `--ruler-offset` from the host. */
   &__track {
     position: absolute;
     bottom: 0;
@@ -57,7 +57,7 @@
       background: var(--color-accent);
     }
 
-    /* Orange glød nær den aktuelle værdi; styrken bindes pr. streg som `--ruler-tick-glow`. */
+    /* Orange glow near the current value; the strength is bound per tick as `--ruler-tick-glow`. */
     &--glow {
       background: color-mix(in srgb, var(--color-accent) var(--ruler-tick-glow), transparent);
     }
@@ -72,7 +72,7 @@
     transform: translateX(-50%);
   }
 
-  /* Usynligt lag over hele linealen, der tager imod træk og tastatur. */
+  /* Invisible layer over the entire ruler that receives dragging and keyboard input. */
   &__range {
     position: absolute;
     inset: 0;
@@ -83,7 +83,7 @@
   }
 }
 
-/* Den store lineal (vægt-siden) har sporet 6 px over bunden, som i designet. */
+/* The large ruler (the weight page) has the track 6 px above the bottom, as in the design. */
 :host(.ui-ruler--lg) .ui-ruler__track {
   bottom: var(--space-1-5);
 }

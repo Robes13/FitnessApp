@@ -6,11 +6,11 @@ import { photoBackgroundImage, photoBackgroundPosition, photoBackgroundSize } fr
 export type ProfileAvatarSize = 'sm' | 'md' | 'lg' | 'xl';
 
 /**
- * Brugerens avatar: enten det beskårne profilbillede eller en blå cirkel med forbogstavet.
+ * The user's avatar: either the cropped profile photo or a blue circle with the initial letter.
  *
- * Beskæringen sættes som `background-size` / `background-position` i procent, så de samme
- * værdier giver det samme udsnit i alle tre størrelser (avatar, forhåndsvisning, editor).
- * Avataren er rent dekorativ – navnet står ved siden af – og derfor `aria-hidden`.
+ * The crop is set as `background-size` / `background-position` in percent, so the same values
+ * produce the same crop across all three sizes (avatar, preview, editor). The avatar is purely
+ * decorative – the name sits next to it – hence `aria-hidden`.
  */
 @Component({
   selector: 'app-profile-avatar',

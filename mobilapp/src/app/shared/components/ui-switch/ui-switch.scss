@@ -1,6 +1,6 @@
-/* Værten bærer `ui-switch` (+ `--on`); kun `:host(…)` rammer den under emuleret encapsulation. */
+/* The host carries `ui-switch` (+ `--on`); only `:host(…)` targets it under emulated encapsulation. */
 :host {
-  /* Knoppens afstand til kanten: (28 − 22) / 2 = 3 px, afledt af tokens. */
+  /* The thumb's distance to the edge: (28 − 22) / 2 = 3 px, derived from tokens. */
   --switch-thumb-offset: calc((var(--size-switch-h) - var(--size-thumb)) / 2);
 
   display: inline-flex;

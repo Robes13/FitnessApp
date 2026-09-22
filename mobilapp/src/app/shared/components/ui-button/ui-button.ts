@@ -8,26 +8,26 @@ import {
 import { UiSpinner } from '../ui-spinner/ui-spinner';
 
 /**
- * `outline` er gennemsigtig med hairline, `surface` lægger glas-fyld bag den samme hairline
- * (designets "Søg vare"/"Scan" og fotoarkets sekundære knapper), og `outline-danger` er en
- * hairline med rød tekst (designets "Log ud").
+ * `outline` is transparent with a hairline, `surface` puts a glass fill behind the same
+ * hairline (design's "Search item"/"Scan" and the photo sheet's secondary buttons), and
+ * `outline-danger` is a hairline with red text (design's "Log out").
  */
 export type UiButtonVariant =
   'primary' | 'outline' | 'surface' | 'outline-danger' | 'ghost' | 'danger' | 'subtle';
 /** 56 / 52 / 48 / 44 px – `--size-control-xl` / `-lg` / `-md` / `-sm`. */
 export type UiButtonSize = 'xl' | 'lg' | 'md' | 'sm';
-/** `pill` er designets standardknap; `rounded` er den lave 14 px-radius (fotoarket). */
+/** `pill` is the design's default button; `rounded` is the low 14 px radius (the photo sheet). */
 export type UiButtonShape = 'pill' | 'rounded';
 
 /**
- * Designets `.pill`-knap og dens varianter. Bruges som attribut på et native `<button>`
- * eller `<a>`, så native `disabled`, `type` og routerLink virker uændret.
+ * Design's `.pill` button and its variants. Used as an attribute on a native `<button>`
+ * or `<a>`, so native `disabled`, `type` and routerLink still work unchanged.
  *
- * `loading` viser en `UiSpinner`, sætter `aria-busy`/`aria-disabled` og blokerer klik, mens
- * der arbejdes.
+ * `loading` shows a `UiSpinner`, sets `aria-busy`/`aria-disabled` and blocks clicks while
+ * work is in progress.
  *
- * Afviger designet fra størrelsesskalaen på en enkelt skærm, kan forælderen sætte
- * `--ui-button-min-height` på knappen i stedet for at kopiere hele knappens styling.
+ * If the design deviates from the size scale on a single screen, the parent can set
+ * `--ui-button-min-height` on the button instead of copying the whole button's styling.
  */
 @Component({
   selector: 'button[app-ui-button], a[app-ui-button]',
@@ -48,9 +48,9 @@ export class UiButton {
   readonly variant = input<UiButtonVariant>('primary');
   readonly size = input<UiButtonSize>('xl');
   readonly shape = input<UiButtonShape>('pill');
-  /** Fylder hele bredden. */
+  /** Fills the full width. */
   readonly block = input(false, { transform: booleanAttribute });
-  /** Viser spinner og blokerer klik. */
+  /** Shows a spinner and blocks clicks. */
   readonly loading = input(false, { transform: booleanAttribute });
 
   protected readonly hostClasses = computed(

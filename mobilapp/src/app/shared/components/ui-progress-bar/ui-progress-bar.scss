@@ -11,7 +11,7 @@
   height: var(--size-progress-thin);
 }
 
-/* Inverse: bjælken på det orange kort – mørk skinne og mørkt fyld. */
+/* Inverse: the bar on the orange card – dark track and dark fill. */
 :host(.ui-progress-bar--inverse) {
   background: color-mix(in srgb, var(--color-text-inverse) 25%, transparent);
 }

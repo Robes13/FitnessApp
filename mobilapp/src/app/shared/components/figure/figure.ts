@@ -9,16 +9,17 @@ import { FigureBandTone, FigureBody, FigureExpression } from './figure-body';
 import { animatedFigure } from './figure-motion';
 import { computeFigureGeometry } from './figure-geometry';
 
-/** Designets standard-aria-label for figuren. */
+/** The design's default aria-label for the figure. */
 const DEFAULT_ARIA_LABEL = 'Figur';
 const LAMP_X = 140;
 
 /**
- * Hele figuren som færdig SVG (`viewBox 0 0 200 300`, bundjusteret): beregner geometrien ud fra
- * vægt, højde og humør og tegner `FigureBody`. Med `showCeiling` tegnes loftet og lampen fra
- * højdetrinnet; de er altid i DOM'en, men usynlige under 212 cm, så de kan fade ind.
+ * The whole figure as a finished SVG (`viewBox 0 0 200 300`, bottom-aligned): computes the
+ * geometry from weight, height and mood and draws `FigureBody`. With `showCeiling`, the ceiling
+ * and lamp are drawn from the height step; they're always in the DOM, just invisible below
+ * 212 cm, so they can fade in.
  *
- * Værten er `display: block` – forælderen styrer bredde/højde (fx `flex: 1; max-width`).
+ * The host is `display: block` – the parent controls width/height (e.g. `flex: 1; max-width`).
  */
 @Component({
   selector: 'app-figure',
@@ -34,7 +35,7 @@ const LAMP_X = 140;
 export class Figure {
   readonly weightKg = input.required<number>();
   readonly heightCm = input.required<number>();
-  /** −1 ked af det … 0 neutral … 1 glad. */
+  /** −1 sad … 0 neutral … 1 happy. */
   readonly mood = input(0);
   readonly bandTone = input<FigureBandTone>('accent');
   readonly showDumbbell = input(false, { transform: booleanAttribute });

@@ -1,4 +1,4 @@
-/* Værten bærer `ui-icon ui-icon--{size}`; kun `:host(…)` rammer den under emuleret encapsulation. */
+/* The host carries `ui-icon ui-icon--{size}`; only `:host(…)` targets it under emulated encapsulation. */
 :host {
   display: inline-flex;
   flex: none;

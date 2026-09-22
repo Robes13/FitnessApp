@@ -10,7 +10,7 @@ import {
 } from './ruler-geometry';
 import { UiRuler } from './ui-ruler';
 
-/** Designets `ruler(30, 300, val)`: 1 kg pr. streg, 8 px pr. streg, stor hver 10., etiket hver 10. */
+/** The design's `ruler(30, 300, val)`: 1 kg per tick, 8 px per tick, major every 10th, label every 10th. */
 const WEIGHT_RULER: Omit<RulerGeometryOptions, 'value' | 'bleed'> = {
   min: 30,
   max: 300,
@@ -24,9 +24,9 @@ const WEIGHT_RULER: Omit<RulerGeometryOptions, 'value' | 'bleed'> = {
 };
 
 /**
- * Forventede værdier er beregnet ved at køre designets originale `ruler()` / `stepRuler()` fra
- * `logic.js` i node. Farverne er oversat: `#F97316` → current, `#cbd5e1` → major uden glød,
- * `#475569` → minor uden glød, `rgba(249,115,22,α)` → glowPercent = α × 100.
+ * Expected values were computed by running the design's original `ruler()` / `stepRuler()` from
+ * `logic.js` in node. Colors are translated: `#F97316` → current, `#cbd5e1` → major without glow,
+ * `#475569` → minor without glow, `rgba(249,115,22,α)` → glowPercent = α × 100.
  */
 describe('computeRulerGeometry', () => {
   it('matcher designets ruler(30, 300, 75) i hvile', () => {
@@ -253,7 +253,7 @@ describe('UiRuler', () => {
   it('committer værdien under fingeren ved nedtryk og følger trækket', async () => {
     const { fixture, host, ruler, range } = await setup();
 
-    // I jsdom er elementets rect 0×0 ved x = 0, så midten er 0 og 16 px svarer til +2 kg (8 px/kg).
+    // In jsdom the element's rect is 0×0 at x = 0, so the center is 0 and 16 px equals +2 kg (8 px/kg).
     range.dispatchEvent(pointerEvent('pointerdown', 16));
     expect(host.value()).toBe(77);
     expect(host.dragging()).toBe(true);

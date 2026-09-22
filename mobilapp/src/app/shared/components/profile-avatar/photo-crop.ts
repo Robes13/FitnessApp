@@ -7,12 +7,12 @@ export const PHOTO_ZOOM_PERCENT_MIN = 100;
 export const PHOTO_ZOOM_PERCENT_MAX = 300;
 
 const PERCENT = 100;
-/** Designets `photoMove`: hvor langt fingeren skal flytte sig for at panorere hele billedet. */
+/** Design's `photoMove`: how far the finger has to move to pan across the whole image. */
 const DRAG_SPAN_PER_ZOOM = 260;
 const DRAG_SPAN_BASE = 40;
 const DRAG_SPAN_MIN = 20;
 
-/** Udgangspunktet for en ny beskæring: helt zoomet ud og centreret. */
+/** The starting point for a new crop: fully zoomed out and centered. */
 export const CENTERED_CROP: Readonly<Pick<ProfilePhoto, 'zoom' | 'x' | 'y'>> = {
   zoom: PHOTO_ZOOM_MIN,
   x: 50,
@@ -22,9 +22,9 @@ export const CENTERED_CROP: Readonly<Pick<ProfilePhoto, 'zoom' | 'x' | 'y'>> = {
 export type PhotoCrop = Pick<ProfilePhoto, 'zoom' | 'x' | 'y'>;
 
 /**
- * Beskæringen udtrykkes som `background-size` og `background-position` i **procent**, ikke i
- * pixels. Derfor giver de samme tre tal (`zoom`, `x`, `y`) nøjagtig samme udsnit i
- * 196 px-editoren, 132 px-forhåndsvisningen og 72 px-avataren. Formlerne er designets
+ * The crop is expressed as `background-size` and `background-position` in **percent**, not in
+ * pixels. That's why the same three numbers (`zoom`, `x`, `y`) produce exactly the same crop in
+ * the 196 px editor, the 132 px preview and the 72 px avatar. The formulas are design's
  * `photoSize` / `photoPos`.
  */
 export function photoZoomPercent(zoom: number): number {
@@ -35,7 +35,7 @@ export function photoBackgroundImage(photo: ProfilePhoto | null): string {
   return photo ? `url("${photo.dataUrl}")` : 'none';
 }
 
-/** Den korte side fyldes, den lange får `auto` – ellers ville billedet blive forvrænget. */
+/** The short side is filled, the long side gets `auto` – otherwise the image would be distorted. */
 export function photoBackgroundSize(photo: ProfilePhoto | null): string {
   if (!photo) {
     return 'auto';
@@ -48,14 +48,14 @@ export function photoBackgroundPosition(photo: ProfilePhoto | null): string {
   return photo ? `${photo.x}% ${photo.y}%` : `${CENTERED_CROP.x}% ${CENTERED_CROP.y}%`;
 }
 
-/** Pixels pr. 100 % forskydning. Jo mere zoomet ind, jo længere skal fingeren flytte sig. */
+/** Pixels per 100% offset. The further zoomed in, the further the finger has to move. */
 export function photoDragSpan(zoom: number): number {
   return Math.max(DRAG_SPAN_MIN, DRAG_SPAN_PER_ZOOM * (zoom - 1) + DRAG_SPAN_BASE);
 }
 
 /**
- * Ny position efter et træk. `start` er beskæringen, da fingeren blev sat, og `deltaX`/`deltaY`
- * er den samlede bevægelse siden – så trækket ikke driver ved afrunding undervejs.
+ * The new position after a drag. `start` is the crop as it was when the finger was placed, and
+ * `deltaX`/`deltaY` is the total movement since then – so the drag doesn't drift from rounding along the way.
  */
 export function movePhotoCrop(
   start: PhotoCrop,

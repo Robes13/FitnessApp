@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 /** 16 / 24 / 44 px – `--size-icon-sm` / `--size-icon-2xl` / `--size-control-sm`. */
 export type SpinnerSize = 'sm' | 'md' | 'lg';
-/** `accent` = orange top på grå skinne (standard); `current` = følger tekstfarven (i knapper). */
+/** `accent` = orange top on a gray track (default); `current` = follows the text color (in buttons). */
 export type SpinnerTone = 'accent' | 'current';
 
 const DEFAULT_LABEL = 'Indlæser…';
 
-/** Roterende ring med orange top (designets `dcspin`). Værten er selv ringen. */
+/** Rotating ring with an orange top (the design's `dcspin`). The host is the ring itself. */
 @Component({
   selector: 'app-ui-spinner',
   templateUrl: './ui-spinner.html',

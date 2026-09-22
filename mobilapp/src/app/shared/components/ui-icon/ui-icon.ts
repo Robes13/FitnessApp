@@ -11,8 +11,8 @@ import { ICON_PATHS, IconName } from './icon-registry';
 export type UiIconSize = '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | 'hero';
 
 /**
- * Stroke-ikon fra `icon-registry.ts`. Farven følger `currentColor`, størrelsen sættes med
- * `size`. Ikonet er altid dekorativt (`aria-hidden`) – knappen omkring det bærer `aria-label`.
+ * Stroke icon from `icon-registry.ts`. The color follows `currentColor`, the size is set with
+ * `size`. The icon is always decorative (`aria-hidden`) – the button around it carries `aria-label`.
  */
 @Component({
   selector: 'app-ui-icon',
@@ -27,7 +27,7 @@ export type UiIconSize = '2xs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl
 export class UiIcon {
   readonly name = input.required<IconName>();
   readonly size = input<UiIconSize>('md');
-  /** Stregtykkelse i SVG-enheder (24×24 viewBox). */
+  /** Stroke width in SVG units (24×24 viewBox). */
   readonly strokeWidth = input(2, { transform: numberAttribute });
 
   protected readonly paths = computed(() => ICON_PATHS[this.name()]);

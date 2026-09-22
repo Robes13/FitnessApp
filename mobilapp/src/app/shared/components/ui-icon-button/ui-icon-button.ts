@@ -2,13 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 /** 56 / 52 / 48 / 44 / 40 / 36 / 28 / 26 px – `--size-control-xl` … `-4xs`. */
 export type UiIconButtonSize = 'xl' | 'lg' | 'md' | 'sm' | 'xs' | '2xs' | '3xs' | '4xs';
-/** `ghost` er helt gennemsigtig (designets lille genlog-knap i historikken). */
+/** `ghost` is fully transparent (the design's small re-log button in history). */
 export type UiIconButtonTone =
   'neutral' | 'ghost' | 'accent' | 'translucent' | 'outline' | 'danger-soft';
 
 /**
- * Designets runde `.circ`-knap. Bruges som attribut på et native `<button>` med et
- * `<app-ui-icon>` som indhold. Knappen er ikon-only, så den **skal** have `aria-label`.
+ * The design's round `.circ` button. Used as an attribute on a native `<button>` with an
+ * `<app-ui-icon>` as content. The button is icon-only, so it **must** have `aria-label`.
  */
 @Component({
   selector: 'button[app-ui-icon-button]',

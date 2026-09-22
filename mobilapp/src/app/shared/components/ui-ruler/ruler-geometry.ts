@@ -1,20 +1,20 @@
 import { roundTo } from '../../../core/utils/math';
 
 /**
- * Linealens geometri – en generisk port af designets `ruler(min, max, val, step, bleed)` og
- * `stepRuler(val, bleed)`. Én streg pr. `tickUnit` (1 kg, 1 cm, 100 skridt …), `pxPerTick`
- * pixel mellem stregerne; hver 5./10. streg er mellem/stor, og stregerne nær den aktuelle værdi
- * "gløder" orange med en styrke, der aftager over `reach` streger og skaleres med `bleed`.
+ * The ruler's geometry – a generic port of the design's `ruler(min, max, val, step, bleed)` and
+ * `stepRuler(val, bleed)`. One tick per `tickUnit` (1 kg, 1 cm, 100 steps …), `pxPerTick`
+ * pixels between ticks; every 5th/10th tick is mid/major, and the ticks near the current value
+ * "glow" orange with a strength that falls off over `reach` ticks and scales with `bleed`.
  */
 export type RulerTickKind = 'current' | 'major' | 'minor';
 
 export interface RulerTick {
-  /** Afstand fra linealens nulpunkt i px. */
+  /** Distance from the ruler's zero point in px. */
   readonly x: number;
-  /** Streghøjde i px (grundhøjde + glødtillæg). */
+  /** Tick height in px (base height + glow bonus). */
   readonly height: number;
   readonly kind: RulerTickKind;
-  /** Glødens styrke i procent til `color-mix`, eller `null` når stregen har sin grundfarve. */
+  /** The glow's strength in percent for `color-mix`, or `null` when the tick has its base color. */
   readonly glowPercent: number | null;
 }
 
@@ -26,7 +26,7 @@ export interface RulerLabel {
 export interface RulerGeometry {
   readonly ticks: readonly RulerTick[];
   readonly labels: readonly RulerLabel[];
-  /** Sporets vandrette forskydning i px, så den aktuelle værdi står under midterlinjen. */
+  /** The track's horizontal offset in px, so the current value sits under the center line. */
   readonly offset: number;
 }
 
@@ -36,30 +36,30 @@ export interface RulerGeometryOptions {
   readonly min: number;
   readonly max: number;
   readonly value: number;
-  /** Værdi pr. streg. */
+  /** Value per tick. */
   readonly tickUnit: number;
-  /** Pixel pr. streg. */
+  /** Pixels per tick. */
   readonly pxPerTick: number;
-  /** Hver n'te streg (i absolutte streg-numre) er stor. */
+  /** Every nth tick (in absolute tick numbers) is major. */
   readonly majorEvery: number;
-  /** Hver n'te streg er mellemhøj. */
+  /** Every nth tick is mid-height. */
   readonly midEvery: number;
-  /** Hver n'te streg får en etiket. */
+  /** Every nth tick gets a label. */
   readonly labelEvery: number;
-  /** Glødens maksimale styrke (0..1): 0,35 i hvile, 1 under træk. */
+  /** The glow's maximum strength (0..1): 0.35 at rest, 1 while dragging. */
   readonly bleed: number;
-  /** Hvor mange streger gløden rækker til hver side. */
+  /** How many ticks the glow reaches on each side. */
   readonly reach: number;
   readonly labelFormatter: RulerLabelFormatter;
 }
 
-/** Glød i hvile (designets standard for `ruler()`). */
+/** Glow at rest (the design's default for `ruler()`). */
 export const RULER_BLEED_IDLE = 0.35;
-/** Glød i hvile på vægt-, højde- og skridt-linealerne (designets 0.4). */
+/** Glow at rest on the weight, height and step rulers (the design's 0.4). */
 export const RULER_BLEED_IDLE_STRONG = 0.4;
-/** Glød mens brugeren trækker. */
+/** Glow while the user is dragging. */
 export const RULER_BLEED_DRAGGING = 1;
-/** Designets `reach` for kg/cm-linealer (skridt-linealen bruger 8). */
+/** The design's `reach` for kg/cm rulers (the step ruler uses 8). */
 export const RULER_DEFAULT_GLOW_REACH = 6;
 
 const TICK_HEIGHT = { current: 34, major: 28, mid: 18, minor: 10 } as const;
@@ -72,7 +72,7 @@ const EPSILON = 1e-9;
 
 const EMPTY_GEOMETRY: RulerGeometry = { ticks: [], labels: [], offset: 0 };
 
-/** Standardetiket: værdien som den er. */
+/** Default label: the value as-is. */
 export function formatRulerLabel(tickValue: number): string {
   return String(tickValue);
 }

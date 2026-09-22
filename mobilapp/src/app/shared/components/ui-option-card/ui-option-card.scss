@@ -27,13 +27,13 @@
   cursor: not-allowed;
 }
 
-/* Kompakt række: designets valgkort i redigeringsarket (58 px). */
+/* Compact row: the design's option card in the edit sheet (58 px). */
 :host(.ui-option-card--row.ui-option-card--compact) {
   min-height: var(--size-option-row-compact);
   padding-block: var(--space-2-5);
 }
 
-/* Kolonne: intensitets-flisen – indikator øverst, tekst nederst (104 px høj). */
+/* Column: the intensity tile – indicator on top, text below (104 px tall). */
 :host(.ui-option-card--column) {
   flex-direction: column;
   align-items: flex-start;
@@ -42,7 +42,7 @@
   padding: var(--space-3);
 }
 
-/* Valgt tilstand pr. stil. */
+/* Selected state per style. */
 :host(.ui-option-card--selected.ui-option-card--style-selected) {
   border-color: var(--color-selected);
   background: var(--color-selected-soft);
@@ -52,7 +52,7 @@
   border-color: var(--color-accent);
   background: var(--color-accent-soft);
 
-  /* Designets `eo.fg`: hele kortets tekst bliver orange, når det er valgt. */
+  /* The design's `eo.fg`: the whole card's text turns orange when selected. */
   color: var(--color-accent);
 }
 
@@ -74,7 +74,7 @@
   font-size: var(--font-size-xs);
 }
 
-/* Køn-kortene (designets `gendersBig`): 12 px undertekst i `--ink-3`. */
+/* The gender cards (the design's `gendersBig`): 12 px subtext in `--ink-3`. */
 :host(.ui-option-card--style-accent-radio) .ui-option-card__description {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
@@ -119,7 +119,7 @@
     line-height: var(--line-height-snug);
   }
 
-  /* 22 px radio-prik med 2 px kant; fyldes orange, når kortet er valgt. */
+  /* 22 px radio dot with a 2 px border; fills orange when the card is selected. */
   &__radio {
     flex: none;
     width: var(--size-icon-xl);

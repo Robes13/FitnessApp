@@ -1,4 +1,4 @@
-/* Værten bærer klasserne `ui-form-error ui-form-error--{tone}`; kun `:host(…)` rammer den. */
+/* The host carries the classes `ui-form-error ui-form-error--{tone}`; only `:host(…)` targets it. */
 :host {
   display: block;
   min-height: var(--space-4);

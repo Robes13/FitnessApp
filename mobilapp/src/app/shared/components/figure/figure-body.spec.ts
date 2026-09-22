@@ -5,7 +5,7 @@ import { computeFigureGeometry } from './figure-geometry';
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
-/** Værtskomponent, der bruger FigureBody som attribut på et `<g>` i en rigtig `<svg>`. */
+/** Host component that uses FigureBody as an attribute on a `<g>` in a real `<svg>`. */
 @Component({
   imports: [FigureBody],
   template: `
@@ -164,7 +164,7 @@ describe('FigureBody', () => {
     expect(brow.getAttribute('transform')).toBe('rotate(-12 88 141)');
     expect((query('.figure-body__smile') as SVGElement).style.opacity).toBe('0');
     expect(query('.figure-body__mouth')?.getAttribute('rx')).toBe('4');
-    // Felter, der ikke er sat, beholder geometriens værdi.
+    // Fields that aren't set keep the geometry's value.
     expect(query('.figure-body__mouth')?.getAttribute('ry')).toBe('0');
   });
 

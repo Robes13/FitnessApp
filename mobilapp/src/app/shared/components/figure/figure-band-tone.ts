@@ -2,11 +2,11 @@ import { Gender } from '../../../core/models/profile';
 import { FigureBandTone } from './figure-body';
 
 /**
- * Designets `bandColor`: figurens pandebånd farves efter det valgte køn og bruges på alle de
- * skærme, der viser figuren (fødselsdag, vægt, højde, aktivitet, notifikationer,
- * mål og opsummering).
+ * Design's `bandColor`: the figure's headband is colored according to the selected gender and is
+ * used on all the screens that show the figure (birthday, weight, height, activity,
+ * notifications, goal and summary).
  *
- * Kvinde → pink, andet → hvidt, mand eller ikke valgt → orange.
+ * Woman → pink, other → white, man or not selected → orange.
  */
 export function bandToneForGender(gender: Gender | null): FigureBandTone {
   switch (gender) {

@@ -17,17 +17,17 @@ export type TextInputMode = 'text' | 'numeric' | 'decimal' | 'email' | 'tel' | '
 /** 52 / 48 px – `--size-control-lg` / `-md`. */
 export type TextInputSize = 'lg' | 'md';
 /**
- * Værdien i formularen. Tekstfelter giver altid en `string`; `type="number"` giver et tal
- * eller `null`, når feltet er tomt – som Angulars indbyggede number-accessor.
+ * The value in the form. Text fields always give a `string`; `type="number"` gives a number
+ * or `null` when the field is empty – like Angular's built-in number accessor.
  */
 export type TextInputValue = string | number | null;
 /**
- * Kantens farve i fejltilstand. `negative` (rød) er standard; `accent` (orange) bruges,
- * hvor designet markerer en blød uoverensstemmelse frem for en fejl – fx uens adgangskoder.
+ * The border color in the error state. `negative` (red) is the default; `accent` (orange) is
+ * used where the design marks a soft mismatch rather than an error – e.g. mismatched passwords.
  */
 export type TextInputInvalidTone = 'negative' | 'accent';
 
-/** Fra designet (login, linje 101). Knappen skifter kun `aria-pressed`, ikke teksten. */
+/** From the design (login, line 101). The button only toggles `aria-pressed`, not the text. */
 const REVEAL_LABEL = 'Vis adgangskode';
 const REVEAL_ICON: Readonly<Record<'hidden' | 'shown', IconName>> = {
   hidden: 'eye',
@@ -35,10 +35,10 @@ const REVEAL_ICON: Readonly<Record<'hidden' | 'shown', IconName>> = {
 };
 
 /**
- * Designets `.glass-input`: glas-fyld, hairline, 14 px radius og orange fokusring.
- * Implementerer `ControlValueAccessor`, så den bruges med `formControl`/`formControlName`.
+ * The design's `.glass-input`: glass fill, hairline, 14 px radius and an orange focus ring.
+ * Implements `ControlValueAccessor`, so it's used with `formControl`/`formControlName`.
  *
- * Adgangskodefelter har et indbygget øje, der viser/skjuler koden (`revealable`).
+ * Password fields have a built-in eye that shows/hides the password (`revealable`).
  */
 @Component({
   selector: 'app-ui-text-input',
@@ -65,19 +65,19 @@ export class UiTextInput implements ControlValueAccessor {
   readonly maxLength = input<number | null>(null);
   readonly autocomplete = input<string | null>(null);
   readonly ariaLabel = input<string | null>(null);
-  /** Fejltilstand: farvet kant. Teksten vises separat med `app-ui-form-error`. */
+  /** Error state: colored border. The text is shown separately with `app-ui-form-error`. */
   readonly invalid = input(false, { transform: booleanAttribute });
-  /** Kantens farve, når `invalid` er sat. */
+  /** The border color when `invalid` is set. */
   readonly invalidTone = input<TextInputInvalidTone>('negative');
-  /** Mørk, halvgennemsigtig bund til felter oven på fotos (glemt adgangskode). */
+  /** Dark, semi-transparent background for fields on top of photos (forgot password). */
   readonly translucent = input(false, { transform: booleanAttribute });
-  /** Kodefelt: centreret, display-skrift og bred spatiering. */
+  /** Code field: centered, display font and wide letter spacing. */
   readonly centered = input(false, { transform: booleanAttribute });
-  /** Vis/skjul-knap på adgangskodefelter. */
+  /** Show/hide button on password fields. */
   readonly revealable = input(true, { transform: booleanAttribute });
   readonly size = input<TextInputSize>('lg');
 
-  /** Feltet har mistet fokus (efter `onTouched` er kaldt). */
+  /** The field has lost focus (after `onTouched` has been called). */
   readonly blurred = output<void>();
 
   protected readonly value = signal('');

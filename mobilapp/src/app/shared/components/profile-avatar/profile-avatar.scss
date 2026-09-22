@@ -6,14 +6,14 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-circle);
-  /* Bunden bag et billede med gennemsigtige kanter – designets `background-color:#0b1120`. */
+  /* The base behind an image with transparent edges – design's `background-color:#0b1120`. */
   background-color: var(--color-background-deep);
   background-repeat: no-repeat;
   color: var(--color-white);
   overflow: hidden;
 }
 
-/* Uden billede er cirklen blå med forbogstavet (designets `avatarBg` / `avatarFg`). */
+/* Without an image, the circle is blue with the initial letter (design's `avatarBg` / `avatarFg`). */
 :host(:not(.profile-avatar--photo)) {
   background-color: var(--color-primary);
 }

@@ -7,7 +7,7 @@ export type ProgressBarThickness = 'thin' | 'regular';
 
 const PERCENT_MAX = 100;
 
-/** Klemmer en andel fast til 0..1; ugyldige tal (NaN, Infinity) bliver 0. */
+/** Clamps a fraction to 0..1; invalid numbers (NaN, Infinity) become 0. */
 export function clampFraction(value: number): number {
   if (!Number.isFinite(value)) {
     return 0;
@@ -16,8 +16,8 @@ export function clampFraction(value: number): number {
 }
 
 /**
- * Vandret fremdriftsbjælke (designets 4/6 px skinne med farvet fyld).
- * `value` er en andel 0..1; bredden animeres, når den ændrer sig.
+ * Horizontal progress bar (the design's 4/6 px track with a colored fill).
+ * `value` is a fraction 0..1; the width animates when it changes.
  */
 @Component({
   selector: 'app-ui-progress-bar',
@@ -41,7 +41,7 @@ export class UiProgressBar {
   protected readonly percentMin = 0;
   protected readonly percentMax = PERCENT_MAX;
 
-  /** Fyldets bredde i procent, altid inden for 0..100. */
+  /** The fill's width in percent, always within 0..100. */
   readonly percent = computed(() => Math.round(clampFraction(this.value()) * PERCENT_MAX));
 
   protected readonly hostClass = computed(

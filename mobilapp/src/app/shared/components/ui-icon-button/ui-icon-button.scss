@@ -1,4 +1,4 @@
-/* Værten er selve `<button>` (designets `.circ`); kun `:host(…)` rammer den. */
+/* The host is the `<button>` itself (the design's `.circ`); only `:host(…)` targets it. */
 :host {
   display: inline-flex;
   flex: none;
@@ -27,7 +27,7 @@
   cursor: not-allowed;
 }
 
-/* Størrelser */
+/* Sizes */
 
 :host(.ui-icon-button--xl) {
   width: var(--size-control-xl);
@@ -69,7 +69,7 @@
   height: var(--size-control-4xs);
 }
 
-/* Toner */
+/* Tones */
 
 :host(.ui-icon-button--ghost) {
   background: transparent;

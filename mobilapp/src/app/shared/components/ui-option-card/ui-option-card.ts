@@ -7,24 +7,24 @@ import {
 } from '@angular/core';
 
 /**
- * `selected` = blå kant + blå tone (designets `sel()`: mål, tempo, intensitet).
- * `accent` = orange kant, orange fyld og orange tekst (designets `editOptions`).
- * `accent-radio` = orange kant og et svagere fyld plus en rund radio-prik til højre, der
- * fyldes, når kortet er valgt (designets `gendersBig`).
+ * `selected` = blue border + blue tone (the design's `sel()`: goal, pace, intensity).
+ * `accent` = orange border, orange fill and orange text (the design's `editOptions`).
+ * `accent-radio` = orange border and a weaker fill plus a round radio dot on the right, which
+ * fills when the card is selected (the design's `gendersBig`).
  */
 export type OptionCardSelectionStyle = 'selected' | 'accent' | 'accent-radio';
-/** `row` = designets `.opt` (68 px), `column` = intensitets-flisen med indikator øverst. */
+/** `row` = the design's `.opt` (68 px), `column` = the intensity tile with indicator on top. */
 export type OptionCardLayout = 'row' | 'column';
-/** `regular` = 68 px, `compact` = 58 px (designets valgkort i redigeringsarket). */
+/** `regular` = 68 px, `compact` = 58 px (the design's option card in the edit sheet). */
 export type OptionCardDensity = 'regular' | 'compact';
 
 /**
- * Valgkort med label og beskrivelse. Bruges som attribut på en `<button>`, så native
- * `disabled` og tastaturstyring følger med. Valget ejes af forælderen (`selected`), og
- * kortet rapporterer via det almindelige `(click)`.
+ * Option card with a label and description. Used as an attribute on a `<button>`, so native
+ * `disabled` and keyboard handling come for free. Selection is owned by the parent (`selected`),
+ * and the card reports back via the regular `(click)`.
  *
- * Slots: `[optionLeading]` (før teksten – i `column` øverst) og `[optionTrailing]`
- * (efter teksten, fx et glyf eller en pris).
+ * Slots: `[optionLeading]` (before the text – on top in `column`) and `[optionTrailing]`
+ * (after the text, e.g. a glyph or a price).
  */
 @Component({
   selector: 'button[app-ui-option-card]',

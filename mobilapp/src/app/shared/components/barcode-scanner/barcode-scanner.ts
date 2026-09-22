@@ -28,7 +28,7 @@ import { UiIconButton } from '../ui-icon-button/ui-icon-button';
 import { FOCUSABLE_SELECTOR, UiSheet } from '../ui-sheet/ui-sheet';
 import { UiTextInput } from '../ui-text-input/ui-text-input';
 
-/** Hvad der vises: kameraoverlay, resultat-ark eller "Ukendt vare"-ark (arkene ligger over overlayet). */
+/** What's shown: camera overlay, result sheet or "Unknown item" sheet (the sheets sit above the overlay). */
 type BarcodeScannerScreen = 'scanner' | 'result' | 'unknown';
 
 export type ScanVerdictTone = 'negative' | 'positive' | 'neutral';
@@ -61,27 +61,27 @@ interface UnknownFoodForm {
   protein: FormControl<number | null>;
 }
 
-/** Designets `openScan`: linjen står stille et halvt sekund, før `runScan` går i gang. */
+/** Design's `openScan`: the line stands still for half a second before `runScan` kicks in. */
 const SCAN_START_DELAY_MS = 500;
-/** Designets `retryUnknown`: kort pause, før scanningen genstarter efter et ark. */
+/** Design's `retryUnknown`: a brief pause before scanning restarts after a sheet. */
 const SCAN_RETRY_DELAY_MS = 300;
-/** Linjens hvileposition (designets `scanLine: 50`). */
+/** The line's idle position (design's `scanLine: 50`). */
 const SCAN_LINE_IDLE_PERCENT = 50;
-/** Designets `runScan`: 88 % straks, 14 % efter 700 ms, 62 % efter 1500 ms. Servicen svarer ved 2300 ms. */
+/** Design's `runScan`: 88% immediately, 14% after 700 ms, 62% after 1500 ms. The service responds at 2300 ms. */
 const SCAN_LINE_SWEEP: readonly { readonly atMs: number; readonly percent: number }[] = [
   { atMs: 0, percent: 88 },
   { atMs: 700, percent: 14 },
   { atMs: 1500, percent: 62 },
 ];
-/** Designets `seed`: 30 stregers relative bredder i den tegnede stregkode. */
+/** Design's `seed`: the relative widths of 30 bars in the drawn barcode. */
 const BARCODE_BAR_WEIGHTS: readonly number[] = [
   3, 1, 2, 1, 3, 1, 1, 2, 3, 1, 2, 1, 1, 3, 2, 1, 1, 2, 1, 3, 1, 2, 1, 1, 3, 1, 2, 1, 3, 1,
 ];
 
 /**
- * Scan-rammens geometri i px fra designet (260×170, streger 30 px inde / 55 px nede / 60 px høje,
- * 3 px mellemrum, linjen 16 px inde). Bindes som CSS-variabler på rammen – der findes ingen tokens
- * for et kamerasøgefelt.
+ * The scan frame's geometry in px from the design (260×170, bars 30 px in / 55 px down / 60 px
+ * tall, 3 px gap, the line 16 px in). Bound as CSS variables on the frame – there are no tokens
+ * for a camera viewfinder.
  */
 const SCAN_FRAME = {
   width: 260,
@@ -93,7 +93,7 @@ const SCAN_FRAME = {
   lineInsetX: 16,
 } as const;
 
-/** Designets `scanPortions`: "Halv" og "1 bar" (varen er en proteinbar). */
+/** Design's `scanPortions`: "Half" and "1 bar" (the item is a protein bar). */
 const SCAN_PORTIONS: readonly ScanPortionOption[] = [
   { multiplier: 0.5, label: 'Halv' },
   { multiplier: 1, label: '1 bar' },
@@ -102,15 +102,15 @@ const SCAN_PORTIONS: readonly ScanPortionOption[] = [
 const SCAN_HINT_SCANNING = 'Læser stregkode…';
 const SCAN_HINT_IDLE = 'Hold stregkoden inden for rammen – vi scanner automatisk';
 
-/** Designets `verdict`: ≥ 15 g protein tæller som en god proteinkilde. */
+/** Design's `verdict`: ≥ 15 g protein counts as a good protein source. */
 const HIGH_PROTEIN_GRAMS = 15;
-/** Designets `saveNewFood`: tom portion bliver til '1 portion'. */
+/** Design's `saveNewFood`: an empty portion becomes '1 portion'. */
 const DEFAULT_CUSTOM_QUANTITY = '1 portion';
 const CUSTOM_FOOD_ID_PREFIX = 'custom';
 
 /**
- * Designets `verdict`-tekster (ordret). `kcalRemaining` er dagens mål minus det spiste.
- * Proteinlinjen bruger varens faktiske gram – for demo-varen ved 1× giver det designets "20 g".
+ * Design's `verdict` texts (verbatim). `kcalRemaining` is the daily goal minus what's been eaten.
+ * The protein line uses the item's actual grams, so the text follows the selected portion.
  */
 export function buildScanVerdict(kcalRemaining: number, item: FoodItem): ScanVerdict {
   const leftAfter = kcalRemaining - item.kcal;
@@ -130,14 +130,14 @@ export function buildScanVerdict(kcalRemaining: number, item: FoodItem): ScanVer
 }
 
 /**
- * Stregkodescanneren fra designet: et fuldskærms-overlay med søgefelt, tegnet stregkode og en
- * orange linje, der fejer 88 % → 14 % → 62 %, mens `BarcodeScannerService` "læser". Fund åbner
- * resultat-arket (portion, makroer, verdict), ellers åbnes "Ukendt vare"-arket med en lille
- * formular.
+ * The barcode scanner from the design: a full-screen overlay with a viewfinder, a drawn barcode
+ * and an orange line that sweeps 88% → 14% → 62% while `BarcodeScannerService` "reads". A find
+ * opens the result sheet (portion, macros, verdict), otherwise the "Unknown item" sheet opens
+ * with a small form.
  *
- * Forælderen ejer `open`. Alle veje ud af scanneren udsender `closed` til sidst – også efter
- * `found`, `customSaved`, `manualRequested` og `noBarcodeRequested` – så forælderen kun behøver
- * én handler, der sætter `open` til `false`. Scanningen genstarter, hver gang arket åbnes.
+ * The parent owns `open`. Every way out of the scanner ultimately emits `closed` – even after
+ * `found`, `customSaved`, `manualRequested` and `noBarcodeRequested` – so the parent only needs
+ * one handler that sets `open` to `false`. Scanning restarts every time the sheet opens.
  */
 @Component({
   selector: 'app-barcode-scanner',
@@ -154,21 +154,21 @@ export function buildScanVerdict(kcalRemaining: number, item: FoodItem): ScanVer
 })
 export class BarcodeScanner {
   readonly open = input.required<boolean>();
-  /** Dagens kalorier tilbage (mål − spist). `null` skjuler verdict-boksen. */
+  /** Today's remaining calories (goal − eaten). `null` hides the verdict box. */
   readonly kcalRemaining = input<number | null>(null);
-  /** Måltidet varen lægges under. Indgår ikke i teksterne (designet siger blot "Gem og tilføj"). */
+  /** The meal the item is logged under. Not part of the texts (the design just says "Save and add"). */
   readonly mealLabel = input('');
-  /** Start scanningen automatisk, når overlayet åbner. Ellers kaldes `startScan()` af forælderen. */
+  /** Start scanning automatically when the overlay opens. Otherwise the parent calls `startScan()`. */
   readonly autoStart = input(true, { transform: booleanAttribute });
 
   readonly closed = output<void>();
-  /** Den scannede vare, skaleret til den valgte portion. */
+  /** The scanned item, scaled to the selected portion. */
   readonly found = output<FoodItem>();
-  /** Ukendt vare gemt fra formularen: navn, portion (standard '1 portion'), kcal, protein; kulhydrat/fedt 0. */
+  /** Unknown item saved from the form: name, portion (default '1 portion'), kcal, protein; carbs/fat 0. */
   readonly customSaved = output<FoodItem>();
-  /** "Indtast manuelt i stedet". */
+  /** "Enter manually instead". */
   readonly manualRequested = output<void>();
-  /** "Varen har ingen stregkode". */
+  /** "The item has no barcode". */
   readonly noBarcodeRequested = output<void>();
 
   private readonly scanner = inject(BarcodeScannerService);
@@ -178,7 +178,7 @@ export class BarcodeScanner {
 
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
   private scanSubscription: Subscription | null = null;
-  /** Elementet, der havde fokus, da scanneren åbnede – fokus gives tilbage dertil ved luk. */
+  /** The element that had focus when the scanner opened – focus returns there on close. */
   private previouslyFocused: HTMLElement | null = null;
 
   protected readonly frame = SCAN_FRAME;
@@ -210,7 +210,7 @@ export class BarcodeScanner {
     return item ? this.calculator.parseQuantity(item.quantity) : null;
   });
 
-  /** Varen skaleret til den valgte portion (designets `scanned`). */
+  /** The item scaled to the selected portion (design's `scanned`). */
   protected readonly scaledItem = computed<FoodItem | null>(() => {
     const item = this.scannedItem();
     const base = this.baseQuantity();
@@ -272,7 +272,7 @@ export class BarcodeScanner {
     });
     inject(DestroyRef).onDestroy(() => this.stop());
 
-    // Flyt fokus ind i overlayet, når det åbner – men ikke væk fra et ark, der ligger ovenpå.
+    // Move focus into the overlay when it opens – but not away from a sheet lying on top.
     afterRenderEffect(() => {
       const overlay = this.overlay()?.nativeElement;
       if (
@@ -286,7 +286,7 @@ export class BarcodeScanner {
     });
   }
 
-  /** Starter (eller genstarter) en scanning med det samme. */
+  /** Starts (or restarts) a scan immediately. */
   startScan(): void {
     this.cancelPending();
     this.screen.set('scanner');
@@ -305,7 +305,7 @@ export class BarcodeScanner {
     this.multiplier.set(multiplier);
   }
 
-  /** "Scan igen" og luk på begge ark: tilbage til søgefeltet og ny scanning efter en kort pause. */
+  /** "Scan again" and close on both sheets: back to the viewfinder and a new scan after a short pause. */
   protected rescan(): void {
     this.cancelPending();
     this.screen.set('scanner');
@@ -356,7 +356,7 @@ export class BarcodeScanner {
   }
 
   protected onEscape(event: Event): void {
-    // Arkene håndterer selv Escape via UiSheet; overlayet reagerer kun, når det ligger øverst.
+    // The sheets handle Escape themselves via UiSheet; the overlay only reacts when it's on top.
     if (!this.open() || this.screen() !== 'scanner') {
       return;
     }
@@ -365,10 +365,10 @@ export class BarcodeScanner {
   }
 
   /**
-   * Holder Tab inde i kameraoverlayet, så et `aria-modal`-overlay ikke kan tabbes væk.
-   * Ligger et ark ovenpå (`screen() !== 'scanner'`), ejer `UiSheet` fælden – samme
-   * arbejdsdeling som for Escape. Retningen kommer fra host-bindingen, da `$event` her
-   * kun er typet `Event`.
+   * Keeps Tab inside the camera overlay, so an `aria-modal` overlay can't be tabbed away from.
+   * If a sheet lies on top (`screen() !== 'scanner'`), `UiSheet` owns the trap – the same
+   * division of labor as for Escape. The direction comes from the host binding, since `$event`
+   * here is only typed as `Event`.
    */
   protected onTab(event: Event, backwards: boolean): void {
     if (!this.open() || this.screen() !== 'scanner') {
@@ -421,7 +421,7 @@ export class BarcodeScanner {
     this.restoreFocus();
   }
 
-  /** Gemmer det element, der åbnede scanneren – kun første gang, overlayet tager fokus. */
+  /** Stores the element that opened the scanner – only the first time the overlay takes focus. */
   private rememberTrigger(): void {
     if (this.previouslyFocused === null) {
       const active = this.document.activeElement;
@@ -429,7 +429,7 @@ export class BarcodeScanner {
     }
   }
 
-  /** Giver fokus tilbage til det gemte element. Gør intet, hvis overlayet aldrig tog fokus. */
+  /** Returns focus to the stored element. Does nothing if the overlay never took focus. */
   private restoreFocus(): void {
     this.previouslyFocused?.focus({ preventScroll: true });
     this.previouslyFocused = null;

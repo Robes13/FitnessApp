@@ -3,9 +3,9 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 export type FormErrorTone = 'accent' | 'negative' | 'positive';
 
 /**
- * Hint-/fejllinje under et felt. Reserverer altid sin højde (designets `min-height:16px`),
- * så layoutet ikke hopper, når teksten kommer og går. `role="status"` gør, at skærmlæsere
- * læser teksten op, når den ændrer sig.
+ * Hint/error line below a field. Always reserves its height (the design's `min-height:16px`),
+ * so the layout doesn't jump when the text appears and disappears. `role="status"` makes
+ * screen readers announce the text when it changes.
  */
 @Component({
   selector: 'app-ui-form-error',

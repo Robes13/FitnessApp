@@ -16,23 +16,23 @@ import {
 import { UiIcon } from '../ui-icon/ui-icon';
 import { UiIconButton } from '../ui-icon-button/ui-icon-button';
 
-/** Lagorden: `sheet` 20 · `sheet-high` 25 · `overlay` 30 · `top` 40 (`--z-index-*`). */
+/** Layer order: `sheet` 20 · `sheet-high` 25 · `overlay` 30 · `top` 40 (`--z-index-*`). */
 export type SheetLayer = 'sheet' | 'sheet-high' | 'overlay' | 'top';
 /**
- * `auto` = op til 78 % af skærmen, `medium` = 88 %, `tall` = 96 %,
- * `full` = næsten hele skærmen (100 % − 24 px).
+ * `auto` = up to 78% of the screen, `medium` = 88%, `tall` = 96%,
+ * `full` = nearly the whole screen (100% − 24 px).
  */
 export type SheetMaxHeight = 'auto' | 'medium' | 'tall' | 'full';
-/** Overskriftens størrelse: `sm` 26 · `md` 28 · `lg` 30 px (`--font-size-display-sm/md/lg`). */
+/** The heading's size: `sm` 26 · `md` 28 · `lg` 30 px (`--font-size-display-sm/md/lg`). */
 export type SheetTitleSize = 'sm' | 'md' | 'lg';
-/** Farven på `titleAccent`: orange (standard) eller rød – designets "Log <rød>ud?</rød>". */
+/** The color of `titleAccent`: orange (default) or red – the design's "Log <red>out?</red>". */
 export type SheetTitleAccentTone = 'accent' | 'negative';
 
 const DEFAULT_CLOSE_LABEL = 'Luk';
 
 /**
- * De elementer i panelet, Tab må lande på. Bruges til at holde fokus inde i det åbne ark –
- * og af `BarcodeScanner`, hvis fuldskærms-overlay har samme behov.
+ * The elements in the panel that Tab is allowed to land on. Used to keep focus inside the open
+ * sheet – and by `BarcodeScanner`, whose fullscreen overlay has the same need.
  */
 export const FOCUSABLE_SELECTOR = [
   'button:not([disabled])',
@@ -44,8 +44,8 @@ export const FOCUSABLE_SELECTOR = [
 ].join(', ');
 
 /**
- * Åbne ark i den rækkefølge, de blev åbnet. Kun det øverste reagerer på Escape, så
- * stablede ark (fx "Ny samling" med en indlejret vare-søgning) lukker ét ad gangen.
+ * Open sheets in the order they were opened. Only the topmost reacts to Escape, so
+ * stacked sheets (e.g. "New collection" with a nested item search) close one at a time.
  */
 const openSheets: UiSheet[] = [];
 
@@ -67,20 +67,20 @@ function isTopmost(sheet: UiSheet): boolean {
 }
 
 /**
- * Bundark: dæmpet, sløret scrim over hele app-roden med et panel nederst (designets
- * `var(--sheet)`-ark med 28 px radius). Arket lukker ved klik på scrimmen, på
- * luk-knappen eller med Escape – alle tre udsender `closed`; forælderen ejer `open`.
+ * Bottom sheet: a dimmed, blurred scrim over the whole app root with a panel at the bottom
+ * (the design's `var(--sheet)` sheet with 28 px radius). The sheet closes on clicking the
+ * scrim, the close button or Escape – all three emit `closed`; the parent owns `open`.
  *
- * `hideClose` gør arket ikke-afviseligt (ingen luk-knap, scrim og Escape ignoreres) –
- * bruges til "Tjek din mail", som brugeren ikke må lukke.
+ * `hideClose` makes the sheet non-dismissible (no close button, scrim and Escape are ignored) –
+ * used for "Check your email", which the user must not be able to close.
  *
- * Titlen sammensættes af `title` + `titleAccent` (orange eller rød, med eller uden mellemrum) i
- * tre størrelser, så alle designets ark kan udtrykkes med inputs alene.
+ * The title is composed of `title` + `titleAccent` (orange or red, with or without a space) in
+ * three sizes, so all of the design's sheets can be expressed with inputs alone.
  *
- * Slots: standardindhold, `[sheetLeading]` (over overskriften – designets ikon-cirkel og
- * log-ud-mærke), `[sheetTitle]` (eget indhold i titlens plads, når `title` og `titleAccent`
- * er tomme – fx en badge), `[sheetHeaderExtra]` (til højre for titlen, før luk-knappen) og
- * `[sheetFooter]`.
+ * Slots: default content, `[sheetLeading]` (above the heading – the design's icon circle and
+ * log-out badge), `[sheetTitle]` (custom content in the title's spot, when `title` and
+ * `titleAccent` are empty – e.g. a badge), `[sheetHeaderExtra]` (to the right of the title,
+ * before the close button) and `[sheetFooter]`.
  */
 @Component({
   selector: 'app-ui-sheet',
@@ -98,23 +98,23 @@ function isTopmost(sheet: UiSheet): boolean {
 export class UiSheet {
   readonly open = input.required<boolean>();
   readonly title = input('');
-  /** Vises orange efter `title`, fx title `Ny` + titleAccent `samling`. */
+  /** Shown in orange after `title`, e.g. title `New` + titleAccent `collection`. */
   readonly titleAccent = input('');
-  /** Designet varierer: "Log ud?" 26 (`sm`), "Tilføj mad" 28 (`md`), "Tjek din mail" 30 (`lg`). */
+  /** The design varies: "Log out?" 26 (`sm`), "Add food" 28 (`md`), "Check your email" 30 (`lg`). */
   readonly titleSize = input<SheetTitleSize>('sm');
   readonly titleAccentTone = input<SheetTitleAccentTone>('accent');
-  /** Ingen mellemrum mellem `title` og `titleAccent`: "Profil" + "billede" → "Profilbillede". */
+  /** No space between `title` and `titleAccent`: "Profile" + "picture" → "Profilepicture". */
   readonly titleAccentJoined = input(false, { transform: booleanAttribute });
   readonly closeLabel = input(DEFAULT_CLOSE_LABEL);
-  /** Skjuler luk-knappen og slår luk via scrim og Escape fra. */
+  /** Hides the close button and disables closing via the scrim and Escape. */
   readonly hideClose = input(false, { transform: booleanAttribute });
   readonly layer = input<SheetLayer>('sheet');
   readonly maxHeight = input<SheetMaxHeight>('auto');
-  /** Lader indholdet scrolle inden i panelet i stedet for at vokse ud af det. */
+  /** Lets the content scroll inside the panel instead of growing out of it. */
   readonly scrollable = input(false, { transform: booleanAttribute });
   /**
-   * Gør indholdsområdet til en flex-kolonne, så indholdet selv kan holde en fast top og
-   * kun lade en del af sig scrolle. Kombineres typisk med et barn, der har `scroll-area`.
+   * Makes the content area a flex column, so the content can keep a fixed top and let
+   * only part of itself scroll. Typically combined with a child that has `scroll-area`.
    */
   readonly column = input(false, { transform: booleanAttribute });
 
@@ -123,7 +123,7 @@ export class UiSheet {
   private readonly document = inject(DOCUMENT);
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
 
-  /** Elementet, der havde fokus, da arket åbnede – fokus gives tilbage dertil ved luk. */
+  /** The element that had focus when the sheet opened – focus is returned there on close. */
   private previouslyFocused: HTMLElement | null = null;
 
   protected readonly dismissible = computed(() => !this.hideClose());
@@ -152,7 +152,7 @@ export class UiSheet {
       this.restoreFocus();
     });
 
-    // Flyt fokus ind i panelet, når det åbner, medmindre indholdet selv har taget fokus.
+    // Move focus into the panel when it opens, unless the content has already taken focus.
     afterRenderEffect(() => {
       const panel = this.panel()?.nativeElement;
       if (panel && !panel.contains(this.document.activeElement)) {
@@ -177,9 +177,10 @@ export class UiSheet {
   }
 
   /**
-   * Holder Tab inde i panelet, så et `aria-modal`-ark ikke kan tabbes væk. Kun det øverste ark
-   * fanger tasten, så stablede ark opfører sig som med Escape. Retningen kommer fra
-   * host-bindingen (`keydown.tab` / `keydown.shift.tab`), da `$event` her kun er typet `Event`.
+   * Keeps Tab inside the panel, so an `aria-modal` sheet can't be tabbed away from. Only the
+   * topmost sheet captures the key, so stacked sheets behave like they do with Escape. The
+   * direction comes from the host binding (`keydown.tab` / `keydown.shift.tab`), since `$event`
+   * here is only typed as `Event`.
    */
   protected onTab(event: Event, backwards: boolean): void {
     if (!this.open() || !isTopmost(this)) {
@@ -220,7 +221,7 @@ export class UiSheet {
     }
   }
 
-  /** Gemmer det element, der åbnede arket – kun første gang, arket tager fokus. */
+  /** Remembers the element that opened the sheet – only the first time the sheet takes focus. */
   private rememberTrigger(): void {
     if (this.previouslyFocused === null) {
       const active = this.document.activeElement;
@@ -228,7 +229,7 @@ export class UiSheet {
     }
   }
 
-  /** Giver fokus tilbage til det gemte element. Gør intet, hvis arket aldrig tog fokus. */
+  /** Returns focus to the remembered element. Does nothing if the sheet never took focus. */
   private restoreFocus(): void {
     this.previouslyFocused?.focus({ preventScroll: true });
     this.previouslyFocused = null;

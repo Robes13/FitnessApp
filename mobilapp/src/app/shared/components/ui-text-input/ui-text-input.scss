@@ -1,7 +1,7 @@
 /*
- * Værten bærer `ui-text-input` og dens modifiers (`--md`, `--invalid`, `--invalid-*`,
+ * The host carries `ui-text-input` and its modifiers (`--md`, `--invalid`, `--invalid-*`,
  * `--translucent`,
- * `--centered`, `--revealable`); kun `:host(…)` rammer den under emuleret encapsulation.
+ * `--centered`, `--revealable`); only `:host(…)` targets it under emulated encapsulation.
  */
 :host {
   position: relative;
@@ -14,12 +14,12 @@
   min-height: var(--size-control-md);
 }
 
-/* Mørk 55 % bund på fotoskærme (login, glemt adgangskode). */
+/* Dark 55% background on photo screens (login, forgot password). */
 :host(.ui-text-input--translucent) .ui-text-input__field {
   background: var(--color-surface-translucent);
 }
 
-/* Kodefeltet: 4 cifre centreret med bred spatiering; venstre padding udligner spatieringen. */
+/* The code field: 4 digits centered with wide letter spacing; left padding offsets the spacing. */
 :host(.ui-text-input--centered) .ui-text-input__field {
   padding: 0 0 0 var(--letter-spacing-code);
   font-family: var(--font-family-display);
@@ -37,7 +37,7 @@
   border-color: var(--color-accent);
 }
 
-/* Plads til øje-knappen (designet: padding-right 52px). */
+/* Room for the eye button (the design: padding-right 52px). */
 :host(.ui-text-input--revealable) .ui-text-input__field {
   padding-right: var(--size-control-lg);
 }
@@ -65,7 +65,7 @@
       color: var(--color-text-muted);
     }
 
-    /* Designet bruger −/+ knapper i stedet for browserens tal-pile. */
+    /* The design uses −/+ buttons instead of the browser's number spinners. */
     &::-webkit-inner-spin-button,
     &::-webkit-outer-spin-button {
       margin: 0;

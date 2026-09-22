@@ -48,7 +48,7 @@ describe('UiProgressRing', () => {
     const { fixture, ring } = await setup();
     const host = fixture.componentInstance;
 
-    // Designets håndskrevne dasharrays fås med diameter = 2·r + strokeWidth.
+    // The design's hand-written dasharrays come from diameter = 2·r + strokeWidth.
     const cases: readonly [number, number, number][] = [
       [45, 3, 132], // signup step ring: r 21 in a 48 box
       [36, 4, 100.5], // home week rings: r 16 in a 40 box

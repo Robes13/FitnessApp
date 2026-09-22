@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input, model } from '@angular/core';
 
 /**
- * Skydeknap 48×28 med 22 px knop (Lys tilstand, Notifikationer). Tilstanden er en
- * two-way `model`, så `[(checked)]` virker. Knappen er den interaktive del og bærer
- * `role="switch"`, `aria-checked` og `aria-label`.
+ * Toggle switch 48×28 with a 22 px thumb (Light mode, Notifications). The state is a
+ * two-way `model`, so `[(checked)]` works. The button is the interactive part and carries
+ * `role="switch"`, `aria-checked` and `aria-label`.
  */
 @Component({
   selector: 'app-ui-switch',

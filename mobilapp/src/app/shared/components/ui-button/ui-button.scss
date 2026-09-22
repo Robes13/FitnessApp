@@ -1,7 +1,7 @@
 /*
- * Værten er selve `<button>`/`<a>` med klasserne `ui-button ui-button--{variant}
- * ui-button--{size}`. Under emuleret encapsulation rammer kun `:host(…)` værten – en
- * `.ui-button { … }`-regel ville blive scoped til indholdet og aldrig matche.
+ * The host is the `<button>`/`<a>` itself with the classes `ui-button ui-button--{variant}
+ * ui-button--{size}`. Under emulated encapsulation, only `:host(…)` hits the host – a
+ * `.ui-button { … }` rule would be scoped to the content and never match.
  */
 :host {
   display: inline-flex;
@@ -35,7 +35,7 @@
   cursor: not-allowed;
 }
 
-/* Størrelser */
+/* Sizes */
 
 :host(.ui-button--xl) {
   min-height: var(--ui-button-min-height, var(--size-control-xl));
@@ -57,7 +57,7 @@
   font-size: var(--font-size-md);
 }
 
-/* Facon */
+/* Shape */
 
 :host(.ui-button--rounded) {
   border-radius: var(--radius-lg);
@@ -68,7 +68,7 @@
   width: 100%;
 }
 
-/* Varianter */
+/* Variants */
 
 :host(.ui-button--primary) {
   background: var(--color-accent);
@@ -141,7 +141,7 @@
   pointer-events: none;
 }
 
-/* Elementer */
+/* Elements */
 
 .ui-button {
   &__content {

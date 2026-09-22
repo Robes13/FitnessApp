@@ -1,8 +1,9 @@
 # BarcodeScanner
 
-Designets stregkodescanner (skærmene "Scan", "Scan-resultat" og "Ukendt vare"). Der er intet
-kamera – `BarcodeScannerService` i `core` spiller scanner og svarer skiftevis med demo-varen og
-"ukendt". Komponenten tegner søgefeltet, kører linje-animationen og viser resultatet.
+Designets stregkodescanner (skærmene "Scan", "Scan-resultat" og "Ukendt vare"). Der er hverken
+kamera eller varedatabase endnu, så `BarcodeScannerService` i `core` svarer altid "ukendt", og
+brugeren tilbydes at oprette varen selv. Komponenten tegner søgefeltet, kører
+linje-animationen og viser resultatet, så snart et opslag kan finde noget.
 
 ```html
 <app-barcode-scanner
@@ -70,8 +71,8 @@ Portionen skaleres med `NutritionCalculator.parseQuantity` + `scaleMacros`, så 
 - **Genstart efter luk på et ark.** I designet efterlader "Luk"/"Scan igen" på resultatet
   søgefeltet i hvile uden at scanne igen, mens "Scan igen" på "Ukendt vare" starter forfra efter
   300 ms. Hintet lover "vi scanner automatisk", så begge ark genstarter scanningen her.
-- **Proteinlinjen bruger varens gram** i stedet for designets hårdkodede "20 g". For demo-varen
-  ved 1× giver det præcis designets tekst; for en halv bar (10 g) rammes reglen alligevel ikke.
+- **Proteinlinjen bruger varens gram** i stedet for designets hårdkodede "20 g", så teksten
+  følger den portion, brugeren har valgt.
 - **"Ukendt vare"-badgen** ligger i `UiSheet`s `[sheetTitle]`-slot, som tegnes i titlens plads,
   når arket ikke har en `title` – så står den til venstre for luk-knappen som i designet.
 - **Kameraoverlayet er altid mørkt.** Designet bruger `#020617` uafhængigt af tema; det er
