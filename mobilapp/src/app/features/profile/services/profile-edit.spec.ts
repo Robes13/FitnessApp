@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { NumberEditDefinition, OptionsEditDefinition, ProfileEditService } from './profile-edit';
@@ -161,7 +162,9 @@ describe('ProfileEditService', () => {
     editor.applyNumber('kcal', 2300);
 
     expect(profiles.profile().kcalOverride).toBe(2300);
-    expect(profiles.kcalTarget()).toBe(2300);
+    const adaptiveGoal = TestBed.inject(AdaptiveGoalService);
+    expect(adaptiveGoal.kcalTarget()).toBe(2300);
+    expect(adaptiveGoal.suggestedKcalTarget()).toBe(2530);
   });
 
   it('trims the e-mail before saving it', () => {

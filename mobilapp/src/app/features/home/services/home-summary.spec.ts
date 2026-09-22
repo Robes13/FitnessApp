@@ -5,6 +5,7 @@ import { STORAGE_KEY } from '../../../core/constants/storage-key';
 import { FoodItem } from '../../../core/models/food';
 import { MealId } from '../../../core/models/meal';
 import { UserProfile } from '../../../core/models/profile';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
 import { FoodLogService } from '../../../core/services/food-log';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log';
@@ -138,7 +139,7 @@ describe('HomeSummaryService', () => {
     // Tuesday and Wednesday before Thursday, 24 September 2026.
     storeFoodDays({ '2026-09-22': [SKYR, SALAT], '2026-09-23': [SALAT] });
     const service = setup();
-    const target = TestBed.inject(UserProfileService).kcalTarget();
+    const target = TestBed.inject(AdaptiveGoalService).kcalTarget();
 
     const rings = service.weekRings();
     expect(rings[0]?.tone).toBe('none');
@@ -174,7 +175,7 @@ describe('HomeSummaryService', () => {
       { ...SALAT, meal: 'frokost' },
     ]);
     const service = setup();
-    const target = TestBed.inject(UserProfileService).kcalTarget();
+    const target = TestBed.inject(AdaptiveGoalService).kcalTarget();
     const summary = service.daySummary();
 
     // 380 + 450 kcal and 32 + 41 g protein.
@@ -229,7 +230,7 @@ describe('HomeSummaryService', () => {
 
   it('counts today once the calorie target is met', () => {
     const service = setup();
-    const target = TestBed.inject(UserProfileService).kcalTarget();
+    const target = TestBed.inject(AdaptiveGoalService).kcalTarget();
     TestBed.inject(FoodLogService).add({ ...TEST_FOOD, kcal: target, protein: 500 }, 'aften');
 
     expect(service.weekSummary()).toMatchObject({
@@ -294,7 +295,7 @@ describe('HomeSummaryService', () => {
 
   it('celebrates when the day reaches the calorie target', () => {
     const service = setup();
-    const target = TestBed.inject(UserProfileService).kcalTarget();
+    const target = TestBed.inject(AdaptiveGoalService).kcalTarget();
 
     expect(service.goalReached()).toBe(false);
 

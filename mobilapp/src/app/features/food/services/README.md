@@ -7,7 +7,7 @@
 `FoodViewService` samler designets `kcalRing`, `macros` og `meals`: dagens label, kaloriemål,
 spist, tilbage (og ringens andel), de tre makrokort og de fire måltidsgrupper.
 
-Servicen ejer ingen state. Den læser `FoodLogService` og `UserProfileService` og regner videre
+Servicen ejer ingen state. Den læser `FoodLogService` og `AdaptiveGoalService` (det tilpassede kaloriemål) og regner videre
 med `computed()`, så `FoodPage` kun indeholder præsentation. Den provides på ruten
 (`FOOD_ROUTES`), fordi værdierne kun bruges af denne feature — ikke `providedIn: 'root'`.
 

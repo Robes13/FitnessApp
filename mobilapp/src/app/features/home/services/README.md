@@ -1,7 +1,7 @@
 # Home – services
 
 `HomeSummaryService` (`providedIn: 'root'`) beregner alt, Hjem viser, ud fra core-lagrene
-(`UserProfileService`, `FoodLogService`, `WeightLogService`, `NutritionCalculator` og `NOW`).
+(`UserProfileService`, `AdaptiveGoalService` (kaloriemålet), `FoodLogService`, `WeightLogService`, `NutritionCalculator` og `NOW`).
 Siden og kortene henter kun færdige værdier – ingen beregninger i templates.
 
 | Signal / metode                       | Indhold                                                             |

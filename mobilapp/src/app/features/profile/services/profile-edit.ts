@@ -16,10 +16,15 @@ import {
   WEIGHT_MIN_KG,
 } from '../../../core/constants/nutrition';
 import { GoalId } from '../../../core/models/profile';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
 import { AuthApi } from '../../../core/services/auth-api';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
 import { UserProfileService } from '../../../core/services/user-profile';
-import { formatInteger, formatWeightKg } from '../../../core/utils/date-format';
+import {
+  formatInteger,
+  formatSignedDecimal,
+  formatWeightKg,
+} from '../../../core/utils/date-format';
 
 /** The rows in Profile that can be edited. The ids are the design's `editDefs` keys. */
 export const PROFILE_EDIT_ROWS = [
@@ -123,6 +128,7 @@ const SAVED: OptionApplyResult = { kind: 'saved' };
 @Injectable({ providedIn: 'root' })
 export class ProfileEditService {
   private readonly profiles = inject(UserProfileService);
+  private readonly adaptiveGoal = inject(AdaptiveGoalService);
   private readonly authApi = inject(AuthApi);
   private readonly calculator = inject(NutritionCalculator);
 
@@ -248,13 +254,13 @@ export class ProfileEditService {
         return {
           id: row,
           title: 'Dagligt kaloriemål',
-          hint: `Beregnet forslag: ${formatInteger(this.profiles.suggestedKcalTarget())} kcal`,
+          hint: this.kcalHint(),
           kind: 'number',
           unit: 'kcal',
           min: KCAL_MIN,
           max: KCAL_MAX,
           step: KCAL_STEP,
-          value: this.profiles.kcalTarget(),
+          value: this.adaptiveGoal.kcalTarget(),
         };
       case 'email':
         return {
@@ -268,6 +274,18 @@ export class ProfileEditService {
       case 'password':
         return { id: row, title: 'Ny adgangskode', hint: 'Mindst 8 tegn', kind: 'password' };
     }
+  }
+
+  /**
+   * The suggestion behind the kcal row, with the adjustment spelled out when it actually changes
+   * the suggestion (after the 1200 kcal floor).
+   */
+  private kcalHint(): string {
+    const suggestion = `Beregnet forslag: ${formatInteger(this.adaptiveGoal.suggestedKcalTarget())} kcal`;
+    const adjustment = this.adaptiveGoal.suggestedAdjustmentKcal();
+    return adjustment === 0
+      ? suggestion
+      : `${suggestion} (tilpasset ${formatSignedDecimal(adjustment, 0)} kcal ud fra din vægtudvikling)`;
   }
 
   /**

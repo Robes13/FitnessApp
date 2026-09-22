@@ -25,8 +25,6 @@ describe('UserProfileService', () => {
     expect(service.initial()).toBe('');
     expect(service.age()).toBe(0);
     expect(service.bmi()).toBe(23.7);
-    expect(service.kcalTarget()).toBe(2530);
-    expect(service.suggestedKcalTarget()).toBe(2530);
     expect(service.activityLevel().label).toBe('Aktiv');
     expect(service.trainingFrequency()).toBe(0);
     expect(service.intensity()).toBeNull();
@@ -50,8 +48,6 @@ describe('UserProfileService', () => {
     expect(service.displayName()).toBe('anna');
     expect(service.initial()).toBe('A');
     expect(service.age()).toBe(28);
-    expect(service.kcalTarget()).toBe(1900);
-    expect(service.suggestedKcalTarget()).toBe(1920);
     expect(service.intensity()?.id).toBe('moderat');
     expect(service.goalDefinition()?.label).toBe('Tabe mig');
     expect(service.paceDefinition()?.rateLabel).toBe('0,5 kg/uge');

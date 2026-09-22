@@ -1,8 +1,14 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
 import { GENDERS, UNIT_SYSTEMS } from '../../../core/constants/nutrition';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
 import { UserProfileService } from '../../../core/services/user-profile';
-import { formatDecimal, formatInteger, formatWeightKg } from '../../../core/utils/date-format';
+import {
+  formatDecimal,
+  formatInteger,
+  formatSignedDecimal,
+  formatWeightKg,
+} from '../../../core/utils/date-format';
 import { clamp } from '../../../core/utils/math';
 
 import { ProfileEditRowId } from './profile-edit';
@@ -25,11 +31,15 @@ const PASSWORD_MASK = '••••••••';
  * "maintain weight", "Tempo" is hidden for "maintain weight" (as in the sign-up flow, where
  * pace doesn't change the target), and "Længde"/"Intensitet" only show when the user has at
  * least one training day.
+ *
+ * "Dagligt kaloriemål" is the adapted target; when the intake/weight trend moves it, the value
+ * also says by how much (e.g. "2.410 kcal · tilpasset −120").
  */
 @Injectable({ providedIn: 'root' })
 export class ProfileRowsService {
   private readonly profiles = inject(UserProfileService);
   private readonly calculator = inject(NutritionCalculator);
+  private readonly adaptiveGoal = inject(AdaptiveGoalService);
 
   readonly planRows: Signal<readonly ProfileRow[]> = computed(() => {
     const profile = this.profiles.profile();
@@ -73,7 +83,7 @@ export class ProfileRowsService {
     rows.push({
       id: 'kcal',
       label: 'Dagligt kaloriemål',
-      value: `${formatInteger(this.profiles.kcalTarget())} kcal`,
+      value: this.kcalText(),
     });
     return rows;
   });
@@ -91,6 +101,14 @@ export class ProfileRowsService {
   readonly heightText = computed(() => String(Math.round(this.profiles.profile().heightCm)));
   /** BMI is always shown with one decimal – the design's `toFixed(1)`. */
   readonly bmiText = computed(() => formatDecimal(this.profiles.bmi(), 1));
+
+  private readonly kcalText = computed(() => {
+    const target = `${formatInteger(this.adaptiveGoal.kcalTarget())} kcal`;
+    const adjustment = this.adaptiveGoal.adjustmentKcal();
+    return adjustment === 0
+      ? target
+      : `${target} · tilpasset ${formatSignedDecimal(adjustment, 0)}`;
+  });
 
   private readonly genderLabel = computed(() => {
     const gender = this.profiles.profile().gender;

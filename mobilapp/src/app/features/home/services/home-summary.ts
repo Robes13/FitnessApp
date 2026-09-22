@@ -4,6 +4,7 @@ import { MEALS } from '../../../core/constants/meals';
 import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../core/constants/nutrition';
 import { Macros } from '../../../core/models/food';
 import { ProfilePhoto } from '../../../core/models/profile';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
 import { FoodLogService } from '../../../core/services/food-log';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
 import { UserProfileService } from '../../../core/services/user-profile';
@@ -138,7 +139,7 @@ export class HomeSummaryService {
 
   readonly displayName = this.profileService.displayName;
   readonly initial = this.profileService.initial;
-  readonly kcalTarget = this.profileService.kcalTarget;
+  readonly kcalTarget = inject(AdaptiveGoalService).kcalTarget;
   readonly todayLabel = computed(() => formatDayLabel(this.now()));
   readonly weekProgressLabel = computed(() => `Dag ${this.todayIndex() + 1} af 7`);
 

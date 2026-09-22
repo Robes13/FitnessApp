@@ -1,3 +1,5 @@
+import { DAYS_PER_WEEK, MS_PER_DAY } from '../constants/time';
+
 export const DAY_NAMES_SHORT = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'] as const;
 export const DAY_NAMES_LONG = [
   'Mandag',
@@ -38,8 +40,6 @@ export const MONTH_NAMES_SHORT = [
   'dec',
 ] as const;
 
-const MS_PER_DAY = 86_400_000;
-const DAYS_PER_WEEK = 7;
 const SUNDAY_OFFSET = 6;
 /** All number and date formatting in the app is Danish (`LOCALE_ID` is `'da'`). */
 const LOCALE = 'da-DK';
@@ -78,6 +78,12 @@ export function toIsoDate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+/** Local midnight of a `YYYY-MM-DD` date (the inverse of `toIsoDate`). */
+export function fromIsoDate(isoDate: string): Date {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return new Date(year ?? 0, (month ?? 1) - 1, day ?? 1);
 }
 
 /** `'I dag'` / `'I går'` / `'3 dage siden'`. Future dates are treated as today. */

@@ -1,5 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
+import { STORAGE_KEY } from '../../../core/constants/storage-key';
+import { LoggedFood } from '../../../core/models/food';
+import { createFakeStorage } from '../../../core/testing/fake-document';
+import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
+import { addDays, toIsoDate } from '../../../core/utils/date-format';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { ProfileRow, ProfileRowsService } from './profile-rows';
 
@@ -36,7 +40,45 @@ describe('ProfileRowsService', () => {
     expect(valueOf(rows.planRows(), 'Aktivitet')).toBe('6.000 skridt · Aktiv');
     expect(valueOf(rows.planRows(), 'Træningsdage')).toBe('3 / uge');
     expect(valueOf(rows.planRows(), 'Længde')).toBe('45 min');
-    expect(valueOf(rows.planRows(), 'Dagligt kaloriemål')).toBe('2.530 kcal');
+    // 2530 kcal by BMR × PAL + ~96 kcal/day for three moderate 45-minute sessions.
+    expect(valueOf(rows.planRows(), 'Dagligt kaloriemål')).toBe('2.630 kcal');
+  });
+
+  it('says when the target is adapted to the weight trend', () => {
+    const days: Record<string, readonly LoggedFood[]> = {};
+    for (let offset = 1; offset <= 12; offset += 1) {
+      const day = addDays(TEST_NOW, -offset);
+      days[toIsoDate(day)] = [
+        {
+          id: 'food-test',
+          name: 'Test',
+          quantity: '1 portion',
+          kcal: 2410,
+          protein: 0,
+          carbs: 0,
+          fat: 0,
+          logId: `log-${offset}`,
+          meal: 'frokost',
+          loggedAt: day.toISOString(),
+        },
+      ];
+    }
+    const weighIns = [1, 20].map((daysAgo) => ({
+      id: `w${daysAgo}`,
+      kg: 75,
+      at: addDays(TEST_NOW, -daysAgo).toISOString(),
+    }));
+    TestBed.configureTestingModule({
+      providers: provideCoreTestEnvironment({
+        storage: createFakeStorage({
+          [STORAGE_KEY.FOOD_LOG]: { days },
+          [STORAGE_KEY.WEIGHT_LOG]: weighIns,
+        }),
+      }),
+    });
+    const rows = TestBed.inject(ProfileRowsService);
+
+    expect(valueOf(rows.planRows(), 'Dagligt kaloriemål')).toBe('2.410 kcal · tilpasset −120');
   });
 
   it('hides Målvægt until a goal other than "hold" is chosen', () => {

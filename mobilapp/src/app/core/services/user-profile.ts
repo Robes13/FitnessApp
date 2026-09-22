@@ -14,7 +14,9 @@ import { NutritionCalculator } from './nutrition-calculator';
 import { StorageService } from './storage';
 
 /**
- * The user's profile as one signal plus derived values (age, BMI, calorie target …).
+ * The user's profile as one signal plus derived values (age, BMI, activity level …). The
+ * calorie target lives in `AdaptiveGoalService`, which also accounts for the logged intake
+ * and weight trend.
  * Saved to storage on every change. Missing fields in a saved profile are filled in from
  * `DEFAULT_PROFILE`, so older data can still be read.
  */
@@ -31,10 +33,6 @@ export class UserProfileService {
   readonly initial = computed(() => this.displayName().charAt(0).toUpperCase());
   readonly age = computed(() => this.calculator.ageFromBirthday(this.state().birthday, this.now()));
   readonly bmi = computed(() => this.calculator.bmi(this.state().weightKg, this.state().heightCm));
-  readonly kcalTarget = computed(() => this.calculator.kcalTarget(this.state(), this.now()));
-  readonly suggestedKcalTarget = computed(() =>
-    this.calculator.suggestedKcalTarget(this.state(), this.now()),
-  );
   readonly activityLevel: Signal<ActivityLevel> = computed(() =>
     this.calculator.activityLevelFor(this.state().stepsPerDay),
   );

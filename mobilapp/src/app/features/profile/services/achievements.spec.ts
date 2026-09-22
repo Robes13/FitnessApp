@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { addDays } from '../../../core/utils/date-format';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
 import { FoodLogService } from '../../../core/services/food-log';
-import { UserProfileService } from '../../../core/services/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { Achievement, AchievementsService } from './achievements';
@@ -17,14 +17,14 @@ function badge(list: readonly Achievement[], id: string): Achievement {
 describe('AchievementsService', () => {
   function setup(): {
     achievements: AchievementsService;
-    profiles: UserProfileService;
+    adaptiveGoal: AdaptiveGoalService;
     foodLog: FoodLogService;
     weightLog: WeightLogService;
   } {
     TestBed.configureTestingModule({ providers: provideCoreTestEnvironment() });
     return {
       achievements: TestBed.inject(AchievementsService),
-      profiles: TestBed.inject(UserProfileService),
+      adaptiveGoal: TestBed.inject(AdaptiveGoalService),
       foodLog: TestBed.inject(FoodLogService),
       weightLog: TestBed.inject(WeightLogService),
     };
@@ -95,7 +95,7 @@ describe('AchievementsService', () => {
   });
 
   it('completes the weekly badges once the day target is met', () => {
-    const { achievements, foodLog, profiles } = setup();
+    const { achievements, foodLog, adaptiveGoal } = setup();
 
     expect(badge(achievements.achievements(), 'perfect-week').progressLabel).toBe('0/7 dage');
 
@@ -105,7 +105,7 @@ describe('AchievementsService', () => {
         id: 'y',
         name: 'Stor dag',
         quantity: '1 portion',
-        kcal: profiles.kcalTarget(),
+        kcal: adaptiveGoal.kcalTarget(),
         protein: 300,
         carbs: 0,
         fat: 0,

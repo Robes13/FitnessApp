@@ -2,9 +2,9 @@ import { Injectable, Signal, computed, inject } from '@angular/core';
 import { MEALS } from '../../../core/constants/meals';
 import { LoggedFood } from '../../../core/models/food';
 import { MealId } from '../../../core/models/meal';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
 import { FoodLogService } from '../../../core/services/food-log';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
-import { UserProfileService } from '../../../core/services/user-profile';
 import { formatDayLabel } from '../../../core/utils/date-format';
 import { NOW } from '../../../core/utils/now';
 import { ProgressBarTone } from '../../../shared/components/ui-progress-bar/ui-progress-bar';
@@ -55,21 +55,20 @@ export interface MealGroupView {
 /**
  * The derived values on the Mad screen (the design's `kcalRing`, `macros` and `meals`).
  *
- * The service owns no state – it reads `FoodLogService` and `UserProfileService` and computes
+ * The service owns no state – it reads `FoodLogService` and `AdaptiveGoalService` and computes
  * further with `computed()`, so the page only contains presentation. It's provided on the route
  * (`FOOD_ROUTES`), because the values are only used by this feature.
  */
 @Injectable()
 export class FoodViewService {
   private readonly foodLog = inject(FoodLogService);
-  private readonly userProfile = inject(UserProfileService);
   private readonly calculator = inject(NutritionCalculator);
   private readonly now = inject(NOW);
 
   /** The design's `todayLabel`, e.g. `'Mandag 21. sep'`. The day doesn't change while the screen is open. */
   readonly todayLabel = formatDayLabel(this.now());
 
-  readonly kcalTarget: Signal<number> = this.userProfile.kcalTarget;
+  readonly kcalTarget: Signal<number> = inject(AdaptiveGoalService).kcalTarget;
   readonly kcalEaten = computed(() => this.foodLog.totals().kcal);
   /** Target − eaten. Can be negative: the scanner's verdict computes further on it. */
   readonly kcalRemaining = computed(() => this.kcalTarget() - this.kcalEaten());

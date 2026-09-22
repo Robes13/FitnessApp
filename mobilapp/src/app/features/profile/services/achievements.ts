@@ -1,5 +1,6 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
 import { MACRO_SPLIT, KCAL_PER_GRAM } from '../../../core/constants/nutrition';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
 import { BarcodeScannerService } from '../../../core/services/barcode-scanner';
 import { CollectionsService } from '../../../core/services/collections';
 import { FoodLogService } from '../../../core/services/food-log';
@@ -64,6 +65,7 @@ interface WeekStats {
 @Injectable({ providedIn: 'root' })
 export class AchievementsService {
   private readonly profiles = inject(UserProfileService);
+  private readonly adaptiveGoal = inject(AdaptiveGoalService);
   private readonly foodLog = inject(FoodLogService);
   private readonly weightLog = inject(WeightLogService);
   private readonly collections = inject(CollectionsService);
@@ -78,7 +80,7 @@ export class AchievementsService {
    * can supply the earlier days.
    */
   private readonly weekStats: Signal<WeekStats> = computed(() => {
-    const kcalTarget = this.profiles.kcalTarget();
+    const kcalTarget = this.adaptiveGoal.kcalTarget();
     const totals = this.foodLog.totals();
     const proteinGoalPerDay = Math.round(
       (kcalTarget * MACRO_SPLIT.protein) / KCAL_PER_GRAM.protein,

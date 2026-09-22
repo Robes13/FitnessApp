@@ -4,6 +4,7 @@ import {
   GenderDefinition,
   GoalDefinition,
   IntensityDefinition,
+  IntensityId,
   PaceDefinition,
   UnitSystemDefinition,
 } from '../models/profile';
@@ -155,6 +156,42 @@ export const GOAL_BMI_MAX = 35;
 /** Step conversion (the design's `stepKm` / `stepKcal`). */
 export const KM_PER_STEP = 0.00075;
 export const KCAL_PER_STEP_PER_KG = 0.00045;
+
+/**
+ * Metabolic equivalents per training intensity (Compendium of Physical Activities, Ainsworth
+ * et al. 2011/Herrmann et al. 2024): light ≈ 3.5 (brisk walk, easy cycling), moderate ≈ 5
+ * (jog, strength with rests), vigorous ≈ 8 (intervals, heavy lifting). 1 MET ≈ 1 kcal/kg/h.
+ */
+export const TRAINING_MET: Readonly<Record<IntensityId, number>> = {
+  mildt: 3.5,
+  moderat: 5,
+  haardt: 8,
+};
+/** Resting MET. It is subtracted, because BMR × PAL already covers resting during the session. */
+export const RESTING_MET = 1;
+/** Intensity used when the user trains but hasn't chosen an RPE. */
+export const TRAINING_FALLBACK_INTENSITY: IntensityId = 'moderat';
+
+/**
+ * Adaptive target: over the last `ADAPTIVE_WINDOW_DAYS` completed days the actual expenditure
+ * is estimated from logged intake and the weight trend, and the target is nudged towards it.
+ */
+export const ADAPTIVE_WINDOW_DAYS = 21;
+/** Minimum number of fully logged days (see `ADAPTIVE_MIN_DAY_FRACTION`). */
+export const ADAPTIVE_MIN_LOGGED_DAYS = 10;
+/**
+ * A day only counts as logged when its kcal reach this share of the formula expenditure.
+ * Below that the day was most likely logged only partly (a forgotten dinner), and counting it
+ * would make the estimate think the user eats less than they do.
+ */
+export const ADAPTIVE_MIN_DAY_FRACTION = 0.5;
+/** Minimum number of weigh-ins and the minimum number of days between the first and last. */
+export const ADAPTIVE_MIN_WEIGH_INS = 2;
+export const ADAPTIVE_MIN_WEIGHT_SPAN_DAYS = 14;
+/** The adjustment never moves the target more than this many kcal either way. */
+export const ADAPTIVE_MAX_ADJUSTMENT_KCAL = 300;
+/** Energy in one kg of body weight change (the common 7700 kcal/kg rule of thumb). */
+export const KCAL_PER_KG_BODY_WEIGHT = 7700;
 
 /** Max number of results in food search. */
 export const FOOD_SEARCH_MAX_RESULTS = 6;
