@@ -1,3 +1,5 @@
+import { roundTo } from '../../../../core/utils/math';
+
 /**
  * Vægtgrafens geometri – en port af designets `pts` / `linePath` / `areaPath` / `goalLineY`.
  *
@@ -27,7 +29,6 @@ const PLOT_HEIGHT = 90;
 /** Luft over og under yderpunkterne, så kurven ikke rører kanten. */
 const PADDING_KG = 0.5;
 /** Én decimal i path-data holder DOM'en læsbar. */
-const PATH_PRECISION = 10;
 
 const EMPTY_GEOMETRY: WeightChartGeometry = {
   linePath: '',
@@ -36,10 +37,6 @@ const EMPTY_GEOMETRY: WeightChartGeometry = {
   lastX: WEIGHT_CHART_WIDTH,
   lastY: BASELINE_Y,
 };
-
-function round(value: number): number {
-  return Math.round(value * PATH_PRECISION) / PATH_PRECISION;
-}
 
 export function computeWeightChartGeometry(
   valuesKg: readonly number[],
@@ -53,8 +50,9 @@ export function computeWeightChartGeometry(
 
   const min = Math.min(...valuesKg, goalKg) - PADDING_KG;
   const max = Math.max(...valuesKg, goalKg) + PADDING_KG;
-  const x = (index: number): number => round((index / lastIndex) * WEIGHT_CHART_WIDTH);
-  const y = (kg: number): number => round(BASELINE_Y - ((kg - min) / (max - min)) * PLOT_HEIGHT);
+  const x = (index: number): number => roundTo((index / lastIndex) * WEIGHT_CHART_WIDTH, 1);
+  const y = (kg: number): number =>
+    roundTo(BASELINE_Y - ((kg - min) / (max - min)) * PLOT_HEIGHT, 1);
 
   const linePath = valuesKg
     .map((kg, index) => `${index ? 'L' : 'M'}${x(index)} ${y(kg)}`)

@@ -1,3 +1,5 @@
+import { roundTo } from '../../../../../../core/utils/math';
+
 /**
  * Kagens geometri i figur-SVG'ets koordinatsystem (`viewBox 0 0 260 300`).
  * Direkte port af designets `cakeLayers` og `candles`: antallet af lag følger alderen,
@@ -78,10 +80,6 @@ const DELAY_STEP = 0.11;
 
 const DECIMALS = 1;
 
-function round1(value: number): number {
-  return Math.round(value * 10 ** DECIMALS) / 10 ** DECIMALS;
-}
-
 export function cakeTierCount(age: number): number {
   if (age < TWO_TIER_AGE) {
     return 1;
@@ -102,7 +100,7 @@ function buildLayers(tiers: number): readonly CakeTier[] {
       () => `q -${half} ${SCALLOP_DEPTH} -${full} 0`,
     ).join(' ');
     return {
-      x: round1(x),
+      x: roundTo(x, 1),
       y,
       width,
       height: TIER_HEIGHT,
@@ -149,17 +147,17 @@ function buildCandles(age: number, top: number, surfaceRx: number): readonly Cak
       const footY = top + ry * Math.sin(angle);
       const height = CANDLE_BASE_HEIGHT - ring;
       const topY = footY - height;
-      const flameY = round1(topY);
-      const cx = round1(centreX);
+      const flameY = roundTo(topY, 1);
+      const cx = roundTo(centreX, 1);
       candles.push({
-        x: round1(centreX - CANDLE_WIDTH / 2),
+        x: roundTo(centreX - CANDLE_WIDTH / 2, 1),
         y: flameY,
         width: CANDLE_WIDTH,
         height,
         radius: CANDLE_RADIUS,
-        stripeY: round1(topY + CANDLE_STRIPE_OFFSET),
+        stripeY: roundTo(topY + CANDLE_STRIPE_OFFSET, 1),
         centreX: cx,
-        glowY: round1(topY - FLAME_OFFSET),
+        glowY: roundTo(topY - FLAME_OFFSET, 1),
         flamePath: `M${cx} ${flameY} c -3 -3 -3 -7 0 -10 c 3 3 3 7 0 10 z`,
         corePath: `M${cx} ${flameY} c -1.3 -1.6 -1.3 -3.6 0 -5.2 c 1.3 1.6 1.3 3.6 0 5.2 z`,
         colourClass: `birthday-cake__candle--${(ring + index) % CANDLE_COLOUR_COUNT}`,
@@ -181,8 +179,8 @@ export function computeCakeGeometry(age: number): CakeGeometry {
     tiers,
     top,
     layers: buildLayers(tiers),
-    surfaceRx: round1(surfaceRx),
-    surfaceRxInner: round1(surfaceRx - SURFACE_INNER_INSET),
+    surfaceRx: roundTo(surfaceRx, 1),
+    surfaceRxInner: roundTo(surfaceRx - SURFACE_INNER_INSET, 1),
     numberY: top + NUMBER_OFFSET_Y,
     candles: buildCandles(age, top, surfaceRx - SURFACE_INSET),
   };

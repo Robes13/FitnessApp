@@ -1,3 +1,5 @@
+import { roundTo } from '../../../core/utils/math';
+
 /**
  * Linealens geometri – en generisk port af designets `ruler(min, max, val, step, bleed)` og
  * `stepRuler(val, bleed)`. Én streg pr. `tickUnit` (1 kg, 1 cm, 100 skridt …), `pxPerTick`
@@ -66,7 +68,6 @@ const GLOW_THRESHOLD = 0.06;
 const GLOW_ALPHA_BASE = 0.3;
 const GLOW_ALPHA_RANGE = 0.7;
 const PERCENT = 100;
-const PX_PRECISION = 100;
 const EPSILON = 1e-9;
 
 const EMPTY_GEOMETRY: RulerGeometry = { ticks: [], labels: [], offset: 0 };
@@ -74,11 +75,6 @@ const EMPTY_GEOMETRY: RulerGeometry = { ticks: [], labels: [], offset: 0 };
 /** Standardetiket: værdien som den er. */
 export function formatRulerLabel(tickValue: number): string {
   return String(tickValue);
-}
-
-/** Runder px til to decimaler, så DOM'en ikke fyldes med flydende-tal-støj (5,6 × 58 …). */
-function roundPx(value: number): number {
-  return Math.round(value * PX_PRECISION) / PX_PRECISION;
 }
 
 export function computeRulerGeometry(options: RulerGeometryOptions): RulerGeometry {
@@ -108,7 +104,7 @@ export function computeRulerGeometry(options: RulerGeometryOptions): RulerGeomet
         : isMid
           ? TICK_HEIGHT.mid
           : TICK_HEIGHT.minor;
-    const x = roundPx(index * pxPerTick);
+    const x = roundTo(index * pxPerTick, 2);
 
     ticks.push({
       x,
@@ -125,5 +121,5 @@ export function computeRulerGeometry(options: RulerGeometryOptions): RulerGeomet
     }
   }
 
-  return { ticks, labels, offset: roundPx(-valueTicks * pxPerTick) };
+  return { ticks, labels, offset: roundTo(-valueTicks * pxPerTick, 2) };
 }

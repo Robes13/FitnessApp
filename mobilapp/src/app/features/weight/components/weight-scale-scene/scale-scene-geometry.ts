@@ -1,4 +1,5 @@
 import { FigureBandTone } from '../../../../shared/components/figure';
+import { roundTo } from '../../../../core/utils/math';
 
 /**
  * Vægt-scenens partikler og toner – en port af designets `vfig`.
@@ -64,10 +65,6 @@ export const SAVE_JUMP_Y = -34;
 export const SCENE_WIDTH_PX = 150;
 export const SCENE_HEIGHT_PX = 236;
 
-function roundTenth(value: number): number {
-  return Math.round(value * 10) / 10;
-}
-
 function positive(progressKg: number): number {
   return Math.max(0, progressKg);
 }
@@ -103,18 +100,18 @@ export function sweatDrops(progressKg: number, headY: number, bodyY: number): re
     [112, bodyY + 34],
   ];
   return spots.slice(0, count).map(([x, y], index) => ({
-    x: roundTenth(x),
-    y: roundTenth(y + SWEAT_Y_OFFSET),
-    duration: roundTenth(1.1 + (index % 3) * 0.35),
-    delay: roundTenth(index * 0.23),
+    x: roundTo(x, 1),
+    y: roundTo(y + SWEAT_Y_OFFSET, 1),
+    duration: roundTo(1.1 + (index % 3) * 0.35, 1),
+    delay: roundTo(index * 0.23, 1),
   }));
 }
 
 export function puddleSize(progressKg: number): PuddleSize {
   const progress = positive(progressKg);
   return {
-    rx: roundTenth(Math.min(PUDDLE_RX_MAX, progress * PUDDLE_RX_PER_KG)),
-    ry: roundTenth(Math.min(PUDDLE_RY_MAX, progress * PUDDLE_RY_PER_KG)),
+    rx: roundTo(Math.min(PUDDLE_RX_MAX, progress * PUDDLE_RX_PER_KG), 1),
+    ry: roundTo(Math.min(PUDDLE_RY_MAX, progress * PUDDLE_RY_PER_KG), 1),
   };
 }
 
@@ -123,9 +120,9 @@ export function steamPuffs(progressKg: number, headY: number): readonly SteamPuf
     return [];
   }
   return [
-    { x: 80, y: roundTenth(headY - 30), delay: 0 },
-    { x: 100, y: roundTenth(headY - 34), delay: 0.6 },
-    { x: 120, y: roundTenth(headY - 30), delay: 1.2 },
+    { x: 80, y: roundTo(headY - 30, 1), delay: 0 },
+    { x: 100, y: roundTo(headY - 34, 1), delay: 0.6 },
+    { x: 120, y: roundTo(headY - 30, 1), delay: 1.2 },
   ];
 }
 

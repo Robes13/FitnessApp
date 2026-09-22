@@ -1,3 +1,5 @@
+import { roundTo } from '../../../core/utils/math';
+
 /**
  * Figurens (maskottens) geometri – en nøjagtig port af designets `figure(w, h, mood)`.
  *
@@ -69,14 +71,6 @@ const HEAD_RADIUS = 26;
 /** Loftets y-position (loftet vises fra 212 cm). */
 const CEILING_Y = 92;
 
-/**
- * Runder til én decimal, som designet gør for alle udledte mål. `+ 0` normaliserer `-0`
- * (fx `-28 * 0`) til `0`, så værdierne kan sammenlignes strengt; SVG-attributten er den samme.
- */
-function roundTenth(value: number): number {
-  return Math.round(value * 10) / 10 + 0;
-}
-
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
@@ -104,7 +98,8 @@ export function computeFigureGeometry(
     headY = ceilY + HEAD_RADIUS + (headY - HEAD_RADIUS - ceilY) * 0.15;
   }
   const handY = bodyY + torsoH * 0.72;
-  const r = roundTenth;
+  /** Alle udledte mål rundes til én decimal, som designet gør. */
+  const r = (value: number): number => roundTo(value, 1);
   const lift = Math.max(0, m) * (torsoH * 0.9);
   const open = clamp01((weightKg - 180) / 60);
   const duck = clamp01((heightCm - 230) / 20);

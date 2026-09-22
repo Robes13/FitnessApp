@@ -13,12 +13,11 @@ import {
 import { GoalId } from '../models/profile';
 import { WeighEntry, WeightPoint, WeightRange } from '../models/weight';
 import { addDays, isSameDay } from '../utils/date-format';
+import { roundTo } from '../utils/math';
 import { NOW } from '../utils/now';
 import { IdService } from './id';
 import { StorageService } from './storage';
 import { UserProfileService } from './user-profile';
-
-const ONE_DECIMAL = 10;
 
 /**
  * Vejninger, nyeste først. `add()` opdaterer også profilens vægt, så Hjem, Mad og
@@ -45,7 +44,7 @@ export class WeightLogService {
   add(kg: number, at: Date = this.now()): WeighEntry {
     const entry: WeighEntry = {
       id: this.ids.next('weigh'),
-      kg: roundToOneDecimal(kg),
+      kg: roundTo(kg, 1),
       at: at.toISOString(),
     };
     this.setEntries(sortNewestFirst([entry, ...this.entriesState()]));
@@ -93,14 +92,10 @@ export class WeightLogService {
     const now = this.now();
     return DEMO_WEIGHT_SEED.map((seed) => ({
       id: this.ids.next('weigh'),
-      kg: roundToOneDecimal(weightKg + (goal === 'tage' ? seed.deltaKgWhenGaining : seed.deltaKg)),
+      kg: roundTo(weightKg + (goal === 'tage' ? seed.deltaKgWhenGaining : seed.deltaKg), 1),
       at: addDays(now, -seed.daysAgo).toISOString(),
     }));
   }
-}
-
-function roundToOneDecimal(value: number): number {
-  return Math.round(value * ONE_DECIMAL) / ONE_DECIMAL;
 }
 
 function sortNewestFirst(entries: readonly WeighEntry[]): readonly WeighEntry[] {

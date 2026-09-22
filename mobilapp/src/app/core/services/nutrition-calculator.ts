@@ -39,7 +39,7 @@ import {
   PaceDefinition,
   UserProfile,
 } from '../models/profile';
-import { clamp } from '../utils/math';
+import { clamp, roundTo } from '../utils/math';
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})/;
 const EMAIL_PATTERN = /\S+@\S+\.\S+/;
@@ -47,7 +47,6 @@ const UPPERCASE_PATTERN = /[A-ZÆØÅ]/;
 const DIGIT_PATTERN = /\d/;
 const LEADING_NUMBER_PATTERN = /^[\d.,\s]+/;
 const CM_PER_M = 100;
-const ONE_DECIMAL = 10;
 
 const PASSWORD_STRENGTHS: readonly PasswordStrength[] = [
   { score: 0, percent: 30, label: 'Svag', tone: 'negative' },
@@ -87,7 +86,7 @@ export class NutritionCalculator {
 
   /** BMI med én decimal. */
   bmi(kg: number, cm: number): number {
-    return roundTo(rawBmi(kg, cm), ONE_DECIMAL);
+    return roundTo(rawBmi(kg, cm), 1);
   }
 
   /** Basalstofskifte (Mifflin-St Jeor). Alder 0 → 30 år; `andet`/ukendt køn → gennemsnit. */
@@ -249,10 +248,6 @@ function rawBmi(kg: number, cm: number): number {
   }
   const metres = cm / CM_PER_M;
   return kg / (metres * metres);
-}
-
-function roundTo(value: number, factor: number): number {
-  return Math.round(value * factor) / factor;
 }
 
 function lastOf<T>(list: readonly T[]): T {

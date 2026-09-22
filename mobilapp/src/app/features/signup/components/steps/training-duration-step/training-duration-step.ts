@@ -5,7 +5,7 @@ import {
   TRAINING_MIN_MINUTES,
 } from '../../../../../core/constants/nutrition';
 import { Gender } from '../../../../../core/models/profile';
-import { clamp } from '../../../../../core/utils/math';
+import { clamp, roundTo } from '../../../../../core/utils/math';
 import {
   FigureBandTone,
   FigureBody,
@@ -46,11 +46,6 @@ const BOB_DURATION_S = 1.6;
 const FIGURE_MOOD = 0.5;
 
 const RULER_STEP = 5;
-
-/** Designet skriver buen med én og varigheden med to decimaler. */
-function round(value: number, factor: number): number {
-  return Math.round(value * factor) / factor;
-}
 
 function bandToneFor(gender: Gender | null): FigureBandTone {
   if (gender === 'kvinde') {
@@ -122,13 +117,13 @@ export class TrainingDurationStep {
 
   /** Ringens resterende stregmængde – 0 ved 180 minutter. */
   protected readonly arcOffset = computed(() =>
-    round(DIAL_CIRCUMFERENCE * (1 - this.minutes() / TRAINING_MAX_MINUTES), 10),
+    roundTo(DIAL_CIRCUMFERENCE * (1 - this.minutes() / TRAINING_MAX_MINUTES), 1),
   );
 
   protected readonly sweepDuration = computed(() =>
-    round(
+    roundTo(
       Math.max(SWEEP_MIN_DURATION_S, SWEEP_BASE_DURATION_S - this.minutes() / SWEEP_DIVISOR),
-      100,
+      2,
     ),
   );
 

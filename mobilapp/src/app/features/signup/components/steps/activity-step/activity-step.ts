@@ -12,7 +12,7 @@ import { STEPS_MAX, STEPS_MIN } from '../../../../../core/constants/nutrition';
 import { Gender } from '../../../../../core/models/profile';
 import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator';
 import { formatDecimal, formatInteger } from '../../../../../core/utils/date-format';
-import { clamp } from '../../../../../core/utils/math';
+import { clamp, roundTo } from '../../../../../core/utils/math';
 import { animatedFigure, computeFigureGeometry } from '../../../../../shared/components/figure';
 import {
   RULER_BLEED_IDLE_STRONG,
@@ -115,11 +115,6 @@ interface WalkExtras {
   readonly medalRibbon: string;
   readonly speedY1: number;
   readonly speedY2: number;
-}
-
-/** Designet skriver animationernes varighed med to decimaler. */
-function roundSeconds(value: number): number {
-  return Math.round(value * 100) / 100;
 }
 
 /** Designets svededråbe – samme path i alle scener. */
@@ -259,10 +254,10 @@ export class ActivityStep {
             WALK_MIN_DURATION_S,
             WALK_BASE_DURATION_S - (steps / WALK_SPEED_DIVISOR) * WALK_SPEED_RANGE_S,
           );
-    return roundSeconds(duration);
+    return roundTo(duration, 2);
   });
   protected readonly groundDuration = computed(() =>
-    roundSeconds(this.walkDuration() * GROUND_DURATION_FACTOR),
+    roundTo(this.walkDuration() * GROUND_DURATION_FACTOR, 2),
   );
   protected readonly walkPlayState = computed(() =>
     this.steps() < WALK_PAUSE_STEPS ? 'paused' : 'running',

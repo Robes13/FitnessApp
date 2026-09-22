@@ -11,7 +11,7 @@ import {
   formatSignedDecimal,
   formatTime,
 } from '../../../core/utils/date-format';
-import { clamp } from '../../../core/utils/math';
+import { clamp, roundTo } from '../../../core/utils/math';
 import { NOW } from '../../../core/utils/now';
 
 /** Tonen på et vægtskifte: grøn når det går den rigtige vej, rød når det ikke gør. */
@@ -60,10 +60,6 @@ const MAINTAIN_TOLERANCE_KG = 0.5;
 const MAX_LOG_ROWS = 6;
 /** Designets `good` for "hold": afvigelsen fra målet med en lille bonus. */
 const MAINTAIN_PROGRESS_BONUS_KG = 0.3;
-
-function roundToTenths(kg: number): number {
-  return Math.round(kg * TENTHS_PER_KG) / TENTHS_PER_KG;
-}
 
 /**
  * Designets farvelogik for et vægtskifte: "tage på" belønner en stigning, "holde vægten"
@@ -114,7 +110,7 @@ export class WeightViewService {
   /** Kladdevægten, brugeren er ved at registrere (designets `nw`). */
   readonly draftKg = computed(() => {
     const override = this.draftTenths();
-    return override === null ? roundToTenths(this.profileWeightKg()) : override / TENTHS_PER_KG;
+    return override === null ? roundTo(this.profileWeightKg(), 1) : override / TENTHS_PER_KG;
   });
 
   readonly draftText = computed(() => formatDecimal(this.draftKg()));
@@ -135,7 +131,7 @@ export class WeightViewService {
   readonly deltaTone = computed(() => weightChangeTone(this.deltaKg(), this.goal()));
 
   readonly toGoalKg = computed(() => Math.abs(this.goalWeightKg() - this.draftKg()));
-  readonly toGoalText = computed(() => formatDecimal(roundToTenths(this.toGoalKg())));
+  readonly toGoalText = computed(() => formatDecimal(roundTo(this.toGoalKg(), 1)));
 
   /**
    * Designets `good`: hvor langt kladden er kommet i den rigtige retning. Styrer figurens
