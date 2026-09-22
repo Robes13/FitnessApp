@@ -266,14 +266,11 @@ backend at kalde – hvert auth-kald fejler med "Der er ingen forbindelse til en
 server endnu." Login og oprettelse virker derfor først, når backenden findes.
 
 Det, brugeren selv registrerer, gemmes lokalt gennem `StorageService`
-(browserens `localStorage`): profil, dagens madlog, egne varer, vejninger,
-egne samlinger, tema, antal scanninger og påmindelser. Madloggen er bundet til dagens dato
-og starter tom hver dag; alt andet bliver liggende.
-
-Appen kender derfor kun dagen i dag. Hjems ugeringe, ugens nøgletal og
-badge-tællerne viser `–` eller 0 for alle dage uden data i stedet for at gætte,
-og historikken rummer kun dagens måltider og brugerens vejninger. Når et API
-kommer til, er det de steder, historikken skal ind.
+(browserens `localStorage`): profil, madlog, egne varer, vejninger, egne samlinger,
+tema, antal scanninger, påmindelser og opslåede stregkodevarer. Madloggen gemmes pr. dato
+i 90 dage, så Hjems ugeringe, ugens nøgletal og Historik viser tidligere dage. Dage uden
+data vises som `–` eller 0 i stedet for at gætte. Når et API kommer til, skal de lokale
+stores synkroniseres med det.
 
 ### Test og build
 

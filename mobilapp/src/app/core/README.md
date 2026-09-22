@@ -23,10 +23,12 @@ rene hjælpefunktioner. `core` må **ikke** importere fra `shared/` eller `featu
   tilstanden i konstruktøren. Nøglerne står i `constants/storage-key.ts`.
 - **Tid injiceres.** Alt der skal kende "nu" bruger `NOW` fra `utils/now.ts` i stedet for
   `new Date()`, så tests kan fastfryse tiden.
-- **Forsinkelser er tokens.** De kunstige svartider (`FOOD_SEARCH_DELAY_MS`, `SCAN_DELAY_MS`)
+- **Forsinkelser er tokens.** De kunstige svartider (`FOOD_SEARCH_DELAY_MS`, `AUTH_API_DELAY_MS`)
   kan sættes til 0 i tests.
-- **Ingen demo-data.** Appen starter tom: der er hverken varedatabase, retter, faste samlinger
-  eller seedede logs, og `AuthApi` har endnu ingen backend at kalde. Alt indhold kommer fra
+- **Native plugins bag tokens.** Capacitor-kald ligger i tynde adaptere bag et interface
+  (`REMINDER_NOTIFIER`, `BARCODE_SCANNER_PLATFORM`), så specs kan give en fake.
+- **Ingen demo-data.** Appen starter tom: der er hverken egen varedatabase, retter, faste samlinger
+  eller seedede logs, og `AuthApi` har endnu ingen backend at kalde – signup-kaldene er stubs. Alt indhold kommer fra
   brugeren, indtil et API er koblet på.
 
 ## Navngivning

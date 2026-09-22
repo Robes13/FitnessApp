@@ -19,6 +19,7 @@ Dansk dato- og talformatering som i designet:
 | `formatInteger(6000)`                               | `'6.000'`                                  |
 | `mondayIndex(date)`                                 | `0` = mandag … `6` = søndag                |
 | `toIsoDate(date)`                                   | `'2026-09-21'` (lokal tid)                 |
+| `fromIsoDate('2026-09-21')`                         | lokal midnat den dag (omvendt `toIsoDate`) |
 | `startOfDay`, `addDays`, `isSameDay`, `daysBetween` | dato-aritmetik på kalenderdage             |
 
 Navnelister: `DAY_NAMES_SHORT`, `DAY_NAMES_LONG`, `DAY_LETTERS`, `MONTH_NAMES_LONG`,
@@ -27,6 +28,11 @@ Navnelister: `DAY_NAMES_SHORT`, `DAY_NAMES_LONG`, `DAY_LETTERS`, `MONTH_NAMES_LO
 Talformateringen er `Number.prototype.toLocaleString('da-DK', …)` — ikke håndlavede
 separatorer. Kun det typografiske minus i `formatSignedDecimal` sættes bagefter, fordi
 `Intl` bruger en almindelig bindestreg.
+
+## `clock-time.ts`
+
+`formatClockTime({ hour: 7, minute: 5 })` → `'07:05'` og `parseClockTime('07:05')` → `ClockTime`
+(eller `null`) – formatet i `<input type="time">`. `isClockTime` validerer gemte tider.
 
 ## `math.ts`
 
@@ -37,6 +43,12 @@ afrundede værdier kan sammenlignes strengt.
 Begge bruges overalt, hvor der ellers ville stå `Math.min(max, Math.max(min, x))` eller
 `Math.round(x * 10) / 10` lokalt — geometri-modulerne, opret-flowets trin, Vægt, Hjem og
 `NutritionCalculator`.
+
+## `name.ts`
+
+`normalizeName(name)` trimmer og laver små bogstaver med dansk locale
+(`toLocaleLowerCase('da')`). Bruges til dubletkontrol af navne på samlinger
+(`CollectionsService`) og egne varer (`FoodLogService`).
 
 ## `id.ts`
 
