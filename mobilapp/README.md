@@ -221,7 +221,12 @@ syntetiske og skal skiftes ud, når der findes en rigtig backend.
 ```bash
 npm run build          # produktionsbuild – skal være uden fejl og advarsler
 npx ng test --watch=false
+npx prettier --check src   # formatering; --write retter
 ```
+
+Formateringen er **ikke** håndhævet automatisk: der findes hverken et
+`format`-script, en pre-commit-hook eller CI, så `npx prettier --write src`
+skal køres manuelt, før man committer. Se «Næste skridt».
 
 `src/app/app-integration.spec.ts` dækker sammenkoblingen mellem features:
 dybe links til Mad, tab barens synlighed, bekræftelses-arket på Hjem,
@@ -232,3 +237,6 @@ omdirigering efter log ud og temaskiftet.
 - Rigtig backend i stedet for `AuthApi`-mocken og de syntetiske historik-tal
 - App-ikoner og splash screens (`@capacitor/assets`)
 - ESLint + Stylelint, så reglerne i `ARCHITECTURE.md` håndhæves automatisk
+- `"format": "prettier --write src"` og `"format:check": "prettier --check src"`
+  i `package.json` plus en pre-commit-hook eller et CI-trin, så formateringen
+  ikke skrider igen

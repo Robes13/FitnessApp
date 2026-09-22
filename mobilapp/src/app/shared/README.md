@@ -16,7 +16,8 @@ UI, flyttes det hertil; skal de dele logik eller typer, flyttes det til `core`.
   brugere – kun til det, den skal tegne. Core-services injiceres kun, hvor spec'en siger det
   (fx `FoodPicker`, `BarcodeScanner`).
 - **Én komponent pr. mappe**, filnavne i kebab-case uden `.component`-suffiks
-  (`ui-button.ts`, `ui-button.html`, `ui-button.scss`, `ui-button.spec.ts`). Klassen hedder
+  (`ui-button.ts`, `ui-button.html`, `ui-button.scss`) – plus en `.spec.ts`, hvor
+  komponenten har logik, der er værd at teste. Klassen hedder
   `UiButton`, selectoren `app-ui-button` – eller en attribut-selector
   (`button[app-ui-button]`), når komponenten skal sidde på et native element for at beholde
   dets semantik (`disabled`, `type`, `routerLink`).
