@@ -1,0 +1,30 @@
+<div class="ui-ruler__centre-line"></div>
+<div class="ui-ruler__track">
+  @for (tick of ticks(); track tick.x) {
+    <div
+      class="ui-ruler__tick"
+      [class]="tick.cssClass"
+      [style.left.px]="tick.x"
+      [style.height.px]="tick.height"
+      [style.--ruler-tick-glow.%]="tick.glowPercent"
+    ></div>
+  }
+  @for (label of labels(); track label.x) {
+    <div class="ui-ruler__label" [style.left.px]="label.x">{{ label.text }}</div>
+  }
+</div>
+<div
+  #range
+  class="ui-ruler__range"
+  role="slider"
+  tabindex="0"
+  [attr.aria-label]="ariaLabelAttr()"
+  [attr.aria-valuemin]="min()"
+  [attr.aria-valuemax]="max()"
+  [attr.aria-valuenow]="value()"
+  (pointerdown)="onPointerDown($event)"
+  (pointermove)="onPointerMove($event)"
+  (pointerup)="onPointerUp()"
+  (pointercancel)="onPointerUp()"
+  (keydown)="onKeyDown($event)"
+></div>

@@ -1,0 +1,89 @@
+/*
+ * Lineal. Geometrien (stregernes x, højde og glød samt sporets forskydning) bindes fra
+ * TypeScript som px og CSS-variabler; alt andet er tokens.
+ */
+:host {
+  position: relative;
+  display: block;
+  height: var(--size-ruler-h);
+  overflow: hidden;
+}
+
+:host(.ui-ruler--lg) {
+  height: var(--size-ruler-h-lg);
+}
+
+.ui-ruler {
+  &__centre-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    z-index: var(--z-index-raised);
+    width: var(--border-width-medium);
+    background: var(--color-accent);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  /* Sporet: 40 px højt, sidder i bunden og trækkes med `--ruler-offset` fra værten. */
+  &__track {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: var(--space-10);
+    transform: translateX(var(--ruler-offset));
+    transition: transform var(--duration-instant) linear;
+    pointer-events: none;
+  }
+
+  &__tick {
+    position: absolute;
+    top: 50%;
+    width: var(--border-width-thin);
+    margin-left: calc(-1 * var(--space-px));
+    border-radius: var(--radius-hairline);
+    background: var(--color-ruler-tick-minor);
+    transform: translateY(-50%);
+
+    &--major,
+    &--current {
+      width: var(--border-width-medium);
+      background: var(--color-ruler-tick-major);
+    }
+
+    &--current {
+      background: var(--color-accent);
+    }
+
+    /* Orange glød nær den aktuelle værdi; styrken bindes pr. streg som `--ruler-tick-glow`. */
+    &--glow {
+      background: color-mix(in srgb, var(--color-accent) var(--ruler-tick-glow), transparent);
+    }
+  }
+
+  &__label {
+    position: absolute;
+    top: calc(-1 * var(--space-7));
+    font-size: var(--font-size-md);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    transform: translateX(-50%);
+  }
+
+  /* Usynligt lag over hele linealen, der tager imod træk og tastatur. */
+  &__range {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-index-base);
+    cursor: ew-resize;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Den store lineal (vægt-siden) har sporet 6 px over bunden, som i designet. */
+:host(.ui-ruler--lg) .ui-ruler__track {
+  bottom: var(--space-1-5);
+}

@@ -1,0 +1,11 @@
+<span class="ui-option-card__leading"><ng-content select="[optionLeading]" /></span>
+<span class="ui-option-card__text">
+  <span class="ui-option-card__label">{{ label() }}</span>
+  @if (description()) {
+    <span class="ui-option-card__description">{{ description() }}</span>
+  }
+</span>
+<span class="ui-option-card__trailing"><ng-content select="[optionTrailing]" /></span>
+@if (hasRadio()) {
+  <span class="ui-option-card__radio" aria-hidden="true"></span>
+}

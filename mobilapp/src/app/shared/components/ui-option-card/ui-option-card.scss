@@ -1,0 +1,134 @@
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--size-control-2xl);
+  padding: var(--space-3-5) var(--space-4-5);
+  border: var(--border-width-thin) solid var(--color-border-strong);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--duration-quick) var(--easing-standard),
+    background-color var(--duration-quick) var(--easing-standard);
+}
+
+:host(:hover) {
+  background: var(--color-surface-hover);
+}
+
+:host(:disabled) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Kompakt række: designets valgkort i redigeringsarket (58 px). */
+:host(.ui-option-card--row.ui-option-card--compact) {
+  min-height: var(--size-option-row-compact);
+  padding-block: var(--space-2-5);
+}
+
+/* Kolonne: intensitets-flisen – indikator øverst, tekst nederst (104 px høj). */
+:host(.ui-option-card--column) {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2-5);
+  min-height: var(--size-option-tile-min-height);
+  padding: var(--space-3);
+}
+
+/* Valgt tilstand pr. stil. */
+:host(.ui-option-card--selected.ui-option-card--style-selected) {
+  border-color: var(--color-selected);
+  background: var(--color-selected-soft);
+}
+
+:host(.ui-option-card--selected.ui-option-card--style-accent) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+
+  /* Designets `eo.fg`: hele kortets tekst bliver orange, når det er valgt. */
+  color: var(--color-accent);
+}
+
+:host(.ui-option-card--selected.ui-option-card--style-accent-radio) {
+  border-color: var(--color-accent);
+  background: var(--color-accent-tint);
+}
+
+:host(.ui-option-card--column) .ui-option-card__text {
+  flex: none;
+}
+
+:host(.ui-option-card--column) .ui-option-card__label {
+  font-size: var(--font-size-lg);
+}
+
+:host(.ui-option-card--column) .ui-option-card__description {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+/* Køn-kortene (designets `gendersBig`): 12 px undertekst i `--ink-3`. */
+:host(.ui-option-card--style-accent-radio) .ui-option-card__description {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+:host(.ui-option-card--selected) .ui-option-card__radio {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.ui-option-card {
+  &__leading,
+  &__trailing {
+    display: flex;
+    flex: none;
+    align-items: center;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  &__label {
+    display: block;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+  }
+
+  &__description {
+    display: block;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-snug);
+  }
+
+  /* 22 px radio-prik med 2 px kant; fyldes orange, når kortet er valgt. */
+  &__radio {
+    flex: none;
+    width: var(--size-icon-xl);
+    height: var(--size-icon-xl);
+    border: var(--border-width-medium) solid var(--color-border-stronger);
+    border-radius: var(--radius-circle);
+    background: transparent;
+    transition:
+      border-color var(--duration-quick) var(--easing-standard),
+      background-color var(--duration-quick) var(--easing-standard);
+  }
+}

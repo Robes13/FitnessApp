@@ -1,0 +1,58 @@
+@if (open()) {
+  <div class="ui-sheet__scrim" [class]="scrimClass()" (click)="onScrimClick($event)">
+    <div
+      #panel
+      class="ui-sheet__panel"
+      [class]="panelHeightClass()"
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      [attr.aria-label]="ariaLabel()"
+    >
+      <div class="ui-sheet__leading"><ng-content select="[sheetLeading]" /></div>
+      @if (hasHeader()) {
+        <div class="ui-sheet__header">
+          @if (hasTitle()) {
+            <h2 class="ui-sheet__title" [class]="titleSizeClass()">
+              <span class="ui-sheet__title-text">{{ title() }}</span>
+              @if (titleAccent()) {
+                <!-- Angular fjerner rene mellemrum mellem elementer; &ngsp; bevarer det ene. -->
+                @if (!titleAccentJoined()) {
+                  &ngsp;
+                }
+                <span
+                  class="ui-sheet__title-accent"
+                  [class.ui-sheet__title-accent--negative]="isNegativeAccent()"
+                  >{{ titleAccent() }}</span
+                >
+              }
+            </h2>
+          } @else {
+            <div class="ui-sheet__title-slot"><ng-content select="[sheetTitle]" /></div>
+          }
+          <div class="ui-sheet__header-extra"><ng-content select="[sheetHeaderExtra]" /></div>
+          @if (dismissible()) {
+            <button
+              app-ui-icon-button
+              size="xs"
+              type="button"
+              class="ui-sheet__close"
+              [attr.aria-label]="closeLabel()"
+              (click)="requestClose()"
+            >
+              <app-ui-icon name="close" size="md" />
+            </button>
+          }
+        </div>
+      }
+      <div
+        class="ui-sheet__body"
+        [class.ui-sheet__body--scrollable]="scrollable()"
+        [class.ui-sheet__body--column]="column()"
+      >
+        <ng-content />
+      </div>
+      <div class="ui-sheet__footer"><ng-content select="[sheetFooter]" /></div>
+    </div>
+  </div>
+}

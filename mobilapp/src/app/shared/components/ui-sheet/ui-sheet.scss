@@ -1,0 +1,159 @@
+@use 'mixins';
+
+/* Værten er kun en beholder; scrimmen er det lag, der ligger over app-roden. */
+:host {
+  display: contents;
+}
+
+.ui-sheet {
+  &__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-index-sheet);
+    display: flex;
+    align-items: flex-end;
+    padding: 0 var(--space-3) calc(var(--safe-area-bottom) + var(--space-5));
+    background: var(--color-scrim);
+    backdrop-filter: blur(var(--blur-sm));
+
+    &--sheet-high {
+      z-index: var(--z-index-sheet-high);
+    }
+
+    &--overlay {
+      z-index: var(--z-index-overlay);
+    }
+
+    &--top {
+      z-index: var(--z-index-sheet-top);
+    }
+  }
+
+  &__panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    width: 100%;
+    min-height: 0;
+    max-height: 78%;
+    padding: var(--space-5-5) var(--space-5-5) var(--space-5);
+    border: var(--border-width-thin) solid var(--color-border);
+    border-radius: var(--radius-3xl);
+    background: var(--color-sheet);
+    color: var(--color-text);
+    box-shadow: var(--shadow-sheet);
+
+    /* Panelet får fokus programmatisk; det er ikke en kontrol, så ingen fokusring. */
+    outline: none;
+
+    &--medium {
+      max-height: 88%;
+    }
+
+    &--tall {
+      max-height: 96%;
+    }
+
+    &--full {
+      max-height: calc(100% - var(--space-6));
+    }
+  }
+
+  /* Indhold over overskriften (designets ikon-cirkel og log-ud-mærke). */
+  &__leading {
+    display: flex;
+    flex: none;
+    justify-content: center;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__header {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__title {
+    @include mixins.display-heading;
+
+    flex: 1;
+    min-width: 0;
+    font-size: var(--font-size-display-sm);
+
+    &--md {
+      font-size: var(--font-size-display-md);
+    }
+
+    &--lg {
+      font-size: var(--font-size-display-lg);
+    }
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+
+    &--negative {
+      color: var(--color-negative);
+    }
+  }
+
+  /* Eget indhold i titlens plads (badge, egen overskrift), når arket ikke har en `title`. */
+  &__title-slot {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  &__header-extra {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2);
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  &__close {
+    flex: none;
+  }
+
+  &__body {
+    flex: 1 1 auto;
+    min-height: 0;
+
+    /*
+     * Gør indholdet til en flex-kolonne, så et barn kan eje sit eget scroll-område
+     * (fx faste chips + faner over en scrollende liste) i stedet for at hele panelet scroller.
+     */
+    &--column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      min-height: 0;
+    }
+
+    &--scrollable {
+      @include mixins.hide-scrollbar;
+
+      display: block;
+      overflow-y: auto;
+    }
+  }
+
+  &__footer {
+    flex: none;
+
+    &:empty {
+      display: none;
+    }
+  }
+}
