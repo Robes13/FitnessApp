@@ -6,7 +6,13 @@ import { WeightLogService } from '../../../core/services/weight-log';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
 import { weighHistory } from '../../../core/testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
-import { WeightViewService, weightChangeTone } from './weight-view';
+import { COLLAPSED_LOG_ROWS, WeightViewService, weightChangeTone } from './weight-view';
+
+const MS_PER_DAY = 86_400_000;
+
+function daysAgoIso(days: number): string {
+  return new Date(TEST_NOW.getTime() - days * MS_PER_DAY).toISOString();
+}
 
 describe('WeightViewService', () => {
   let storage: FakeStorage;
@@ -128,6 +134,81 @@ describe('WeightViewService', () => {
     expect(view.lastWeighLabel()).toBe('Sidst vejet i dag');
   });
 
+  it('opdaterer dagens vejning, når der gemmes igen samme dag', () => {
+    const view = setup();
+    view.setDraftKg(73.4);
+    const first = view.save();
+
+    view.setDraftKg(73.1);
+    const second = view.save();
+
+    expect(second.id).toBe(first.id);
+    expect(view.logRows()).toHaveLength(4);
+    expect(view.logRows()[0]?.kg).toBe('73,1');
+  });
+
+  it('viser kun vejninger fra de sidste 3 mdr. og sammenligner stadig med den før', () => {
+    storage.setItem(
+      STORAGE_KEY.WEIGHT_LOG,
+      JSON.stringify([
+        { id: 'recent', kg: 75, at: daysAgoIso(5) },
+        { id: 'old', kg: 77, at: daysAgoIso(100) },
+      ]),
+    );
+
+    const view = setup({ goal: 'tabe' });
+
+    expect(view.allLogRows().map((row) => row.id)).toEqual(['recent']);
+    expect(view.logRows()[0]?.delta).toBe('−2,0');
+  });
+
+  it('folder listen ud til alle vejninger fra de sidste 3 mdr.', () => {
+    storage.setItem(
+      STORAGE_KEY.WEIGHT_LOG,
+      JSON.stringify(
+        Array.from({ length: 10 }, (_, index) => ({
+          id: `w-${index}`,
+          kg: 75 + index / 10,
+          at: daysAgoIso(index * 10 + 1),
+        })),
+      ),
+    );
+
+    const view = setup();
+
+    // Entries 0–8 are within 90 days; entry 9 (91 days) is not.
+    expect(view.logRows()).toHaveLength(COLLAPSED_LOG_ROWS);
+    expect(view.hiddenLogCount()).toBe(3);
+
+    view.toggleLogExpanded();
+
+    expect(view.logExpanded()).toBe(true);
+    expect(view.logRows()).toHaveLength(9);
+  });
+
+  it('retter og sletter den vejning, der er åben i arket', () => {
+    const view = setup();
+    const profile = TestBed.inject(UserProfileService);
+
+    view.startEdit('w-1');
+    expect(view.editingRow()?.kgValue).toBe(75);
+
+    view.saveEdit(74.2);
+    expect(view.editingRow()).toBeNull();
+    expect(view.logRows()[0]?.kg).toBe('74,2');
+    expect(profile.profile().weightKg).toBe(74.2);
+
+    view.startEdit('w-1');
+    view.removeEditing();
+    expect(view.editingRow()).toBeNull();
+    expect(view.logRows().map((row) => row.id)).toEqual(['w-2', 'w-3']);
+    expect(profile.profile().weightKg).toBe(75.6);
+
+    view.startEdit('w-2');
+    view.cancelEdit();
+    expect(view.editingRow()).toBeNull();
+  });
+
   it('fortæller, når der ikke er vejet endnu', () => {
     storage.setItem(STORAGE_KEY.WEIGHT_LOG, JSON.stringify([]));
 
@@ -136,6 +217,7 @@ describe('WeightViewService', () => {
     expect(view.hasEntries()).toBe(false);
     expect(view.logRows()).toHaveLength(0);
     expect(view.lastWeighLabel()).toBe('Ingen vejninger endnu');
+    expect(view.logEmptyMessage()).toBe('Ingen vejninger endnu.');
   });
 });
 

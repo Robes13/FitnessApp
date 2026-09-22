@@ -7,17 +7,19 @@
 | `weight-page.ts`      | Siden: udstiller `WeightViewService` og holder de to kortlivede animationer. |
 | `weight-page.html`    | Skærmens opbygning.                                                          |
 | `weight-page.scss`    | Layout og typografi; `:host` er sidens rod (`page-screen`).                  |
-| `weight-page.spec.ts` | Røgtest: opbygning, −/+, gem, intervalchips og listen.                       |
+| `weight-page.spec.ts` | Røgtest: opbygning, −/+, gem, intervalchips, listen, ret og slet.            |
 
 ## Opbygning
 
 1. Overskrift "Registrér **vægt**" og "Sidst vejet …" til højre.
 2. Kladdevægten som stort orange tal (mindre trin fra 100 kg) med nøgletallene
    "Siden sidst" og "Til mål" under sig – og badevægt-scenen til højre.
-3. Linealen (`UiRuler`, 30–300 kg i trin på 0,1) med −/+ knapper på enderne.
-4. "Gem vejning", der kvitterer med "Gemt ✓" i 1,4 s.
+3. Linealen (`WeightRulerInput` om `UiRuler`, 30–300 kg i trin på 0,1) med −/+ knapper på enderne.
+4. "Gem vejning", der kvitterer med "Gemt ✓" i 1,4 s. Er der allerede vejet i dag, opdateres
+   dagens vejning.
 5. Grafkortet, og **under det** intervalchipsene 1 uge / 4 uger / 3 mdr.
-6. "Seneste vejninger" og til sidst en spacer, så indholdet kan scrolles fri af tab baren.
+6. "Seneste vejninger" (højst 3 mdr. tilbage, "Vis alle" folder ud) og til sidst en spacer, så
+   indholdet kan scrolles fri af tab baren. Tryk på en række åbner `WeightEditSheet`.
 
 ## Tilstand
 
@@ -31,5 +33,5 @@ Alt andet er afledt i `WeightViewService`.
 
 ## Bemærk
 
-Skærmen har ingen tekstfelter, så der er ingen reactive form. Vægten vælges udelukkende med
-linealen og −/+ knapperne, som klemmer værdien fast mellem 30 og 300 kg.
+Skærmen har ingen tekstfelter, så der er ingen reactive form. Vægten vælges – også i ret-arket –
+udelukkende med linealen og −/+ knapperne, som klemmer værdien fast mellem 30 og 300 kg.

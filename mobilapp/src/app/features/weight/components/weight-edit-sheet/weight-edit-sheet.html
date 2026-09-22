@@ -1,0 +1,58 @@
+<app-ui-sheet
+  [open]="isOpen()"
+  title="Ret"
+  titleAccent="vejning"
+  scrollable
+  (closed)="closed.emit()"
+>
+  <p class="weight-edit-sheet__when">{{ whenText() }}</p>
+
+  <p class="weight-edit-sheet__value">
+    <span class="weight-edit-sheet__number">{{ draftText() }}</span>
+    <span class="weight-edit-sheet__unit">kg</span>
+  </p>
+
+  <app-weight-ruler-input
+    class="weight-edit-sheet__ruler"
+    [value]="draftKg()"
+    (valueChange)="setDraft($event)"
+  />
+
+  @if (confirmingDelete()) {
+    <p class="weight-edit-sheet__confirm">
+      Vil du slette vejningen fra {{ whenText() }}? Det kan ikke fortrydes.
+    </p>
+  }
+
+  <div sheetFooter class="weight-edit-sheet__actions">
+    @if (confirmingDelete()) {
+      <button
+        app-ui-button
+        type="button"
+        variant="danger"
+        block
+        class="weight-edit-sheet__confirm-delete"
+        (click)="confirmDelete()"
+      >
+        Ja, slet vejning
+      </button>
+      <button app-ui-button type="button" variant="outline" block (click)="cancelDelete()">
+        Annuller
+      </button>
+    } @else {
+      <button app-ui-button type="button" block class="weight-edit-sheet__save" (click)="save()">
+        Gem
+      </button>
+      <button
+        app-ui-button
+        type="button"
+        variant="outline-danger"
+        block
+        class="weight-edit-sheet__delete"
+        (click)="askDelete()"
+      >
+        Slet
+      </button>
+    }
+  </div>
+</app-ui-sheet>

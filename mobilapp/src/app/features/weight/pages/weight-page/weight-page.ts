@@ -6,15 +6,14 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../../core/constants/nutrition';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
-import { RULER_BLEED_IDLE_STRONG } from '../../../../shared/components/ui-ruler/ruler-geometry';
-import { UiRuler } from '../../../../shared/components/ui-ruler/ui-ruler';
 import { WeightChart } from '../../components/weight-chart/weight-chart';
+import { WeightEditSheet } from '../../components/weight-edit-sheet/weight-edit-sheet';
 import { WeightLogList } from '../../components/weight-log-list/weight-log-list';
+import { WeightRulerInput } from '../../components/weight-ruler-input/weight-ruler-input';
 import { WeightScaleScene } from '../../components/weight-scale-scene/weight-scale-scene';
-import { WEIGHT_STEP_KG, WeightViewService } from '../../services/weight-view';
+import { WeightViewService } from '../../services/weight-view';
 
 /** How long the button shows "Saved ✓" after a weigh-in. */
 const SAVED_LABEL_MS = 1400;
@@ -33,7 +32,15 @@ const SAVED_LABEL = 'Gemt ✓';
  */
 @Component({
   selector: 'app-weight-page',
-  imports: [UiButton, UiChip, UiRuler, WeightChart, WeightLogList, WeightScaleScene],
+  imports: [
+    UiButton,
+    UiChip,
+    WeightChart,
+    WeightEditSheet,
+    WeightLogList,
+    WeightRulerInput,
+    WeightScaleScene,
+  ],
   templateUrl: './weight-page.html',
   styleUrl: './weight-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,11 +49,6 @@ const SAVED_LABEL = 'Gemt ✓';
 })
 export class WeightPage {
   protected readonly view = inject(WeightViewService);
-
-  protected readonly rulerGlowStrength = RULER_BLEED_IDLE_STRONG;
-  protected readonly minKg = WEIGHT_MIN_KG;
-  protected readonly maxKg = WEIGHT_MAX_KG;
-  protected readonly stepKg = WEIGHT_STEP_KG;
 
   private readonly saved = signal(false);
   private readonly lookDirectionState = signal(0);
@@ -67,16 +69,10 @@ export class WeightPage {
     });
   }
 
-  /** The ruler: set the draft and let the gaze follow the direction. */
+  /** The ruler and its −/+ buttons: set the draft and let the gaze follow the direction. */
   protected onDraftChange(kg: number): void {
     const direction = Math.sign(kg - this.view.draftKg()) || this.lookDirectionState();
     this.view.setDraftKg(kg);
-    this.look(direction);
-  }
-
-  /** The −/+ buttons: one step of 0.1 kg. */
-  protected stepDraft(direction: number): void {
-    this.view.adjustDraftKg(direction * WEIGHT_STEP_KG);
     this.look(direction);
   }
 

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DEFAULT_PROFILE } from '../../../../core/constants/profile-defaults';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
+import { UserProfileService } from '../../../../core/services/user-profile';
 import { WeightLogService } from '../../../../core/services/weight-log';
 import { weighHistory } from '../../../../core/testing/fixtures';
 import {
@@ -51,14 +52,16 @@ describe('WeightPage', () => {
 
   it('skruer på kladden med −/+ knapperne', async () => {
     const root = await setup();
-    const plus = root.querySelector<HTMLButtonElement>('.weight-page__step--plus');
-    const minus = root.querySelector<HTMLButtonElement>('.weight-page__step--minus');
+    const plus = root.querySelector<HTMLButtonElement>('.weight-ruler-input__step--plus');
+    const minus = root.querySelector<HTMLButtonElement>('.weight-ruler-input__step--minus');
 
     plus?.click();
     await fixture.whenStable();
     expect(root.querySelector('.weight-page__draft-value')?.textContent?.trim()).toBe('75,1');
 
+    // Each click steps from the rendered value, so let change detection run in between.
     minus?.click();
+    await fixture.whenStable();
     minus?.click();
     await fixture.whenStable();
     expect(root.querySelector('.weight-page__draft-value')?.textContent?.trim()).toBe('74,9');
@@ -82,7 +85,7 @@ describe('WeightPage', () => {
     const root = await setup();
     vi.useFakeTimers();
     try {
-      root.querySelector<HTMLButtonElement>('.weight-page__step--plus')?.click();
+      root.querySelector<HTMLButtonElement>('.weight-ruler-input__step--plus')?.click();
       root.querySelector<HTMLButtonElement>('.weight-page__save')?.click();
       const pending = vi.getTimerCount();
       expect(pending).toBeGreaterThanOrEqual(2);
@@ -124,5 +127,54 @@ describe('WeightPage', () => {
     expect(
       [...root.querySelectorAll('.weight-log-list__delta')].map((el) => el.textContent?.trim()),
     ).toEqual(['−0,6', '−0,5', 'Start']);
+  });
+
+  it('retter en vejning i arket og opdaterer listen og profilens vægt', async () => {
+    const root = await setup();
+    expect(root.querySelector('app-weight-edit-sheet .ui-sheet__panel')).toBeNull();
+
+    root.querySelector<HTMLButtonElement>('.weight-log-list__row')?.click();
+    await fixture.whenStable();
+
+    expect(root.querySelector('.weight-edit-sheet__when')?.textContent).toContain(
+      '3 dage siden kl.',
+    );
+    expect(root.querySelector('.weight-edit-sheet__number')?.textContent?.trim()).toBe('75,0');
+
+    root
+      .querySelector<HTMLButtonElement>(
+        '.weight-edit-sheet__ruler .weight-ruler-input__step--minus',
+      )
+      ?.click();
+    await fixture.whenStable();
+    expect(root.querySelector('.weight-edit-sheet__number')?.textContent?.trim()).toBe('74,9');
+
+    root.querySelector<HTMLButtonElement>('.weight-edit-sheet__save')?.click();
+    await fixture.whenStable();
+
+    expect(root.querySelector('.weight-edit-sheet__save')).toBeNull();
+    expect(root.querySelector('.weight-log-list__kg')?.textContent).toContain('74,9');
+    expect(TestBed.inject(UserProfileService).profile().weightKg).toBe(74.9);
+  });
+
+  it('sletter først en vejning, når sletningen er bekræftet', async () => {
+    const root = await setup();
+    root.querySelector<HTMLButtonElement>('.weight-log-list__row')?.click();
+    await fixture.whenStable();
+
+    root.querySelector<HTMLButtonElement>('.weight-edit-sheet__delete')?.click();
+    await fixture.whenStable();
+
+    expect(root.querySelector('.weight-edit-sheet__confirm')?.textContent).toContain(
+      'Vil du slette vejningen',
+    );
+    expect(TestBed.inject(WeightLogService).entries()).toHaveLength(3);
+
+    root.querySelector<HTMLButtonElement>('.weight-edit-sheet__confirm-delete')?.click();
+    await fixture.whenStable();
+
+    expect(TestBed.inject(WeightLogService).entries()).toHaveLength(2);
+    expect(root.querySelectorAll('.weight-log-list__row')).toHaveLength(2);
+    expect(TestBed.inject(UserProfileService).profile().weightKg).toBe(75.6);
   });
 });

@@ -1,5 +1,6 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../core/constants/nutrition';
+import { WEIGHT_LOG_HISTORY_RANGE } from '../../../core/constants/weight';
 import { GoalId } from '../../../core/models/profile';
 import { Tone } from '../../../core/models/tone';
 import { WeighEntry, WeightRange } from '../../../core/models/weight';
@@ -26,6 +27,8 @@ export interface WeighLogRow {
   readonly time: string;
   /** The weight with a Danish comma, e.g. `'75,0'`. */
   readonly kg: string;
+  /** The raw weight – the edit sheet's starting value. */
+  readonly kgValue: number;
   /** The difference from the previous weigh-in, or `'Start'` for the oldest one. */
   readonly delta: string;
   readonly deltaTone: WeightChangeTone;
@@ -56,8 +59,11 @@ const TENTHS_PER_KG = 10;
 const NEUTRAL_DELTA_KG = 0.05;
 /** "Maintain weight" is satisfied within ±0.5 kg. */
 const MAINTAIN_TOLERANCE_KG = 0.5;
-/** The design shows at most six weigh-ins in the list. */
-const MAX_LOG_ROWS = 6;
+/** The design shows six weigh-ins in the list until the user expands it. */
+export const COLLAPSED_LOG_ROWS = 6;
+
+const EMPTY_LOG_MESSAGE = 'Ingen vejninger endnu.';
+const NO_RECENT_LOG_MESSAGE = 'Ingen vejninger de sidste 3 mdr.';
 /** Design's `good` for "maintain": the deviation from the goal with a small bonus. */
 const MAINTAIN_PROGRESS_BONUS_KG = 0.3;
 
@@ -96,6 +102,8 @@ export class WeightViewService {
   /** `null` = the user hasn't touched the draft yet; so it follows the profile's weight. */
   private readonly draftTenths = signal<number | null>(null);
   private readonly rangeState = signal<WeightRange>(DEFAULT_WEIGHT_RANGE);
+  private readonly logExpandedState = signal(false);
+  private readonly editingId = signal<string | null>(null);
 
   readonly range: Signal<WeightRange> = this.rangeState.asReadonly();
   readonly rangeOptions = WEIGHT_RANGE_OPTIONS;
@@ -186,10 +194,16 @@ export class WeightViewService {
   readonly profileWeightText = computed(() => trimZeroDecimal(this.profileWeightKg()));
   readonly goalWeightText = computed(() => trimZeroDecimal(this.goalWeightKg()));
 
-  readonly logRows = computed<readonly WeighLogRow[]>(() => {
+  /**
+   * Every weigh-in from the last 3 months (`WEIGHT_LOG_HISTORY_RANGE`), newest first. Older
+   * weigh-ins are never listed, but the oldest listed row is still compared with the weigh-in
+   * before it, so "Start" only marks the user's very first weigh-in.
+   */
+  readonly allLogRows = computed<readonly WeighLogRow[]>(() => {
     const entries = this.log.entries();
     const goal = this.goal();
-    return entries.slice(0, MAX_LOG_ROWS).map((entry, index) => {
+    return this.log.entriesWithin(WEIGHT_LOG_HISTORY_RANGE).map((entry, index) => {
+      // `entriesWithin` is a newest-first prefix of `entries`, so the indexes line up.
       const previous = entries[index + 1];
       const change = previous ? entry.kg - previous.kg : 0;
       const at = new Date(entry.at);
@@ -199,11 +213,36 @@ export class WeightViewService {
         date: formatRelativeDay(at, this.now()),
         time: formatTime(at),
         kg: formatDecimal(entry.kg),
+        kgValue: entry.kg,
         delta: previous ? formatSignedDecimal(change) : 'Start',
         deltaTone,
         deltaClass: `weight-log-list__delta--${deltaTone}`,
       };
     });
+  });
+
+  readonly logExpanded: Signal<boolean> = this.logExpandedState.asReadonly();
+
+  /** The rows shown: the six newest, or all from the last 3 months when expanded. */
+  readonly logRows = computed<readonly WeighLogRow[]>(() => {
+    const rows = this.allLogRows();
+    return this.logExpandedState() ? rows : rows.slice(0, COLLAPSED_LOG_ROWS);
+  });
+
+  /** How many rows "Vis alle" would add; 0 hides the toggle. */
+  readonly hiddenLogCount = computed(() =>
+    Math.max(0, this.allLogRows().length - COLLAPSED_LOG_ROWS),
+  );
+
+  /** Distinguishes "never weighed" from "nothing in the last 3 months". */
+  readonly logEmptyMessage = computed(() =>
+    this.hasEntries() ? NO_RECENT_LOG_MESSAGE : EMPTY_LOG_MESSAGE,
+  );
+
+  /** The weigh-in open in the edit sheet, or `null` when the sheet is closed. */
+  readonly editingRow = computed<WeighLogRow | null>(() => {
+    const id = this.editingId();
+    return id === null ? null : (this.allLogRows().find((row) => row.id === id) ?? null);
   });
 
   /** Sets the draft in whole tenths and keeps it within 30–300 kg. */
@@ -221,7 +260,40 @@ export class WeightViewService {
     this.rangeState.set(range);
   }
 
-  /** Saves the draft as a weigh-in. `WeightLogService` also updates the profile's weight. */
+  toggleLogExpanded(): void {
+    this.logExpandedState.update((expanded) => !expanded);
+  }
+
+  startEdit(id: string): void {
+    this.editingId.set(id);
+  }
+
+  cancelEdit(): void {
+    this.editingId.set(null);
+  }
+
+  /** Saves the corrected weight. `WeightLogService` keeps the profile's weight in sync. */
+  saveEdit(kg: number): void {
+    const id = this.editingId();
+    if (id !== null) {
+      this.log.update(id, clamp(kg, WEIGHT_MIN_KG, WEIGHT_MAX_KG));
+    }
+    this.editingId.set(null);
+  }
+
+  /** Deletes the weigh-in open in the edit sheet. */
+  removeEditing(): void {
+    const id = this.editingId();
+    if (id !== null) {
+      this.log.remove(id);
+    }
+    this.editingId.set(null);
+  }
+
+  /**
+   * Saves the draft as a weigh-in. A second weigh-in the same day replaces today's entry
+   * (`WeightLogService.add`), which also updates the profile's weight.
+   */
   save(): WeighEntry {
     return this.log.add(this.draftKg());
   }

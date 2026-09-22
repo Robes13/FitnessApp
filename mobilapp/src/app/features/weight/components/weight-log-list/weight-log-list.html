@@ -4,21 +4,43 @@
   <ul class="weight-log-list__items">
     @for (row of rows(); track row.id) {
       <li class="weight-log-list__item">
-        <div>
-          <div class="weight-log-list__date">{{ row.date }}</div>
-          <div class="weight-log-list__time">{{ row.time }}</div>
-        </div>
-        <div class="weight-log-list__values">
-          <span class="weight-log-list__delta" [class]="row.deltaClass">
-            {{ row.delta }}
+        <button
+          class="weight-log-list__row"
+          type="button"
+          [attr.aria-label]="rowLabel(row)"
+          (click)="rowSelected.emit(row.id)"
+        >
+          <span>
+            <span class="weight-log-list__date">{{ row.date }}</span>
+            <span class="weight-log-list__time">{{ row.time }}</span>
           </span>
-          <span class="weight-log-list__kg">
-            {{ row.kg }}<span class="weight-log-list__unit">kg</span>
+          <span class="weight-log-list__values">
+            <span class="weight-log-list__delta" [class]="row.deltaClass">
+              {{ row.delta }}
+            </span>
+            <span class="weight-log-list__kg">
+              {{ row.kg }}<span class="weight-log-list__unit">kg</span>
+            </span>
           </span>
-        </div>
+        </button>
       </li>
     }
   </ul>
+
+  @if (showToggle()) {
+    <button
+      app-ui-button
+      type="button"
+      variant="ghost"
+      size="sm"
+      block
+      class="weight-log-list__toggle"
+      [attr.aria-expanded]="expanded()"
+      (click)="expandToggled.emit()"
+    >
+      {{ toggleLabel() }}
+    </button>
+  }
 } @else {
-  <app-ui-empty-state message="Ingen vejninger endnu." />
+  <app-ui-empty-state [message]="emptyMessage()" />
 }

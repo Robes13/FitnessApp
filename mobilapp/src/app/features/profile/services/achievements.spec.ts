@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
+import { addDays } from '../../../core/utils/date-format';
 import { FoodLogService } from '../../../core/services/food-log';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log';
-import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
+import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { Achievement, AchievementsService } from './achievements';
 
 function badge(list: readonly Achievement[], id: string): Achievement {
@@ -85,7 +86,8 @@ describe('AchievementsService', () => {
 
     expect(badge(achievements.achievements(), 'lost-2').progressLabel).toBe('0/2 kg');
 
-    weightLog.add(76);
+    // One weigh-in per day: yesterday's 76 kg and today's 74.8 kg.
+    weightLog.add(76, addDays(TEST_NOW, -1));
     weightLog.add(74.8);
 
     expect(badge(achievements.achievements(), 'lost-2').progressLabel).toBe('1,2/2 kg');

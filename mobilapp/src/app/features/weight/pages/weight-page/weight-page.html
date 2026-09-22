@@ -43,34 +43,11 @@
     />
   </section>
 
-  <div class="weight-page__scale">
-    <button
-      class="weight-page__step weight-page__step--minus"
-      type="button"
-      aria-label="Minus 0,1"
-      (click)="stepDraft(-1)"
-    >
-      −
-    </button>
-    <app-ui-ruler
-      size="lg"
-      ariaLabel="Vægt i kilo"
-      [min]="minKg"
-      [max]="maxKg"
-      [step]="stepKg"
-      [value]="view.draftKg()"
-      [glowStrength]="rulerGlowStrength"
-      (valueChange)="onDraftChange($event)"
-    />
-    <button
-      class="weight-page__step weight-page__step--plus"
-      type="button"
-      aria-label="Plus 0,1"
-      (click)="stepDraft(1)"
-    >
-      +
-    </button>
-  </div>
+  <app-weight-ruler-input
+    class="weight-page__scale"
+    [value]="view.draftKg()"
+    (valueChange)="onDraftChange($event)"
+  />
 
   <button app-ui-button block type="button" class="weight-page__save" (click)="save()">
     {{ saveLabel() }}
@@ -101,7 +78,22 @@
     }
   </div>
 
-  <app-weight-log-list class="weight-page__log" [rows]="view.logRows()" />
+  <app-weight-log-list
+    class="weight-page__log"
+    [rows]="view.logRows()"
+    [hiddenCount]="view.hiddenLogCount()"
+    [expanded]="view.logExpanded()"
+    [emptyMessage]="view.logEmptyMessage()"
+    (rowSelected)="view.startEdit($event)"
+    (expandToggled)="view.toggleLogExpanded()"
+  />
 </div>
+
+<app-weight-edit-sheet
+  [row]="view.editingRow()"
+  (saved)="view.saveEdit($event)"
+  (removed)="view.removeEditing()"
+  (closed)="view.cancelEdit()"
+/>
 
 <div class="weight-page__clearance"></div>

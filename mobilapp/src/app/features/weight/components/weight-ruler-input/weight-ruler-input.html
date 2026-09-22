@@ -1,0 +1,26 @@
+<button
+  class="weight-ruler-input__step weight-ruler-input__step--minus"
+  type="button"
+  aria-label="Minus 0,1"
+  (click)="step(-1)"
+>
+  −
+</button>
+<app-ui-ruler
+  size="lg"
+  ariaLabel="Vægt i kilo"
+  [min]="minKg"
+  [max]="maxKg"
+  [step]="stepKg"
+  [value]="value()"
+  [glowStrength]="glowStrength"
+  (valueChange)="emit($event)"
+/>
+<button
+  class="weight-ruler-input__step weight-ruler-input__step--plus"
+  type="button"
+  aria-label="Plus 0,1"
+  (click)="step(1)"
+>
+  +
+</button>
