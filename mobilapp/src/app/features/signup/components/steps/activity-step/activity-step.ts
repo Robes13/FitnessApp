@@ -21,23 +21,23 @@ import {
 import { UiRuler } from '../../../../../shared/components/ui-ruler/ui-ruler';
 import { SignupStateService } from '../../../services/signup-state';
 
-/** Under dette antal skridt bytter gå-scenen plads med sofa-scenen. */
+/** Below this step count, the walking scene swaps places with the couch scene. */
 const LAZY_MAX_STEPS = 2500;
-/** Under dette antal skridt står figuren stille (designets `walkPlay`). */
+/** Below this step count, the figure stands still (design's `walkPlay`). */
 const WALK_PAUSE_STEPS = 400;
 const DOG_MIN_STEPS = 8000;
 const SPEED_MIN_STEPS = 9000;
 const SWEAT_MIN_STEPS = 12000;
 const SWEAT_SECOND_DROP_STEPS = 17000;
 const MEDAL_MIN_STEPS = 25000;
-/** Tallet hopper, hver gang man krydser et tusinde. */
+/** The number jumps every time you cross a thousand. */
 const STEPS_PER_TICK = 1000;
-/** Konfetti ved 10.000 skridt. */
+/** Confetti at 10,000 steps. */
 const CONFETTI_STEPS = 10000;
 const CONFETTI_VISIBLE_MS = 1300;
 const CONFETTI_COUNT = 12;
 
-/** Designets tærskler for underoverskriften. */
+/** Design's thresholds for the subtitle. */
 const SUBTITLE_EVERYDAY_STEPS = 6000;
 const SUBTITLE_SOLID_STEPS = 12000;
 
@@ -46,7 +46,7 @@ const SUBTITLE_EVERYDAY = 'Almindelig hverdag. Bruges til dit kaloriebehov.';
 const SUBTITLE_SOLID = 'Solidt hverdagsniveau. Bruges til dit kaloriebehov.';
 const SUBTITLE_HIGH = 'Du går altså meget. Bruges til dit kaloriebehov.';
 
-/** Linealen: én streg pr. 100 skridt, 5,6 px mellem stregerne, etiket hver 2.000. */
+/** The ruler: one tick per 100 steps, 5.6 px between ticks, a label every 2,000. */
 const RULER_TICK_UNIT = 100;
 const RULER_PX_PER_TICK = 5.6;
 const RULER_STEP = 100;
@@ -54,14 +54,14 @@ const RULER_LABEL_EVERY = 20;
 const RULER_GLOW_REACH = 8;
 const STEPS_PER_LABEL_UNIT = 1000;
 
-/** Gå-animationens tempo (designets `walkDur`). */
+/** The walking animation's timing (design's `walkDur`). */
 const WALK_BASE_DURATION_S = 1.2;
 const WALK_MIN_DURATION_S = 0.32;
 const WALK_SPEED_DIVISOR = 20000;
 const WALK_SPEED_RANGE_S = 0.88;
 const GROUND_DURATION_FACTOR = 0.5;
 
-/** Scenernes ind-/udgang, når de bytter plads. */
+/** The scenes' entry/exit as they swap places. */
 const WALK_SHIFT_PX = -58;
 const WALK_SCALE_SMALL = 0.88;
 const LAZY_SHIFT_PX = 52;
@@ -76,11 +76,11 @@ const GROUND_DASH_START = -40;
 
 const ARM_HEIGHT_FACTOR = 0.72;
 
-/** Hundens trav og tv-skæret har faste tempi i designet. */
+/** The dog's trot and the TV glow have fixed timings in the design. */
 const TROT_DURATION_S = 0.5;
 const TV_GLOW_DURATION_S = 2.4;
 
-/** Konfettiens farver, i designets rækkefølge. */
+/** The confetti's colors, in the design's order. */
 const CONFETTI_TONES = ['accent', 'positive', 'info', 'warning'] as const;
 
 interface ConfettiParticle {
@@ -101,7 +101,7 @@ interface GroundDash {
   readonly x: number;
 }
 
-/** De mål gå-scenen har ud over figurens egen geometri (designets `afig`). */
+/** The measurements the walking scene has beyond the figure's own geometry (design's `afig`). */
 interface WalkExtras {
   readonly armHeight: number;
   readonly armBackX: number;
@@ -117,7 +117,7 @@ interface WalkExtras {
   readonly speedY2: number;
 }
 
-/** Designets svededråbe – samme path i alle scener. */
+/** Design's sweat drop – the same path in every scene. */
 function dropPath(x: number, y: number): string {
   return `M${x} ${y} c -3 4 -3 6 -3 7 a 3 3 0 0 0 6 0 c 0 -1 0 -3 -3 -7 z`;
 }
@@ -129,7 +129,7 @@ function bandModifier(gender: Gender | null): string {
   return gender === 'andet' ? 'activity-step__band--white' : 'activity-step__band--accent';
 }
 
-/** `0` og `2k`, `4k` … som i designets `stepRuler`. */
+/** `0` and `2k`, `4k` … as in design's `stepRuler`. */
 const formatStepLabel: RulerLabelFormatter = (tickValue) =>
   tickValue === 0 ? '0' : `${tickValue / STEPS_PER_LABEL_UNIT}k`;
 
@@ -150,13 +150,14 @@ const GROUND_DASHES: readonly GroundDash[] = Array.from(
 );
 
 /**
- * Trin 6: hvor mange skridt tager du på en almindelig dag?
+ * Step 6: how many steps do you take on an average day?
  *
- * Tallet, aktivitetsniveauet og de to omregninger kommer fra `NutritionCalculator`; resten af
- * trinnet er designets scene. Over 2.500 skridt går figuren mod venstre med et tempo, der følger
- * tallet (hund fra 8.000, fartstreger fra 9.000, sved fra 12.000, medalje fra 25.000) – under
- * 2.500 glider sofa-scenen ind i stedet. Gå-figuren er tegnet i trinnet og ikke med `FigureBody`,
- * fordi ben og arme skal animeres hver for sig om deres egne hofter og skuldre.
+ * The number, the activity level and the two conversions come from `NutritionCalculator`;
+ * the rest of the step is the design's scene. Above 2,500 steps the figure walks to the
+ * left at a pace that follows the number (dog from 8,000, speed lines from 9,000, sweat
+ * from 12,000, medal from 25,000) – below 2,500 the couch scene slides in instead. The
+ * walking figure is drawn in the step rather than with `FigureBody`, because the legs and
+ * arms need to be animated independently around their own hips and shoulders.
  */
 @Component({
   selector: 'app-activity-step',
@@ -183,12 +184,12 @@ export class ActivityStep {
   protected readonly rulerGlowStrength = RULER_BLEED_IDLE_STRONG;
   protected readonly rulerLabelFormatter = formatStepLabel;
   protected readonly groundDashes = GROUND_DASHES;
-  /** Scenernes faste tempi (sekunder) – designets egne værdier. */
+  /** The scenes' fixed timings (seconds) – the design's own values. */
   protected readonly trotDuration = TROT_DURATION_S;
   protected readonly tvGlowDuration = TV_GLOW_DURATION_S;
 
   protected readonly dragging = signal(false);
-  /** Skifter mellem de to ens keyframes, så talhoppet kan starte forfra. */
+  /** Alternates between the two identical keyframes, so the number jump can restart. */
   private readonly tickFlip = signal(false);
   private readonly confettiOn = signal(false);
 
@@ -244,7 +245,7 @@ export class ActivityStep {
 
   protected readonly bandClass = computed(() => bandModifier(this.state.gender()));
 
-  /** Designets `walkDur`: 1,2 s i gang, ned mod 0,32 s ved mange skridt. */
+  /** Design's `walkDur`: 1.2 s at rest, down to 0.32 s at a high step count. */
   protected readonly walkDuration = computed(() => {
     const steps = this.steps();
     const duration =

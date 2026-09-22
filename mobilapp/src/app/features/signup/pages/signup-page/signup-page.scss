@@ -9,8 +9,8 @@
 
 .signup-page {
   /*
-   * Det aktive trin fylder resten af højden. `min-height: 0` lader trinnets egen
-   * scroll-container krympe i stedet for at presse fodnoten ud af skærmen.
+   * The active step fills the rest of the height. `min-height: 0` lets the step's own
+   * scroll container shrink instead of pushing the footer off the screen.
    */
   &__step {
     display: flex;

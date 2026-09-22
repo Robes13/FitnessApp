@@ -5,8 +5,8 @@ import { UiOptionCard } from '../../../../../shared/components/ui-option-card/ui
 import { SignupStateService } from '../../../services/signup-state';
 
 /**
- * Trin 3 (`sKon`): køn som tre valgkort med radio-prik. Valget farver figurens
- * pandebånd på de følgende trin (`genderBandTone`) og indgår i BMR-formlen.
+ * Step 3 (`sKon`): gender as three option cards with a radio dot. The choice colors the
+ * figure's headband on the following steps (`genderBandTone`) and feeds into the BMR formula.
  */
 @Component({
   selector: 'app-gender-step',

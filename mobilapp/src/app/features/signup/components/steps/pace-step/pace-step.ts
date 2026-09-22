@@ -9,9 +9,9 @@ const INTRO_LOSE = 'Hvor hurtigt vil du tabe dig?';
 const SUMMARY_EMPTY = 'Vælg et tempo for at se dagligt kalorietal.';
 
 /**
- * Trin `pace` (designets `s5`): tempoet for vægtændringen. Trinnet springes over, når målet
- * er "holde vægten" (`SKIP_PACE_FOR_MAINTAIN`). Den grønne boks nederst oversætter tempoet
- * til et dagligt kalorietal.
+ * Step `pace` (the design's `s5`): the tempo of the weight change. The step is skipped when
+ * the goal is "maintain weight" (`SKIP_PACE_FOR_MAINTAIN`). The green box at the bottom
+ * translates the tempo into a daily calorie figure.
  */
 @Component({
   selector: 'app-pace-step',

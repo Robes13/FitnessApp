@@ -16,7 +16,7 @@ import {
 import { UiOptionCard } from '../../../../../shared/components/ui-option-card/ui-option-card';
 import { SignupStateService } from '../../../services/signup-state';
 
-/** Højden på anstrengelses-søjlerne: designets `12 + n * 2.8` px. */
+/** The height of the effort bars: the design's `12 + n * 2.8` px. */
 const EFFORT_BAR_BASE_HEIGHT = 12;
 const EFFORT_BAR_STEP_HEIGHT = 2.8;
 
@@ -30,7 +30,7 @@ const RPE_PLACEHOLDER = '–';
 const HEAT_DURATION_S = 2.2;
 const HEAT_OFFSET_Y = -34;
 
-/** Scenens udtryk pr. intensitet – designets `intDef`-felter, der kun bruges til figuren. */
+/** The scene's expression per intensity – the design's `intDef` fields, used only for the figure. */
 interface IntensityScene {
   readonly mood: number;
   readonly bobDuration: number;
@@ -145,14 +145,14 @@ interface HeatLine {
 
 const BAR_BLOCK = 'training-intensity-step__bar';
 const SEGMENT_BLOCK = 'training-intensity-step__segment-fill';
-/** Flisens tre søjler er 8, 14 og 20 px høje. */
+/** The tile's three bars are 8, 14 and 20 px tall. */
 const BAR_SIZES = ['sm', 'md', 'lg'] as const;
 
 function dropPath(x: number, y: number): string {
   return `M${x} ${y} c -3 4 -3 6 -3 7 a 3 3 0 0 0 6 0 c 0 -1 0 -3 -3 -7 z`;
 }
 
-/** Søjlen i flisen: farvet når flisen er valgt, dæmpet når niveauet nås, ellers helt blegt. */
+/** The bar within the tile: colored when the tile is selected, dimmed when the level is reached, otherwise fully pale. */
 function barClasses(index: number, reached: boolean, selected: boolean, tone: Tone): string {
   const size = `${BAR_BLOCK}--${BAR_SIZES[index]}`;
   if (selected && reached) {
@@ -162,11 +162,11 @@ function barClasses(index: number, reached: boolean, selected: boolean, tone: To
 }
 
 /**
- * Trin 9: hvor hårdt træner du?
+ * Step 9: how hard do you train?
  *
- * RPE-tallet (1–10) sættes enten på søjleskalaen eller med de tre fliser, og det afgør
- * figurens udtryk: mund, bryn, kinder, pandebånd, vippetempo, varmestriber og sved.
- * Kroppen er `FigureBody`; kun varme og sved tegnes her.
+ * The RPE number (1–10) is set either on the bar scale or with the three tiles, and it
+ * drives the figure's expression: mouth, brows, cheeks, headband, bob tempo, heat lines
+ * and sweat. The body is `FigureBody`; only heat and sweat are drawn here.
  */
 @Component({
   selector: 'app-training-intensity-step',

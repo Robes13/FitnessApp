@@ -1,9 +1,9 @@
 @use 'mixins';
 
 /*
- * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
- * ellers kan indholdet ikke scrolle.
- * --notifications-* bindes fra TypeScript (NOTIFICATIONS_LAYOUT).
+ * The step is a child of the page's flex column and must fill the rest of the
+ * height itself, otherwise the content can't scroll.
+ * --notifications-* is bound from TypeScript (NOTIFICATIONS_LAYOUT).
  */
 :host {
   display: flex;
@@ -26,7 +26,7 @@
     color: var(--color-accent);
   }
 
-  /* Højden er reserveret, så scenen ikke hopper, når teksten skifter med valget. */
+  /* The height is reserved so the scene doesn't jump when the text changes with the choice. */
   &__caption {
     max-width: var(--notifications-caption-width);
     min-height: var(--notifications-caption-height);
@@ -54,8 +54,8 @@
   }
 
   /*
-   * Klokken svinger om sit ophæng. Tempoet (0,9 s) er designets eget scene-tempo,
-   * ikke en overgang, og hører derfor ikke til --duration-*-skalaen.
+   * The bell swings around its mount. The tempo (0.9 s) is the design's own scene
+   * tempo, not a transition, and therefore doesn't belong to the --duration-* scale.
    */
   &__bell {
     transform-box: view-box;

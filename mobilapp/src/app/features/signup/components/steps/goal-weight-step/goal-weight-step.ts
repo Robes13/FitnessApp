@@ -12,12 +12,12 @@ import { SignupStateService } from '../../../services/signup-state';
 import { clamp } from '../../../../../core/utils/math';
 
 /**
- * Designets faste mål fra skærmen (HTML-linje 782–800). De er ikke spacing-tokens, men
- * geometri for scenen, og bindes derfor som CSS-variabler — som i `BarcodeScanner`.
+ * The design's fixed measurements from the screen (HTML line 782–800). They are not
+ * spacing tokens, but scene geometry, and are therefore bound as CSS variables — as in `BarcodeScanner`.
  */
 const GOAL_WEIGHT_LAYOUT = { quipWidth: 290, asideWidth: 150, figureWidth: 215 } as const;
 
-/** Figurens humør ved målvægten: lidt gladere når man vil ned, end når man vil op. */
+/** The figure's mood at the goal weight: a bit happier when losing than when gaining. */
 const MOOD_GAIN = 0.4;
 const MOOD_OTHER = 0.6;
 
@@ -28,9 +28,9 @@ const MINUS_SIGN = '−';
 const PLUS_SIGN = '+';
 
 /**
- * Trin `goal-weight` (designets `sMaal`): målvægten vælges på en lineal, hvis grænser
- * følger målet (`NutritionCalculator.goalWeightBounds`). Figuren tegnes ved målvægten oven
- * på en stiplet silhuet af kroppen i dag, så forskellen kan ses.
+ * Step `goal-weight` (design's `sMaal`): the goal weight is chosen on a ruler whose bounds
+ * follow the goal (`NutritionCalculator.goalWeightBounds`). The figure is drawn at the goal weight
+ * on top of a dashed silhouette of today's body, so the difference can be seen.
  */
 @Component({
   selector: 'app-goal-weight-step',
@@ -55,7 +55,7 @@ export class GoalWeightStep {
     this.calculator.goalWeightBounds(this.state.goal(), this.state.weightKg()),
   );
 
-  /** Designets `goalW`: kladdens værdi klemt ind i skalaens grænser. */
+  /** Design's `goalW`: the draft value clamped into the scale's bounds. */
   protected readonly goalWeightKg = computed(() => {
     const { min, max } = this.bounds();
     return clamp(this.state.goalWeightKg(), min, max);
@@ -81,7 +81,7 @@ export class GoalWeightStep {
       : `Hvor meget vil du ned? Skalaen stopper lige under dine ${current} kg.`;
   });
 
-  /** Tom, når målet er realistisk – ellers designets to advarsler. */
+  /** Empty when the goal is realistic – otherwise one of the design's two warnings. */
   protected readonly hint = computed(() => {
     const realistic = this.calculator.isGoalWeightRealistic(
       this.state.goal(),
@@ -101,7 +101,7 @@ export class GoalWeightStep {
       this.state.goal() === 'tage' ? MOOD_GAIN : MOOD_OTHER,
     ),
   );
-  /** Kroppen i dag – tegnes som stiplet omrids bag figuren. */
+  /** Today's body – drawn as a dashed outline behind the figure. */
   protected readonly currentGeometry = animatedFigure(() =>
     computeFigureGeometry(this.state.weightKg(), this.state.heightCm()),
   );

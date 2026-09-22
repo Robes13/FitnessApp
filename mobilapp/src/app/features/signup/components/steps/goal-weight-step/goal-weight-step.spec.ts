@@ -34,7 +34,7 @@ describe('GoalWeightStep', () => {
     expect(textOf('.goal-weight-step__now')).toContain('Nu: 75 kg.');
   });
 
-  /* Skalaen stopper lige under vægten i dag, så nul forskel kan kun ske i skalaens bund. */
+  /* The scale stops just below today's weight, so zero difference can only happen at the bottom of the scale. */
   it('skriver "Samme som nu", når målet er vægten i dag', () => {
     state.weightKg.set(36);
     state.goalWeightKg.set(36);

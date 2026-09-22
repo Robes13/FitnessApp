@@ -2,7 +2,7 @@ import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, switchMap, tap } from 'rxjs';
 import { APP_PATH } from '../../../core/constants/app-route';
-import { DEMO_PROFILE_DEFAULTS } from '../../../core/constants/demo-data';
+import { DEFAULT_PROFILE } from '../../../core/constants/profile-defaults';
 import { MAX_AGE, MIN_AGE, PASSWORD_MIN_LENGTH } from '../../../core/constants/nutrition';
 import { Gender, GoalId, PaceId, UserProfile } from '../../../core/models/profile';
 import { AuthApi } from '../../../core/services/auth-api';
@@ -12,7 +12,7 @@ import { UserProfileService } from '../../../core/services/user-profile';
 import { NOW } from '../../../core/utils/now';
 import { clamp } from '../../../core/utils/math';
 
-/** Designets `order`: `s1, sAlder, sKon, s2, s3, sAkt, sFreq, sDur, sInt, s4, sMaal, s5, sNotif, s6`. */
+/** Design's `order`: `s1, sAlder, sKon, s2, s3, sAkt, sFreq, sDur, sInt, s4, sMaal, s5, sNotif, s6`. */
 export type SignupStepId =
   | 'account'
   | 'birthday'
@@ -46,7 +46,7 @@ export const SIGNUP_STEP_ORDER: readonly SignupStepId[] = [
   'summary',
 ];
 
-/** Ét kapitel i fremdriftslinjen. `flex` er antal synlige trin, `pct` er 0..100. */
+/** One chapter in the progress bar. `flex` is the number of visible steps, `pct` is 0..100. */
 export interface SignupChapter {
   label: string;
   flex: number;
@@ -55,7 +55,7 @@ export interface SignupChapter {
   done: boolean;
 }
 
-/** Designets prop `skipPaceForMaintain`: tempo-trinnet springes over ved målet "holde vægten". */
+/** Design's prop `skipPaceForMaintain`: the pace step is skipped for the "maintain weight" goal. */
 export const SKIP_PACE_FOR_MAINTAIN = true;
 
 const FIRST_STEP: SignupStepId = 'account';
@@ -75,8 +75,8 @@ const CHAPTER_DEFINITIONS: readonly {
 ];
 
 /**
- * Designets `editChains`: retter man et trin, der hører sammen med de næste, bliver man i
- * kæden i stedet for at hoppe direkte tilbage til opsummeringen.
+ * Design's `editChains`: editing a step that belongs together with the next ones keeps you in
+ * the chain instead of jumping straight back to the summary.
  */
 const EDIT_CHAINS: Partial<Record<SignupStepId, readonly SignupStepId[]>> = {
   'training-frequency': ['training-frequency', 'training-duration', 'training-intensity'],
@@ -89,12 +89,12 @@ const SUBMIT_LABEL = 'Opret konto';
 const PERCENT_MAX = 100;
 
 /**
- * Kladden bag oprettelsesflowet: ét signal pr. felt, trin-navigationen og den afledte
- * fremdrift. Servicen leveres af ruten (`SIGNUP_ROUTES`), ikke i roden, så kladden lever
- * præcis lige så længe som flowet og starter forfra, hvis brugeren forlader det.
+ * The draft behind the signup flow: one signal per field, the step navigation and the derived
+ * progress. The service is provided by the route (`SIGNUP_ROUTES`), not at the root, so the draft
+ * lives exactly as long as the flow and starts over if the user leaves it.
  *
- * Trinkomponenterne injicerer servicen direkte og skriver i kladde-signalerne – de har
- * hverken inputs eller outputs.
+ * The step components inject the service directly and write to the draft signals – they have
+ * neither inputs nor outputs.
  */
 @Injectable()
 export class SignupStateService {
@@ -105,25 +105,25 @@ export class SignupStateService {
   private readonly router = inject(Router);
   private readonly now = inject(NOW);
 
-  // --- Kladde. Startværdierne er designets initielle state (= DEMO_PROFILE_DEFAULTS). ---
+  // --- Draft. The starting values are the design's initial state (= DEFAULT_PROFILE). ---
   readonly username = signal('');
   readonly password = signal('');
   readonly passwordRepeat = signal('');
-  /** ISO-dato (`YYYY-MM-DD`) eller `null`. */
-  readonly birthday = signal<string | null>(DEMO_PROFILE_DEFAULTS.birthday);
-  readonly gender = signal<Gender | null>(DEMO_PROFILE_DEFAULTS.gender);
-  readonly weightKg = signal(DEMO_PROFILE_DEFAULTS.weightKg);
-  readonly heightCm = signal(DEMO_PROFILE_DEFAULTS.heightCm);
-  readonly stepsPerDay = signal(DEMO_PROFILE_DEFAULTS.stepsPerDay);
-  /** Syv flag, mandag først. Skift ét med `toggleTrainingDay`. */
-  readonly trainingDays = signal<readonly boolean[]>(DEMO_PROFILE_DEFAULTS.trainingDays);
-  readonly trainingMinutes = signal(DEMO_PROFILE_DEFAULTS.trainingMinutes);
-  readonly trainingRpe = signal<number | null>(DEMO_PROFILE_DEFAULTS.trainingRpe);
-  readonly goal = signal<GoalId | null>(DEMO_PROFILE_DEFAULTS.goal);
-  readonly goalWeightKg = signal(DEMO_PROFILE_DEFAULTS.goalWeightKg);
-  readonly pace = signal<PaceId | null>(DEMO_PROFILE_DEFAULTS.pace);
-  /** `null` = ikke besvaret endnu. Designet starter på "Ja tak". */
-  readonly notifications = signal<boolean | null>(DEMO_PROFILE_DEFAULTS.notificationsEnabled);
+  /** ISO date (`YYYY-MM-DD`) or `null`. */
+  readonly birthday = signal<string | null>(DEFAULT_PROFILE.birthday);
+  readonly gender = signal<Gender | null>(DEFAULT_PROFILE.gender);
+  readonly weightKg = signal(DEFAULT_PROFILE.weightKg);
+  readonly heightCm = signal(DEFAULT_PROFILE.heightCm);
+  readonly stepsPerDay = signal(DEFAULT_PROFILE.stepsPerDay);
+  /** Seven flags, Monday first. Toggle one with `toggleTrainingDay`. */
+  readonly trainingDays = signal<readonly boolean[]>(DEFAULT_PROFILE.trainingDays);
+  readonly trainingMinutes = signal(DEFAULT_PROFILE.trainingMinutes);
+  readonly trainingRpe = signal<number | null>(DEFAULT_PROFILE.trainingRpe);
+  readonly goal = signal<GoalId | null>(DEFAULT_PROFILE.goal);
+  readonly goalWeightKg = signal(DEFAULT_PROFILE.goalWeightKg);
+  readonly pace = signal<PaceId | null>(DEFAULT_PROFILE.pace);
+  /** `null` = not answered yet. The design starts on "Yes please". */
+  readonly notifications = signal<boolean | null>(DEFAULT_PROFILE.notificationsEnabled);
   readonly email = signal('');
   readonly termsAccepted = signal(false);
 
@@ -131,7 +131,7 @@ export class SignupStateService {
   private readonly editFromState = signal<SignupStepId | null>(null);
 
   readonly step: Signal<SignupStepId> = this.stepState.asReadonly();
-  /** Det trin, opsummeringen sendte brugeren hen til – ellers `null`. */
+  /** The step the summary sent the user to – otherwise `null`. */
   readonly editFrom: Signal<SignupStepId | null> = this.editFromState.asReadonly();
   readonly isEditing = computed(
     () => this.editFromState() !== null && this.stepState() !== SUMMARY_STEP,
@@ -143,13 +143,13 @@ export class SignupStateService {
   private readonly age = computed(() =>
     this.calculator.ageFromBirthday(this.birthday(), this.now()),
   );
-  /** Målvægten klemt ind i skalaens grænser – designets `goalW`. */
+  /** The goal weight clamped to the scale's bounds – design's `goalW`. */
   private readonly boundedGoalWeightKg = computed(() => {
     const bounds = this.calculator.goalWeightBounds(this.goal(), this.weightKg());
     return clamp(this.goalWeightKg(), bounds.min, bounds.max);
   });
 
-  /** Designets `visOrder`: rækkefølgen uden de trin, brugerens svar gør overflødige. */
+  /** Design's `visOrder`: the order without the steps the user's answers make redundant. */
   readonly visibleOrder: Signal<readonly SignupStepId[]> = computed(() => {
     const noTrainingDays = this.trainingDayCount() === 0;
     const maintains = this.maintainsWeight();
@@ -191,7 +191,7 @@ export class SignupStateService {
     });
   });
 
-  /** Designets `canNext` – ét udtryk pr. trin. */
+  /** Design's `canNext` – one expression per step. */
   readonly canContinue = computed(() => {
     switch (this.stepState()) {
       case 'account':
@@ -233,7 +233,7 @@ export class SignupStateService {
     }
   });
 
-  /** Designets `calcNext`: næste synlige trin. */
+  /** Design's `calcNext`: the next visible step. */
   private readonly nextStep = computed<SignupStepId | null>(() => this.neighbour(1));
 
   private readonly editChain = computed<readonly SignupStepId[]>(() => {
@@ -244,7 +244,7 @@ export class SignupStateService {
     return EDIT_CHAINS[from] ?? [from];
   });
 
-  /** Designets `nextIsSave`: retter man, og forlader næste trin rette-kæden, hedder knappen "Gem". */
+  /** Design's `nextIsSave`: while editing, if the next step leaves the edit chain, the button reads "Save". */
   private readonly nextIsSave = computed(() => {
     if (!this.isEditing()) {
       return false;
@@ -261,8 +261,8 @@ export class SignupStateService {
   });
 
   /**
-   * Går videre. På opsummeringen sker der intet – dér er knappen "Opret konto", og siden
-   * kalder `submit()`, fordi den skal vise spinner og fejl.
+   * Advances. Nothing happens on the summary – there the button reads "Create account", and the
+   * page calls `submit()` itself, since it needs to show a spinner and errors.
    */
   next(): void {
     if (this.stepState() === SUMMARY_STEP) {
@@ -278,7 +278,7 @@ export class SignupStateService {
     }
   }
 
-  /** Tilbage ét trin. Fra første trin ud af flowet; midt i en rettelse til opsummeringen. */
+  /** Back one step. From the first step, out of the flow; mid-edit, back to the summary. */
   back(): void {
     const previous = this.neighbour(-1);
     const editing = this.isEditing();
@@ -295,7 +295,7 @@ export class SignupStateService {
     }
   }
 
-  /** Designets `jumpEdit`: opsummeringen sender brugeren ind i et trin i rette-tilstand. */
+  /** Design's `jumpEdit`: the summary sends the user into a step in edit mode. */
   jumpTo(step: SignupStepId): void {
     this.stepState.set(step);
     this.editFromState.set(step);
@@ -306,9 +306,10 @@ export class SignupStateService {
   }
 
   /**
-   * Opretter kontoen: registrerer hos (mock-)backenden, skriver kladden som profil og
-   * markerer sessionen som oprettet men ubekræftet, så Hjem viser bekræftelses-arket.
-   * Profilen skrives først, når registreringen er gået godt.
+   * Creates the account: registers with the backend, writes the draft as the profile and marks
+   * the session as created but unconfirmed, so Home shows the confirmation sheet. The profile is
+   * only written once registration succeeds – and there is no backend yet, so the call fails
+   * until `AuthApi` is implemented.
    */
   submit(): Observable<void> {
     const profile = this.toProfile();
@@ -319,9 +320,9 @@ export class SignupStateService {
   }
 
   /**
-   * Naboen i `visibleOrder` (`+1` frem, `-1` tilbage) – dermed er spring-reglerne kun
-   * beskrevet ét sted. Er det aktive trin selv blevet skjult af et senere svar, findes
-   * den nærmeste synlige nabo ud fra den faste rækkefølge i stedet.
+   * The neighbour in `visibleOrder` (`+1` forward, `-1` backward) – this way the skip rules are
+   * described in only one place. If the active step itself has been hidden by a later answer,
+   * the nearest visible neighbour is found from the fixed order instead.
    */
   private neighbour(direction: 1 | -1): SignupStepId | null {
     const order = this.visibleOrder();

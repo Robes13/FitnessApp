@@ -53,7 +53,7 @@ describe('BirthdayStep', () => {
   });
 
   it('picks a day and shows the age', () => {
-    // 1. juni 1998 var en mandag, så den 16. er celle nummer 16.
+    // June 1, 1998 was a Monday, so the 16th is cell number 16.
     days()[15]?.click();
     fixture.detectChanges();
 
@@ -108,7 +108,7 @@ describe('BirthdayStep', () => {
     }
     fixture.detectChanges();
 
-    // I dag er mandag 21. september 2026, så oktober er utilgængelig og den 22. slået fra.
+    // Today is Monday, September 21, 2026, so October is unreachable and the 22nd is disabled.
     expect(text('.birthday-step__month')).toBe('september');
     const tomorrow = days().find((day) => day.textContent?.trim() === '22');
     expect(tomorrow?.disabled).toBe(true);
@@ -121,7 +121,7 @@ describe('BirthdayStep', () => {
     state.birthday.set('1998-06-16');
     fixture.detectChanges();
 
-    // 28 år: to lag og ét lys pr. år.
+    // 28 years: two tiers and one flame per year.
     expect(root().querySelectorAll('.birthday-cake__tier')).toHaveLength(2);
     expect(root().querySelectorAll('.birthday-cake__flame')).toHaveLength(25);
   });

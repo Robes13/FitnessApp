@@ -32,7 +32,7 @@ const ISO_MONTH_START = 5;
 const ISO_MONTH_END = 7;
 const ISO_DAY_START = 8;
 
-/** Designets `ageHint`. */
+/** The design's `ageHint`. */
 const HINT_NO_DATE = 'Vælg din fødselsdato ovenfor.';
 const HINT_TOO_YOUNG = 'Du skal være mindst 16 år for at bruge Nutrify.';
 const HINT_TOO_OLD = 'Tjek datoen igen.';
@@ -40,12 +40,12 @@ const LABEL_NO_DATE = 'Ingen dato valgt endnu';
 const AGE_PLACEHOLDER = '–';
 
 /**
- * Trin 2 (`sAlder`): fødselsdatoen vælges i en månedskalender med år- og
- * månedsknapper. Alderen vises stort og bruges i BMR-beregningen, og
- * `app-birthday-cake` reagerer på den med hat, lys og kagelag.
+ * Step 2 (`sAlder`): the birthday is picked in a month calendar with year and
+ * month buttons. The age is shown large and used in the BMR calculation, and
+ * `app-birthday-cake` reacts to it with hat, flames and cake tiers.
  *
- * Kalendervisningen (år/måned) er lokal trin-state; kun selve datoen skrives i
- * `SignupStateService`.
+ * The calendar view (year/month) is local step state; only the date itself is
+ * written to `SignupStateService`.
  */
 @Component({
   selector: 'app-birthday-step',
@@ -62,7 +62,7 @@ export class BirthdayStep {
   protected readonly state = inject(SignupStateService);
   protected readonly weekdays = CALENDAR_WEEKDAYS;
 
-  /** Årstallet mens brugeren skriver – først ved fire cifre bliver det til en visning. */
+  /** The year while the user is typing – only becomes a display value at four digits. */
   private readonly yearDraft = signal<string | null>(null);
   private readonly yearOverride = signal<number | null>(null);
   private readonly monthOverride = signal<number | null>(null);
@@ -115,7 +115,7 @@ export class BirthdayStep {
     return age > MAX_AGE ? HINT_TOO_OLD : '';
   });
 
-  /** Designets `birthdayLabel`: `Valgt: 16. maj 1998` eller `Ingen dato valgt endnu`. */
+  /** The design's `birthdayLabel`: `Valgt: 16. maj 1998` or `Ingen dato valgt endnu`. */
   protected readonly birthdayLabel = computed(() => {
     const iso = this.birthdayIso();
     if (!iso) {
@@ -162,7 +162,7 @@ export class BirthdayStep {
     this.yearDraft.set(null);
   }
 
-  /** Kun cifre, højst fire. Ved fire cifre klemmes året fast og visningen følger med. */
+  /** Digits only, at most four. At four digits the year is clamped and the view follows. */
   private onYearInput(raw: string): void {
     const digits = raw.replace(/\D/g, '').slice(0, YEAR_LENGTH);
     if (digits.length < YEAR_LENGTH) {

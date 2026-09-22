@@ -52,7 +52,7 @@ describe('TrainingDurationStep', () => {
       result.element.querySelector('.training-duration-step__dial-arc');
 
     expect(arc()?.getAttribute('stroke-dasharray')).toBe('364.4');
-    // 364,4 × (1 − 45/180) = 273,3
+    // 364.4 × (1 − 45/180) = 273.3
     expect(arc()?.getAttribute('stroke-dashoffset')).toBe('273.3');
 
     setMinutes(result, 180);
@@ -65,7 +65,7 @@ describe('TrainingDurationStep', () => {
     const hand = (): HTMLElement | null =>
       result.element.querySelector('.training-duration-step__hand');
 
-    // 4,5 − 45/40 = 3,38 s
+    // 4.5 − 45/40 = 3.38 s
     expect(hand()?.style.animationDuration).toBe('3.38s');
 
     setMinutes(result, 20);
@@ -74,7 +74,7 @@ describe('TrainingDurationStep', () => {
 
     setMinutes(result, 150);
     expect(result.element.textContent).toContain('Udholdenhedspas');
-    // 4,5 − 150/40 = 0,75 → klemt fast på minimum
+    // 4.5 − 150/40 = 0.75 → clamped to the minimum
     expect(hand()?.style.animationDuration).toBe('1.2s');
   });
 

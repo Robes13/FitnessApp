@@ -25,7 +25,7 @@ import { WeightStep } from '../../components/steps/weight-step/weight-step';
 import { SignupStateService } from '../../services/signup-state';
 
 const BACK_LABEL = 'Tilbage';
-/** Designet har ingen fejltilstand her – teksten er vores egen, i designets tone. */
+/** The design has no error state here – the text is our own, in the design's tone. */
 const SUBMIT_ERROR_MESSAGE = 'Kontoen kunne ikke oprettes. Prøv igen.';
 
 function errorMessage(error: unknown): string {
@@ -34,8 +34,8 @@ function errorMessage(error: unknown): string {
 }
 
 /**
- * Oprettelsesflowets eneste side: fremdrift øverst, det aktive trin i midten og
- * tilbage/videre nederst. Trinnene henter selv deres data fra `SignupStateService`.
+ * The signup flow's only page: progress at the top, the active step in the middle and
+ * back/next at the bottom. The steps fetch their own data from `SignupStateService`.
  */
 @Component({
   selector: 'app-signup-page',
@@ -75,7 +75,7 @@ export class SignupPage {
 
   protected readonly backLabel = BACK_LABEL;
 
-  /** På opsummeringen opretter knappen kontoen – ellers går den bare videre. */
+  /** On the summary, the button creates the account – otherwise it just moves on. */
   protected onNext(): void {
     if (this.state.step() !== 'summary') {
       this.state.next();

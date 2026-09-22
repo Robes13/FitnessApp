@@ -8,35 +8,35 @@ import {
 } from '../../../../../../shared/components/figure';
 import { CAKE_NUMBER_MIN_AGE, computeCakeGeometry } from './cake-geometry';
 
-/** Aldersgrænsen i designet: under 16 år kan man ikke bruge appen. */
+/** The age limit in the design: under 16 you can't use the app. */
 const MIN_AGE = 16;
 
-/** Designets `bfig`-humør: glad når alderen er gyldig, ked af det når den er for lav. */
+/** The design's `bfig` mood: happy when the age is valid, sad when it's too low. */
 const MOOD_HAPPY = 0.8;
 const MOOD_SAD = -1;
 const MOOD_NEUTRAL = 0;
 
-/** Designets `cakeOp`: kagen tones ned, når alderen mangler eller er for lav. */
+/** The design's `cakeOp`: the cake fades out when the age is missing or too low. */
 const CAKE_OPACITY_FULL = 1;
 const CAKE_OPACITY_TOO_YOUNG = 0.3;
 const CAKE_OPACITY_UNSET = 0.25;
 
-/** Hattens tre y-niveauer målt fra hovedets centrum. */
+/** The hat's three y-levels measured from the head's centre. */
 const HAT_BASE_OFFSET = -22;
 const HAT_MID_OFFSET = -36;
 const HAT_TIP_OFFSET = -56;
 const TEAR_OFFSET = 6;
 
-/** Pupillerne står ét punkt længere ude end standardfiguren på dette trin. */
+/** The pupils sit one point further out than the default figure at this step. */
 const EXPRESSION: Partial<FigureExpression> = { pupilOffsetX: 1 };
 
 /**
- * Fødselsdagsscenen: figuren med festhat rækker ud efter en lagkage, hvis størrelse og
- * antal lys følger alderen. Under 16 år falder hatten væk, figuren får en tåre, og
- * kagen tones ned.
+ * The birthday scene: the figure wearing a party hat reaches for a layer cake whose size and
+ * number of candles follow the age. Under 16, the hat disappears, the figure gets a tear, and
+ * the cake fades out.
  *
- * Scenen tegner selv sit SVG og bruger `FigureBody` til kroppen. Højre arm er slået fra,
- * fordi den erstattes af armen, der peger mod kagen (designets `cakeArm`).
+ * The scene draws its own SVG and uses `FigureBody` for the body. The right arm is disabled,
+ * because it's replaced by the arm pointing at the cake (the design's `cakeArm`).
  */
 @Component({
   selector: 'app-birthday-cake',
@@ -55,7 +55,7 @@ export class BirthdayCake {
 
   protected readonly expression = EXPRESSION;
 
-  /** Designets `tooYoung`: en valgt dato, der giver en alder under 16. */
+  /** The design's `tooYoung`: a chosen date that yields an age under 16. */
   protected readonly tooYoung = computed(() => this.age() > 0 && this.age() < MIN_AGE);
 
   protected readonly geometry = animatedFigure(() => {
@@ -85,7 +85,7 @@ export class BirthdayCake {
   );
   protected readonly hatStripePath = computed(() => `M89 ${this.hatMidY()} L111 ${this.hatMidY()}`);
 
-  /** Designets `cakeArm`: højre arm strækker sig op mod kagen. */
+  /** The design's `cakeArm`: the right arm stretches up towards the cake. */
   protected readonly cakeArmPath = computed(() => {
     const g = this.geometry();
     const shoulderX = g.bodyX + g.bodyW - 10;

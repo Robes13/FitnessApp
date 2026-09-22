@@ -50,7 +50,7 @@ med meget indhold kan scrolle uden at skubbe knapperne ud af skærmen.
 
 ## Oprettelsen
 
-`submit()` registrerer kontoen hos `AuthApi` (mock), skriver kladden som profil via
+`submit()` registrerer kontoen hos `AuthApi`, skriver kladden som profil via
 `UserProfileService.replace` og kalder `SessionService.completeSignup()`. Brugeren er derefter
 logget ind, men **ikke** bekræftet, så Hjem viser bekræftelses-arket. Profilen skrives først,
 når registreringen er gået godt, og siden viser fejlen fra backenden i en `UiFormError`.

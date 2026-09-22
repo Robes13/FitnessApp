@@ -8,19 +8,19 @@ import {
 import { UiProgressRing } from '../../../../shared/components/ui-progress-ring/ui-progress-ring';
 import { SignupChapter } from '../../services/signup-state';
 
-/** Designets `chapterLabel`, når brugeren retter et svar fra opsummeringen. */
+/** The design's `chapterLabel` when the user edits an answer from the summary. */
 const EDITING_LABEL = 'Retter';
 const EDITING_CAPTION = 'Tilbage til opsummering';
 
-/** 48 px ring med 3 px streg – designets fremdriftsring i signup-headeren. */
+/** 48 px ring with a 3 px stroke – the design's progress ring in the signup header. */
 const RING_DIAMETER = 48;
 const RING_STROKE_WIDTH = 3;
 
 /**
- * Fremdriften øverst i oprettelsesflowet: ring med trinnummeret, kapitelnavn +
- * "Trin x af y" og en bjælke pr. kapitel, hvis bredde følger antallet af synlige trin.
+ * The progress at the top of the sign-up flow: a ring with the step number, chapter name +
+ * "Trin x af y", and a bar per chapter whose width follows the number of visible steps.
  *
- * Komponenten er ren præsentation – siden leverer de afledte værdier fra
+ * The component is pure presentation – the page supplies the derived values from
  * `SignupStateService`.
  */
 @Component({
@@ -34,10 +34,10 @@ const RING_STROKE_WIDTH = 3;
 export class SignupProgress {
   readonly stepNumber = input.required<number>();
   readonly stepTotal = input.required<number>();
-  /** Andel 0..1 til ringen. */
+  /** Share 0..1 for the ring. */
   readonly value = input.required<number>();
   readonly chapters = input.required<readonly SignupChapter[]>();
-  /** Retter brugeren et svar fra opsummeringen, skifter overskrift og undertekst. */
+  /** When the user edits an answer from the summary, the heading and subtext change. */
   readonly editing = input(false, { transform: booleanAttribute });
 
   protected readonly ringDiameter = RING_DIAMETER;

@@ -3,17 +3,18 @@ import { Router, provideRouter } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { APP_PATH } from '../../../core/constants/app-route';
 import { STORAGE_KEY } from '../../../core/constants/storage-key';
-import { UserProfile } from '../../../core/models/profile';
 import { SessionService } from '../../../core/services/session';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { SIGNUP_STEP_ORDER, SignupStateService, SignupStepId } from './signup-state';
 
-/** Fast "nu" i tests er mandag 21. september 2026 – se `provideCoreTestEnvironment`. */
+/** The fixed "now" in tests is Monday, September 21, 2026 – see `provideCoreTestEnvironment`. */
 const BIRTHDAY_ADULT = '1998-05-16';
 const BIRTHDAY_CHILD = '2015-01-01';
 const NO_TRAINING_DAYS: readonly boolean[] = [false, false, false, false, false, false, false];
+/** Monday, Wednesday and Friday – the draft starts with no days selected, so tests set them themselves. */
+const TRAINING_DAYS: readonly boolean[] = [true, false, true, false, true, false, false];
 
 describe('SignupStateService', () => {
   let storage: FakeStorage;
@@ -25,13 +26,14 @@ describe('SignupStateService', () => {
     return TestBed.inject(SignupStateService);
   }
 
-  /** Udfylder alle felter, så hvert trin kan passeres. */
+  /** Fills in all fields so every step can be passed. */
   function fillDraft(state: SignupStateService): void {
     state.username.set('mads');
     state.password.set('hemmelig1');
     state.passwordRepeat.set('hemmelig1');
     state.birthday.set(BIRTHDAY_ADULT);
     state.gender.set('mand');
+    state.trainingDays.set(TRAINING_DAYS);
     state.trainingRpe.set(6);
     state.goal.set('tabe');
     state.pace.set('moderat');
@@ -39,13 +41,13 @@ describe('SignupStateService', () => {
     state.termsAccepted.set(true);
   }
 
-  /** Udfylder kladden og hopper direkte til `step` (rette-tilstand er uden betydning her). */
+  /** Fills the draft and jumps directly to `step` (edit mode does not matter here). */
   function at(state: SignupStateService, step: SignupStepId): void {
     fillDraft(state);
     state.jumpTo(step);
   }
 
-  /** Udfylder kladden og går frem til `step` med `next()`, så rette-tilstanden er ren. */
+  /** Fills the draft and advances to `step` with `next()`, so edit mode stays clean. */
   function fill(state: SignupStateService, step: SignupStepId): void {
     fillDraft(state);
     while (state.step() !== step) {
@@ -82,9 +84,15 @@ describe('SignupStateService', () => {
       'notifications',
       'summary',
     ]);
+    // The draft starts with no training days, so the two training detail steps are hidden from the start.
+    expect(state.visibleOrder()).not.toContain('training-duration');
+    expect(state.stepTotal()).toBe(12);
+    expect(state.isEditing()).toBe(false);
+
+    state.trainingDays.set(TRAINING_DAYS);
+
     expect(state.visibleOrder()).toEqual(SIGNUP_STEP_ORDER);
     expect(state.stepTotal()).toBe(14);
-    expect(state.isEditing()).toBe(false);
   });
 
   describe('skip rules', () => {
@@ -101,6 +109,7 @@ describe('SignupStateService', () => {
     it('drops goal weight and pace when the goal is "hold"', () => {
       const state = setup();
 
+      state.trainingDays.set(TRAINING_DAYS);
       state.goal.set('hold');
 
       expect(state.visibleOrder()).not.toContain('goal-weight');
@@ -111,6 +120,7 @@ describe('SignupStateService', () => {
     it('keeps goal weight and pace for the other goals', () => {
       const state = setup();
 
+      state.trainingDays.set(TRAINING_DAYS);
       state.goal.set('tage');
 
       expect(state.visibleOrder()).toContain('goal-weight');
@@ -390,6 +400,7 @@ describe('SignupStateService', () => {
   it('toggles a single training day without touching the others', () => {
     const state = setup();
 
+    state.trainingDays.set(TRAINING_DAYS);
     state.toggleTrainingDay(1);
 
     expect(state.trainingDays()).toEqual([true, true, true, false, true, false, false]);
@@ -417,6 +428,7 @@ describe('SignupStateService', () => {
     it('shrinks a chapter when its steps are skipped', () => {
       const state = setup();
 
+      state.trainingDays.set(TRAINING_DAYS);
       state.goal.set('hold');
 
       expect(state.chapters()[2]).toMatchObject({ label: 'Mål', flex: 1 });
@@ -435,68 +447,19 @@ describe('SignupStateService', () => {
   });
 
   describe('submit', () => {
-    it('writes the draft as the profile and completes the session', async () => {
+    it('fails without a backend and leaves the profile and session untouched', async () => {
       const state = setup();
       fill(state, 'summary');
-      state.weightKg.set(82);
-      state.heightCm.set(184);
-      state.stepsPerDay.set(9000);
-      state.trainingMinutes.set(60);
-      state.goalWeightKg.set(76);
-      state.notifications.set(false);
       state.username.set('  Mads  ');
       state.email.set('  mads@nutrify.dk  ');
 
-      await firstValueFrom(state.submit());
-
-      const profile = TestBed.inject(UserProfileService).profile();
-      const session = TestBed.inject(SessionService);
-
-      expect(profile).toMatchObject<Partial<UserProfile>>({
-        username: 'Mads',
-        email: 'mads@nutrify.dk',
-        birthday: BIRTHDAY_ADULT,
-        gender: 'mand',
-        weightKg: 82,
-        heightCm: 184,
-        stepsPerDay: 9000,
-        trainingMinutes: 60,
-        trainingRpe: 6,
-        goal: 'tabe',
-        pace: 'moderat',
-        goalWeightKg: 76,
-        notificationsEnabled: false,
-        units: 'metrisk',
-        kcalOverride: null,
-        photo: null,
-      });
-      expect(session.isLoggedIn()).toBe(true);
-      expect(session.isEmailVerified()).toBe(false);
-      expect(storage.getItem(STORAGE_KEY.PROFILE)).not.toBeNull();
-    });
-
-    it('clamps the goal weight to the scale before saving', async () => {
-      const state = setup();
-      fill(state, 'summary');
-      state.goal.set('tage');
-      state.weightKg.set(75);
-      state.goalWeightKg.set(60);
-
-      await firstValueFrom(state.submit());
-
-      expect(TestBed.inject(UserProfileService).profile().goalWeightKg).toBe(76);
-    });
-
-    it('leaves the profile untouched when the registration fails', async () => {
-      const state = setup();
-      fill(state, 'summary');
-      state.username.set('   ');
-
       await expect(firstValueFrom(state.submit())).rejects.toMatchObject({
-        message: 'Udfyld brugernavn og adgangskode.',
+        message: 'Der er ingen forbindelse til en server endnu.',
       });
+
       expect(TestBed.inject(UserProfileService).profile().username).toBe('');
       expect(TestBed.inject(SessionService).isLoggedIn()).toBe(false);
+      expect(storage.getItem(STORAGE_KEY.PROFILE)).toBeNull();
     });
   });
 });

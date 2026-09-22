@@ -9,11 +9,11 @@ import {
 } from '../../../../../shared/components/figure';
 import { SignupStateService } from '../../../services/signup-state';
 
-/** Designets `freqLabel`/`freqSubtitle`-tærskler. */
+/** The design's `freqLabel`/`freqSubtitle` thresholds. */
 const LIGHT_MAX_DAYS = 2;
 const GOOD_MAX_DAYS = 4;
 const HIGH_MAX_DAYS = 6;
-/** Fra seks træninger om ugen sveder figuren. */
+/** From six training sessions a week, the figure sweats. */
 const SWEAT_MIN_DAYS = 6;
 
 const LABEL_NONE = 'Ingen faste træninger';
@@ -27,13 +27,13 @@ const SUBTITLE_LIGHT = 'En eller to gange om ugen holder maskinen i gang.';
 const SUBTITLE_GOOD = 'Det niveau de fleste kan holde året rundt.';
 const SUBTITLE_HIGH = 'Mange pas om ugen. Husk en hviledag imellem.';
 
-/** Curl-tempoet (designets `curlDur`): langsommere jo færre træninger. */
+/** The curl tempo (the design's `curlDur`): slower the fewer training sessions there are. */
 const CURL_IDLE_DURATION_S = 1.6;
 const CURL_BASE_DURATION_S = 1.8;
 const CURL_MIN_DURATION_S = 0.6;
 const CURL_STEP_PER_DAY_S = 0.16;
 
-/** Figurens humør, når der er mindst én træning (designets `ffig`). */
+/** The figure's mood when there is at least one training session (the design's `ffig`). */
 const TRAINING_MOOD = 0.6;
 const SWEAT_DURATION_S = 1.2;
 
@@ -55,12 +55,12 @@ function dropPath(x: number, y: number): string {
 }
 
 /**
- * Trin 7: hvor mange dage om ugen træner du?
+ * Step 7: how many days a week do you train?
  *
- * Dagene vælges enkeltvis (mandag først), og antallet styrer både teksten og figurens
- * biceps-curl: uden træningsdage står den stille, og fra seks dage kommer der sved.
- * Kroppen er `FigureBody`; kun højre arm og håndvægten tegnes her, fordi de skal rotere
- * om skulderen i deres egen gruppe.
+ * Days are toggled individually (Monday first), and the count drives both the copy and
+ * the figure's bicep curl: with no training days it stands still, and from six days it
+ * starts sweating. The body is `FigureBody`; only the right arm and dumbbell are drawn
+ * here, because they need to rotate around the shoulder in their own group.
  */
 @Component({
   selector: 'app-training-frequency-step',
@@ -121,7 +121,7 @@ export class TrainingFrequencyStep {
 
   protected readonly bandTone = computed(() => bandToneForGender(this.state.gender()));
 
-  /** Curl-gruppens omdrejningspunkt: højre skulder. */
+  /** The curl group's pivot point: the right shoulder. */
   protected readonly curlOrigin = computed(() => {
     const g = this.figure();
     return `${g.bodyX + g.bodyW - 10}px ${g.bodyY + 22}px`;
@@ -132,7 +132,7 @@ export class TrainingFrequencyStep {
     if (days === 0) {
       return CURL_IDLE_DURATION_S;
     }
-    // Designet skriver varigheden med to decimaler.
+    // The design writes the duration with two decimal places.
     const duration = Math.max(
       CURL_MIN_DURATION_S,
       CURL_BASE_DURATION_S - days * CURL_STEP_PER_DAY_S,

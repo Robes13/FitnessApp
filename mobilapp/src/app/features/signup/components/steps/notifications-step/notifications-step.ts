@@ -21,18 +21,18 @@ const CHOICES: readonly SegmentOption<boolean>[] = [
   { value: false, label: 'Nej tak' },
 ];
 
-/** Designets faste mål fra skærmen (HTML-linje 905–930), bundet som CSS-variabler. */
+/** The design's fixed dimensions from the screen (HTML line 905–930), bound as CSS variables. */
 const NOTIFICATIONS_LAYOUT = { captionWidth: 300, captionHeight: 40, sceneHeight: 270 } as const;
 
-/** Klokkens x-akse i figurens viewBox – konstanter fra designet. */
+/** The bell's x-axis in the figure's viewBox – constants from the design. */
 const BELL_X = 140;
 const BELL_ORIGIN_X = 158;
-/** Klokkens afstande op fra hovedets midte (designets `headY - n`). */
+/** The bell's offsets up from the center of the head (the design's `headY - n`). */
 const BELL_OFFSETS = { translate: 62, origin: 60, wave1: 48, wave2: 56, sleep: 40 } as const;
 
 /**
- * Klokkens placering, afledt af hovedets y-position, præcis som designets
- * `bellY` / `bellTopY` / `bellWaveY1` / `bellWaveY2` / `zzzY`.
+ * The bell's placement, derived from the head's y-position, exactly like the
+ * design's `bellY` / `bellTopY` / `bellWaveY1` / `bellWaveY2` / `zzzY`.
  */
 interface BellGeometry {
   readonly translateY: number;
@@ -43,12 +43,12 @@ interface BellGeometry {
 }
 
 /**
- * Trin `notifications` (designets `sNotif`): må vi sende påmindelser?
+ * Step `notifications` (the design's `sNotif`): may we send reminders?
  *
- * Scenen svarer på valget: ved "Ja tak" ringer en orange klokke med lydbølger, ved
- * "Nej tak" er den grå og overstreget, figuren lukker øjnene, og der står "z z z".
- * Valget er `null`, indtil brugeren svarer — så er knoppen i pillen usynlig, og
- * `SignupStateService.canContinue` er falsk.
+ * The scene responds to the choice: on "Yes please" an orange bell rings with sound
+ * waves, on "No thanks" it's gray and crossed out, the figure closes its eyes, and
+ * "z z z" is shown. The choice is `null` until the user answers — at that point the
+ * knob in the pill is invisible, and `SignupStateService.canContinue` is false.
  */
 @Component({
   selector: 'app-notifications-step',
@@ -88,7 +88,7 @@ export class NotificationsStep {
   protected readonly ringing = computed(() => this.state.notifications() === true);
   protected readonly expression = computed(() => ({ eyesClosed: this.asleep() }));
 
-  /** Scenens tre ind/ud-toninger – designets synlighed pr. valg, holdt ude af templaten. */
+  /** The scene's three in/out fades – the design's visibility per choice, kept out of the template. */
   protected readonly bellSlashOpacity = computed(() => (this.asleep() ? 1 : 0));
   protected readonly waveOpacity = computed(() => (this.ringing() ? 1 : 0));
   protected readonly snoreOpacity = computed(() => (this.asleep() ? 1 : 0));
@@ -107,7 +107,7 @@ export class NotificationsStep {
   protected readonly bellTransform = computed(
     () => `translate(${BELL_X} ${this.bell().translateY}) scale(1.6)`,
   );
-  /** `transform-box: view-box`, så origo er i figurens viewBox-enheder. */
+  /** `transform-box: view-box`, so the origin is in the figure's viewBox units. */
   protected readonly bellOrigin = computed(() => `${BELL_ORIGIN_X}px ${this.bell().originY}px`);
   protected readonly wavePath1 = computed(() => `M184 ${this.bell().waveY1} q 6 8 0 16`);
   protected readonly wavePath2 = computed(() => `M192 ${this.bell().waveY2} q 8 12 0 24`);

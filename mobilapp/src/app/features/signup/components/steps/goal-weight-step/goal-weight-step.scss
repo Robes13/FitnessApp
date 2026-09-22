@@ -1,9 +1,9 @@
 @use 'mixins';
 
 /*
- * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
- * ellers kan indholdet ikke scrolle.
- * --goal-weight-*-width bindes fra TypeScript (GOAL_WEIGHT_LAYOUT).
+ * The step is a child of the page's flex column and must fill the rest of the
+ * height itself, otherwise the content can't scroll.
+ * --goal-weight-*-width is bound from TypeScript (GOAL_WEIGHT_LAYOUT).
  */
 :host {
   display: flex;
@@ -33,7 +33,7 @@
     text-wrap: pretty;
   }
 
-  /* Tal til venstre, figur til højre – begge bundjusteret over linealen. */
+  /* Number on the left, figure on the right – both bottom-aligned above the ruler. */
   &__scene {
     display: flex;
     flex: 1;
@@ -110,7 +110,7 @@
     text-wrap: pretty;
   }
 
-  /* Pladsen er reserveret, så layoutet ikke hopper, når advarslen kommer og går. */
+  /* The space is reserved so the layout doesn't jump when the warning appears and disappears. */
   &__hint {
     max-width: var(--goal-weight-aside-width);
     min-height: var(--size-icon-sm);
@@ -135,14 +135,14 @@
     transition: none;
   }
 
-  /* Silhuetten af kroppen i dag – konstant grå i begge temaer. */
+  /* The silhouette of today's body – constant gray in both themes. */
   &__ghost {
     opacity: 0.28;
     stroke: var(--color-figure-ghost);
     transition: none;
   }
 
-  /* Linealen går ud til skærmkanten, som i designet. */
+  /* The ruler extends to the screen edge, as in the design. */
   &__ruler {
     flex: none;
     margin-top: var(--space-3);

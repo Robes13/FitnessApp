@@ -9,14 +9,14 @@ import { clamp } from '../../../../../core/utils/math';
 
 import { SignupStateService } from '../../../services/signup-state';
 
-/** Designets `hMinus`/`hPlus`: én centimeter ad gangen. */
+/** The design's `hMinus`/`hPlus`: one centimeter at a time. */
 const STEP_CM = 1;
 const FIGURE_LABEL = 'Figur under loftet';
 
 /**
- * Trin 5 (`s3`): højden som et stort orange tal med en lineal fra 55 til 250 cm.
- * BMI'et under knapperne opdateres med det samme, og figuren nærmer sig loftet fra
- * 212 cm og dukker hovedet fra 230 cm (begge dele ligger i `computeFigureGeometry`).
+ * Step 5 (`s3`): height as a large orange number with a ruler from 55 to 250 cm.
+ * The BMI below the buttons updates immediately, and the figure approaches the ceiling
+ * from 212 cm and ducks its head from 230 cm (both handled in `computeFigureGeometry`).
  */
 @Component({
   selector: 'app-height-step',

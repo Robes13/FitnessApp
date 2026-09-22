@@ -27,20 +27,20 @@ const CAPTION_READY = 'Sådan. Nu mangler kun det sidste tryk.';
 const EMAIL_PLACEHOLDER = 'Din e-mail · dig@mail.dk';
 const EDIT_LABEL_PREFIX = 'Ret ';
 
-/** Designets faste mål fra skærmen (HTML-linje 849–856), bundet som CSS-variabler. */
+/** The design's fixed measurements from the screen (HTML line 849–856), bound as CSS variables. */
 const SUMMARY_LAYOUT = { figureWidth: 92, figureHeight: 124, captionHeight: 36 } as const;
 
-/** Figurens humør: den retter sig op, når betingelserne er accepteret. */
+/** The figure's mood: it straightens up once the conditions are accepted. */
 const MOOD_SIGNED = 1;
 const MOOD_WAITING = 0.15;
-/** Pennen sidder i højre hånd; designets `sfig.penX/penY`. */
+/** The pen sits in the right hand; the design's `sfig.penX/penY`. */
 const PEN_OFFSET_X = 8;
 const HAND_RATIO = 0.72;
 const LIFT_RATIO = 0.9;
-/** Fluebenets streg er tykkere end standardikonets (designet: 3.2 SVG-enheder). */
+/** The checkmark's stroke is thicker than the standard icon's (design: 3.2 SVG units). */
 const CHECK_STROKE_WIDTH = 3.2;
 
-/** Gnist i designets `signSparks` – position i figurens viewBox og forsinkelse i sekunder. */
+/** A spark from the design's `signSparks` – position in the figure's viewBox and delay in seconds. */
 interface SignSpark {
   readonly path: string;
   readonly delay: number;
@@ -61,12 +61,12 @@ function sparkPath(x: number, y: number): string {
 }
 
 /**
- * Trin `summary` (designets `s6`): "Tjek og **bekræft**".
+ * Step `summary` (the design's `s6`): "Check and **confirm**".
  *
- * Her samles hele kladden i ni linjer. Hver linje er en knap, der sender brugeren tilbage
- * til sit trin i rette-tilstand (`SignupStateService.jumpTo`), hvorefter "Næste" hedder
- * "Gem" og fører tilbage hertil. E-mail og flueben er de to sidste betingelser, før
- * "Opret konto" bliver aktiv — selve oprettelsen sker på siden, ikke i trinnet.
+ * Here the whole draft is gathered into nine lines. Each line is a button that sends the user back
+ * to its step in edit mode (`SignupStateService.jumpTo`), after which "Next" becomes
+ * "Save" and leads back here. Email and checkbox are the last two conditions before
+ * "Create account" becomes active — the actual account creation happens on the page, not in the step.
  */
 @Component({
   selector: 'app-summary-step',
@@ -95,7 +95,7 @@ export class SummaryStep {
   });
 
   private readonly emailValid = computed(() => this.calculator.isValidEmail(this.state.email()));
-  /** Rød kant først, når der faktisk står noget forkert – ikke i det tomme felt. */
+  /** Red border only appears once something is actually wrong – not on the empty field. */
   protected readonly emailInvalid = computed(
     () => this.state.email().length > 0 && !this.emailValid(),
   );
@@ -120,7 +120,7 @@ export class SummaryStep {
     );
   });
 
-  /** Målvægten klemt ind i skalaens grænser, så linjen viser det samme som mål-trinnet. */
+  /** The goal weight clamped into the scale's bounds, so the line shows the same as the goal step. */
   private readonly boundedGoalWeightKg = computed(() => {
     const { min, max } = this.calculator.goalWeightBounds(this.state.goal(), this.state.weightKg());
     return clamp(this.state.goalWeightKg(), min, max);
@@ -151,7 +151,7 @@ export class SummaryStep {
   );
   protected readonly bandTone = computed(() => bandToneForGender(this.state.gender()));
 
-  /** Pennen starter i hånden: samme punkt som højre arms endepunkt. */
+  /** The pen starts in the hand: the same point as the right arm's endpoint. */
   protected readonly penPath = computed(() => {
     const geometry = this.geometry();
     const lift = this.mood() * geometry.bodyH * LIFT_RATIO;
@@ -160,7 +160,7 @@ export class SummaryStep {
     return `M${x} ${y} l 14 -34`;
   });
 
-  /** Gnisterne vises kun, når betingelserne er accepteret. */
+  /** The sparks only appear once the conditions are accepted. */
   protected readonly sparks = computed<readonly SignSpark[]>(() => {
     if (!this.state.termsAccepted()) {
       return [];

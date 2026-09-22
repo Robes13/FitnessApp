@@ -1,8 +1,8 @@
 @use 'mixins';
 
 /*
- * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
- * ellers kan indholdet ikke scrolle.
+ * The step is a child of the page's flex column and must fill the rest of the
+ * height itself, otherwise the content can't scroll.
  */
 :host {
   display: flex;
@@ -44,7 +44,7 @@
     white-space: nowrap;
   }
 
-  /* Den grønne opsummeringsboks: grøn i venstre side, der toner ud i fladen. */
+  /* The green summary box: green on the left side, fading out into the surface. */
   &__summary {
     margin: var(--space-4) 0 0;
     padding: var(--space-3-5) var(--space-4);

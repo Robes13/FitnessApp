@@ -4,7 +4,7 @@ import { GoalId } from '../../../../../core/models/profile';
 import { UiOptionCard } from '../../../../../shared/components/ui-option-card/ui-option-card';
 import { SignupStateService } from '../../../services/signup-state';
 
-/** Designets `goalsDef`: glyffen til højre og dens faste farve pr. mål. */
+/** Design's `goalsDef`: the glyph on the right and its fixed color per goal. */
 interface GoalOption {
   readonly id: GoalId;
   readonly label: string;
@@ -20,12 +20,12 @@ const GOAL_GLYPH_CLASSES: Readonly<Record<GoalId, string>> = {
   tage: 'goal-step__glyph--selected',
 };
 
-/** Designets startforslag til målvægten, når man vælger et mål (`goalsDef[].pick`). */
+/** Design's initial suggestion for the goal weight when picking a goal (`goalsDef[].pick`). */
 const GOAL_WEIGHT_OFFSET_KG = 5;
 
 /**
- * Trin `goal` (designets `s4`): tabe / holde / tage på. Valget nulstiller tempoet og
- * sætter et startforslag til målvægten, præcis som designet gør.
+ * Step `goal` (design's `s4`): lose / maintain / gain. The choice resets the pace and
+ * sets an initial suggestion for the goal weight, exactly as the design does.
  */
 @Component({
   selector: 'app-goal-step',
@@ -52,7 +52,7 @@ export class GoalStep {
     this.state.goalWeightKg.set(this.suggestedGoalWeight(id));
   }
 
-  /** `tabe` → 5 kg under (dog mindst 35), `tage` → 5 kg over, `hold` → vægten i dag. */
+  /** `tabe` → 5 kg below (but at least 35), `tage` → 5 kg above, `hold` → today's weight. */
   private suggestedGoalWeight(id: GoalId): number {
     const current = Math.round(this.state.weightKg());
     switch (id) {

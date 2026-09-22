@@ -3,16 +3,16 @@ import { Gender, GoalId, IntensityDefinition, PaceId } from '../../../../../core
 import { formatInteger, formatWeightKg } from '../../../../../core/utils/date-format';
 import { SignupStepId } from '../../../services/signup-state';
 
-/** Én linje i opsummeringen. `step` er det trin, linjen sender brugeren tilbage til. */
+/** A single line in the summary. `step` is the step the line sends the user back to. */
 export interface SummaryRow {
   readonly step: SignupStepId;
   readonly label: string;
   readonly value: string;
-  /** Kun "Mål" er fremhævet med orange værdi, som i designet. */
+  /** Only "Goal" is highlighted with an orange value, as in the design. */
   readonly accent: boolean;
 }
 
-/** Kladden, som opsummeringen læser — allerede afledte værdier, ikke rå signaler. */
+/** The draft the summary reads from — already-derived values, not raw signals. */
 export interface SummaryDraft {
   readonly username: string;
   readonly age: number;
@@ -25,7 +25,7 @@ export interface SummaryDraft {
   readonly trainingMinutes: number;
   readonly intensity: IntensityDefinition | null;
   readonly goal: GoalId | null;
-  /** Målvægten inden for skalaens grænser (designets `goalW`). */
+  /** The goal weight clamped within the scale's bounds (the design's `goalW`). */
   readonly goalWeightKg: number;
   readonly pace: PaceId | null;
   readonly notifications: boolean | null;
@@ -41,7 +41,7 @@ function genderLabel(gender: Gender | null): string {
   return GENDERS.find((candidate) => candidate.id === gender)?.label ?? EMPTY;
 }
 
-/** `Tabe mig · 70 kg · moderat` – målvægten udelades ved "holde vægten". */
+/** `Lose weight · 70 kg · moderate` – the goal weight is omitted for "maintain weight". */
 function goalLabel(draft: SummaryDraft): string {
   const goal = GOALS.find((candidate) => candidate.id === draft.goal);
   if (!goal) {
@@ -53,7 +53,7 @@ function goalLabel(draft: SummaryDraft): string {
   return `${goal.label}${weight}${paceSuffix}`;
 }
 
-/** `3 × 45 min · moderat` – eller "Ingen faste træninger", når ingen dage er valgt. */
+/** `3 × 45 min · moderate` – or "No fixed workouts", when no days are selected. */
 function trainingLabel(draft: SummaryDraft): string {
   if (draft.trainingDayCount === 0) {
     return NO_TRAINING;
@@ -70,8 +70,8 @@ function notificationsLabel(notifications: boolean | null): string {
 }
 
 /**
- * Designets `sumRows`: ni linjer i samme rækkefølge som flowet. Funktionen er ren, så den
- * kan testes uden at rejse komponenten.
+ * The design's `sumRows`: nine lines in the same order as the flow. The function is pure, so it
+ * can be tested without instantiating the component.
  */
 export function buildSummaryRows(draft: SummaryDraft): readonly SummaryRow[] {
   const rows: readonly Omit<SummaryRow, 'accent'>[] = [

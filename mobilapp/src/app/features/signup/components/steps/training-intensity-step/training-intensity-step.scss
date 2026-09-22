@@ -1,8 +1,9 @@
 @use 'mixins';
 
 /*
- * Træningsintensitet. RPE-tallet farver både tallet, søjleskalaen og figuren; højder og
- * tempi bindes fra TypeScript, mens farver, spacing og typografi er tokens.
+ * Training intensity. The RPE number colors the number, the bar scale and the figure;
+ * heights and tempos are bound from TypeScript, while colors, spacing and typography
+ * are tokens.
  */
 :host {
   display: flex;
@@ -24,7 +25,7 @@
     color: var(--color-accent);
   }
 
-  /* Bredderne er sat i ch, fordi designets 290/150 px svarer til en tekstspalte. */
+  /* Widths are set in ch because the design's 290/150 px correspond to a text column. */
   &__subtitle {
     max-width: 40ch;
     margin: var(--space-2-5) 0 0;
@@ -153,7 +154,7 @@
     fill: var(--color-figure-sweat);
   }
 
-  /* Anstrengelsesskalaen: ti søjler, der vokser mod højre. */
+  /* The effort scale: ten bars that grow toward the right. */
   &__segments {
     display: flex;
     flex: none;
@@ -260,7 +261,7 @@
     }
   }
 
-  /* Én linje – talk-testen må ikke skubbe knapperne ned. */
+  /* One line – the talk test must not push the buttons down. */
   &__talk-test {
     @include mixins.text-truncate;
 

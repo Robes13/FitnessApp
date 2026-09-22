@@ -1,9 +1,10 @@
 @use 'mixins';
 
 /*
- * Aktivitetstrinnet. Scenens tempi og forskydninger bindes fra TypeScript (skridttallet
- * styrer dem), mens farver, spacing og typografi er tokens. SVG-koordinaterne står som
- * attributter i templaten; her sættes kun fyld, streg og animationsnavne.
+ * The activity step. The scene's timings and offsets are bound from TypeScript (driven
+ * by the step count), while colors, spacing and typography are tokens. The SVG
+ * coordinates live as attributes in the template; only fill, stroke and animation names
+ * are set here.
  */
 :host {
   display: flex;
@@ -25,7 +26,7 @@
     color: var(--color-accent);
   }
 
-  /* Bredderne er sat i ch, fordi designets 290/140 px svarer til en tekstspalte. */
+  /* Widths are set in ch, since the design's 290/140 px correspond to a text column. */
   &__subtitle {
     max-width: 40ch;
     margin: var(--space-2-5) 0 0;
@@ -64,7 +65,7 @@
     font-size: var(--font-size-display-8xl);
     line-height: var(--line-height-none);
     letter-spacing: var(--letter-spacing-tighter);
-    /* Navnet skifter mellem `numtickA` og `numtickB`, så hoppet starter forfra pr. tusinde. */
+    /* The name alternates between `numtickA` and `numtickB`, so the jump restarts per thousand. */
     animation-duration: var(--duration-quick);
     animation-timing-function: ease;
   }
@@ -153,14 +154,14 @@
     overflow: visible;
   }
 
-  /* Linealen går ud til begge kanter, som i designet. */
+  /* The ruler extends to both edges, as in the design. */
   &__ruler {
     flex: none;
     margin-top: var(--space-3);
     margin-inline: calc(-1 * var(--layout-page-padding-x));
   }
 
-  /* --- Scenerne: gå-scenen og sofa-scenen krydsfader. --- */
+  /* --- The scenes: the walking scene and the couch scene cross-fade. --- */
   &__walk,
   &__lazy {
     transform-box: view-box;
@@ -322,7 +323,7 @@
     fill: var(--color-accent);
   }
 
-  /* Hunden spejlvendes, så den trasker samme vej som figuren. */
+  /* The dog is mirrored so it trots the same direction as the figure. */
   &__dog {
     transform-box: view-box;
     transform-origin: 17% 90%;

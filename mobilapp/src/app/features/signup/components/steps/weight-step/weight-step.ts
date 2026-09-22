@@ -8,14 +8,14 @@ import { clamp } from '../../../../../core/utils/math';
 
 import { SignupStateService } from '../../../services/signup-state';
 
-/** Designets `wMinus`/`wPlus`: ét kilo ad gangen. */
+/** Design's `wMinus`/`wPlus`: one kilo at a time. */
 const STEP_KG = 1;
 const FIGURE_LABEL = 'Figur med håndvægt';
 
 /**
- * Trin 4 (`s2`): vægten som et stort orange tal med en lineal fra 30 til 300 kg.
- * Figuren ved siden af bliver bredere, når vægten stiger (`computeFigureGeometry`),
- * og løfter en håndvægt.
+ * Step 4 (`s2`): the weight as a large orange number with a ruler from 30 to 300 kg.
+ * The figure next to it gets wider as the weight increases (`computeFigureGeometry`),
+ * and lifts a dumbbell.
  */
 @Component({
   selector: 'app-weight-step',

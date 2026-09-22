@@ -26,7 +26,7 @@
     color: var(--color-text-secondary);
   }
 
-  /* Tallet til venstre, figuren til højre – begge bundjusteret som i designet. */
+  /* The number on the left, the figure on the right – both bottom-aligned as in the design. */
   &__stage {
     display: flex;
     flex: 1;
@@ -98,7 +98,7 @@
     }
   }
 
-  /* Designets max-width:150px ved 12 px tekst = 12,5em. */
+  /* The design's max-width: 150px at 12 px text = 12.5em. */
   &__hint {
     max-width: 12.5em;
     margin: 0;
@@ -108,7 +108,7 @@
     text-wrap: pretty;
   }
 
-  /* Designets max-width:215px af sidens indholdsbredde. */
+  /* The design's max-width: 215px of the page's content width. */
   &__figure {
     flex: 1;
     align-self: stretch;
@@ -117,7 +117,7 @@
     height: 100%;
   }
 
-  /* Linealen går ud til begge kanter, uden om sidens vandrette padding. */
+  /* The ruler extends to both edges, bypassing the page's horizontal padding. */
   &__ruler {
     flex: none;
     margin-top: var(--space-3);

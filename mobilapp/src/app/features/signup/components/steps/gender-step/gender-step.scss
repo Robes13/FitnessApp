@@ -34,7 +34,7 @@
     margin-top: var(--space-6);
   }
 
-  /* Designets tomme flex-felt under kortene, så trinnet fylder resten af højden. */
+  /* The design's empty flex spacer below the cards, so the step fills the rest of the height. */
   &__spacer {
     flex: 1;
     min-height: 0;

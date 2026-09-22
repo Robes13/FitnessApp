@@ -1,4 +1,4 @@
-/* Fødselsdagsscenen: kagens lag og lysenes pastelfarver kommer fra `--color-cake-*`/`--color-candle-*`. */
+/* The birthday scene: the cake's layers and the candles' pastel colours come from `--color-cake-*`/`--color-candle-*`. */
 :host {
   display: block;
 }
@@ -81,7 +81,7 @@
     fill: var(--color-accent);
   }
 
-  /* Designets fem lysfarver: hvid, lyseblå, rosa, mint og lys gul. */
+  /* The design's five candle colours: white, light blue, pink, mint and light yellow. */
   &__candle--0 {
     fill: var(--color-candle-0);
   }

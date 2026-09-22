@@ -53,7 +53,8 @@ describe('SignupPage', () => {
   it('shows the progress header, the first step and the footer', async () => {
     const { page } = await setup();
 
-    expect(page.textContent).toContain('Trin 1 af 14');
+    // The draft starts with no training days, so the two training detail steps are hidden.
+    expect(page.textContent).toContain('Trin 1 af 12');
     expect(page.textContent).toContain('Dig');
     expect(page.querySelector('app-account-step')).not.toBeNull();
     expect(page.querySelector('[aria-label="Tilbage"]')).not.toBeNull();

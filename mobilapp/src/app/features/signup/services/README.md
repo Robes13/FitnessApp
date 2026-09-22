@@ -14,7 +14,7 @@ oprettelsen, er alt væk næste gang.
 - **Kladde** (skrivbare signaler, sat af trinnene): `username`, `password`, `passwordRepeat`,
   `birthday`, `gender`, `weightKg`, `heightCm`, `stepsPerDay`, `trainingDays`,
   `trainingMinutes`, `trainingRpe`, `goal`, `goalWeightKg`, `pace`, `notifications`, `email`,
-  `termsAccepted`. Startværdierne er designets – dvs. `DEMO_PROFILE_DEFAULTS`.
+  `termsAccepted`. Startværdierne kommer fra `DEFAULT_PROFILE`, så kladden begynder tom.
 - **Navigation**: `step`, `editFrom`, `isEditing`, `visibleOrder`, `stepNumber`, `stepTotal`,
   `progressValue`, `chapters`, `canContinue`, `nextLabel`, `next()`, `back()`,
   `jumpTo(step)`, `toggleTrainingDay(index)`.

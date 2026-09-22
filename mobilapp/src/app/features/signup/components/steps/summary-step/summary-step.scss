@@ -1,9 +1,9 @@
 @use 'mixins';
 
 /*
- * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
- * ellers kan listen ikke scrolle.
- * --summary-* bindes fra TypeScript (SUMMARY_LAYOUT).
+ * The step is a child of the page's flex column and must fill the rest of the height itself,
+ * otherwise the list can't scroll.
+ * --summary-* is bound from TypeScript (SUMMARY_LAYOUT).
  */
 :host {
   display: flex;
@@ -39,7 +39,7 @@
     color: var(--color-accent);
   }
 
-  /* Højden er reserveret, så listen ikke hopper, når teksten skifter. */
+  /* The height is reserved so the list doesn't jump when the text changes. */
   &__caption {
     min-height: var(--summary-caption-height);
     margin: var(--space-2) 0 0;
@@ -56,7 +56,7 @@
     overflow: visible;
   }
 
-  /* Pennen banker utålmodigt, indtil betingelserne er accepteret. */
+  /* The pen taps impatiently until the conditions are accepted. */
   &__pen {
     transform-box: fill-box;
     transform-origin: bottom left;
@@ -84,9 +84,9 @@
   }
 
   /*
-   * Listen er selve scroll-området. Den er en flex-kolonne (ikke `scroll-area`-mixinens
-   * `display: block`), fordi designet lægger luft mellem felt, rækker og betingelser med
-   * `gap`. `min-height: 0` er stadig nødvendig, ellers presser flex-forælderen den flad.
+   * The list is the actual scroll area. It's a flex column (not the `scroll-area` mixin's
+   * `display: block`), because the design spaces out field, rows and conditions with
+   * `gap`. `min-height: 0` is still necessary, otherwise the flex parent squashes it flat.
    */
   &__list {
     @include mixins.hide-scrollbar;
@@ -173,7 +173,7 @@
     text-wrap: pretty;
   }
 
-  /* Ordene er fremhævet, men fører ingen steder hen – der er ingen sider bag dem. */
+  /* The words are highlighted but lead nowhere – there are no pages behind them. */
   &__terms-link {
     color: var(--color-accent);
     font-weight: var(--font-weight-bold);

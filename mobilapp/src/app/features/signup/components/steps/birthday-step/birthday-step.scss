@@ -27,7 +27,7 @@
     color: var(--color-text-secondary);
   }
 
-  /* År og måned side om side, hver i sin pille med −/+ og ‹/›. */
+  /* Year and month side by side, each in its own pill with −/+ and ‹/›. */
   &__controls {
     display: flex;
     gap: var(--space-2);
@@ -149,7 +149,7 @@
     font-weight: var(--font-weight-medium);
     cursor: pointer;
 
-    /* Dage fra nabomånederne og fremtidige datoer er nedtonet som i designet. */
+    /* Days from adjacent months and future dates are dimmed, as in the design. */
     &--ghost {
       color: var(--color-text-muted);
       opacity: 0.42;
@@ -182,7 +182,7 @@
     }
   }
 
-  /* Alderen til venstre, kagen til højre – begge bundjusteret. */
+  /* Age on the left, cake on the right – both bottom-aligned. */
   &__stage {
     display: flex;
     flex: 1;
@@ -231,7 +231,7 @@
     color: var(--color-accent);
   }
 
-  /* Designets max-width:150px ved 12 px tekst = 12,5em. */
+  /* Design's max-width:150px at 12px text = 12.5em. */
   &__age-hint {
     max-width: 12.5em;
     margin: var(--space-2) 0 0;
@@ -240,7 +240,7 @@
     text-wrap: pretty;
   }
 
-  /* Designets max-width:200px af sidens indholdsbredde; højden styres af rækken. */
+  /* Design's max-width:200px of the page's content width; height is controlled by the row. */
   &__cake {
     flex: 1;
     align-self: stretch;

@@ -1,9 +1,9 @@
 import { clamp, roundTo } from '../../../../../../core/utils/math';
 
 /**
- * Kagens geometri i figur-SVG'ets koordinatsystem (`viewBox 0 0 260 300`).
- * Direkte port af designets `cakeLayers` og `candles`: antallet af lag følger alderen,
- * og ét lys pr. år (op til 25) fordeles på op til tre koncentriske ringe på kagens top.
+ * The cake's geometry in the figure SVG's coordinate system (`viewBox 0 0 260 300`).
+ * Direct port of the design's `cakeLayers` and `candles`: the number of layers follows the age,
+ * and one candle per year (up to 25) is distributed across up to three concentric rings on top of the cake.
  */
 
 export interface CakeTier {
@@ -11,7 +11,7 @@ export interface CakeTier {
   readonly y: number;
   readonly width: number;
   readonly height: number;
-  /** Glasurens sti: kagens overkant plus en bue pr. "tunge". */
+  /** The icing's path: the cake's top edge plus one arc per "tongue". */
   readonly drip: string;
   readonly tierClass: string;
   readonly icingClass: string;
@@ -25,18 +25,18 @@ export interface CakeCandle {
   readonly radius: number;
   readonly stripeY: number;
   readonly centreX: number;
-  /** Midten af det bløde skær om flammen. */
+  /** The centre of the soft glow around the flame. */
   readonly glowY: number;
   readonly flamePath: string;
   readonly corePath: string;
   readonly colourClass: string;
-  /** Forskudt animation i sekunder, så lysene ikke blafrer i takt. */
+  /** Animation offset in seconds, so the candles don't flicker in sync. */
   readonly delay: number;
 }
 
 export interface CakeGeometry {
   readonly tiers: number;
-  /** Y for kagens øverste flade – lysene står her. */
+  /** Y for the cake's top surface – the candles stand here. */
   readonly top: number;
   readonly layers: readonly CakeTier[];
   readonly surfaceRx: number;
@@ -61,10 +61,10 @@ const NUMBER_OFFSET_Y = 40;
 const TIER_CLASSES = ['dark', 'brown', 'dark'] as const;
 const ICING_CLASSES = ['accent', 'accent-light', 'accent'] as const;
 
-/** Aldersgrænserne for antal lag: under 20 ét, under 50 to, derover tre. */
+/** The age limits for the number of layers: under 20 one, under 50 two, above that three. */
 const TWO_TIER_AGE = 20;
 const THREE_TIER_AGE = 50;
-/** Flere end 25 lys får ikke plads på kagen – så står tallet der i stedet. */
+/** More than 25 candles won't fit on the cake – the number is shown there instead. */
 export const MAX_CANDLES = 25;
 export const CAKE_NUMBER_MIN_AGE = 40;
 const RING_CAPS = [12, 8, 5] as const;
@@ -78,7 +78,7 @@ const FLAME_OFFSET = 6;
 const CANDLE_COLOUR_COUNT = 5;
 const DELAY_STEP = 0.11;
 
-/** Designet skriver kagens mål med én decimal. */
+/** The design writes the cake's measurements with one decimal. */
 const DECIMALS = 1;
 
 export function cakeTierCount(age: number): number {
@@ -112,7 +112,7 @@ function buildLayers(tiers: number): readonly CakeTier[] {
   });
 }
 
-/** Lysene fordelt på 1–3 ringe; det yderste lag tegnes bagest (sorteret på y). */
+/** The candles distributed across 1–3 rings; the outermost layer is drawn first (sorted by y). */
 function buildCandles(age: number, top: number, surfaceRx: number): readonly CakeCandle[] {
   const total = clamp(age, 0, MAX_CANDLES);
   if (total === 0) {
@@ -129,7 +129,7 @@ function buildCandles(age: number, top: number, surfaceRx: number): readonly Cak
     rings.push(take);
     left -= take;
   }
-  // Et enkelt lys alene i den inderste ring ser forkert ud – lån ét fra ringen udenfor.
+  // A single lone candle in the innermost ring looks wrong – borrow one from the ring outside it.
   const last = rings.length - 1;
   const outer = rings[last - 1];
   if (rings.length > 1 && rings[last] === 1 && outer !== undefined) {

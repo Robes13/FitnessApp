@@ -1,8 +1,8 @@
 @use 'mixins';
 
 /*
- * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
- * ellers kan indholdet ikke scrolle.
+ * The step is a child of the page's flex column and must fill the rest of the height
+ * itself, otherwise the content can't scroll.
  */
 :host {
   display: flex;
@@ -37,7 +37,7 @@
     margin-top: var(--space-8);
   }
 
-  /* Designets hint-linje ligger 4 px inde, så den flugter med feltets tekst. */
+  /* The design's hint line sits 4 px in, so it aligns with the field's text. */
   &__hint {
     padding-left: var(--space-1);
   }

@@ -1,8 +1,9 @@
 @use 'mixins';
 
 /*
- * Træningsfrekvens. Curl-scenens tempo bindes fra TypeScript (antallet af træningsdage);
- * farver, spacing og typografi er tokens, og SVG-koordinaterne står i templaten.
+ * Training frequency. The curl scene's tempo is bound from TypeScript (the number of
+ * training days); colors, spacing and typography are tokens, and the SVG coordinates
+ * live in the template.
  */
 :host {
   display: flex;
@@ -24,7 +25,7 @@
     color: var(--color-accent);
   }
 
-  /* Bredderne er sat i ch, fordi designets 290/130 px svarer til en tekstspalte. */
+  /* Widths are set in ch because the design's 290/130 px correspond to a text column. */
   &__subtitle {
     max-width: 40ch;
     margin: var(--space-2-5) 0 0;

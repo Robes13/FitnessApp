@@ -1,6 +1,6 @@
 import { mondayIndex, toIsoDate } from '../../../../../core/utils/date-format';
 
-/** Én celle i månedsgitteret. `ghost` er en dag fra nabomåneden. */
+/** One cell in the month grid. `ghost` is a day from an adjacent month. */
 export interface CalendarCell {
   readonly iso: string;
   readonly label: string;
@@ -8,15 +8,15 @@ export interface CalendarCell {
   readonly month: number;
   readonly ghost: boolean;
   readonly selected: boolean;
-  /** Fremtidige datoer kan ikke vælges (man kan ikke være født i morgen). */
+  /** Future dates cannot be picked (you can't be born tomorrow). */
   readonly future: boolean;
 }
 
-/** Designets gitter er altid 6 uger højt, så layoutet ikke hopper mellem måneder. */
+/** The design's grid is always 6 weeks tall, so the layout doesn't jump between months. */
 export const CALENDAR_CELL_COUNT = 42;
 export const CALENDAR_WEEKDAYS = ['ma', 'ti', 'on', 'to', 'fr', 'lø', 'sø'] as const;
 export const CALENDAR_MIN_YEAR = 1900;
-/** Designets startvisning, når ingen dato er valgt endnu: juni 1998. */
+/** The design's default view when no date has been picked yet: June 1998. */
 export const CALENDAR_DEFAULT_YEAR = 1998;
 export const CALENDAR_DEFAULT_MONTH = 5;
 
@@ -36,9 +36,9 @@ function cell(date: Date, selectedIso: string, today: Date, ghost: boolean): Cal
 }
 
 /**
- * Bygger de 42 celler for `year`/`month`: først de manglende dage fra forrige måned,
- * så månedens egne dage, og til sidst nok dage fra næste måned til at fylde gitteret.
- * Ugen starter mandag. Port af designets `calendar()`.
+ * Builds the 42 cells for `year`/`month`: first the missing days from the previous
+ * month, then the month's own days, and finally enough days from the next month to
+ * fill the grid. The week starts on Monday. Port of the design's `calendar()`.
  */
 export function buildCalendarCells(
   year: number,
@@ -62,7 +62,7 @@ export function buildCalendarCells(
   return cells;
 }
 
-/** År og måned efter et spring, klemt fast så visningen aldrig lander i fremtiden. */
+/** Year and month after a jump, clamped so the view never lands in the future. */
 export function shiftCalendar(
   year: number,
   month: number,

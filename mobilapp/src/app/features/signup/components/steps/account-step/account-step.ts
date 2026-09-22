@@ -6,7 +6,7 @@ import { UiFormError } from '../../../../../shared/components/ui-form-error/ui-f
 import { UiTextInput } from '../../../../../shared/components/ui-text-input/ui-text-input';
 import { SignupStateService } from '../../../services/signup-state';
 
-/** Designets `pwHint` – begge tekster er verbatim fra prototypen. */
+/** Design's `pwHint` – both texts are verbatim from the prototype. */
 const MISMATCH_HINT = 'Adgangskoderne er ikke ens.';
 const MIN_LENGTH_HINT = 'Mindst 8 tegn.';
 
@@ -17,12 +17,12 @@ interface AccountForm {
 }
 
 /**
- * Trin 1 (`s1`): brugernavn og adgangskode to gange. Feltet for gentagelsen markeres, så
- * snart de to koder ikke er ens, og hint-linjen under felterne holder sin højde, så
- * layoutet ikke hopper.
+ * Step 1 (`s1`): username and password, entered twice. The repeat field is flagged as
+ * soon as the two passwords don't match, and the hint line under the fields keeps its
+ * height so the layout doesn't jump.
  *
- * Trinnet har hverken inputs eller outputs: det skriver direkte i `SignupStateService`,
- * som også afgør, hvornår "Næste" er aktiv (`canContinue`).
+ * The step has neither inputs nor outputs: it writes directly to `SignupStateService`,
+ * which also decides when "Next" is active (`canContinue`).
  */
 @Component({
   selector: 'app-account-step',
@@ -41,7 +41,7 @@ export class AccountStep {
     passwordRepeat: new FormControl(this.state.passwordRepeat(), { nonNullable: true }),
   });
 
-  /** Designets `pwMismatch`: først når der er skrevet noget i gentagelsesfeltet. */
+  /** Design's `pwMismatch`: only once something has been typed in the repeat field. */
   protected readonly mismatch = computed(
     () =>
       this.state.passwordRepeat().length > 0 &&

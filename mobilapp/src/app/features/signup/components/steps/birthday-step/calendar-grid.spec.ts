@@ -1,7 +1,7 @@
 import { TEST_NOW } from '../../../../../core/testing/test-providers';
 import { CALENDAR_CELL_COUNT, buildCalendarCells, shiftCalendar } from './calendar-grid';
 
-/** Mandag 21. september 2026 – samme "nu" som resten af testene. */
+/** Monday, September 21, 2026 – the same "now" as the rest of the tests. */
 const TODAY = new Date(TEST_NOW.getFullYear(), TEST_NOW.getMonth(), TEST_NOW.getDate());
 
 describe('buildCalendarCells', () => {
@@ -9,7 +9,7 @@ describe('buildCalendarCells', () => {
     const cells = buildCalendarCells(1998, 4, '', TODAY);
 
     expect(cells).toHaveLength(CALENDAR_CELL_COUNT);
-    // 1. maj 1998 var en fredag, så mandag–torsdag kommer fra april.
+    // May 1, 1998 was a Friday, so Monday–Thursday come from April.
     expect(cells[0]?.iso).toBe('1998-04-27');
     expect(cells[0]?.ghost).toBe(true);
     expect(cells[4]?.iso).toBe('1998-05-01');

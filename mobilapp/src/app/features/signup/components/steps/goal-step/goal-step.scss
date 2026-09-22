@@ -1,8 +1,8 @@
 @use 'mixins';
 
 /*
- * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
- * ellers kan indholdet ikke scrolle.
+ * The step is a child of the page's flex column and must fill the rest of the
+ * height itself, otherwise the content can't scroll.
  */
 :host {
   display: flex;
@@ -37,7 +37,7 @@
     margin-top: var(--space-8);
   }
 
-  /* Glyffen har fast farve pr. mål – den skifter ikke med valget. */
+  /* The glyph has a fixed color per goal – it doesn't change with the selection. */
   &__glyph {
     @include mixins.display-heading;
 

@@ -28,7 +28,7 @@ function setDays(result: Setup, days: readonly boolean[]): void {
   result.fixture.detectChanges();
 }
 
-/** Strict-mode-venlig opslag: fejler højlydt, hvis elementet mangler. */
+/** Strict-mode-friendly lookup: fails loudly if the element is missing. */
 function at<T extends Element>(root: ParentNode, selector: string, index: number): T {
   const found = root.querySelectorAll<T>(selector)[index];
   if (!found) {
@@ -47,10 +47,10 @@ describe('TrainingFrequencyStep', () => {
 
     expect(element.textContent).toContain('Hvor ofte');
     expect(element.textContent).toContain('træner du?');
-    // Kladden starter på mandag, onsdag og fredag.
-    expect(element.querySelector('.training-frequency-step__count')?.textContent?.trim()).toBe('3');
+    // The draft starts with no days selected – the user picks them.
+    expect(element.querySelector('.training-frequency-step__count')?.textContent?.trim()).toBe('0');
     expect(element.querySelector('.training-frequency-step__pill-label')?.textContent?.trim()).toBe(
-      'God rytme',
+      'Ingen faste træninger',
     );
     expect(element.textContent).toContain('Tryk på de dage, du typisk træner.');
   });
@@ -74,7 +74,7 @@ describe('TrainingFrequencyStep', () => {
       'Mandag',
     );
     expect(at(element, '.training-frequency-step__day', 0).getAttribute('aria-pressed')).toBe(
-      'true',
+      'false',
     );
     expect(at(element, '.training-frequency-step__day', 1).getAttribute('aria-pressed')).toBe(
       'false',
@@ -91,7 +91,7 @@ describe('TrainingFrequencyStep', () => {
     expect(result.state.trainingDays()[1]).toBe(true);
     expect(
       result.element.querySelector('.training-frequency-step__count')?.textContent?.trim(),
-    ).toBe('4');
+    ).toBe('1');
   });
 
   it('stops the curl without training days and sweats from six', () => {
@@ -99,15 +99,15 @@ describe('TrainingFrequencyStep', () => {
     const curl = (): HTMLElement | null =>
       result.element.querySelector('.training-frequency-step__curl');
 
-    // 1,8 − 3 × 0,16 = 1,32 s
-    expect(curl()?.style.animationDuration).toBe('1.32s');
-    expect(curl()?.style.animationPlayState).toBe('running');
-
-    setDays(result, [false, false, false, false, false, false, false]);
-
     expect(curl()?.style.animationPlayState).toBe('paused');
     expect(curl()?.style.animationDuration).toBe('1.6s');
     expect(result.element.textContent).toContain('Ingen faste træninger');
+
+    // 1.8 − 3 × 0.16 = 1.32 s
+    setDays(result, [true, false, true, false, true, false, false]);
+
+    expect(curl()?.style.animationDuration).toBe('1.32s');
+    expect(curl()?.style.animationPlayState).toBe('running');
 
     setDays(result, [true, true, true, true, true, true, false]);
 

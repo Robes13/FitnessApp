@@ -34,7 +34,7 @@ function filledSegments(element: HTMLElement): number {
   ).length;
 }
 
-/** Strict-mode-venlig opslag: fejler højlydt, hvis elementet mangler. */
+/** Strict-mode-friendly lookup: fails loudly if the element is missing. */
 function at<T extends Element>(root: ParentNode, selector: string, index: number): T {
   const found = root.querySelectorAll<T>(selector)[index];
   if (!found) {

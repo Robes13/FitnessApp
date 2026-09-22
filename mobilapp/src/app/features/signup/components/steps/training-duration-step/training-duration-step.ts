@@ -15,7 +15,7 @@ import {
 import { UiRuler } from '../../../../../shared/components/ui-ruler/ui-ruler';
 import { SignupStateService } from '../../../services/signup-state';
 
-/** Designets `durLabel`/`durSubtitle`-tærskler i minutter. */
+/** The design's `durLabel`/`durSubtitle` thresholds in minutes. */
 const SHORT_MAX_MINUTES = 25;
 const CLASSIC_MAX_MINUTES = 50;
 const LONG_MAX_MINUTES = 80;
@@ -33,25 +33,25 @@ const SUBTITLE_LONG = 'Godt med tid til både opvarmning og styrke.';
 const SUBTITLE_VERY_LONG = 'Lange pas kræver mad og væske undervejs.';
 const SUBTITLE_ENDURANCE = 'Over to timer. Planlæg mad, væske og en rolig dag efter.';
 
-/** Stopurets ring: hele omkredsen af cirklen med r = 58 (designets `364.4`). */
+/** The stopwatch ring: the full circumference of the circle with r = 58 (the design's `364.4`). */
 const DIAL_CIRCUMFERENCE = 364.4;
-/** Visersekunder: hurtigere jo længere passet er (designets `sweepDur`). */
+/** Hand speed in seconds: faster the longer the session is (the design's `sweepDur`). */
 const SWEEP_BASE_DURATION_S = 4.5;
 const SWEEP_MIN_DURATION_S = 1.2;
 const SWEEP_DIVISOR = 40;
-/** Figurens vip har fast tempo her. */
+/** The figure's bob has a fixed tempo here. */
 const BOB_DURATION_S = 1.6;
-/** Designets `dfig`: figuren er glad på dette trin. */
+/** The design's `dfig`: the figure is happy at this step. */
 const FIGURE_MOOD = 0.5;
 
 const RULER_STEP = 5;
 
 /**
- * Trin 8: hvor længe træner du ad gangen?
+ * Step 8: how long do you train per session?
  *
- * Minuttallet fylder stopurets ring (0–180 min) og sætter farten på viseren. Figuren er
- * `FigureBody` skaleret ned til 62 %, som i designet – uden kinder, fordi stopur-scenen
- * tegner et roligt ansigt.
+ * The minute value fills the stopwatch ring (0–180 min) and sets the hand's speed. The
+ * figure is `FigureBody` scaled down to 62%, as in the design — without cheeks, because
+ * the stopwatch scene draws a calm face.
  */
 @Component({
   selector: 'app-training-duration-step',
@@ -69,7 +69,7 @@ export class TrainingDurationStep {
   protected readonly rulerStep = RULER_STEP;
   protected readonly dialCircumference = DIAL_CIRCUMFERENCE;
   protected readonly bobDuration = BOB_DURATION_S;
-  /** Stopur-figuren har ingen kinder i designet. */
+  /** The stopwatch figure has no cheeks in the design. */
   protected readonly expression: Partial<FigureExpression> = { cheekRadius: 0 };
 
   protected readonly dragging = signal(false);
@@ -107,7 +107,7 @@ export class TrainingDurationStep {
     return minutes < VERY_LONG_MAX_MINUTES ? SUBTITLE_VERY_LONG : SUBTITLE_ENDURANCE;
   });
 
-  /** Ringens resterende stregmængde – 0 ved 180 minutter. */
+  /** The ring's remaining stroke amount – 0 at 180 minutes. */
   protected readonly arcOffset = computed(() =>
     roundTo(DIAL_CIRCUMFERENCE * (1 - this.minutes() / TRAINING_MAX_MINUTES), 1),
   );

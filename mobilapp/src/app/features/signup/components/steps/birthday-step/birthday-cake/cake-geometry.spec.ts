@@ -25,7 +25,7 @@ describe('computeCakeGeometry', () => {
     expect(tier?.y).toBe(254);
     expect(tier?.width).toBe(116);
     expect(tier?.drip.startsWith('M146.0 254 h 116 v 8 q -7.3 9 -14.5 0')).toBe(true);
-    // 116 / 14 rundes til 8 buer.
+    // 116 / 14 rounds to 8 arcs.
     expect(tier?.drip.split('q')).toHaveLength(9);
   });
 
@@ -44,7 +44,7 @@ describe('computeCakeGeometry', () => {
 
     expect(cake.tiers).toBe(3);
     expect(cake.candles).toHaveLength(MAX_CANDLES);
-    // Ringene har højderne 15, 14 og 13 (15 − ringens nummer).
+    // The rings have heights 15, 14 and 13 (15 − ring number).
     expect(new Set(cake.candles.map((candle) => candle.height))).toEqual(new Set([15, 14, 13]));
   });
 
