@@ -1,0 +1,305 @@
+@switch (step()) {
+  @case ('search') {
+    <div class="food-picker__step">
+      <div class="food-picker__search-row">
+        <app-ui-text-input
+          class="food-picker__search"
+          [formControl]="queryControl"
+          size="md"
+          inputMode="search"
+          autocomplete="off"
+          placeholder="Søg mad, f.eks. havregryn"
+          ariaLabel="Søg mad, f.eks. havregryn"
+        />
+        @if (showScan()) {
+          <button
+            app-ui-icon-button
+            size="md"
+            tone="accent"
+            type="button"
+            class="food-picker__scan"
+            aria-label="Scan stregkode"
+            (click)="requestScan()"
+          >
+            <app-ui-icon name="scan" size="xl" [strokeWidth]="2.2" />
+          </button>
+        }
+      </div>
+
+      <div class="food-picker__results">
+        @if (isSearching()) {
+          <div class="food-picker__loading"><app-ui-spinner /></div>
+        } @else if (hasNoMatches()) {
+          <app-ui-empty-state
+            class="food-picker__empty"
+            message="Ingen varer matcher din søgning."
+          />
+        } @else {
+          @for (item of results(); track item.id) {
+            <button type="button" class="food-picker__result" (click)="pick(item)">
+              <span class="food-picker__result-main">
+                <span class="food-picker__result-name">
+                  {{ item.name }}
+                  @if (item.isCustom) {
+                    <span class="food-picker__own">Egen vare</span>
+                  }
+                </span>
+                <span class="food-picker__result-meta">
+                  {{ item.quantity }} · P {{ item.protein }} · K {{ item.carbs }} · F {{ item.fat }}
+                </span>
+              </span>
+              <span class="food-picker__result-kcal">
+                {{ item.kcal }} kcal
+                <span class="food-picker__result-add"><app-ui-icon name="plus" size="sm" /></span>
+              </span>
+            </button>
+          }
+        }
+        <button type="button" class="food-picker__create" (click)="openNewFood()">
+          <span class="food-picker__create-icon"><app-ui-icon name="plus" size="md" /></span>
+          <span class="food-picker__create-text">
+            <span class="food-picker__create-title">{{ createLabel() }}</span>
+            <span class="food-picker__create-sub">Ingen stregkode nødvendig</span>
+          </span>
+        </button>
+      </div>
+    </div>
+  }
+
+  @case ('new-food') {
+    <form class="food-picker__step" [formGroup]="form" (ngSubmit)="saveNewFoodAndLog()">
+      <div class="food-picker__heading">
+        <button
+          app-ui-icon-button
+          size="2xs"
+          type="button"
+          class="food-picker__back"
+          aria-label="Tilbage"
+          (click)="closeNewFood()"
+        >
+          <app-ui-icon name="chevron-left" size="sm" [strokeWidth]="2.4" />
+        </button>
+        <div class="food-picker__heading-text">
+          <div class="food-picker__title">Ny egen vare</div>
+          <div class="food-picker__subtitle">Gemmes under Mine varer</div>
+        </div>
+      </div>
+
+      <div class="food-picker__fields">
+        <label class="food-picker__field">
+          <span class="food-picker__label">Navn</span>
+          <app-ui-text-input
+            formControlName="name"
+            autocomplete="off"
+            placeholder="f.eks. Mormors frikadeller"
+          />
+        </label>
+
+        <div class="food-picker__field">
+          <span class="food-picker__label">Portion</span>
+          <div class="food-picker__portion-row">
+            <app-ui-text-input
+              class="food-picker__portion-amount"
+              formControlName="amount"
+              type="number"
+              inputMode="numeric"
+              placeholder="1"
+              ariaLabel="Mængde"
+            />
+            <div class="food-picker__units">
+              @for (unit of units; track unit.id) {
+                <button
+                  app-ui-chip
+                  class="food-picker__unit"
+                  [selected]="unit.id === selectedUnit()"
+                  (click)="selectUnit(unit.id)"
+                >
+                  {{ unit.label }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="food-picker__grid">
+          <label class="food-picker__field">
+            <span class="food-picker__label">Kalorier</span>
+            <app-ui-text-input
+              formControlName="kcal"
+              type="number"
+              inputMode="numeric"
+              placeholder="420"
+            />
+          </label>
+          <label class="food-picker__field">
+            <span class="food-picker__label">Protein (g)</span>
+            <app-ui-text-input
+              formControlName="protein"
+              type="number"
+              inputMode="numeric"
+              placeholder="28"
+            />
+          </label>
+        </div>
+
+        <button
+          type="button"
+          class="food-picker__more"
+          [attr.aria-expanded]="showMore()"
+          (click)="toggleMore()"
+        >
+          <span>{{ moreLabel() }}</span>
+          <app-ui-icon [name]="moreIcon()" size="sm" />
+        </button>
+
+        @if (showMore()) {
+          <div class="food-picker__grid">
+            <label class="food-picker__field">
+              <span class="food-picker__label">Kulhydrat (g)</span>
+              <app-ui-text-input
+                formControlName="carbs"
+                type="number"
+                inputMode="numeric"
+                placeholder="30"
+              />
+            </label>
+            <label class="food-picker__field">
+              <span class="food-picker__label">Fedt (g)</span>
+              <app-ui-text-input
+                formControlName="fat"
+                type="number"
+                inputMode="numeric"
+                placeholder="18"
+              />
+            </label>
+          </div>
+        }
+      </div>
+
+      <div class="food-picker__actions">
+        <button app-ui-button type="submit" block [disabled]="!canSaveNewFood()">
+          {{ saveAndLogLabel() }}
+        </button>
+        <button
+          app-ui-button
+          type="button"
+          variant="subtle"
+          size="sm"
+          block
+          class="food-picker__save-only"
+          (click)="saveNewFood()"
+        >
+          Gem uden at logge
+        </button>
+      </div>
+    </form>
+  }
+
+  @case ('portion') {
+    <div class="food-picker__step food-picker__step--portion">
+      <div class="food-picker__heading">
+        <button
+          app-ui-icon-button
+          size="2xs"
+          type="button"
+          class="food-picker__back"
+          aria-label="Tilbage"
+          (click)="backFromPortion()"
+        >
+          <app-ui-icon name="chevron-left" size="sm" [strokeWidth]="2.4" />
+        </button>
+        <div class="food-picker__heading-text">
+          <div class="food-picker__title food-picker__title--truncate">{{ portionName() }}</div>
+          <div class="food-picker__subtitle food-picker__subtitle--secondary">
+            Standard: {{ baseLabel() }}
+          </div>
+        </div>
+      </div>
+
+      <div class="food-picker__adjust">
+        <button
+          app-ui-icon-button
+          size="lg"
+          tone="outline"
+          type="button"
+          class="food-picker__stepper"
+          aria-label="Mindre"
+          (click)="decrease()"
+        >
+          <app-ui-icon name="minus" size="lg" [strokeWidth]="3" />
+        </button>
+        <div
+          #amountBox
+          class="food-picker__amount"
+          [class.food-picker__amount--dragging]="dragging()"
+          (pointerdown)="onDragStart($event, amountBox)"
+          (pointermove)="onDragMove($event)"
+          (pointerup)="onDragEnd($event, amountBox)"
+          (pointercancel)="onDragEnd($event, amountBox)"
+        >
+          <input
+            #amountField
+            class="food-picker__amount-field"
+            type="number"
+            inputmode="numeric"
+            aria-label="Mængde"
+            [value]="amountValue()"
+            (input)="onAmountInput(amountField.value)"
+          />
+          <span class="food-picker__amount-unit">{{ unit() }}</span>
+        </div>
+        <button
+          app-ui-icon-button
+          size="lg"
+          tone="outline"
+          type="button"
+          class="food-picker__stepper"
+          aria-label="Mere"
+          (click)="increase()"
+        >
+          <app-ui-icon name="plus" size="lg" [strokeWidth]="3" />
+        </button>
+      </div>
+      <p class="food-picker__hint">Hold på tallet og træk til siden for at justere.</p>
+
+      <div class="food-picker__chips">
+        @for (value of chipValues(); track value) {
+          <button
+            app-ui-chip
+            size="sm"
+            class="food-picker__chip"
+            [selected]="value === amount()"
+            (click)="setAmount(value)"
+          >
+            {{ value }} {{ unit() }}
+          </button>
+        }
+      </div>
+
+      <div class="food-picker__stats">
+        @for (stat of stats(); track stat.label) {
+          <div class="food-picker__stat" [class.food-picker__stat--accent]="stat.accent">
+            <div
+              class="food-picker__stat-value"
+              [class.food-picker__stat-value--accent]="stat.accent"
+            >
+              {{ stat.value }}
+            </div>
+            <div class="food-picker__stat-label">{{ stat.label }}</div>
+          </div>
+        }
+      </div>
+
+      <button
+        app-ui-button
+        type="button"
+        block
+        class="food-picker__confirm"
+        [disabled]="!canConfirm()"
+        (click)="confirm()"
+      >
+        {{ ctaLabel() }}
+      </button>
+    </div>
+  }
+}

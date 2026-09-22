@@ -1,0 +1,400 @@
+@use 'mixins';
+
+/*
+ * Værten er en flex-kolonne, der højst fylder sin forælder (arkets krop). Det lader
+ * resultatlisten og formularens felter scrolle inde i komponenten, mens overskrift og
+ * knapper bliver stående – designets "min-height: 0"-regel.
+ */
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+}
+
+.food-picker {
+  &__step {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-height: 0;
+
+    &--portion {
+      gap: var(--space-3-5);
+    }
+  }
+
+  /* Søgning */
+
+  &__search-row {
+    display: flex;
+    flex: none;
+    gap: var(--space-2);
+  }
+
+  &__search {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__results {
+    @include mixins.hide-scrollbar;
+
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  &__loading {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-4) 0;
+  }
+
+  &__empty {
+    margin-top: var(--space-2);
+  }
+
+  &__result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-3) 0;
+    border: 0;
+    border-top: var(--border-width-thin) solid var(--color-border-soft);
+    background: transparent;
+    color: var(--color-text);
+    text-align: left;
+  }
+
+  &__result-main {
+    min-width: 0;
+  }
+
+  &__result-name {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1-5);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  /* "Egen vare"-pillen: grøn 9 px caps. */
+  &__own {
+    flex: none;
+    padding: var(--space-0-5) var(--space-2);
+    border-radius: var(--radius-pill);
+    background: var(--color-positive-soft);
+    color: var(--color-positive);
+    font-size: var(--font-size-3xs);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-wider);
+    text-transform: uppercase;
+  }
+
+  &__result-meta {
+    display: block;
+    margin-top: var(--space-0-5);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  &__result-kcal {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2-5);
+    color: var(--color-accent);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+  }
+
+  /* Den lille orange plus-cirkel (28 px). */
+  &__result-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-control-3xs);
+    height: var(--size-control-3xs);
+    border-radius: var(--radius-circle);
+    background: var(--color-accent-soft);
+  }
+
+  &__create {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-3-5) 0 var(--space-1);
+    border: 0;
+    border-top: var(--border-width-thin) solid var(--color-border-soft);
+    background: transparent;
+    color: var(--color-text);
+    text-align: left;
+  }
+
+  &__create-icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-control-2xs);
+    height: var(--size-control-2xs);
+    border: var(--border-width-thin) dashed var(--color-border-stronger);
+    border-radius: var(--radius-md);
+    color: var(--color-accent);
+  }
+
+  &__create-text {
+    min-width: 0;
+  }
+
+  &__create-title {
+    @include mixins.text-truncate;
+
+    display: block;
+    color: var(--color-accent);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  &__create-sub {
+    display: block;
+    margin-top: var(--space-0-5);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  /* Overskrift med tilbage-knap (ny vare + portion) */
+
+  &__heading {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2-5);
+  }
+
+  &__heading-text {
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+
+    &--truncate {
+      @include mixins.text-truncate;
+    }
+  }
+
+  &__subtitle {
+    margin-top: var(--space-0-5);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+
+    &--secondary {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  /* Ny egen vare */
+
+  &__fields {
+    @include mixins.hide-scrollbar;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-height: 0;
+
+    /* Lidt luft, så fokusringen på felterne ikke klippes af scroll-containeren. */
+    margin: 0 calc(-1 * var(--space-1));
+    padding: var(--space-0-5) var(--space-1);
+    overflow-y: auto;
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1-5);
+  }
+
+  &__label {
+    @include mixins.caption-uppercase;
+  }
+
+  &__portion-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  &__portion-amount {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__units {
+    display: flex;
+    flex: none;
+    gap: var(--space-1);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2-5);
+  }
+
+  &__more {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    min-height: var(--size-control-sm);
+    padding: 0 var(--space-3-5);
+    border: var(--border-width-thin) solid var(--color-border-strong);
+    border-radius: var(--radius-lg);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    transition:
+      color var(--duration-quick) var(--easing-standard),
+      border-color var(--duration-quick) var(--easing-standard);
+
+    &:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  /* Portion */
+
+  &__adjust {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  /* Tallet kan trækkes til siden; kun feltet selv reagerer på almindelig indtastning. */
+  &__amount {
+    display: flex;
+    flex: 1;
+    align-items: baseline;
+    justify-content: center;
+    gap: var(--space-1-5);
+    min-width: 0;
+    padding: var(--space-2-5) 0;
+    border: var(--border-width-thin) solid var(--color-border-soft);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    cursor: ew-resize;
+    touch-action: none;
+    user-select: none;
+    transition:
+      background-color var(--duration-fast) var(--easing-standard),
+      border-color var(--duration-fast) var(--easing-standard);
+
+    &--dragging {
+      border-color: var(--color-accent);
+      background: var(--color-accent-tint-2);
+    }
+  }
+
+  &__amount-field {
+    @include mixins.display-heading;
+    @include mixins.tabular-nums;
+
+    width: var(--size-portion-field);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    font-size: var(--font-size-display-4xl);
+    text-align: right;
+    outline: none;
+    appearance: textfield;
+
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      margin: 0;
+      appearance: none;
+    }
+  }
+
+  &__amount-unit {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &__hint {
+    /* Designet trækker hjælpeteksten 6 px tættere på tallet. */
+    margin-top: calc(-1 * var(--space-1-5));
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    text-align: center;
+  }
+
+  &__chips {
+    display: flex;
+    flex: none;
+    gap: var(--space-2);
+  }
+
+  &__chip {
+    flex: 1;
+    padding-inline: 0;
+  }
+
+  &__stats {
+    display: grid;
+    flex: none;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-2);
+  }
+
+  &__stat {
+    padding: var(--space-3) var(--space-2);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    text-align: center;
+
+    &--accent {
+      background: var(--color-accent-tint-2);
+    }
+  }
+
+  &__stat-value {
+    @include mixins.display-heading;
+
+    font-size: var(--font-size-display-2xs);
+
+    &--accent {
+      color: var(--color-accent);
+    }
+  }
+
+  &__stat-label {
+    margin-top: var(--space-0-5);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-2xs);
+  }
+
+  &__confirm {
+    flex: none;
+  }
+}

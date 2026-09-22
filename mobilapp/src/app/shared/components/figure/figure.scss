@@ -1,0 +1,28 @@
+:host {
+  display: block;
+}
+
+.figure {
+  &__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  &__ceiling {
+    stroke: var(--color-border-stronger);
+  }
+
+  &__lamp-cord {
+    stroke: var(--color-text-secondary);
+  }
+
+  &__lamp {
+    fill: var(--color-accent);
+  }
+}
+
+:host(.figure--animated) .figure__scenery {
+  transition: all var(--duration-slow) ease;
+}

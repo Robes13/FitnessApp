@@ -1,0 +1,56 @@
+@use 'mixins';
+
+:host {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-circle);
+  /* Bunden bag et billede med gennemsigtige kanter – designets `background-color:#0b1120`. */
+  background-color: var(--color-background-deep);
+  background-repeat: no-repeat;
+  color: var(--color-white);
+  overflow: hidden;
+}
+
+/* Uden billede er cirklen blå med forbogstavet (designets `avatarBg` / `avatarFg`). */
+:host(:not(.profile-avatar--photo)) {
+  background-color: var(--color-primary);
+}
+
+:host(.profile-avatar--sm) {
+  width: var(--size-avatar-sm);
+  height: var(--size-avatar-sm);
+}
+
+:host(.profile-avatar--md) {
+  width: var(--size-avatar-md);
+  height: var(--size-avatar-md);
+}
+
+:host(.profile-avatar--lg) {
+  width: var(--size-avatar-lg);
+  height: var(--size-avatar-lg);
+}
+
+:host(.profile-avatar--xl) {
+  width: var(--size-avatar-xl);
+  height: var(--size-avatar-xl);
+}
+
+.profile-avatar {
+  &__initial {
+    @include mixins.display-heading;
+
+    font-size: var(--font-size-display-md);
+  }
+}
+
+:host(.profile-avatar--sm) .profile-avatar__initial {
+  font-size: var(--font-size-xl);
+}
+
+:host(.profile-avatar--lg) .profile-avatar__initial,
+:host(.profile-avatar--xl) .profile-avatar__initial {
+  font-size: var(--font-size-avatar-initial);
+}

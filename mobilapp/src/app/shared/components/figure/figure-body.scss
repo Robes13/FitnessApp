@@ -1,0 +1,137 @@
+/*
+ * Figurens krop. Alle farver er figur-tokens (ens i begge temaer); geometrien bindes som
+ * SVG-attributter fra TypeScript. Dele, der skal skifte farve efter tilstand (pandebånd,
+ * kinder), får en BEM-modifier.
+ */
+.figure-body {
+  &__shadow {
+    fill: var(--color-figure-shadow);
+  }
+
+  &__leg,
+  &__body,
+  &__skull {
+    fill: var(--color-figure);
+  }
+
+  &__leg--dark {
+    fill: var(--color-figure-dark);
+  }
+
+  &__shoe {
+    fill: var(--color-figure-shoe);
+
+    &--dark {
+      fill: var(--color-figure-shoe-dark);
+    }
+  }
+
+  &__arm {
+    fill: none;
+    stroke: var(--color-figure);
+
+    &--dark {
+      stroke: var(--color-figure-dark);
+    }
+
+    &--light {
+      stroke: var(--color-figure-light);
+    }
+  }
+
+  &__belt {
+    fill: var(--color-figure-belt);
+  }
+
+  &__dumbbell-bar {
+    fill: var(--color-figure-dumbbell);
+  }
+
+  &__dumbbell-cap {
+    fill: var(--color-figure-dumbbell-cap);
+  }
+
+  &__band {
+    fill: var(--color-accent);
+
+    &--pink {
+      fill: var(--color-figure-band-pink);
+    }
+
+    &--white {
+      fill: var(--color-figure-band-white);
+    }
+
+    &--positive {
+      fill: var(--color-positive);
+    }
+
+    &--negative {
+      fill: var(--color-negative);
+    }
+
+    &--muted {
+      fill: var(--color-text-muted);
+    }
+
+    &--accent-strong {
+      fill: var(--color-accent-strong);
+    }
+
+    &--accent-deep {
+      fill: var(--color-accent-deeper);
+    }
+  }
+
+  &__eye {
+    fill: var(--color-figure-face);
+  }
+
+  &__pupil {
+    fill: var(--color-figure-pupil);
+  }
+
+  &__mouth {
+    fill: var(--color-figure-mouth);
+  }
+
+  &__eyelid,
+  &__smile {
+    fill: none;
+    stroke: var(--color-figure-face);
+  }
+
+  &__cheek {
+    fill: var(--color-figure-cheek);
+
+    /* Lysere kinder, når ingen intensitet er valgt eller ved "mildt". */
+    &--accent-soft {
+      fill: var(--color-figure-cheek-soft);
+    }
+
+    &--negative {
+      fill: color-mix(in srgb, var(--color-negative) 60%, transparent);
+    }
+
+    &--negative-strong {
+      fill: color-mix(in srgb, var(--color-negative) 90%, transparent);
+    }
+  }
+
+  &__tongue {
+    fill: var(--color-accent);
+  }
+
+  &__brow {
+    fill: var(--color-figure-face);
+  }
+}
+
+/* Designets `transition: all .35s ease` på hver del og `transform` på hovedgruppen. */
+:host(.figure-body--animated) .figure-body__part {
+  transition: all var(--duration-slow) ease;
+}
+
+:host(.figure-body--animated) .figure-body__head {
+  transition: transform var(--duration-slow) ease;
+}

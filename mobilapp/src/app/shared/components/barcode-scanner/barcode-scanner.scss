@@ -1,0 +1,341 @@
+@use 'mixins';
+
+/* Værten er kun en beholder; overlay og ark lægger sig over app-roden. */
+:host {
+  display: contents;
+}
+
+.barcode-scanner {
+  /* Kameraoverlay */
+
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-index-overlay);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    padding: var(--layout-page-padding-top-lg) var(--layout-page-padding-x)
+      calc(var(--safe-area-bottom) + var(--space-10));
+
+    /* Et kamerabillede er mørkt i begge temaer. */
+    background: var(--color-background-scanner);
+    color: var(--color-white);
+
+    /* Overlayet får fokus programmatisk; det er ikke en kontrol, så ingen fokusring. */
+    outline: none;
+  }
+
+  &__glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 45%, var(--color-selected-soft), transparent 60%);
+    pointer-events: none;
+  }
+
+  &__header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__title {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    letter-spacing: var(--letter-spacing-widest);
+    text-transform: uppercase;
+  }
+
+  /* Holder titlen centreret over for luk-knappen. */
+  &__header-spacer {
+    width: var(--size-control-sm);
+  }
+
+  &__viewfinder {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-6);
+  }
+
+  /* Rammens geometri (--scan-*) bindes fra TypeScript; se SCAN_FRAME i barcode-scanner.ts. */
+  &__frame {
+    position: relative;
+    width: var(--scan-frame-width);
+    height: var(--scan-frame-height);
+  }
+
+  &__corner {
+    position: absolute;
+    width: var(--space-9);
+    height: var(--space-9);
+    border: 0 solid var(--color-accent);
+
+    &--top-left {
+      top: 0;
+      left: 0;
+      border-top-width: var(--border-width-heavy);
+      border-left-width: var(--border-width-heavy);
+      border-top-left-radius: var(--radius-lg);
+    }
+
+    &--top-right {
+      top: 0;
+      right: 0;
+      border-top-width: var(--border-width-heavy);
+      border-right-width: var(--border-width-heavy);
+      border-top-right-radius: var(--radius-lg);
+    }
+
+    &--bottom-left {
+      bottom: 0;
+      left: 0;
+      border-bottom-width: var(--border-width-heavy);
+      border-left-width: var(--border-width-heavy);
+      border-bottom-left-radius: var(--radius-lg);
+    }
+
+    &--bottom-right {
+      right: 0;
+      bottom: 0;
+      border-bottom-width: var(--border-width-heavy);
+      border-right-width: var(--border-width-heavy);
+      border-bottom-right-radius: var(--radius-lg);
+    }
+  }
+
+  &__bars {
+    position: absolute;
+    top: var(--scan-bars-top);
+    right: var(--scan-bars-inset-x);
+    left: var(--scan-bars-inset-x);
+    display: flex;
+    gap: var(--scan-bar-gap);
+    align-items: stretch;
+    height: var(--scan-bars-height);
+    opacity: 0.55;
+  }
+
+  &__bar {
+    flex: var(--bar-weight);
+    background: var(--color-white);
+  }
+
+  &__line {
+    position: absolute;
+    top: var(--scan-line-y);
+    right: var(--scan-line-inset-x);
+    left: var(--scan-line-inset-x);
+    height: var(--border-width-medium);
+    background: var(--color-accent);
+    box-shadow: var(--shadow-accent-line-glow);
+    transition: top var(--duration-scan-sweep) var(--easing-standard);
+  }
+
+  &__hint {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    text-align: center;
+    text-wrap: balance;
+  }
+
+  &__actions {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2-5);
+  }
+
+  /* Resultat-ark */
+
+  &__result {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  &__subtitle {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+  }
+
+  &__caption {
+    @include mixins.caption-uppercase;
+
+    margin: var(--space-1-5) 0 0;
+  }
+
+  &__portions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  &__portion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-0-5);
+    min-height: var(--size-control-lg);
+    padding: 0;
+    border: var(--border-width-thin) solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-base);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-quick) var(--easing-standard),
+      border-color var(--duration-quick) var(--easing-standard),
+      color var(--duration-quick) var(--easing-standard);
+
+    &--selected {
+      border-color: var(--color-accent);
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+    }
+  }
+
+  &__portion-label {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &__portion-sub {
+    font-size: var(--font-size-2xs);
+    opacity: 0.75;
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-2);
+    margin: var(--space-1) 0 0;
+  }
+
+  &__stat {
+    padding: var(--space-3) var(--space-2);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    text-align: center;
+
+    &--accent {
+      background: var(--color-accent-tint-2);
+    }
+  }
+
+  &__stat-value {
+    @include mixins.display-heading;
+
+    display: block;
+    font-size: var(--font-size-display-2xs);
+  }
+
+  &__stat--accent &__stat-value {
+    color: var(--color-accent);
+  }
+
+  &__stat-label {
+    display: block;
+    margin-top: var(--space-0-5);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-2xs);
+  }
+
+  &__verdict {
+    margin: 0;
+    padding: var(--space-3) var(--space-3-5);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    font-size: var(--font-size-md);
+    text-wrap: pretty;
+
+    &--negative {
+      background: var(--color-negative-soft-strong);
+    }
+
+    &--positive {
+      background: var(--color-positive-tint);
+    }
+  }
+
+  &__footer {
+    display: flex;
+    gap: var(--space-2-5);
+    margin-top: var(--space-1);
+  }
+
+  &__action {
+    flex: 1;
+  }
+
+  /* Ukendt vare-ark */
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1-5);
+    padding: var(--space-1-25) var(--space-3);
+    border-radius: var(--radius-pill);
+    background: var(--color-negative-soft);
+    color: var(--color-negative);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-wider);
+    text-transform: uppercase;
+  }
+
+  &__unknown {
+    display: block;
+  }
+
+  &__heading {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-sm);
+  }
+
+  &__heading-accent {
+    color: var(--color-negative);
+  }
+
+  &__lead {
+    margin: var(--space-2) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    text-wrap: pretty;
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1-5);
+  }
+
+  &__label {
+    @include mixins.caption-uppercase;
+  }
+
+  &__field-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2-5);
+  }
+}

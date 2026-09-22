@@ -1,0 +1,44 @@
+<svg
+  class="figure__svg"
+  viewBox="0 0 200 300"
+  preserveAspectRatio="xMidYMax meet"
+  role="img"
+  [attr.aria-label]="ariaLabel()"
+  focusable="false"
+>
+  @if (showCeiling()) {
+    <line
+      class="figure__scenery figure__ceiling"
+      x1="-20"
+      [attr.y1]="geometry().ceilY"
+      x2="220"
+      [attr.y2]="geometry().ceilY"
+      stroke-width="3"
+      stroke-dasharray="6 6"
+      [style.opacity]="geometry().ceilOp"
+    />
+    <line
+      class="figure__scenery figure__lamp-cord"
+      x1="140"
+      [attr.y1]="geometry().ceilY"
+      x2="140"
+      [attr.y2]="geometry().lampY"
+      stroke-width="2"
+      [style.opacity]="geometry().ceilOp"
+    />
+    <path
+      class="figure__scenery figure__lamp"
+      [attr.d]="lampPath()"
+      [attr.transform]="lampTransform()"
+      [style.opacity]="geometry().ceilOp"
+    />
+  }
+  <g
+    app-figure-body
+    [geometry]="geometry()"
+    [bandTone]="bandTone()"
+    [showDumbbell]="showDumbbell()"
+    [expression]="expression()"
+    [animated]="animated()"
+  />
+</svg>

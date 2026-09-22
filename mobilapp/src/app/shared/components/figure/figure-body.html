@@ -1,0 +1,215 @@
+@if (showShadow()) {
+  <svg:ellipse
+    class="figure-body__part figure-body__shadow"
+    cx="100"
+    cy="292"
+    [attr.rx]="geometry().shadowRx"
+    ry="6"
+  />
+}
+<svg:rect
+  class="figure-body__part figure-body__leg"
+  [class.figure-body__leg--dark]="shaded()"
+  [attr.x]="geometry().legLX"
+  [attr.y]="geometry().legY"
+  width="20"
+  [attr.height]="geometry().legH"
+  rx="10"
+/>
+<svg:rect
+  class="figure-body__part figure-body__leg"
+  [attr.x]="geometry().legRX"
+  [attr.y]="geometry().legY"
+  width="20"
+  [attr.height]="geometry().legH"
+  rx="10"
+/>
+<svg:rect
+  class="figure-body__part figure-body__shoe"
+  [class.figure-body__shoe--dark]="shaded()"
+  [attr.x]="geometry().shoeLX"
+  y="279"
+  width="30"
+  height="12"
+  rx="6"
+/>
+<svg:rect
+  class="figure-body__part figure-body__shoe"
+  [attr.x]="geometry().shoeRX"
+  y="279"
+  width="30"
+  height="12"
+  rx="6"
+/>
+@if (showLeftArm()) {
+  <svg:path
+    class="figure-body__part figure-body__arm"
+    [class.figure-body__arm--dark]="shaded()"
+    [attr.d]="geometry().armL"
+    stroke-width="16"
+    stroke-linecap="round"
+  />
+}
+@if (showRightArm()) {
+  <svg:path
+    class="figure-body__part figure-body__arm"
+    [class.figure-body__arm--light]="shaded()"
+    [attr.d]="geometry().armR"
+    stroke-width="16"
+    stroke-linecap="round"
+  />
+}
+<svg:rect
+  class="figure-body__part figure-body__body"
+  [attr.x]="geometry().bodyX"
+  [attr.y]="geometry().bodyY"
+  [attr.width]="geometry().bodyW"
+  [attr.height]="geometry().bodyH"
+  [attr.rx]="geometry().bodyRx"
+/>
+<svg:rect
+  class="figure-body__part figure-body__belt"
+  [attr.x]="geometry().beltX"
+  [attr.y]="geometry().beltY"
+  [attr.width]="geometry().beltW"
+  height="10"
+  rx="5"
+/>
+@if (showDumbbell()) {
+  <svg:rect
+    class="figure-body__part figure-body__dumbbell-bar"
+    [attr.x]="geometry().dbX"
+    [attr.y]="geometry().dbY"
+    width="40"
+    height="6"
+    rx="3"
+  />
+  <svg:rect
+    class="figure-body__part figure-body__dumbbell-cap"
+    [attr.x]="geometry().dbX"
+    [attr.y]="geometry().dbCapY"
+    width="9"
+    height="20"
+    rx="3"
+  />
+  <svg:rect
+    class="figure-body__part figure-body__dumbbell-cap"
+    [attr.x]="geometry().dbCapRX"
+    [attr.y]="geometry().dbCapY"
+    width="9"
+    height="20"
+    rx="3"
+  />
+}
+@if (showHead()) {
+  <svg:g class="figure-body__head" [attr.transform]="headTransform()">
+    <svg:circle
+      class="figure-body__part figure-body__skull"
+      cx="100"
+      [attr.cy]="geometry().headY"
+      r="26"
+    />
+    <svg:rect
+      class="figure-body__part figure-body__band"
+      [class]="bandClass()"
+      x="74"
+      [attr.y]="geometry().bandY"
+      width="52"
+      height="9"
+      rx="4.5"
+    />
+    <svg:g class="figure-body__part figure-body__eyes" [style.opacity]="eyesOpacity()">
+      <svg:circle
+        class="figure-body__part figure-body__eye"
+        cx="90"
+        [attr.cy]="geometry().eyeY"
+        r="4.5"
+      />
+      <svg:circle
+        class="figure-body__part figure-body__eye"
+        cx="110"
+        [attr.cy]="geometry().eyeY"
+        r="4.5"
+      />
+      <svg:circle
+        class="figure-body__part figure-body__pupil"
+        [attr.cx]="pupilLeftX()"
+        [attr.cy]="pupilY()"
+        r="2.2"
+      />
+      <svg:circle
+        class="figure-body__part figure-body__pupil"
+        [attr.cx]="pupilRightX()"
+        [attr.cy]="pupilY()"
+        r="2.2"
+      />
+    </svg:g>
+    <svg:g class="figure-body__part figure-body__eyes-closed" [style.opacity]="eyesClosedOpacity()">
+      <svg:path
+        class="figure-body__eyelid"
+        [attr.d]="eyelidLeftPath()"
+        stroke-width="2.5"
+        stroke-linecap="round"
+      />
+      <svg:path
+        class="figure-body__eyelid"
+        [attr.d]="eyelidRightPath()"
+        stroke-width="2.5"
+        stroke-linecap="round"
+      />
+    </svg:g>
+    <svg:circle
+      class="figure-body__part figure-body__cheek"
+      [class]="cheekClass()"
+      cx="81"
+      [attr.cy]="geometry().cheekY"
+      [attr.r]="resolvedExpression().cheekRadius"
+    />
+    <svg:circle
+      class="figure-body__part figure-body__cheek"
+      [class]="cheekClass()"
+      cx="119"
+      [attr.cy]="geometry().cheekY"
+      [attr.r]="resolvedExpression().cheekRadius"
+    />
+    <svg:path
+      class="figure-body__part figure-body__smile"
+      [attr.d]="geometry().smile"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      [style.opacity]="resolvedExpression().smileOpacity"
+    />
+    <svg:ellipse
+      class="figure-body__part figure-body__mouth"
+      cx="100"
+      [attr.cy]="geometry().mouthY"
+      [attr.rx]="resolvedExpression().mouthRx"
+      [attr.ry]="resolvedExpression().mouthRy"
+    />
+    <svg:ellipse
+      class="figure-body__part figure-body__tongue"
+      cx="100"
+      [attr.cy]="geometry().mouthY"
+      [attr.rx]="resolvedExpression().tongueRx"
+      [attr.ry]="resolvedExpression().tongueRy"
+    />
+    <svg:ellipse
+      class="figure-body__part figure-body__brow"
+      cx="88"
+      [attr.cy]="geometry().browY"
+      rx="7"
+      ry="2"
+      [attr.transform]="browLeftTransform()"
+      [style.opacity]="resolvedExpression().browOpacity"
+    />
+    <svg:ellipse
+      class="figure-body__part figure-body__brow"
+      cx="112"
+      [attr.cy]="geometry().browY"
+      rx="7"
+      ry="2"
+      [attr.transform]="browRightTransform()"
+      [style.opacity]="resolvedExpression().browOpacity"
+    />
+  </svg:g>
+}

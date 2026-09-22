@@ -1,0 +1,196 @@
+@if (open()) {
+  <div
+    #overlay
+    class="barcode-scanner__overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Scan stregkode"
+    tabindex="-1"
+  >
+    <div class="barcode-scanner__glow" aria-hidden="true"></div>
+
+    <header class="barcode-scanner__header">
+      <button
+        app-ui-icon-button
+        size="sm"
+        tone="translucent"
+        type="button"
+        aria-label="Luk"
+        (click)="close()"
+      >
+        <app-ui-icon name="close" size="md" [strokeWidth]="2.5" />
+      </button>
+      <span class="barcode-scanner__title">Scan stregkode</span>
+      <span class="barcode-scanner__header-spacer" aria-hidden="true"></span>
+    </header>
+
+    <div class="barcode-scanner__viewfinder">
+      <div
+        class="barcode-scanner__frame"
+        aria-hidden="true"
+        [style.--scan-frame-width.px]="frame.width"
+        [style.--scan-frame-height.px]="frame.height"
+        [style.--scan-bars-inset-x.px]="frame.barsInsetX"
+        [style.--scan-bars-top.px]="frame.barsTop"
+        [style.--scan-bars-height.px]="frame.barsHeight"
+        [style.--scan-bar-gap.px]="frame.barGap"
+        [style.--scan-line-inset-x.px]="frame.lineInsetX"
+        [style.--scan-line-y.%]="scanLinePercent()"
+      >
+        <span class="barcode-scanner__corner barcode-scanner__corner--top-left"></span>
+        <span class="barcode-scanner__corner barcode-scanner__corner--top-right"></span>
+        <span class="barcode-scanner__corner barcode-scanner__corner--bottom-left"></span>
+        <span class="barcode-scanner__corner barcode-scanner__corner--bottom-right"></span>
+        <div class="barcode-scanner__bars">
+          @for (weight of barWeights; track $index) {
+            <span class="barcode-scanner__bar" [style.--bar-weight]="weight"></span>
+          }
+        </div>
+        <div class="barcode-scanner__line"></div>
+      </div>
+      <p class="barcode-scanner__hint" role="status" aria-live="polite">{{ hint() }}</p>
+    </div>
+
+    <div class="barcode-scanner__actions">
+      <button app-ui-button variant="subtle" size="sm" type="button" (click)="requestManual()">
+        Indtast manuelt i stedet
+      </button>
+      <button app-ui-button variant="ghost" size="sm" type="button" (click)="requestNoBarcode()">
+        Varen har ingen stregkode
+      </button>
+    </div>
+  </div>
+
+  <app-ui-sheet [open]="isResultOpen()" [title]="resultTitle()" layer="top" (closed)="rescan()">
+    @if (scaledItem()) {
+      <div class="barcode-scanner__result">
+        <p class="barcode-scanner__subtitle">{{ resultSubtitle() }}</p>
+        <p class="barcode-scanner__caption">Hvor meget tog du?</p>
+        <div class="barcode-scanner__portions">
+          @for (portion of portions(); track portion.multiplier) {
+            <button
+              type="button"
+              class="barcode-scanner__portion"
+              [class.barcode-scanner__portion--selected]="portion.selected"
+              [attr.aria-pressed]="portion.selected"
+              (click)="pickPortion(portion.multiplier)"
+            >
+              <span class="barcode-scanner__portion-label">{{ portion.label }}</span>
+              <span class="barcode-scanner__portion-sub">{{ portion.sub }}</span>
+            </button>
+          }
+        </div>
+        <div class="barcode-scanner__stats">
+          @for (stat of stats(); track stat.label) {
+            <div class="barcode-scanner__stat" [class.barcode-scanner__stat--accent]="stat.accent">
+              <span class="barcode-scanner__stat-value">{{ stat.value }}</span>
+              <span class="barcode-scanner__stat-label">{{ stat.label }}</span>
+            </div>
+          }
+        </div>
+        @if (verdict(); as verdict) {
+          <p
+            class="barcode-scanner__verdict"
+            [class.barcode-scanner__verdict--negative]="verdict.tone === 'negative'"
+            [class.barcode-scanner__verdict--positive]="verdict.tone === 'positive'"
+          >
+            {{ verdict.text }}
+          </p>
+        }
+      </div>
+    }
+    <div class="barcode-scanner__footer" sheetFooter>
+      <button
+        app-ui-button
+        variant="outline"
+        type="button"
+        class="barcode-scanner__action"
+        (click)="rescan()"
+      >
+        Scan igen
+      </button>
+      <button app-ui-button type="button" class="barcode-scanner__action" (click)="addScanned()">
+        Tilføj
+      </button>
+    </div>
+  </app-ui-sheet>
+
+  <app-ui-sheet
+    [open]="isUnknownOpen()"
+    layer="top"
+    maxHeight="full"
+    scrollable
+    (closed)="rescan()"
+  >
+    <span class="barcode-scanner__badge" sheetTitle>Ukendt vare</span>
+    <form class="barcode-scanner__unknown" [formGroup]="form">
+      <h3 class="barcode-scanner__heading">
+        Den kender vi <span class="barcode-scanner__heading-accent">ikke</span>
+      </h3>
+      <p class="barcode-scanner__lead">
+        Stregkoden findes ikke i databasen. Tag tallene fra pakken, så gemmer vi varen under dine
+        egne – næste gang er den klar med ét tryk.
+      </p>
+      <div class="barcode-scanner__fields">
+        <div class="barcode-scanner__field">
+          <span class="barcode-scanner__label">Navn</span>
+          <app-ui-text-input
+            formControlName="name"
+            placeholder="f.eks. Proteinbar Karamel"
+            ariaLabel="Navn"
+          />
+        </div>
+        <div class="barcode-scanner__field">
+          <span class="barcode-scanner__label">Portion</span>
+          <app-ui-text-input
+            formControlName="quantity"
+            placeholder="f.eks. 55 g"
+            ariaLabel="Portion"
+          />
+        </div>
+        <div class="barcode-scanner__field-row">
+          <div class="barcode-scanner__field">
+            <span class="barcode-scanner__label">Kalorier</span>
+            <app-ui-text-input
+              formControlName="kcal"
+              type="number"
+              inputMode="numeric"
+              placeholder="210"
+              ariaLabel="Kalorier"
+            />
+          </div>
+          <div class="barcode-scanner__field">
+            <span class="barcode-scanner__label">Protein (g)</span>
+            <app-ui-text-input
+              formControlName="protein"
+              type="number"
+              inputMode="numeric"
+              placeholder="20"
+              ariaLabel="Protein (g)"
+            />
+          </div>
+        </div>
+      </div>
+    </form>
+    <div class="barcode-scanner__footer" sheetFooter>
+      <button
+        app-ui-button
+        variant="outline"
+        type="button"
+        class="barcode-scanner__action"
+        (click)="rescan()"
+      >
+        Scan igen
+      </button>
+      <button
+        app-ui-button
+        type="button"
+        class="barcode-scanner__action"
+        [disabled]="!canSaveUnknown()"
+        (click)="saveUnknown()"
+      >
+        Gem og tilføj
+      </button>
+    </div>
+  </app-ui-sheet>
+}
