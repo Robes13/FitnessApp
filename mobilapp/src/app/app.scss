@@ -6,7 +6,8 @@
 :host {
   position: relative;
   display: block;
-  height: 100dvh;
+  /* Shrinks above the on-screen keyboard (see `KeyboardService`); 0 when it's closed. */
+  height: calc(100dvh - var(--keyboard-inset));
   max-width: var(--layout-max-width);
   margin-inline: auto;
   overflow: hidden;

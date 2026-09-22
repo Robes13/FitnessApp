@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { ApiError } from '../../../../core/models/api-error';
+import { KeyboardService } from '../../../../core/services/keyboard';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-icon-button';
@@ -70,6 +71,8 @@ export class SignupPage {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly state = inject(SignupStateService);
+  /** Above the on-screen keyboard the progress header slims down, so the fields keep the room. */
+  protected readonly keyboardOpen = inject(KeyboardService).isOpen;
   protected readonly submitting = signal(false);
   protected readonly error = signal<string | null>(null);
 

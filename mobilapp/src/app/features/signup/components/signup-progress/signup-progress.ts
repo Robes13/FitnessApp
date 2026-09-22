@@ -39,6 +39,11 @@ export class SignupProgress {
   readonly chapters = input.required<readonly SignupChapter[]>();
   /** When the user edits an answer from the summary, the heading and subtext change. */
   readonly editing = input(false, { transform: booleanAttribute });
+  /**
+   * A slim variant – only the chapter, step count and bars – for when the screen is short,
+   * e.g. while the on-screen keyboard is open and the fields need the room.
+   */
+  readonly compact = input(false, { transform: booleanAttribute });
 
   protected readonly ringDiameter = RING_DIAMETER;
   protected readonly ringStrokeWidth = RING_STROKE_WIDTH;

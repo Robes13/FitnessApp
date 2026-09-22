@@ -62,6 +62,14 @@
     gap: var(--space-6);
   }
 
+  /*
+   * With the keyboard open the screen is short, and the camera frame is only decoration while
+   * a barcode is typed – it steps aside so the hint and field keep their air.
+   */
+  &__overlay--keyboard &__frame {
+    display: none;
+  }
+
   /* The frame's geometry (--scan-*) is bound from TypeScript; see SCAN_FRAME in barcode-scanner.ts. */
   &__frame {
     position: relative;

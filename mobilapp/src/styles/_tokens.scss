@@ -458,6 +458,12 @@
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 
+  /*
+   * The on-screen keyboard's height, written by `KeyboardService` while it's open. The app
+   * root shrinks by it, so screens lay themselves out above the keyboard.
+   */
+  --keyboard-inset: 0px;
+
   --layout-max-width: 32rem;
   --layout-page-padding-x: 1.5rem;
   --layout-page-padding-top: calc(var(--safe-area-top) + var(--space-5));
@@ -534,4 +540,14 @@
   --color-text-soft: var(--palette-light-ink-soft);
   --color-text-soft-strong: var(--palette-light-ink);
   --color-text-inactive: var(--palette-slate-400);
+}
+
+/*
+ * While the on-screen keyboard is open it covers the home indicator, so the bottom safe area
+ * no longer applies. Everything derived from it (sheet padding, tab bar offset …) follows.
+ */
+:root[data-keyboard='open'] {
+  --safe-area-bottom: 0px;
+  /* The room under a screen's last button goes to the content instead; the keyboard is the edge. */
+  --layout-page-padding-bottom: var(--space-3);
 }

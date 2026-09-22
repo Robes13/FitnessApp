@@ -121,6 +121,23 @@ for filerne på GitHub er offentlige og kræver ikke login.
 
 ---
 
+## Tastaturet
+
+Skærmtastaturet må aldrig skubbe WebView'et. I `capacitor.config.ts` er `ios.scrollEnabled`
+derfor `false`, og `@capacitor/keyboard` kører med `resize: 'none'`. I stedet gør layoutet selv
+plads: `KeyboardService` sætter `--keyboard-inset` og `data-keyboard="open"` på `<html>`, og
+app-roden bliver `100dvh − --keyboard-inset`. Alle skærme er bygget på `height: 100%`, så de
+lægger sig over tastaturet. Sheets lander lige over det, footer-knapper forbliver synlige, og
+det fokuserede felt scrolles frem i sit eget scroll-område. Tab-baren skjules, mens tastaturet
+er åbent. Kamerarammen i stregkodescanneren og signup-forløbets ring og kapitelnavne gør plads
+for felterne, og signup-trinnet scroller, hvis det stadig ikke passer. Et tryk uden for et
+tekstfelt lukker tastaturet, fordi iOS ikke viser en "Færdig"-knap i et WebView.
+
+Nye skærme med tekstfelter skal derfor bygges på højden af deres forælder (`height: 100%`, flex
+og egne scroll-områder), ikke på `100vh`, `position: fixed` eller dokumentets scroll. Ellers
+tager de ikke højde for tastaturet. På Android ændrer systemet selv WebView'ets størrelse, så
+dér bliver `--keyboard-inset` 0.
+
 ## Påmindelser (lokale notifikationer)
 
 Påmindelserne bruger `@capacitor/local-notifications`. Pluginet skal synkroniseres ind i

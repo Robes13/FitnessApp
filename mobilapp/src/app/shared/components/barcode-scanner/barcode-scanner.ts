@@ -35,6 +35,7 @@ import {
 } from '../../../core/models/barcode';
 import { FoodItem } from '../../../core/models/food';
 import { BarcodeFlowService, formatAmount } from '../../../core/services/barcode-flow';
+import { KeyboardService } from '../../../core/services/keyboard';
 import { UiButton } from '../ui-button/ui-button';
 import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiIcon } from '../ui-icon/ui-icon';
@@ -228,6 +229,8 @@ export class BarcodeScanner {
 
   private readonly flow = inject(BarcodeFlowService);
   private readonly document = inject(DOCUMENT);
+  /** While typing a barcode the camera frame is only decoration, so it gives way to the field. */
+  protected readonly keyboardOpen = inject(KeyboardService).isOpen;
   private readonly overlay = viewChild<ElementRef<HTMLElement>>('overlay');
 
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();

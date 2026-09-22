@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from '@capacitor/cli';
+import { KeyboardResize } from '@capacitor/keyboard';
 
 /**
  * Capacitor configuration.
@@ -16,6 +17,14 @@ const config: CapacitorConfig = {
   ios: {
     backgroundColor: '#F8FAFC',
     contentInset: 'never',
+    // Tastaturet må ikke skubbe WebView'et: layoutet gør selv plads (se KeyboardService).
+    scrollEnabled: false,
+  },
+  plugins: {
+    Keyboard: {
+      // WebView'et ændrer ikke størrelse; appen krymper sin egen rod med --keyboard-inset.
+      resize: KeyboardResize.None,
+    },
   },
 };
 

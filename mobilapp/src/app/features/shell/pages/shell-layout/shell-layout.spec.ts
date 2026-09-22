@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Routes, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { APP_PATH, APP_ROUTE, ROUTE_PARAM } from '../../../../core/constants/app-route';
 import { ROUTE_DATA } from '../../../../core/constants/route-data';
+import { KeyboardService } from '../../../../core/services/keyboard';
 import { ShellLayout } from './shell-layout';
 
 @Component({ template: '' })
@@ -31,8 +32,15 @@ const ROUTES: Routes = [
 ];
 
 describe('ShellLayout', () => {
+  const keyboardOpen = signal(false);
+
+  beforeEach(() => keyboardOpen.set(false));
+
   async function setup(initialUrl: string) {
-    TestBed.configureTestingModule({ providers: [provideRouter(ROUTES)] });
+    const keyboard: Pick<KeyboardService, 'isOpen'> = { isOpen: keyboardOpen.asReadonly() };
+    TestBed.configureTestingModule({
+      providers: [provideRouter(ROUTES), { provide: KeyboardService, useValue: keyboard }],
+    });
     const harness = await RouterTestingHarness.create(initialUrl);
     const shell = harness.routeNativeElement as HTMLElement;
     return { harness, shell };
@@ -68,5 +76,17 @@ describe('ShellLayout', () => {
     await harness.navigateByUrl(APP_PATH.recipe('demo-skyr-bowl'));
     await harness.fixture.whenStable();
     expect(tabBar(shell)).toBeNull();
+  });
+
+  it('hides the tab bar while the on-screen keyboard is open', async () => {
+    const { harness, shell } = await setup(APP_PATH.HOME);
+
+    keyboardOpen.set(true);
+    await harness.fixture.whenStable();
+    expect(tabBar(shell)).toBeNull();
+
+    keyboardOpen.set(false);
+    await harness.fixture.whenStable();
+    expect(tabBar(shell)).not.toBeNull();
   });
 });

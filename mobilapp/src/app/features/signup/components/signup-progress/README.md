@@ -18,3 +18,6 @@ Retter brugeren et svar, skifter overskriften til "Retter" og undertekten til
 Bjælkernes bredde følger antallet af synlige trin i kapitlet (`flex-grow`), så de skrumper,
 når et trin springes over. Selve ringen er `UiProgressRing` med `trackTone="neutral"`, så
 sporet får designets `rgba(148,163,184,.3)`.
+
+`compact` (sat af signup-siden, mens skærmtastaturet er åbent) skjuler ringen og
+kapitelnavnene, så kun kapitel, trin og streger er tilbage, og felterne får pladsen.

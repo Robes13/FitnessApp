@@ -2,6 +2,7 @@
   <div
     #overlay
     class="barcode-scanner__overlay"
+    [class.barcode-scanner__overlay--keyboard]="keyboardOpen()"
     role="dialog"
     aria-modal="true"
     aria-label="Scan stregkode"

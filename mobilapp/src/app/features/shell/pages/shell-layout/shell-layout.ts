@@ -9,6 +9,7 @@ import {
 } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { ROUTE_DATA } from '../../../../core/constants/route-data';
+import { KeyboardService } from '../../../../core/services/keyboard';
 import { UiTabBar } from '../../../../shared/components/ui-tab-bar/ui-tab-bar';
 import { TAB_BAR_ITEMS } from '../../shell-navigation';
 
@@ -19,6 +20,9 @@ import { TAB_BAR_ITEMS } from '../../shell-navigation';
  * navigation by walking the snapshot tree (`ActivatedRouteSnapshot.firstChild`) to the
  * bottom. The snapshot tree is complete before the shell is created; `ActivatedRoute.firstChild`
  * is not.
+ *
+ * The tab bar is also hidden while the on-screen keyboard is open – as in native iOS apps, the
+ * keyboard takes its place, and the screen above keeps all the room for the focused field.
  */
 @Component({
   selector: 'app-shell-layout',
@@ -31,6 +35,7 @@ import { TAB_BAR_ITEMS } from '../../shell-navigation';
 export class ShellLayout {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly keyboard = inject(KeyboardService);
 
   protected readonly tabBarItems = TAB_BAR_ITEMS;
 
@@ -42,7 +47,7 @@ export class ShellLayout {
     { initialValue: this.deepestRouteHidesTabBar() },
   );
 
-  protected readonly showTabBar = computed(() => !this.tabBarHidden());
+  protected readonly showTabBar = computed(() => !this.tabBarHidden() && !this.keyboard.isOpen());
 
   private deepestRouteHidesTabBar(): boolean {
     let deepest: ActivatedRouteSnapshot = this.route.snapshot;

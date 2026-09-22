@@ -4,9 +4,10 @@
   [value]="state.progressValue()"
   [chapters]="state.chapters()"
   [editing]="state.isEditing()"
+  [compact]="keyboardOpen()"
 />
 
-<div class="signup-page__step">
+<div class="signup-page__step" [class.signup-page__step--compact]="keyboardOpen()">
   @switch (state.step()) {
     @case ('account') {
       <app-account-step />

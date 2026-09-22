@@ -1,11 +1,13 @@
-<app-ui-progress-ring
-  [value]="value()"
-  [diameter]="ringDiameter"
-  [strokeWidth]="ringStrokeWidth"
-  trackTone="neutral"
->
-  <span class="signup-progress__number">{{ stepNumber() }}</span>
-</app-ui-progress-ring>
+@if (!compact()) {
+  <app-ui-progress-ring
+    [value]="value()"
+    [diameter]="ringDiameter"
+    [strokeWidth]="ringStrokeWidth"
+    trackTone="neutral"
+  >
+    <span class="signup-progress__number">{{ stepNumber() }}</span>
+  </app-ui-progress-ring>
+}
 
 <div class="signup-progress__meta">
   <div class="signup-progress__heading">
@@ -21,16 +23,18 @@
     }
   </div>
 
-  <div class="signup-progress__labels">
-    @for (chapter of chapters(); track chapter.label) {
-      <div
-        class="signup-progress__label"
-        [style.flex-grow]="chapter.flex"
-        [class.signup-progress__label--active]="chapter.active"
-        [class.signup-progress__label--done]="chapter.done"
-      >
-        {{ chapter.label }}
-      </div>
-    }
-  </div>
+  @if (!compact()) {
+    <div class="signup-progress__labels">
+      @for (chapter of chapters(); track chapter.label) {
+        <div
+          class="signup-progress__label"
+          [style.flex-grow]="chapter.flex"
+          [class.signup-progress__label--active]="chapter.active"
+          [class.signup-progress__label--done]="chapter.done"
+        >
+          {{ chapter.label }}
+        </div>
+      }
+    </div>
+  }
 </div>
