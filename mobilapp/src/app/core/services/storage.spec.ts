@@ -1,0 +1,58 @@
+import { DOCUMENT } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { STORAGE_KEY } from '../constants/storage-key';
+import { FakeStorage, createFakeDocument, createFakeStorage } from '../testing/fake-document';
+import { StorageService } from './storage';
+
+describe('StorageService', () => {
+  let storage: FakeStorage;
+  let service: StorageService;
+
+  beforeEach(() => {
+    storage = createFakeStorage();
+    TestBed.configureTestingModule({
+      providers: [{ provide: DOCUMENT, useValue: createFakeDocument(storage) }],
+    });
+    service = TestBed.inject(StorageService);
+  });
+
+  it('round-trips JSON values', () => {
+    service.write(STORAGE_KEY.PROFILE, { username: 'mads', weightKg: 75 });
+
+    expect(service.read<{ username: string }>(STORAGE_KEY.PROFILE)).toEqual({
+      username: 'mads',
+      weightKg: 75,
+    });
+    expect(storage.getItem(STORAGE_KEY.PROFILE)).toBe('{"username":"mads","weightKg":75}');
+  });
+
+  it('returns null for missing keys and after remove', () => {
+    expect(service.read(STORAGE_KEY.THEME)).toBeNull();
+
+    service.write(STORAGE_KEY.THEME, 'light');
+    service.remove(STORAGE_KEY.THEME);
+
+    expect(service.read(STORAGE_KEY.THEME)).toBeNull();
+  });
+
+  it('returns null and warns on corrupt JSON instead of throwing', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    storage.setItem(STORAGE_KEY.SESSION, '{not json');
+
+    expect(service.read(STORAGE_KEY.SESSION)).toBeNull();
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
+  });
+
+  it('degrades to no-ops when storage is unavailable', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [{ provide: DOCUMENT, useValue: { documentElement: {}, defaultView: null } }],
+    });
+    const detached = TestBed.inject(StorageService);
+
+    expect(() => detached.write(STORAGE_KEY.THEME, 'dark')).not.toThrow();
+    expect(detached.read(STORAGE_KEY.THEME)).toBeNull();
+    expect(() => detached.remove(STORAGE_KEY.THEME)).not.toThrow();
+  });
+});
