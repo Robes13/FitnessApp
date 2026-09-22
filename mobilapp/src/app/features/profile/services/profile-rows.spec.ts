@@ -51,6 +51,18 @@ describe('ProfileRowsService', () => {
     expect(valueOf(rows.planRows(), 'Målvægt')).toBe('70 kg');
   });
 
+  it('hides Tempo when the goal is "hold"', () => {
+    const { rows, profiles } = setup();
+
+    expect(labels(rows.planRows())).toContain('Tempo');
+
+    profiles.update({ goal: 'hold' });
+    expect(labels(rows.planRows())).not.toContain('Tempo');
+
+    profiles.update({ goal: 'tage' });
+    expect(labels(rows.planRows())).toContain('Tempo');
+  });
+
   it('hides Længde and Intensitet when there are no training days', () => {
     const { rows, profiles } = setup();
 

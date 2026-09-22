@@ -31,8 +31,8 @@ afledt af `core/`-stores, så en ændring et andet sted i appen slår igennem me
 1. **Hoved** – avatar 72 px med en orange blyant i hjørnet, navn (30 px display, afkortes) og
    e-mail. Blyanten åbner fotoarket.
 2. **Nøgletal** – tre fliser: Vægt (orange), Højde og BMI.
-3. **Min plan** – Mål, Tempo, Køn, Højde, [Målvægt], Aktivitet, Træningsdage, [Længde],
-   [Intensitet] og Dagligt kaloriemål. De tre i kantede parenteser er betingede; se
+3. **Min plan** – Mål, [Tempo], Køn, Højde, [Målvægt], Aktivitet, Træningsdage, [Længde],
+   [Intensitet] og Dagligt kaloriemål. De fire i kantede parenteser er betingede; se
    [`services/README.md`](services/README.md).
 4. **Konto** – E-mail, Adgangskode, Enheder samt kontakterne "Lys tilstand" og
    "Notifikationer".

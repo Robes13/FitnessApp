@@ -21,9 +21,10 @@ const PASSWORD_MASK = '••••••••';
  * The rows under "Min plan" and "Konto" on the profile page – the design's `profileRows`
  * and `accountRows`.
  *
- * Three rows are conditional, exactly as in the design: "Målvægt" only shows when the
- * goal isn't "maintain weight", and "Længde"/"Intensitet" only when the user has at least
- * one training day.
+ * Four rows are conditional: "Målvægt" only shows when a goal is chosen and it isn't
+ * "maintain weight", "Tempo" is hidden for "maintain weight" (as in the sign-up flow, where
+ * pace doesn't change the target), and "Længde"/"Intensitet" only show when the user has at
+ * least one training day.
  */
 @Injectable({ providedIn: 'root' })
 export class ProfileRowsService {
@@ -35,13 +36,16 @@ export class ProfileRowsService {
     const goal = this.profiles.goalDefinition();
     const pace = this.profiles.paceDefinition();
     const frequency = this.profiles.trainingFrequency();
-    const rows: ProfileRow[] = [
-      { id: 'goal', label: 'Mål', value: goal?.label ?? EMPTY_VALUE },
-      { id: 'pace', label: 'Tempo', value: pace?.rateLabel ?? EMPTY_VALUE },
+    const rows: ProfileRow[] = [{ id: 'goal', label: 'Mål', value: goal?.label ?? EMPTY_VALUE }];
+    const maintains = profile.goal === 'hold';
+    if (!maintains) {
+      rows.push({ id: 'pace', label: 'Tempo', value: pace?.rateLabel ?? EMPTY_VALUE });
+    }
+    rows.push(
       { id: 'gender', label: 'Køn', value: this.genderLabel() },
       { id: 'height', label: 'Højde', value: `${Math.round(profile.heightCm)} cm` },
-    ];
-    if (profile.goal !== null && profile.goal !== 'hold') {
+    );
+    if (profile.goal !== null && !maintains) {
       rows.push({ id: 'goalWeight', label: 'Målvægt', value: `${this.goalWeightKg()} kg` });
     }
     rows.push(

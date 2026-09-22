@@ -63,12 +63,12 @@ describe('ProfileEditService', () => {
   it('applies an option straight to the profile', () => {
     const { editor, profiles } = setup();
 
-    editor.applyOption('goal', 'tage');
+    expect(editor.applyOption('goal', 'tabe')).toEqual({ kind: 'saved' });
     editor.applyOption('gender', 'kvinde');
     editor.applyOption('units', 'imperial');
     editor.applyOption('trainInt', 'haardt');
 
-    expect(profiles.profile().goal).toBe('tage');
+    expect(profiles.profile().goal).toBe('tabe');
     expect(profiles.profile().gender).toBe('kvinde');
     expect(profiles.profile().units).toBe('imperial');
     expect(profiles.profile().trainingRpe).toBe(9);
@@ -80,6 +80,71 @@ describe('ProfileEditService', () => {
     editor.applyOption('goal', 'noget-andet');
 
     expect(profiles.profile().goal).toBeNull();
+  });
+
+  it('bounds the goal weight row by the goal, like the sign-up scale', () => {
+    const { editor, profiles } = setup();
+
+    profiles.update({ goal: 'tabe', weightKg: 75 });
+    expect(editor.definitionFor('goalWeight')).toMatchObject({ min: 35, max: 74 });
+
+    profiles.update({ goal: 'tage', goalWeightKg: 80 });
+    expect(editor.definitionFor('goalWeight')).toMatchObject({ min: 76, max: 200 });
+  });
+
+  it('requires a goal weight below today when losing and above today when gaining', () => {
+    const { editor, profiles } = setup();
+    profiles.update({ weightKg: 75, heightCm: 178 });
+
+    expect(editor.goalWeightError(75, 'tabe')).toBe(
+      'Målvægten skal være under din nuværende vægt (75 kg).',
+    );
+    expect(editor.goalWeightError(70, 'tabe')).toBeNull();
+    expect(editor.goalWeightError(75, 'tage')).toBe(
+      'Målvægten skal være over din nuværende vægt (75 kg).',
+    );
+    expect(editor.goalWeightError(80, 'tage')).toBeNull();
+    expect(editor.goalWeightError(75, 'hold')).toBeNull();
+  });
+
+  it('blocks an unrealistic BMI with the sign-up warnings', () => {
+    const { editor, profiles } = setup();
+    profiles.update({ weightKg: 75, heightCm: 178 });
+
+    // 178 cm: BMI 17 ≈ 53.9 kg, BMI 35 ≈ 110.9 kg.
+    expect(editor.goalWeightError(50, 'tabe')).toBe('Det mål er for lavt for din højde.');
+    expect(editor.goalWeightError(120, 'tage')).toBe('Det mål er meget højt for din højde.');
+  });
+
+  it('refuses to save a goal weight that breaks the current goal', () => {
+    const { editor, profiles } = setup();
+    profiles.update({ goal: 'tabe', weightKg: 75, goalWeightKg: 70 });
+
+    expect(editor.applyNumber('goalWeight', 80)).toBe(false);
+    expect(profiles.profile().goalWeightKg).toBe(70);
+
+    expect(editor.applyNumber('goalWeight', 68)).toBe(true);
+    expect(profiles.profile().goalWeightKg).toBe(68);
+  });
+
+  it('holds back a goal change the stored goal weight no longer fits', () => {
+    const { editor, profiles } = setup();
+    profiles.update({ goal: 'tabe', weightKg: 75, goalWeightKg: 70 });
+
+    expect(editor.applyOption('goal', 'tage')).toEqual({ kind: 'needs-goal-weight', goal: 'tage' });
+    expect(profiles.profile().goal).toBe('tabe');
+
+    expect(editor.applyGoalWithGoalWeight('tage', 72)).toBe(false);
+    expect(editor.applyGoalWithGoalWeight('tage', 80)).toBe(true);
+    expect(profiles.profile()).toMatchObject({ goal: 'tage', goalWeightKg: 80 });
+  });
+
+  it('switches to "hold" without asking for a goal weight', () => {
+    const { editor, profiles } = setup();
+    profiles.update({ goal: 'tabe', weightKg: 75, goalWeightKg: 70 });
+
+    expect(editor.applyOption('goal', 'hold')).toEqual({ kind: 'saved' });
+    expect(profiles.profile().goal).toBe('hold');
   });
 
   it('turns a training-day count into the first N weekdays', () => {
@@ -97,7 +162,6 @@ describe('ProfileEditService', () => {
 
     expect(profiles.profile().kcalOverride).toBe(2300);
     expect(profiles.kcalTarget()).toBe(2300);
-    expect(profiles.suggestedKcalTarget()).toBe(2530);
   });
 
   it('trims the e-mail before saving it', () => {

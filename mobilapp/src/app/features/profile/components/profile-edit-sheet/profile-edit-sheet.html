@@ -63,6 +63,7 @@
           <app-ui-icon name="plus" size="lg" />
         </button>
       </div>
+      <app-ui-form-error tone="negative" [message]="numberError()" />
       <button app-ui-button type="submit" block [disabled]="!canSaveNumber()">Gem</button>
     </form>
   }

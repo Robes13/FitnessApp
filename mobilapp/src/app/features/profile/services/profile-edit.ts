@@ -15,7 +15,9 @@ import {
   WEIGHT_MAX_KG,
   WEIGHT_MIN_KG,
 } from '../../../core/constants/nutrition';
+import { GoalId } from '../../../core/models/profile';
 import { AuthApi } from '../../../core/services/auth-api';
+import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { formatInteger, formatWeightKg } from '../../../core/utils/date-format';
 
@@ -80,6 +82,14 @@ export type ProfileEditDefinition =
   OptionsEditDefinition | NumberEditDefinition | TextEditDefinition | PasswordEditDefinition;
 
 /**
+ * What happened when an option was picked. A new goal ("tabe"/"tage") that the stored goal
+ * weight no longer fits is **not** saved – the sheet must ask for a new goal weight first
+ * and then save both with `applyGoalWithGoalWeight()`.
+ */
+export type OptionApplyResult =
+  { readonly kind: 'saved' } | { readonly kind: 'needs-goal-weight'; readonly goal: GoalId };
+
+/**
  * The design's `editDefs` uses a narrower height range than the ruler in the sign-up flow
  * (`HEIGHT_MIN_CM`/`HEIGHT_MAX_CM`), because this field is typed with the keyboard.
  */
@@ -96,6 +106,12 @@ const KCAL_STEP = 50;
 
 const EMAIL_PLACEHOLDER = 'dig@mail.dk';
 
+/** The same two warnings as the sign-up flow's goal-weight step. */
+const GOAL_WEIGHT_TOO_LOW = 'Det mål er for lavt for din højde.';
+const GOAL_WEIGHT_TOO_HIGH = 'Det mål er meget højt for din højde.';
+
+const SAVED: OptionApplyResult = { kind: 'saved' };
+
 /**
  * The definitions behind the "Rediger profil" sheet: what a row is called, what kind of
  * field it shows, and what happens when the user saves. A port of the design's
@@ -108,6 +124,7 @@ const EMAIL_PLACEHOLDER = 'dig@mail.dk';
 export class ProfileEditService {
   private readonly profiles = inject(UserProfileService);
   private readonly authApi = inject(AuthApi);
+  private readonly calculator = inject(NutritionCalculator);
 
   definitionFor(row: ProfileEditRowId): ProfileEditDefinition {
     const profile = this.profiles.profile();
@@ -190,17 +207,7 @@ export class ProfileEditService {
           value: Math.round(profile.heightCm),
         };
       case 'goalWeight':
-        return {
-          id: row,
-          title: 'Målvægt',
-          hint: `Nu: ${formatWeightKg(profile.weightKg)} kg`,
-          kind: 'number',
-          unit: 'kg',
-          min: WEIGHT_MIN_KG,
-          max: WEIGHT_MAX_KG,
-          step: GOAL_WEIGHT_STEP_KG,
-          value: Math.round(profile.goalWeightKg),
-        };
+        return this.goalWeightDefinition(profile.goal);
       case 'steps':
         return {
           id: row,
@@ -264,74 +271,153 @@ export class ProfileEditService {
   }
 
   /**
+   * The goal weight row for `goal`. The bounds are the same scale as in the sign-up flow
+   * (`NutritionCalculator.goalWeightBounds`): below today's weight when losing, above it when
+   * gaining. With `pendingGoal` the row is shown while switching to that goal, and the hint
+   * explains why a new goal weight is needed.
+   */
+  goalWeightDefinition(goal: GoalId | null, pendingGoal = false): NumberEditDefinition {
+    const profile = this.profiles.profile();
+    const bounds =
+      goal === 'tabe' || goal === 'tage'
+        ? this.calculator.goalWeightBounds(goal, profile.weightKg)
+        : { min: WEIGHT_MIN_KG, max: WEIGHT_MAX_KG };
+    const current = formatWeightKg(profile.weightKg);
+    const goalLabel = GOALS.find((item) => item.id === goal)?.label ?? '';
+    return {
+      id: 'goalWeight',
+      title: 'Målvægt',
+      hint: pendingGoal
+        ? `Din målvægt passer ikke til målet "${goalLabel}" (nu: ${current} kg). Vælg en ny målvægt – målet skiftes, når du gemmer.`
+        : `Nu: ${current} kg`,
+      kind: 'number',
+      unit: 'kg',
+      min: bounds.min,
+      max: bounds.max,
+      step: GOAL_WEIGHT_STEP_KG,
+      value: Math.round(profile.goalWeightKg),
+    };
+  }
+
+  /**
+   * Why `goalWeightKg` isn't a valid goal weight for `goal` – or `null` when it is. The
+   * rules match the sign-up flow: below today's weight when losing, above it when gaining,
+   * and never an unrealistic BMI (`NutritionCalculator.isGoalWeightRealistic`).
+   */
+  goalWeightError(
+    goalWeightKg: number,
+    goal: GoalId | null = this.profiles.profile().goal,
+  ): string | null {
+    if (goal !== 'tabe' && goal !== 'tage') {
+      return null;
+    }
+    const profile = this.profiles.profile();
+    const bounds = this.calculator.goalWeightBounds(goal, profile.weightKg);
+    const current = formatWeightKg(profile.weightKg);
+    if (goal === 'tabe' && goalWeightKg > bounds.max) {
+      return `Målvægten skal være under din nuværende vægt (${current} kg).`;
+    }
+    if (goal === 'tage' && goalWeightKg < bounds.min) {
+      return `Målvægten skal være over din nuværende vægt (${current} kg).`;
+    }
+    if (!this.calculator.isGoalWeightRealistic(goal, goalWeightKg, profile.heightCm)) {
+      return goal === 'tabe' ? GOAL_WEIGHT_TOO_LOW : GOAL_WEIGHT_TOO_HIGH;
+    }
+    if (goalWeightKg < bounds.min || goalWeightKg > bounds.max) {
+      return `Vælg en målvægt mellem ${bounds.min} og ${bounds.max} kg.`;
+    }
+    return null;
+  }
+
+  /** Saves a goal change together with the new goal weight it required. */
+  applyGoalWithGoalWeight(goal: GoalId, goalWeightKg: number): boolean {
+    const rounded = Math.round(goalWeightKg);
+    if (this.goalWeightError(rounded, goal) !== null) {
+      return false;
+    }
+    this.profiles.update({ goal, goalWeightKg: rounded });
+    return true;
+  }
+
+  /**
    * A choice in an options sheet is saved immediately, as in the design. The id is looked
    * up in the definition list, so an unknown string can never end up in the profile.
+   * The exception is a goal the stored goal weight doesn't fit – see `OptionApplyResult`.
    */
-  applyOption(row: ProfileEditRowId, optionId: string): void {
+  applyOption(row: ProfileEditRowId, optionId: string): OptionApplyResult {
     switch (row) {
       case 'goal': {
         const goal = GOALS.find((item) => item.id === optionId);
-        if (goal) {
-          this.profiles.update({ goal: goal.id });
+        if (!goal) {
+          return SAVED;
         }
-        return;
+        const goalWeightKg = Math.round(this.profiles.profile().goalWeightKg);
+        if (this.goalWeightError(goalWeightKg, goal.id) !== null) {
+          return { kind: 'needs-goal-weight', goal: goal.id };
+        }
+        this.profiles.update({ goal: goal.id });
+        return SAVED;
       }
       case 'pace': {
         const pace = PACES.find((item) => item.id === optionId);
         if (pace) {
           this.profiles.update({ pace: pace.id });
         }
-        return;
+        return SAVED;
       }
       case 'gender': {
         const gender = GENDERS.find((item) => item.id === optionId);
         if (gender) {
           this.profiles.update({ gender: gender.id });
         }
-        return;
+        return SAVED;
       }
       case 'units': {
         const units = UNIT_SYSTEMS.find((item) => item.id === optionId);
         if (units) {
           this.profiles.update({ units: units.id });
         }
-        return;
+        return SAVED;
       }
       case 'trainInt': {
         const intensity = INTENSITIES.find((item) => item.id === optionId);
         if (intensity) {
           this.profiles.update({ trainingRpe: intensity.rpe });
         }
-        return;
+        return SAVED;
       }
       default:
-        return;
+        return SAVED;
     }
   }
 
-  applyNumber(row: ProfileEditRowId, value: number): void {
+  /** Returns `false` when the value was rejected (a goal weight that breaks the goal's rules). */
+  applyNumber(row: ProfileEditRowId, value: number): boolean {
     const rounded = Math.round(value);
     switch (row) {
       case 'height':
         this.profiles.update({ heightCm: rounded });
-        return;
+        return true;
       case 'goalWeight':
+        if (this.goalWeightError(rounded) !== null) {
+          return false;
+        }
         this.profiles.update({ goalWeightKg: rounded });
-        return;
+        return true;
       case 'steps':
         this.profiles.update({ stepsPerDay: rounded });
-        return;
+        return true;
       case 'trainFreq':
         this.profiles.update({ trainingDays: trainingDaysFor(rounded) });
-        return;
+        return true;
       case 'trainDur':
         this.profiles.update({ trainingMinutes: rounded });
-        return;
+        return true;
       case 'kcal':
         this.profiles.update({ kcalOverride: rounded });
-        return;
+        return true;
       default:
-        return;
+        return true;
     }
   }
 

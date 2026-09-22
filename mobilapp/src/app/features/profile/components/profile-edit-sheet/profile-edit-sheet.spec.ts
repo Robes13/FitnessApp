@@ -1,5 +1,7 @@
 import { Provider } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DEFAULT_PROFILE } from '../../../../core/constants/profile-defaults';
+import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import { UserProfileService } from '../../../../core/services/user-profile';
 import { ProfileEditRowId } from '../../services/profile-edit';
 import { ProfileEditSheet } from './profile-edit-sheet';
@@ -100,10 +102,57 @@ describe('ProfileEditSheet', () => {
     const options = result.host.querySelectorAll<HTMLButtonElement>('button[app-ui-option-card]');
 
     expect(options.length).toBe(3);
-    at(options, 2).click();
+    at(options, 0).click();
     await result.fixture.whenStable();
 
-    expect(profiles.profile().goal).toBe('tage');
+    expect(profiles.profile().goal).toBe('tabe');
+    expect(result.closed).toBe(1);
+  });
+
+  it('shows why a goal weight breaks the goal and keeps Gem disabled', async () => {
+    localStorage.setItem(
+      STORAGE_KEY.PROFILE,
+      JSON.stringify({ ...DEFAULT_PROFILE, goal: 'tabe', weightKg: 75, goalWeightKg: 70 }),
+    );
+    const { fixture, host } = await open('goalWeight');
+    const field = host.querySelector<HTMLInputElement>('input[type="number"]');
+    const save = button(host, 'Gem');
+
+    expect(save.disabled).toBe(false);
+
+    setValue(field, '78');
+    await fixture.whenStable();
+    expect(save.disabled).toBe(true);
+    expect(host.textContent).toContain('Målvægten skal være under din nuværende vægt (75 kg).');
+
+    setValue(field, '50');
+    await fixture.whenStable();
+    expect(save.disabled).toBe(true);
+    expect(host.textContent).toContain('Det mål er for lavt for din højde.');
+  });
+
+  it('asks for a new goal weight before switching to a goal it no longer fits', async () => {
+    localStorage.setItem(
+      STORAGE_KEY.PROFILE,
+      JSON.stringify({ ...DEFAULT_PROFILE, goal: 'tabe', weightKg: 75, goalWeightKg: 70 }),
+    );
+    const result = await open('goal');
+
+    at(result.host.querySelectorAll<HTMLButtonElement>('button[app-ui-option-card]'), 2).click();
+    await result.fixture.whenStable();
+
+    expect(result.closed).toBe(0);
+    expect(profiles.profile().goal).toBe('tabe');
+    expect(result.host.querySelector('h2')?.textContent?.trim()).toBe('Målvægt');
+    expect(result.host.textContent).toContain('Din målvægt passer ikke til målet "Tage på"');
+    expect(button(result.host, 'Gem').disabled).toBe(true);
+
+    setValue(result.host.querySelector<HTMLInputElement>('input[type="number"]'), '80');
+    await result.fixture.whenStable();
+    result.host.querySelector('form')?.dispatchEvent(new Event('submit'));
+    await result.fixture.whenStable();
+
+    expect(profiles.profile()).toMatchObject({ goal: 'tage', goalWeightKg: 80 });
     expect(result.closed).toBe(1);
   });
 

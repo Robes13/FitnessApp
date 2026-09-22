@@ -27,6 +27,16 @@ Alle felter er typede reactive forms. Grænser (`min`/`max`) kommer fra definiti
 som validators, når arket åbner, så "Gem" er slået fra, indtil tallet er gyldigt – præcis som
 designets `editSaveDisabled`.
 
+## Målvægt og skift af mål
+
+Målvægtsfeltet har en ekstra validator fra `ProfileEditService.goalWeightError`, og fejlen
+vises i `app-ui-form-error` under feltet (under/over vægten i dag, eller urealistisk BMI).
+
+Returnerer `applyOption('goal', …)` `needs-goal-weight`, lukker arket ikke. Det gemmer målet i
+`pendingGoal` (et `linkedSignal`, der nulstilles, når en ny række åbnes) og viser
+målvægtsfeltet for det nye mål. "Gem" skriver mål og målvægt samlet; lukkes arket, er
+intet ændret.
+
 ## Adgangskoden er asynkron
 
 Adgangskoden findes ikke i `UserProfile`. "Gem" kalder derfor `AuthApi.resetPassword()` via

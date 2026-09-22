@@ -6,6 +6,7 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   output,
   signal,
 } from '@angular/core';
@@ -21,6 +22,7 @@ import {
 import { map } from 'rxjs';
 import { PASSWORD_MIN_LENGTH } from '../../../../core/constants/nutrition';
 import { ApiError } from '../../../../core/models/api-error';
+import { GoalId } from '../../../../core/models/profile';
 import { NutritionCalculator } from '../../../../core/services/nutrition-calculator';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
@@ -64,6 +66,11 @@ const GENERIC_ERROR = 'Adgangskoden kunne ikke gemmes. Prøv igen.';
  *   isn't part of the profile, so it's sent to the backend; the button shows a spinner meanwhile.
  *
  * The parent owns which row is open (`row`); `null` means closed.
+ *
+ * Goal weight follows the sign-up rules (see `ProfileEditService.goalWeightError`), and the
+ * error is shown under the field. Picking a goal the stored goal weight doesn't fit switches
+ * the sheet to the goal weight field (`pendingGoal`); the goal is only saved together with a
+ * valid goal weight, so closing the sheet leaves the old goal untouched.
  */
 @Component({
   selector: 'app-profile-edit-sheet',
@@ -90,8 +97,18 @@ export class ProfileEditSheet {
   private readonly calculator = inject(NutritionCalculator);
   private readonly destroyRef = inject(DestroyRef);
 
+  /** A goal waiting for a new goal weight. Reset whenever another row is opened. */
+  private readonly pendingGoal = linkedSignal<ProfileEditRowId | null, GoalId | null>({
+    source: this.row,
+    computation: () => null,
+  });
+
   protected readonly definition = computed(() => {
     const row = this.row();
+    const pendingGoal = this.pendingGoal();
+    if (pendingGoal !== null) {
+      return this.editor.goalWeightDefinition(pendingGoal, true);
+    }
     return row === null ? null : this.editor.definitionFor(row);
   });
 
@@ -132,6 +149,15 @@ export class ProfileEditSheet {
   protected readonly saving = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
+  private readonly numberValue = toSignal(this.numberForm.controls.value.valueChanges, {
+    initialValue: null,
+  });
+  /** The goal weight rule that the current value breaks, shown under the field. */
+  protected readonly numberError = computed(() => {
+    const value = this.numberValue();
+    return value === null ? null : this.goalWeightErrorFor(value);
+  });
+
   private readonly numberStatus = toSignal(
     this.numberForm.statusChanges.pipe(map(() => this.numberForm.valid)),
     { initialValue: false },
@@ -164,6 +190,7 @@ export class ProfileEditSheet {
             Validators.required,
             Validators.min(definition.min),
             Validators.max(definition.max),
+            (control) => this.validGoalWeight(control),
           ]);
           this.numberForm.controls.value.setValue(definition.value);
           this.numberForm.controls.value.updateValueAndValidity();
@@ -195,7 +222,11 @@ export class ProfileEditSheet {
     if (row === null) {
       return;
     }
-    this.editor.applyOption(row, optionId);
+    const result = this.editor.applyOption(row, optionId);
+    if (result.kind === 'needs-goal-weight') {
+      this.pendingGoal.set(result.goal);
+      return;
+    }
     this.closed.emit();
   }
 
@@ -216,8 +247,14 @@ export class ProfileEditSheet {
     if (row === null || value === null || !this.numberForm.valid) {
       return;
     }
-    this.editor.applyNumber(row, value);
-    this.closed.emit();
+    const pendingGoal = this.pendingGoal();
+    const saved =
+      pendingGoal === null
+        ? this.editor.applyNumber(row, value)
+        : this.editor.applyGoalWithGoalWeight(pendingGoal, value);
+    if (saved) {
+      this.closed.emit();
+    }
   }
 
   protected saveText(): void {
@@ -247,6 +284,19 @@ export class ProfileEditSheet {
           this.errorMessage.set(toErrorMessage(error));
         },
       });
+  }
+
+  private validGoalWeight(control: AbstractControl): ValidationErrors | null {
+    const value = control.value as number | null;
+    return value !== null && this.goalWeightErrorFor(value) !== null ? { goalWeight: true } : null;
+  }
+
+  /** `null` for every row but goal weight. Uses the pending goal while switching goal. */
+  private goalWeightErrorFor(value: number): string | null {
+    if (this.definition()?.id !== 'goalWeight') {
+      return null;
+    }
+    return this.editor.goalWeightError(value, this.pendingGoal() ?? undefined);
   }
 
   private validEmail(control: AbstractControl): ValidationErrors | null {
