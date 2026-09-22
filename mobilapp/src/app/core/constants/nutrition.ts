@@ -125,7 +125,6 @@ export const MAX_AGE = 120;
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_STRONG_LENGTH = 12;
 export const RESET_CODE_LENGTH = 4;
-export const WHO_WEEKLY_MINUTES = 150;
 
 /** Andel af dagens kalorier pr. makro (designets 30/45/25). */
 export const MACRO_SPLIT: Readonly<Omit<Macros, 'kcal'>> = { protein: 0.3, carbs: 0.45, fat: 0.25 };
