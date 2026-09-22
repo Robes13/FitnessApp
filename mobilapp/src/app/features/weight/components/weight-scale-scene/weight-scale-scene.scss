@@ -41,7 +41,7 @@
   &__puddle {
     fill: var(--color-figure-sweat);
     opacity: 0.55;
-    transition: all var(--duration-slowest) ease;
+    transition: all var(--duration-instant) linear;
   }
 
   &__sweat {

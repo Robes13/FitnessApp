@@ -127,11 +127,14 @@
   }
 }
 
-/* Designets `transition: all .35s ease` på hver del og `transform` på hovedgruppen. */
+/*
+ * Geometrien følger linealen i samme korte, lineære tempo. En langsom easing her bliver
+ * afbrudt ved hvert pointer-move og får derfor kropsdelene til at halte efter tallet.
+ */
 :host(.figure-body--animated) .figure-body__part {
-  transition: all var(--duration-slow) ease;
+  transition: all var(--duration-instant) linear;
 }
 
 :host(.figure-body--animated) .figure-body__head {
-  transition: transform var(--duration-slow) ease;
+  transition: transform var(--duration-instant) linear;
 }

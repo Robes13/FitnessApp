@@ -56,7 +56,7 @@ Tegnerækkefølgen er designets: skygge → ben → sko → arme → krop → b�
 | `showHead`                     | `true`     | Slå hovedet fra (fx når scenen tegner hoved med hat)                                                                   |
 | `showShadow`                   | `true`     | Skyggeellipsen under figuren                                                                                           |
 | `shaded`                       | `false`    | Dybdeskygge som i træningsscenerne: venstre ben/arm/sko mørkere, højre arm lysere                                      |
-| `animated`                     | `true`     | Designets `transition: all .35s ease` på hver del                                                                      |
+| `animated`                     | `true`     | Kort, lineær geometriovergang i samme tempo som linealen, så delene følger hurtige talændringer                        |
 | `expression`                   | `{}`       | `Partial<FigureExpression>` – overskriver ansigtet felt for felt                                                       |
 
 `FigureExpression` dækker smil-opacitet, åben mund/tunge, bryn (rotation + opacitet), kinder
