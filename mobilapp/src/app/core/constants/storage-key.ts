@@ -7,6 +7,7 @@ export const STORAGE_KEY = {
   COLLECTIONS: 'nutrify.collections',
   THEME: 'nutrify.theme',
   SCAN_COUNT: 'nutrify.scan-count',
+  REMINDERS: 'nutrify.reminders',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEY)[keyof typeof STORAGE_KEY];

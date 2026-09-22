@@ -121,6 +121,26 @@ for filerne på GitHub er offentlige og kræver ikke login.
 
 ---
 
+## Påmindelser (lokale notifikationer)
+
+Påmindelserne bruger `@capacitor/local-notifications`. Pluginet skal synkroniseres ind i
+de native projekter, før det virker på en enhed:
+
+```bash
+npm run sync   # ng build + cap sync – registrerer pluginet i android/ og ios/
+```
+
+- **Android:** Pluginets eget manifest flettes ind ved build og tilføjer
+  `POST_NOTIFICATIONS` (Android 13+ spørger brugeren), `SCHEDULE_EXACT_ALARM`,
+  `RECEIVE_BOOT_COMPLETED` og `WAKE_LOCK`. Appens `AndroidManifest.xml` skal derfor ikke
+  ændres. Påmindelserne planlægges bevidst **ikke** som eksakte alarmer – de kan komme et
+  par minutter forsinket, men brugeren skal ikke give lov til eksakte alarmer. Efter en
+  genstart af telefonen genplanlægger pluginet selv.
+- **iOS:** Ingen `Info.plist`-nøgle kræves; appen beder om lov, første gang brugeren slår
+  en påmindelse eller "Notifikationer" til.
+- **Browser:** Der planlægges intet. Indstillingerne gemmes stadig, og arket viser, at
+  påmindelser kun virker i appen.
+
 ## Arbejdsgang
 
 Web-koden bygges til `dist/mobilapp/browser` og kopieres ind i de native
@@ -206,7 +226,7 @@ prototypen findes, og de er koblet sammen gennem `core/`.
 | `weight`      | `/vaegt`                       | Vejning med lineal og vægt-scene, graf og vejningsliste            |
 | `collections` | `/samling`                     | Samlinger, opskrifter (fuldskærm) og "Ny samling"-arket            |
 | `history`     | `/historik`                    | Filtrerbar historik over vejninger, mad og måludskiftninger        |
-| `profile`     | `/profil`                      | Profilbillede med beskæring, plan, badges, tema og log ud          |
+| `profile`     | `/profil`                      | Profilbillede, plan, badges, tema, påmindelser og log ud           |
 
 ### Data og tilstand
 
@@ -217,7 +237,7 @@ server endnu." Login og oprettelse virker derfor først, når backenden findes.
 
 Det, brugeren selv registrerer, gemmes lokalt gennem `StorageService`
 (browserens `localStorage`): profil, dagens madlog, egne varer, vejninger,
-egne samlinger, tema og antal scanninger. Madloggen er bundet til dagens dato
+egne samlinger, tema, antal scanninger og påmindelser. Madloggen er bundet til dagens dato
 og starter tom hver dag; alt andet bliver liggende.
 
 Appen kender derfor kun dagen i dag. Hjems ugeringe, ugens nøgletal og

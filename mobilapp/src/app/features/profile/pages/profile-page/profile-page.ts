@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
+import { ReminderService } from '../../../../core/services/reminders';
 import { SessionService } from '../../../../core/services/session';
 import { ThemeService } from '../../../../core/services/theme';
 import { UserProfileService } from '../../../../core/services/user-profile';
@@ -15,9 +16,17 @@ import { ProfileDeleteAccountSheet } from '../../components/profile-delete-accou
 import { ProfileEditSheet } from '../../components/profile-edit-sheet/profile-edit-sheet';
 import { ProfileLogoutSheet } from '../../components/profile-logout-sheet/profile-logout-sheet';
 import { ProfilePhotoSheet } from '../../components/profile-photo-sheet/profile-photo-sheet';
+import { ProfileRemindersSheet } from '../../components/profile-reminders-sheet/profile-reminders-sheet';
 import { AchievementsService } from '../../services/achievements';
 import { ProfileEditRowId } from '../../services/profile-edit';
 import { ProfileRowsService } from '../../services/profile-rows';
+
+const REMINDERS_VALUE = {
+  OFF: 'Fra',
+  NONE: 'Ingen',
+  ONE_ACTIVE: 'aktiv',
+  MANY_ACTIVE: 'aktive',
+} as const;
 
 /**
  * The profile screen: avatar and key figures at the top, then "Min plan", "Konto", the
@@ -35,6 +44,7 @@ import { ProfileRowsService } from '../../services/profile-rows';
     ProfileEditSheet,
     ProfileLogoutSheet,
     ProfilePhotoSheet,
+    ProfileRemindersSheet,
     UiButton,
     UiIcon,
     UiPageHeader,
@@ -53,6 +63,7 @@ export class ProfilePage {
   private readonly theme = inject(ThemeService);
   private readonly rows = inject(ProfileRowsService);
   private readonly achievementsService = inject(AchievementsService);
+  private readonly reminders = inject(ReminderService);
 
   protected readonly displayName = this.profiles.displayName;
   protected readonly initial = this.profiles.initial;
@@ -65,14 +76,24 @@ export class ProfilePage {
   protected readonly accountRows = this.rows.accountRows;
   protected readonly achievements = this.achievementsService.achievements;
   protected readonly isLight = this.theme.isLight;
-  protected readonly notificationsEnabled = computed(
-    () => this.profiles.profile().notificationsEnabled,
-  );
+  protected readonly notificationsEnabled = this.reminders.masterEnabled;
+  /** The "Påmindelser" row's value: "Fra", "Ingen", "1 aktiv" or "3 aktive". */
+  protected readonly remindersValue = computed(() => {
+    const count = this.reminders.enabledCount();
+    if (!this.reminders.masterEnabled()) {
+      return REMINDERS_VALUE.OFF;
+    }
+    if (count === 0) {
+      return REMINDERS_VALUE.NONE;
+    }
+    return `${count} ${count === 1 ? REMINDERS_VALUE.ONE_ACTIVE : REMINDERS_VALUE.MANY_ACTIVE}`;
+  });
 
   protected readonly editRow = signal<ProfileEditRowId | null>(null);
   protected readonly photoOpen = signal(false);
   protected readonly logoutOpen = signal(false);
   protected readonly deleteAccountOpen = signal(false);
+  protected readonly remindersOpen = signal(false);
 
   protected goBack(): void {
     void this.router.navigateByUrl(APP_PATH.HOME);
@@ -92,6 +113,14 @@ export class ProfilePage {
 
   protected closePhoto(): void {
     this.photoOpen.set(false);
+  }
+
+  protected openReminders(): void {
+    this.remindersOpen.set(true);
+  }
+
+  protected closeReminders(): void {
+    this.remindersOpen.set(false);
   }
 
   protected askLogout(): void {
@@ -121,7 +150,7 @@ export class ProfilePage {
   }
 
   protected setNotifications(enabled: boolean): void {
-    this.profiles.update({ notificationsEnabled: enabled });
+    this.reminders.setMasterEnabled(enabled);
   }
 
   protected logout(): void {

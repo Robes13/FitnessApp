@@ -19,12 +19,13 @@ profile/
 │   ├── achievements/                 Gitteret med de 12 badges
 │   ├── profile-edit-sheet/           "Rediger profil" – alle fire feltvarianter
 │   ├── profile-photo-sheet/          "Profilbillede" – filvalg, træk og zoom
+│   ├── profile-reminders-sheet/      "Dine påmindelser" – typer, tidspunkter og vejedag
 │   ├── profile-logout-sheet/         "Log ud?" – bekræftelsen
 │   └── profile-delete-account-sheet/ "Slet konto?" – bekræftelsen
 └── services/                         Rækker, redigeringsdefinitioner og præstationer
 ```
 
-Siden ejer kun, hvad der er åbent (`editRow`, `photoOpen`, `logoutOpen`, `deleteAccountOpen`). Alt andet er
+Siden ejer kun, hvad der er åbent (`editRow`, `photoOpen`, `remindersOpen`, `logoutOpen`, `deleteAccountOpen`). Alt andet er
 afledt af `core/`-stores, så en ændring et andet sted i appen slår igennem med det samme.
 
 ## Skærmens dele
@@ -35,8 +36,8 @@ afledt af `core/`-stores, så en ændring et andet sted i appen slår igennem me
 3. **Min plan** – Mål, [Tempo], Køn, Højde, [Målvægt], Aktivitet, Træningsdage, [Længde],
    [Intensitet] og Dagligt kaloriemål. De fire i kantede parenteser er betingede; se
    [`services/README.md`](services/README.md).
-4. **Konto** – E-mail, Adgangskode, Enheder samt kontakterne "Lys tilstand" og
-   "Notifikationer".
+4. **Konto** – E-mail, Adgangskode, Enheder, kontakterne "Lys tilstand" og
+   "Notifikationer" samt rækken "Påmindelser", der åbner påmindelses-arket.
 5. **Præstationer** – 12 badges i fire kolonner.
 6. **Log ud** – rød tekst i en omrids-pille, der åbner bekræftelsen.
 7. **Slet konto** – en diskret tekstknap under "Log ud", der åbner sin egen bekræftelse.
@@ -47,8 +48,17 @@ et tal, en tekst eller en adgangskode.
 ## Tema og notifikationer
 
 "Lys tilstand" styrer `ThemeService` (ikke profilen): den sætter `data-theme` på `<html>` og
-husker valget. "Notifikationer" skriver `notificationsEnabled` på profilen. Begge er
-almindelige `app-ui-switch`.
+husker valget. "Notifikationer" er **hovedkontakten** for påmindelser: den går gennem
+`ReminderService.setMasterEnabled()`, som skriver `notificationsEnabled` på profilen og – når
+den slås til – beder om lov til notifikationer. Begge er almindelige `app-ui-switch`.
+
+## Påmindelser
+
+Rækken "Påmindelser" viser "Fra" (hovedkontakten er slået fra), "Ingen" eller antallet af
+aktive påmindelser, og åbner `profile-reminders-sheet`. Arket vælger, hvilke påmindelser
+brugeren vil have (morgenmad, frokost, aftensmad, vejning og "Husk at logge dagens mad"),
+og deres tidspunkt. Selve planlægningen af lokale notifikationer ligger i
+`core/services/reminders.ts`; se [`core/services/README.md`](../../core/services/README.md).
 
 ## Log ud
 

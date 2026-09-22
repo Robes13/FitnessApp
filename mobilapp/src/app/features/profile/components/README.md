@@ -9,6 +9,7 @@ også skal kunne bruge, hører til i `shared/components/`.
 | [`achievements/`](achievements/README.md)                                 | `app-achievements`                 | Gitteret med de 12 præstationer                     |
 | [`profile-edit-sheet/`](profile-edit-sheet/README.md)                     | `app-profile-edit-sheet`           | "Rediger profil" – liste, tal, tekst og adgangskode |
 | [`profile-photo-sheet/`](profile-photo-sheet/README.md)                   | `app-profile-photo-sheet`          | "Profilbillede" – filvalg, træk og zoom             |
+| [`profile-reminders-sheet/`](profile-reminders-sheet/README.md)           | `app-profile-reminders-sheet`      | "Dine påmindelser" – typer, tider og vejedag        |
 | [`profile-logout-sheet/`](profile-logout-sheet/README.md)                 | `app-profile-logout-sheet`         | "Log ud?" – bekræftelsen                            |
 | [`profile-delete-account-sheet/`](profile-delete-account-sheet/README.md) | `app-profile-delete-account-sheet` | "Slet konto?" – bekræftelsen (GDPR)                 |
 

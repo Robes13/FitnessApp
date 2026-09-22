@@ -12,7 +12,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IconName } from '../ui-icon/icon-registry';
 import { UiIcon } from '../ui-icon/ui-icon';
 
-export type TextInputType = 'text' | 'password' | 'email' | 'number';
+export type TextInputType = 'text' | 'password' | 'email' | 'number' | 'time';
 export type TextInputMode = 'text' | 'numeric' | 'decimal' | 'email' | 'tel' | 'search' | 'url';
 /** 52 / 48 px – `--size-control-lg` / `-md`. */
 export type TextInputSize = 'lg' | 'md';

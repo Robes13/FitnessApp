@@ -76,6 +76,12 @@
         (checkedChange)="setNotifications($event)"
       />
     </div>
+    <button
+      app-ui-row-button
+      label="Påmindelser"
+      [value]="remindersValue()"
+      (click)="openReminders()"
+    ></button>
   </section>
 
   <section class="profile-page__section">
@@ -108,6 +114,7 @@
 
 <app-profile-edit-sheet [row]="editRow()" (closed)="closeEdit()" />
 <app-profile-photo-sheet [open]="photoOpen()" (closed)="closePhoto()" />
+<app-profile-reminders-sheet [open]="remindersOpen()" (closed)="closeReminders()" />
 <app-profile-logout-sheet [open]="logoutOpen()" (closed)="closeLogout()" (confirmed)="logout()" />
 <app-profile-delete-account-sheet
   [open]="deleteAccountOpen()"

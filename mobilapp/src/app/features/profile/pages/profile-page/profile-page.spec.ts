@@ -95,6 +95,7 @@ describe('ProfilePage', () => {
       'E-mail',
       'Adgangskode',
       'Enheder',
+      'Påmindelser',
     ]);
   });
 
@@ -144,6 +145,21 @@ describe('ProfilePage', () => {
     await fixture.whenStable();
 
     expect(profiles.profile().notificationsEnabled).toBe(false);
+  });
+
+  it('opens the reminders sheet from the "Påmindelser" row', async () => {
+    const { fixture, host } = await setup();
+    const row = Array.from(
+      host.querySelectorAll<HTMLButtonElement>('button[app-ui-row-button]'),
+    ).find((element) => element.textContent?.includes('Påmindelser'));
+
+    expect(row?.textContent).toContain('1 aktiv');
+    row?.click();
+    await fixture.whenStable();
+
+    const sheet = host.querySelector('app-profile-reminders-sheet [role="dialog"]');
+    expect(sheet?.textContent).toContain('Dagens madlog');
+    expect(sheet?.textContent).toContain('kun i appen');
   });
 
   it('asks before logging out and then sends the user to login', async () => {

@@ -1,0 +1,69 @@
+<app-ui-sheet
+  [open]="open()"
+  title="Dine"
+  titleAccent="påmindelser"
+  titleSize="sm"
+  maxHeight="tall"
+  scrollable
+  (closed)="closed.emit()"
+>
+  @if (notice(); as notice) {
+    <div class="profile-reminders-sheet__notice" role="status">
+      <p class="profile-reminders-sheet__notice-text">{{ notice.text }}</p>
+      @if (noticeActionLabel(); as actionLabel) {
+        <button app-ui-button type="button" variant="outline" block (click)="runNoticeAction()">
+          {{ actionLabel }}
+        </button>
+      }
+    </div>
+  }
+
+  <ul class="profile-reminders-sheet__list">
+    @for (row of rows(); track row.id) {
+      <li class="profile-reminders-sheet__item">
+        <div class="profile-reminders-sheet__row">
+          <div class="profile-reminders-sheet__text">
+            <span class="profile-reminders-sheet__label">{{ row.label }}</span>
+            <span class="profile-reminders-sheet__summary">{{ row.summary }}</span>
+          </div>
+          <app-ui-switch
+            [ariaLabel]="row.switchLabel"
+            [checked]="row.enabled"
+            [disabled]="locked()"
+            (checkedChange)="setEnabled(row.id, $event)"
+          />
+        </div>
+
+        @if (row.enabled) {
+          <div class="profile-reminders-sheet__details">
+            <app-ui-text-input
+              type="time"
+              size="md"
+              [ariaLabel]="row.timeLabel"
+              [formControl]="row.timeControl"
+            />
+            @if (row.allowsWeekday) {
+              <div class="profile-reminders-sheet__weekdays" role="group" aria-label="Hvilken dag">
+                @for (option of row.weekdayOptions; track option.label) {
+                  <button
+                    app-ui-chip
+                    size="sm"
+                    [selected]="option.selected"
+                    [disabled]="locked()"
+                    (click)="setWeekday(row.id, option.value)"
+                  >
+                    {{ option.label }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        }
+      </li>
+    }
+  </ul>
+
+  <app-ui-form-error tone="negative" [message]="error()" />
+
+  <button app-ui-button sheetFooter type="button" block (click)="closed.emit()">Færdig</button>
+</app-ui-sheet>
