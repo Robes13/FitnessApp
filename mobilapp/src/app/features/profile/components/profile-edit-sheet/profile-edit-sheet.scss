@@ -1,0 +1,75 @@
+@use 'mixins';
+
+:host {
+  display: contents;
+}
+
+.profile-edit-sheet {
+  &__hint {
+    margin: 0 0 var(--space-3-5);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-snug);
+  }
+
+  &__options,
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  &__form {
+    gap: var(--space-3-5);
+  }
+
+  &__stepper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  &__number {
+    display: flex;
+    flex: 1;
+    align-items: baseline;
+    justify-content: center;
+    gap: var(--space-1-5);
+    min-width: 0;
+    padding: var(--space-2-5) var(--space-3);
+    border: var(--border-width-thin) solid var(--color-border-soft);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+  }
+
+  &__number-input {
+    @include mixins.display-heading;
+    @include mixins.tabular-nums;
+
+    width: var(--size-field-number);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    font-size: var(--font-size-display-3xl);
+    text-align: right;
+    appearance: textfield;
+
+    &:focus {
+      outline: none;
+    }
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      appearance: none;
+      margin: 0;
+    }
+  }
+
+  &__number-unit {
+    flex: none;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+  }
+}

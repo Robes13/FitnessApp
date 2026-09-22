@@ -1,0 +1,159 @@
+import { Provider } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { UserProfileService } from '../../../../core/services/user-profile';
+import { ProfileEditRowId } from '../../services/profile-edit';
+import { ProfileEditSheet } from './profile-edit-sheet';
+import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
+
+/**
+ * Komponenttests bruger `provideComponentTestEnvironment()`: jsdom's rigtige `DOCUMENT`,
+ * fastfrosset `NOW` og 0 ms mock-forsinkelser. Browserens storage ryddes pr. test.
+ */
+const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
+
+describe('ProfileEditSheet', () => {
+  let profiles: UserProfileService;
+
+  afterEach(() => localStorage.clear());
+
+  async function open(row: ProfileEditRowId | null): Promise<{
+    fixture: ComponentFixture<ProfileEditSheet>;
+    host: HTMLElement;
+    closed: number;
+  }> {
+    TestBed.configureTestingModule({ providers: TEST_PROVIDERS });
+    profiles = TestBed.inject(UserProfileService);
+    const fixture = TestBed.createComponent(ProfileEditSheet);
+    const state = { closed: 0 };
+    fixture.componentInstance.closed.subscribe(() => state.closed++);
+    fixture.componentRef.setInput('row', row);
+    await fixture.whenStable();
+    return {
+      fixture,
+      host: fixture.nativeElement as HTMLElement,
+      get closed() {
+        return state.closed;
+      },
+    };
+  }
+
+  function button(host: HTMLElement, label: string): HTMLButtonElement {
+    const found = Array.from(host.querySelectorAll('button')).find(
+      (element) =>
+        element.getAttribute('aria-label') === label || element.textContent?.trim() === label,
+    );
+    if (!found) {
+      throw new Error(`Ingen knap med teksten "${label}"`);
+    }
+    return found;
+  }
+
+  it('renders nothing while no row is being edited', async () => {
+    const { host } = await open(null);
+
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('shows the row title and the current value', async () => {
+    const { host } = await open('height');
+    const field = host.querySelector<HTMLInputElement>('input[type="number"]');
+
+    expect(host.querySelector('h2')?.textContent?.trim()).toBe('Højde');
+    expect(field?.value).toBe('178');
+    expect(host.textContent).toContain('cm');
+  });
+
+  it('steps the value and saves it to the profile', async () => {
+    const result = await open('height');
+
+    button(result.host, 'Mere').click();
+    await result.fixture.whenStable();
+    expect(result.host.querySelector<HTMLInputElement>('input[type="number"]')?.value).toBe('179');
+
+    result.host.querySelector('form')?.dispatchEvent(new Event('submit'));
+    await result.fixture.whenStable();
+
+    expect(profiles.profile().heightCm).toBe(179);
+    expect(result.closed).toBe(1);
+  });
+
+  it('never steps past the bounds of the row', async () => {
+    const { fixture, host } = await open('trainFreq');
+    const minus = button(host, 'Mindre');
+
+    for (let click = 0; click < 6; click++) {
+      minus.click();
+    }
+    await fixture.whenStable();
+
+    expect(host.querySelector<HTMLInputElement>('input[type="number"]')?.value).toBe('0');
+  });
+
+  it('shows the calculated suggestion as a hint on the calorie row', async () => {
+    const { host } = await open('kcal');
+
+    expect(host.textContent).toContain('Beregnet forslag: 2.530 kcal');
+  });
+
+  it('applies an option immediately and closes', async () => {
+    const result = await open('goal');
+    const options = result.host.querySelectorAll<HTMLButtonElement>('button[app-ui-option-card]');
+
+    expect(options.length).toBe(3);
+    at(options, 2).click();
+    await result.fixture.whenStable();
+
+    expect(profiles.profile().goal).toBe('tage');
+    expect(result.closed).toBe(1);
+  });
+
+  it('keeps Gem disabled until the two passwords match and are long enough', async () => {
+    const { fixture, host } = await open('password');
+    const fields = host.querySelectorAll<HTMLInputElement>('input[type="password"]');
+    const save = button(host, 'Gem');
+
+    expect(fields.length).toBe(2);
+    expect(save.disabled).toBe(true);
+
+    setValue(at(fields, 0), 'langnokkode');
+    setValue(at(fields, 1), 'ikke-ens');
+    await fixture.whenStable();
+    expect(save.disabled).toBe(true);
+
+    setValue(at(fields, 1), 'langnokkode');
+    await fixture.whenStable();
+    expect(save.disabled).toBe(false);
+  });
+
+  it('keeps Gem disabled for an invalid e-mail', async () => {
+    const { fixture, host } = await open('email');
+    const field = host.querySelector<HTMLInputElement>('input');
+    const save = button(host, 'Gem');
+
+    expect(save.disabled).toBe(true);
+
+    setValue(field, 'ikke-en-mail');
+    await fixture.whenStable();
+    expect(save.disabled).toBe(true);
+
+    setValue(field, 'mads@mail.dk');
+    await fixture.whenStable();
+    expect(save.disabled).toBe(false);
+  });
+});
+
+function at<T>(list: ArrayLike<T>, index: number): T {
+  const item = list[index];
+  if (item === undefined) {
+    throw new Error(`Der er intet element nr. ${index}`);
+  }
+  return item;
+}
+
+function setValue(field: HTMLInputElement | null | undefined, value: string): void {
+  if (!field) {
+    throw new Error('Feltet findes ikke');
+  }
+  field.value = value;
+  field.dispatchEvent(new Event('input'));
+}

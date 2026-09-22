@@ -1,0 +1,27 @@
+<app-ui-sheet
+  [open]="open()"
+  title="Log"
+  titleAccent="ud?"
+  titleAccentTone="negative"
+  titleSize="sm"
+  hideClose
+  scrollable
+  layer="overlay"
+>
+  <span sheetLeading class="profile-logout-sheet__mark" aria-hidden="true">
+    <app-ui-icon name="log-out" size="xl" />
+  </span>
+
+  <p class="profile-logout-sheet__body">
+    Dine data bliver gemt. Du skal logge ind igen for at fortsætte.
+  </p>
+
+  <div sheetFooter class="profile-logout-sheet__actions">
+    <button app-ui-button type="button" variant="danger" block (click)="confirmed.emit()">
+      Ja, log mig ud
+    </button>
+    <button app-ui-button type="button" variant="outline" block (click)="closed.emit()">
+      Annuller
+    </button>
+  </div>
+</app-ui-sheet>

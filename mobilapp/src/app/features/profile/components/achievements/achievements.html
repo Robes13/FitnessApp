@@ -1,0 +1,24 @@
+@for (item of items(); track item.id) {
+  <div
+    class="achievements__item"
+    [class]="item.toneClass"
+    [class.achievements__item--locked]="!item.complete"
+  >
+    <div class="achievements__medal">
+      <span class="achievements__disc" aria-hidden="true">{{ item.glyph }}</span>
+      @if (!item.complete) {
+        <app-ui-progress-ring
+          class="achievements__ring"
+          aria-hidden="true"
+          trackTone="none"
+          [tone]="item.tone"
+          [value]="item.progress"
+          [diameter]="medalDiameter"
+          [strokeWidth]="medalStrokeWidth"
+        />
+      }
+    </div>
+    <p class="achievements__label">{{ item.label }}</p>
+    <p class="achievements__progress">{{ item.progressLabel }}</p>
+  </div>
+}

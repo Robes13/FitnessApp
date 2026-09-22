@@ -1,0 +1,103 @@
+<app-ui-sheet
+  [open]="open()"
+  title="Profil"
+  titleAccent="billede"
+  titleAccentJoined
+  titleSize="sm"
+  maxHeight="tall"
+  scrollable
+  (closed)="onClose()"
+>
+  @if (errorMessage()) {
+    <app-ui-form-error tone="negative" [message]="errorMessage()" />
+  }
+
+  @if (photo(); as picked) {
+    <div class="profile-photo-sheet__editor">
+      <div
+        class="profile-photo-sheet__crop"
+        tabindex="0"
+        aria-label="Træk i billedet for at flytte det"
+        (pointerdown)="onPointerDown($event)"
+        (pointermove)="onPointerMove($event)"
+        (pointerup)="onPointerUp()"
+        (pointercancel)="onPointerUp()"
+        (pointerleave)="onPointerUp()"
+        (keydown)="onKeydown($event)"
+      >
+        <app-profile-avatar size="xl" [photo]="picked" [initial]="initial()" />
+      </div>
+    </div>
+    <p class="profile-photo-sheet__hint">
+      Træk i billedet for at flytte det. Piletasterne flytter det også.
+    </p>
+    <div class="profile-photo-sheet__zoom">
+      <span class="profile-photo-sheet__zoom-label">Zoom</span>
+      <input
+        class="profile-photo-sheet__zoom-input"
+        type="range"
+        aria-label="Zoom"
+        [min]="zoomMin"
+        [max]="zoomMax"
+        [value]="zoomPercent()"
+        (input)="onZoomChange($event)"
+      />
+      <span class="profile-photo-sheet__zoom-value">{{ zoomLabel() }}</span>
+    </div>
+    <div class="profile-photo-sheet__actions">
+      <button
+        app-ui-button
+        type="button"
+        variant="surface"
+        size="sm"
+        shape="rounded"
+        block
+        class="profile-photo-sheet__action"
+        (click)="recenter()"
+      >
+        Centrér igen
+      </button>
+      <button
+        app-ui-button
+        type="button"
+        variant="surface"
+        size="sm"
+        shape="rounded"
+        block
+        class="profile-photo-sheet__action profile-photo-sheet__action--remove"
+        (click)="removePhoto()"
+      >
+        Fjern foto
+      </button>
+    </div>
+    <label class="profile-photo-sheet__replace">
+      <span>Vælg et andet foto</span>
+      <input
+        class="profile-photo-sheet__file"
+        type="file"
+        accept="image/*"
+        aria-label="Vælg et andet foto"
+        (change)="onFileChange($event)"
+      />
+    </label>
+    <button app-ui-button type="button" block class="profile-photo-sheet__use" (click)="onClose()">
+      Brug billedet
+    </button>
+  } @else {
+    <div class="profile-photo-sheet__editor">
+      <app-profile-avatar size="lg" [photo]="null" [initial]="initial()" />
+    </div>
+    <label class="profile-photo-sheet__pick">
+      <app-ui-icon name="image" size="md" />
+      <span>Vælg foto</span>
+      <input
+        class="profile-photo-sheet__file"
+        type="file"
+        accept="image/*"
+        aria-label="Vælg foto"
+        (change)="onFileChange($event)"
+      />
+    </label>
+    <p class="profile-photo-sheet__hint">Du beskærer billedet, når det er valgt.</p>
+  }
+</app-ui-sheet>

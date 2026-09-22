@@ -1,0 +1,127 @@
+@use 'mixins';
+
+:host {
+  display: contents;
+}
+
+.profile-photo-sheet {
+  &__editor {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-4);
+  }
+
+  /* Trækfladen: cirklen er avataren, rammen og markøren hører til her. */
+  &__crop {
+    border: var(--border-width-medium) solid var(--color-accent-ring-strong);
+    border-radius: var(--radius-circle);
+    cursor: grab;
+    touch-action: none;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  &__hint {
+    margin: var(--space-3) 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    text-align: center;
+  }
+
+  &__zoom {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+
+  &__zoom-label {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+  }
+
+  &__zoom-input {
+    flex: 1;
+    min-width: 0;
+    height: var(--size-switch-h);
+    accent-color: var(--color-accent);
+  }
+
+  &__zoom-value {
+    @include mixins.tabular-nums;
+
+    flex: none;
+    color: var(--color-accent);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+    text-align: right;
+  }
+
+  &__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+  }
+
+  /* Designets 46 px – mellem `--size-control-sm` og `-md`, derfor knappens egen hook. */
+  &__action {
+    --ui-button-min-height: var(--size-button-secondary);
+
+    &--remove {
+      color: var(--color-negative);
+    }
+  }
+
+  /* Filvælgere kan ikke åbnes fra en knap – derfor et <label> med et skjult input. */
+  &__replace,
+  &__pick {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2-5);
+    cursor: pointer;
+  }
+
+  &__replace {
+    min-height: var(--size-button-secondary);
+    margin-top: var(--space-2);
+    border: var(--border-width-thin) dashed var(--color-border-dashed);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  &__pick {
+    min-height: var(--size-control-lg);
+    margin-top: var(--space-4-5);
+    border-radius: var(--radius-pill);
+    background: var(--color-accent);
+    color: var(--color-text-on-accent);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-caps);
+    text-transform: uppercase;
+
+    &:hover {
+      background: var(--color-accent-hover);
+    }
+  }
+
+  &__file {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  &__use {
+    margin-top: var(--space-3-5);
+  }
+}

@@ -1,0 +1,107 @@
+:host {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3-5) var(--space-2-5);
+}
+
+.achievements {
+  /*
+   * Hvert badge sætter sin egen farvefamilie som lokale variabler, så cirklen, kanten,
+   * ringen og statusteksten altid følges ad. Låste badges overskriver dem bagefter.
+   */
+  &__item {
+    --achievement-color: var(--color-accent);
+    --achievement-fill: var(--color-accent-tint-3);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    text-align: center;
+
+    &--positive {
+      --achievement-color: var(--color-positive);
+      --achievement-fill: var(--color-positive-soft);
+    }
+
+    &--info {
+      --achievement-color: var(--color-info);
+      --achievement-fill: var(--color-selected-soft);
+    }
+
+    &--negative {
+      --achievement-color: var(--color-negative);
+      --achievement-fill: var(--color-negative-soft-strong);
+    }
+
+    &--neutral {
+      --achievement-color: var(--color-neutral-strong);
+      --achievement-fill: var(--color-neutral-tint);
+    }
+
+    /* Ikke klaret endnu: nedtonet, grå kant og tegn – ringen viser fremdriften. */
+    &--locked {
+      --achievement-fill: var(--color-surface);
+
+      opacity: 0.55;
+    }
+  }
+
+  &__medal {
+    position: relative;
+    width: var(--size-control-xl);
+    height: var(--size-control-xl);
+  }
+
+  /*
+   * Display-skriften, men uden `display-heading`s versaler: designets tegn er blandt andet
+   * "kg" og "P", og de skal stå, som de er skrevet.
+   */
+  &__disc {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: var(--border-width-medium) solid var(--achievement-color);
+    border-radius: var(--radius-circle);
+    background: var(--achievement-fill);
+    color: var(--achievement-color);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-3xl);
+    font-stretch: var(--font-stretch-display);
+    font-weight: var(--font-weight-extrabold);
+    line-height: var(--line-height-display);
+  }
+
+  &__ring {
+    position: absolute;
+    inset: 0;
+  }
+
+  &__label {
+    margin: 0;
+    color: var(--color-text-soft);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-snug);
+    text-wrap: balance;
+  }
+
+  &__progress {
+    margin: 0;
+    color: var(--achievement-color);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-wide-plus);
+  }
+}
+
+.achievements__item--locked .achievements__disc {
+  border-color: var(--color-border-strong);
+  color: var(--color-text-muted);
+}
+
+.achievements__item--locked .achievements__progress {
+  color: var(--color-text-muted);
+}

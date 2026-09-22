@@ -1,0 +1,113 @@
+<app-ui-sheet
+  [open]="isOpen()"
+  [title]="title()"
+  titleSize="sm"
+  maxHeight="medium"
+  scrollable
+  (closed)="onClose()"
+>
+  @if (hint()) {
+    <p class="profile-edit-sheet__hint">{{ hint() }}</p>
+  }
+
+  @if (optionsDefinition(); as options) {
+    <div class="profile-edit-sheet__options">
+      @for (option of options.options; track option.id) {
+        <button
+          app-ui-option-card
+          selectionStyle="accent"
+          density="compact"
+          [label]="option.label"
+          [description]="option.description"
+          [selected]="option.id === options.selectedId"
+          (click)="pickOption(option.id)"
+        ></button>
+      }
+    </div>
+  }
+
+  @if (numberDefinition(); as number) {
+    <form class="profile-edit-sheet__form" [formGroup]="numberForm" (ngSubmit)="saveNumber()">
+      <div class="profile-edit-sheet__stepper">
+        <button
+          app-ui-icon-button
+          type="button"
+          size="lg"
+          tone="outline"
+          aria-label="Mindre"
+          (click)="stepNumber(-1)"
+        >
+          <app-ui-icon name="minus" size="lg" />
+        </button>
+        <div class="profile-edit-sheet__number">
+          <input
+            class="profile-edit-sheet__number-input"
+            type="number"
+            inputmode="numeric"
+            formControlName="value"
+            aria-label="Værdi"
+            [attr.min]="number.min"
+            [attr.max]="number.max"
+            [attr.step]="number.step"
+          />
+          <span class="profile-edit-sheet__number-unit">{{ number.unit }}</span>
+        </div>
+        <button
+          app-ui-icon-button
+          type="button"
+          size="lg"
+          tone="outline"
+          aria-label="Mere"
+          (click)="stepNumber(1)"
+        >
+          <app-ui-icon name="plus" size="lg" />
+        </button>
+      </div>
+      <button app-ui-button type="submit" block [disabled]="!canSaveNumber()">Gem</button>
+    </form>
+  }
+
+  @if (textDefinition(); as text) {
+    <form class="profile-edit-sheet__form" [formGroup]="textForm" (ngSubmit)="saveText()">
+      <app-ui-text-input
+        type="email"
+        autocomplete="email"
+        ariaLabel="E-mail"
+        formControlName="value"
+        [placeholder]="text.placeholder"
+      />
+      <button app-ui-button type="submit" block [disabled]="!canSaveText()">Gem</button>
+    </form>
+  }
+
+  @if (isPassword()) {
+    <form class="profile-edit-sheet__form" [formGroup]="passwordForm" (ngSubmit)="savePassword()">
+      <app-ui-text-input
+        type="password"
+        autocomplete="new-password"
+        placeholder="Ny adgangskode"
+        ariaLabel="Ny adgangskode"
+        formControlName="password"
+        [revealable]="false"
+      />
+      <app-ui-text-input
+        type="password"
+        autocomplete="new-password"
+        placeholder="Gentag adgangskode"
+        ariaLabel="Gentag adgangskode"
+        formControlName="repeat"
+        [revealable]="false"
+      />
+      <app-ui-form-error tone="negative" [message]="errorMessage()" />
+      <button
+        app-ui-button
+        type="submit"
+        block
+        [loading]="saving()"
+        [disabled]="!canSavePassword()"
+      >
+        Gem
+      </button>
+    </form>
+  }
+</app-ui-sheet>
