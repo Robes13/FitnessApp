@@ -4,8 +4,9 @@ import { UiProgressBar } from '../../../../shared/components/ui-progress-bar/ui-
 import { GoalSummary } from '../../services/home-summary';
 
 /**
- * Det orange "Til mål"-kort: afstand til målvægten, selve målvægten, fremdrift og en kort
- * vejledning ud fra det valgte tempo. Siden skjuler kortet, når målet er at holde vægten.
+ * The orange "Til mål" card: distance to the goal weight, the goal weight itself,
+ * progress, and a short pointer based on the chosen pace. The page hides the card when
+ * the goal is to maintain weight.
  */
 @Component({
   selector: 'app-home-goal-card',

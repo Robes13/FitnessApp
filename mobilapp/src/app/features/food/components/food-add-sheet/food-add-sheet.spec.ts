@@ -3,13 +3,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FoodCollection, FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections';
+import { FoodLogService } from '../../../../core/services/food-log';
 import { TEST_NOW, provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 import { FoodPickerStartStep } from '../../../../shared/components/food-picker/food-picker';
 import { FoodAddSheet } from './food-add-sheet';
 
 /**
- * Komponenttests bruger `provideComponentTestEnvironment()`: jsdom's rigtige `DOCUMENT`,
- * fastfrosset `NOW` og 0 ms mock-forsinkelser. Browserens storage ryddes pr. test.
+ * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`,
+ * a frozen `NOW` and 0ms mock delays. The browser's storage is cleared per test.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
@@ -26,7 +27,7 @@ const LOGGED_SALAD: LoggedFood = {
   fat: 10,
 };
 
-/** Stub uden samlinger, så den tomme tilstand kan vises. */
+/** Stub without collections, so the empty state can be shown. */
 const NO_COLLECTIONS: Pick<CollectionsService, 'collections' | 'collectionTotals' | 'recipeById'> =
   {
     collections: signal<readonly FoodCollection[]>([]),
@@ -79,11 +80,13 @@ describe('FoodAddSheet', () => {
   async function setup(
     configure?: (host: Host) => void,
     providers: Provider[] = [],
+    prepare?: () => void,
   ): Promise<Setup> {
     TestBed.configureTestingModule({
       imports: [Host],
       providers: [...TEST_PROVIDERS, ...providers],
     });
+    prepare?.();
     const fixture = TestBed.createComponent(Host);
     const host = fixture.componentInstance;
     configure?.(host);
@@ -143,7 +146,18 @@ describe('FoodAddSheet', () => {
   });
 
   it('lists the collections that have content and logs one as a single item', async () => {
-    const { host, root, settle } = await setup();
+    // The app has no fixed collections – the user has to have created one themselves.
+    const { host, root, settle } = await setup(undefined, [], () => {
+      TestBed.inject(CollectionsService).create({
+        name: 'Meal prep',
+        icon: 'bag',
+        meal: 'frokost',
+        items: [
+          { ...LOGGED_SALAD, id: 'item-salat' },
+          { ...LOGGED_SALAD, id: 'item-salat-2' },
+        ],
+      });
+    });
     const collections = TestBed.inject(CollectionsService);
     const first = collections.collections()[0];
 
@@ -195,7 +209,17 @@ describe('FoodAddSheet', () => {
   });
 
   it('keeps the meal chips but drops the tabs on the portion step', async () => {
-    const { root, settle } = await setup();
+    // Search only finds the user's own foods, so there has to be one to select.
+    const { root, settle } = await setup(undefined, [], () => {
+      TestBed.inject(FoodLogService).addCustomFood({
+        name: 'Havregryn',
+        quantity: '60 g',
+        kcal: 222,
+        protein: 8,
+        carbs: 38,
+        fat: 4,
+      });
+    });
 
     root.querySelector<HTMLButtonElement>('.food-picker__result')?.click();
     await settle();

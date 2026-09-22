@@ -19,7 +19,7 @@ import { AuthApi } from '../../../core/services/auth-api';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { formatInteger, formatWeightKg } from '../../../core/utils/date-format';
 
-/** Rækkerne i Profil, der kan redigeres. Id'erne er designets `editDefs`-nøgler. */
+/** The rows in Profile that can be edited. The ids are the design's `editDefs` keys. */
 export const PROFILE_EDIT_ROWS = [
   'goal',
   'pace',
@@ -47,7 +47,7 @@ export interface ProfileEditOption {
 interface BaseEditDefinition {
   readonly id: ProfileEditRowId;
   readonly title: string;
-  /** Tom streng = ingen hjælpetekst. */
+  /** Empty string = no hint text. */
   readonly hint: string;
 }
 
@@ -80,8 +80,8 @@ export type ProfileEditDefinition =
   OptionsEditDefinition | NumberEditDefinition | TextEditDefinition | PasswordEditDefinition;
 
 /**
- * Designets `editDefs` bruger en snævrere højdeskala end linealen i opret-flowet
- * (`HEIGHT_MIN_CM`/`HEIGHT_MAX_CM`), fordi feltet skrives med tastaturet.
+ * The design's `editDefs` uses a narrower height range than the ruler in the sign-up flow
+ * (`HEIGHT_MIN_CM`/`HEIGHT_MAX_CM`), because this field is typed with the keyboard.
  */
 const HEIGHT_EDIT_MIN_CM = 120;
 const HEIGHT_EDIT_MAX_CM = 230;
@@ -97,11 +97,12 @@ const KCAL_STEP = 50;
 const EMAIL_PLACEHOLDER = 'dig@mail.dk';
 
 /**
- * Definitionerne bag "Rediger profil"-arket: hvad en række hedder, hvilken slags felt den
- * viser, og hvad der sker, når brugeren gemmer. Port af designets `editDefs`/`openEdit`.
+ * The definitions behind the "Rediger profil" sheet: what a row is called, what kind of
+ * field it shows, and what happens when the user saves. A port of the design's
+ * `editDefs`/`openEdit`.
  *
- * Adgangskoden hører ikke til profilen, så den sendes til `AuthApi.resetPassword()` –
- * mock-backenden er det eneste sted, en adgangskode kan ændres.
+ * The password isn't part of the profile, so it's sent to `AuthApi.resetPassword()` – the
+ * backend is the only place a password can be changed.
  */
 @Injectable({ providedIn: 'root' })
 export class ProfileEditService {
@@ -263,8 +264,8 @@ export class ProfileEditService {
   }
 
   /**
-   * Et valg i et options-ark gemmes med det samme, som i designet. Id'et slås op i
-   * definitionslisten, så en ukendt streng aldrig kan ende i profilen.
+   * A choice in an options sheet is saved immediately, as in the design. The id is looked
+   * up in the definition list, so an unknown string can never end up in the profile.
    */
   applyOption(row: ProfileEditRowId, optionId: string): void {
     switch (row) {
@@ -343,7 +344,7 @@ export class ProfileEditService {
   }
 }
 
-/** Designets `trainFreq.apply`: de første `count` ugedage markeres som træningsdage. */
+/** The design's `trainFreq.apply`: the first `count` weekdays are marked as training days. */
 function trainingDaysFor(count: number): readonly boolean[] {
   return Array.from({ length: TRAINING_DAYS_PER_WEEK }, (_, index) => index < count);
 }

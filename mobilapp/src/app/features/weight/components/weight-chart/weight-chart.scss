@@ -1,8 +1,8 @@
 @use 'mixins';
 
 /*
- * Værten er selve kortet. Kurvens højde er SVG-geometri (viewBox 320 × 110) og bindes derfor
- * som `--weight-chart-plot-height` fra TypeScript – ikke som en px-værdi i stilarket.
+ * The host is the card itself. The curve's height is SVG geometry (viewBox 320 × 110) and is
+ * therefore bound as `--weight-chart-plot-height` from TypeScript – not as a px value in the stylesheet.
  */
 :host {
   @include mixins.surface-card;

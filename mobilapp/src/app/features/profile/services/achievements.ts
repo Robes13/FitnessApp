@@ -5,41 +5,26 @@ import { CollectionsService } from '../../../core/services/collections';
 import { FoodLogService } from '../../../core/services/food-log';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log';
-import { formatDecimal, formatInteger, mondayIndex } from '../../../core/utils/date-format';
-import { NOW } from '../../../core/utils/now';
+import { formatDecimal, formatInteger } from '../../../core/utils/date-format';
 
-/** Farvefamilien bag et badge. Bruges både til ring, kant, fyld og tekst. */
+/** The color family behind a badge. Used for the ring, border, fill, and text alike. */
 export type AchievementTone = 'accent' | 'positive' | 'info' | 'negative' | 'neutral';
 
 export interface Achievement {
   readonly id: string;
-  /** Tegnet midt i cirklen – designets `icon` (tekst, ikke et ikon fra registret). */
+  /** The glyph in the middle of the circle – the design's `icon` (text, not a registry icon). */
   readonly glyph: string;
   readonly label: string;
   readonly tone: AchievementTone;
-  /** Andel 0..1 af målet. */
+  /** Share 0..1 of the goal. */
   readonly progress: number;
   readonly complete: boolean;
   /** "Klaret" · "Mangler" · "4/7 dage". */
   readonly progressLabel: string;
 }
 
-/** Designets `dayHist`: kaloriedækning for ugens dage før i dag. */
-const DAY_HISTORY: readonly number[] = [1, 0.97, 0.86, 1, 1, 0.72, 0.95];
-/** En dag tæller som "ramt", når mindst 95 % af målet er spist. */
+/** A day counts as "hit" once at least 95% of the goal has been eaten. */
 const DAY_HIT_THRESHOLD = 0.95;
-/** Designets `streakDays = streakRun + 3` – demo-historik før ugens start. */
-const STREAK_HISTORY_BONUS = 3;
-/** Designets syntetiske proteintal for tidligere dage. */
-const PROTEIN_DAY_BASE = 0.88;
-const PROTEIN_DAY_SPREAD = 0.16;
-
-/** Demo-forspring, så badges ikke står på nul i prototypen (designets `6 +`, `23 +`, `4 +`). */
-const MEALS_LOGGED_HEAD_START = 6;
-const MEALS_LOGGED_HEAD_START_LARGE = 23;
-const SCANS_HEAD_START = 4;
-/** Designets gulv under "kg tabt", så ringen altid viser lidt fremgang. */
-const MIN_KG_LOST = 1.2;
 
 const TONE_BY_TARGET = {
   STREAK: 'positive',
@@ -70,11 +55,11 @@ interface WeekStats {
 }
 
 /**
- * De 12 præstationer på profilsiden – en tro port af designets `badges`.
+ * The 12 achievements on the profile page.
  *
- * Tallene blandes bevidst: nogle kommer fra rigtige data (madlog, vejninger, samlinger,
- * scanninger), andre fra designets syntetiske uge (`dayHist`) og faste forspring, så
- * prototypen viser et realistisk mix af klarede og låste badges.
+ * All numbers come from the user's own data: the food log, weigh-ins, collections, and the
+ * scan count. The app has no history beyond today, so the weekly counters can at most reach
+ * 1 until the backend supplies earlier days.
  */
 @Injectable({ providedIn: 'root' })
 export class AchievementsService {
@@ -83,70 +68,42 @@ export class AchievementsService {
   private readonly weightLog = inject(WeightLogService);
   private readonly collections = inject(CollectionsService);
   private readonly scanner = inject(BarcodeScannerService);
-  private readonly now = inject(NOW);
 
   readonly achievements: Signal<readonly Achievement[]> = computed(() =>
     this.seeds().map((seed) => toAchievement(seed)),
   );
 
-  /** Ugens tal fra designets `weekHit` / `weekProteinHit` / `streakDays`. */
+  /**
+   * The week's numbers. Only today has data, so each counter is 0 or 1 until the backend
+   * can supply the earlier days.
+   */
   private readonly weekStats: Signal<WeekStats> = computed(() => {
-    const todayIndex = mondayIndex(this.now());
     const kcalTarget = this.profiles.kcalTarget();
     const totals = this.foodLog.totals();
     const proteinGoalPerDay = Math.round(
       (kcalTarget * MACRO_SPLIT.protein) / KCAL_PER_GRAM.protein,
     );
-    const dayPart = (index: number): number => {
-      if (index > todayIndex) {
-        return 0;
-      }
-      if (index === todayIndex) {
-        return Math.min(1, totals.kcal / kcalTarget);
-      }
-      return DAY_HISTORY[index] ?? 0;
-    };
-    const proteinOfDay = (index: number): number => {
-      if (index > todayIndex) {
-        return 0;
-      }
-      if (index === todayIndex) {
-        return totals.protein;
-      }
-      const part = dayPart(index);
-      return Math.round(proteinGoalPerDay * part * (PROTEIN_DAY_BASE + part * PROTEIN_DAY_SPREAD));
-    };
-    const weekDays = Array.from({ length: todayIndex + 1 }, (_, index) => index);
-    let streakRun = 0;
-    for (let index = todayIndex - 1; index >= 0; index--) {
-      if (dayPart(index) < DAY_HIT_THRESHOLD) {
-        break;
-      }
-      streakRun++;
-    }
-    if (dayPart(todayIndex) >= DAY_HIT_THRESHOLD) {
-      streakRun++;
-    }
+    const kcalPart = kcalTarget > 0 ? Math.min(1, totals.kcal / kcalTarget) : 0;
+    const kcalHitToday = kcalPart >= DAY_HIT_THRESHOLD;
+    const proteinHitToday = totals.protein >= proteinGoalPerDay * DAY_HIT_THRESHOLD;
     return {
-      hitDays: weekDays.filter((index) => dayPart(index) >= DAY_HIT_THRESHOLD).length,
-      proteinHitDays: weekDays.filter(
-        (index) => proteinOfDay(index) >= proteinGoalPerDay * DAY_HIT_THRESHOLD,
-      ).length,
-      streakDays: streakRun + STREAK_HISTORY_BONUS,
+      hitDays: kcalHitToday ? 1 : 0,
+      proteinHitDays: proteinHitToday ? 1 : 0,
+      streakDays: kcalHitToday ? 1 : 0,
     };
   });
 
-  /** Fremgang mod målvægten i kg. Kun et fald tæller (designets `kgDown`). */
+  /** Drop from the oldest weigh-in to the current weight. Only a decrease counts. */
   private readonly kgLost = computed(() => {
-    const latest = this.weightLog.latest();
     const current = this.profiles.profile().weightKg;
-    return Math.max(0, (latest?.kg ?? current) - current);
+    const first = this.weightLog.entries().at(-1);
+    return Math.max(0, (first?.kg ?? current) - current);
   });
 
   private readonly seeds: Signal<readonly AchievementSeed[]> = computed(() => {
     const week = this.weekStats();
     const loggedCount = this.foodLog.entries().length;
-    const kgLost = Math.max(MIN_KG_LOST, this.kgLost());
+    const kgLost = this.kgLost();
     return [
       {
         id: 'streak-7',
@@ -170,7 +127,7 @@ export class AchievementsService {
         id: 'meals-10',
         glyph: '10',
         label: '10 måltider',
-        value: MEALS_LOGGED_HEAD_START + loggedCount,
+        value: loggedCount,
         target: 10,
         unit: 'måltider',
         tone: TONE_BY_TARGET.MEALS,
@@ -215,7 +172,7 @@ export class AchievementsService {
         id: 'meals-50',
         glyph: '50',
         label: '50 måltider',
-        value: MEALS_LOGGED_HEAD_START_LARGE + loggedCount,
+        value: loggedCount,
         target: 50,
         unit: 'måltider',
         tone: TONE_BY_TARGET.MEALS,
@@ -233,7 +190,7 @@ export class AchievementsService {
         id: 'scans-10',
         glyph: '⚡',
         label: '10 scanninger',
-        value: SCANS_HEAD_START + this.scanner.scanCount(),
+        value: this.scanner.scanCount(),
         target: 10,
         unit: 'scan',
         tone: TONE_BY_TARGET.SCAN,

@@ -1,7 +1,7 @@
 /*
- * Host-elementet (`.shell-layout`) fylder app-roden; tab baren er `position: absolute` og
- * placerer sig i forhold hertil. `:host` er nødvendig for at ramme selve elementet under
- * emuleret encapsulation.
+ * The host element (`.shell-layout`) fills the app root; the tab bar is `position: absolute`
+ * and positions itself relative to it. `:host` is needed to target the element itself
+ * under emulated encapsulation.
  */
 :host {
   position: relative;

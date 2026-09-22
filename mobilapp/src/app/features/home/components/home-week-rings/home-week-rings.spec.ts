@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WeekRing } from '../../services/home-summary';
 import { HomeWeekRings } from './home-week-rings';
 
-/** To lukkede dage, én undervejs og en fremtidig dag – nok til at dække alle tre toner. */
+/** Two completed days, one in progress, and one future day – enough to cover all three tones. */
 const RINGS: readonly WeekRing[] = [
   {
     index: 0,

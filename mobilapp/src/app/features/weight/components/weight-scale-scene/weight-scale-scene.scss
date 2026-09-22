@@ -1,6 +1,6 @@
 /*
- * Badevægt-scenen. Farver er tokens; geometrien er SVG-enheder fra TypeScript, og
- * animationernes tempo bindes pr. partikel (designets `drip`/`steam` har hvert sit tempo).
+ * The bathroom scale scene. Colors are tokens; the geometry is SVG units from TypeScript, and
+ * the animations' tempo is bound per particle (design's `drip`/`steam` each have their own tempo).
  */
 :host {
   display: block;

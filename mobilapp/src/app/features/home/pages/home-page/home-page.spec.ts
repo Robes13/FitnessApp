@@ -3,14 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
-import { DEFAULT_DISPLAY_NAME } from '../../../../core/constants/demo-data';
 import { SessionService } from '../../../../core/services/session';
 import { HomePage } from './home-page';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 
 /**
- * Komponenttests bruger `provideComponentTestEnvironment()`: jsdom's rigtige `DOCUMENT`,
- * fastfrosset `NOW` og 0 ms mock-forsinkelser. Browserens storage ryddes pr. test.
+ * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`, a
+ * frozen `NOW`, and 0 ms mock delays. Browser storage is cleared per test.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
@@ -40,12 +39,10 @@ describe('HomePage', () => {
     const { page } = await setup();
     const avatar = page.querySelector('.home-page__avatar');
 
-    expect(page.querySelector('.home-page__greeting')?.textContent?.trim()).toBe(
-      `Hej, ${DEFAULT_DISPLAY_NAME}`,
-    );
+    expect(page.querySelector('.home-page__greeting')?.textContent?.trim()).toBe('Hej');
     expect(page.querySelector('.home-page__today')?.textContent?.trim()).toBe('Mandag 21. sep');
     expect(avatar?.getAttribute('href')).toBe(APP_PATH.PROFILE);
-    expect(avatar?.textContent?.trim()).toBe('M');
+    expect(avatar?.textContent?.trim()).toBe('');
   });
 
   it('renders the week rings, the next step and the day, goal and week cards', async () => {
@@ -57,7 +54,7 @@ describe('HomePage', () => {
     );
     expect(page.querySelector('app-home-day-card')).not.toBeNull();
     expect(page.querySelector('app-home-week-card')).not.toBeNull();
-    // Standardprofilen har intet mål valgt, så målkortet er ikke skjult.
+    // The default profile has no goal selected, so the goal card isn't hidden.
     expect(page.querySelector('app-home-goal-card')).not.toBeNull();
   });
 

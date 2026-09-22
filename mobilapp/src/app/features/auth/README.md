@@ -43,10 +43,8 @@ nogen kode at fortsætte med.
 - **Ventetiden er en token.** Kvitteringstrinnet venter `FORGOT_PASSWORD_DONE_DELAY_MS`
   (1400 ms som i designet), før der logges ind. Tokenet kan sættes til 0 i tests, og timeren
   ryddes af `takeUntilDestroyed`, hvis brugeren forlader siden inden.
-- **Brugernavnet til det afsluttende login** er profilens **rå** brugernavn
-  (`profile().username`), ikke `displayName()` – `SessionService.login()` gemmer det, den får,
-  så demo-navnet ville ellers blive skrevet ind i en tom profil. Er brugernavnet tomt, sendes
-  brugeren til `/login` i stedet.
+- **Brugernavnet til det afsluttende login** er profilens gemte brugernavn
+  (`profile().username`). Er det tomt, sendes brugeren til `/login` i stedet.
 
 ## Kendte afvigelser fra designet
 

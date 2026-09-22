@@ -1,25 +1,68 @@
 import { TestBed } from '@angular/core/testing';
 import { APP_PATH, QUERY_PARAM } from '../../../core/constants/app-route';
-import { DEMO_PROFILE_DEFAULTS } from '../../../core/constants/demo-data';
+import { DEFAULT_PROFILE } from '../../../core/constants/profile-defaults';
 import { STORAGE_KEY } from '../../../core/constants/storage-key';
+import { FoodItem } from '../../../core/models/food';
+import { MealId } from '../../../core/models/meal';
 import { UserProfile } from '../../../core/models/profile';
 import { FoodLogService } from '../../../core/services/food-log';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
+import { TEST_FOOD, weighHistory } from '../../../core/testing/fixtures';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { HomeSummaryService } from './home-summary';
 
-/** Torsdag 24. september 2026 – midt i ugen, så både fortid, i dag og fremtid er i spil. */
+/** Thursday, September 24, 2026 – mid-week, so past, today, and future are all in play. */
 const THURSDAY = new Date(2026, 8, 24, 10, 30);
 const THURSDAY_INDEX = 3;
+const THURSDAY_ISO = '2026-09-24';
 const RING_CIRCUMFERENCE = 100.5;
+
+const SKYR: FoodItem = {
+  id: 'f-skyr',
+  name: 'Skyr-bowl',
+  quantity: '250 g',
+  kcal: 380,
+  protein: 32,
+  carbs: 38,
+  fat: 9,
+};
+const SALAT: FoodItem = {
+  id: 'f-salat',
+  name: 'Kyllingesalat',
+  quantity: '1 portion',
+  kcal: 450,
+  protein: 41,
+  carbs: 18,
+  fat: 22,
+};
 
 describe('HomeSummaryService', () => {
   let storage: FakeStorage;
 
   function storeProfile(patch: Partial<UserProfile>): void {
-    storage.setItem(STORAGE_KEY.PROFILE, JSON.stringify({ ...DEMO_PROFILE_DEFAULTS, ...patch }));
+    storage.setItem(STORAGE_KEY.PROFILE, JSON.stringify({ ...DEFAULT_PROFILE, ...patch }));
+  }
+
+  /** Puts meals on today's log, as if the user had logged them themselves. */
+  function storeFoodLog(entries: readonly (FoodItem & { meal: MealId })[]): void {
+    storage.setItem(
+      STORAGE_KEY.FOOD_LOG,
+      JSON.stringify({
+        date: THURSDAY_ISO,
+        entries: entries.map(({ meal, ...food }, index) => ({
+          ...food,
+          meal,
+          logId: `log-${index}`,
+          loggedAt: THURSDAY.toISOString(),
+        })),
+      }),
+    );
+  }
+
+  function storeWeighHistory(): void {
+    storage.setItem(STORAGE_KEY.WEIGHT_LOG, JSON.stringify(weighHistory(THURSDAY)));
   }
 
   function setup(): HomeSummaryService {
@@ -42,7 +85,18 @@ describe('HomeSummaryService', () => {
     expect(service.selectedDay()).toBe(THURSDAY_INDEX);
   });
 
-  it('builds seven rings with demo history behind today and empty rings ahead', () => {
+  it('greets without a name until the profile has one', () => {
+    const service = setup();
+
+    expect(service.hasName()).toBe(false);
+
+    TestBed.inject(UserProfileService).update({ username: 'Ida' });
+
+    expect(service.hasName()).toBe(true);
+  });
+
+  it('leaves every ring but today empty, because there is no history', () => {
+    storeFoodLog([{ ...SKYR, meal: 'morgen' }]);
     const service = setup();
     const rings = service.weekRings();
 
@@ -55,15 +109,13 @@ describe('HomeSummaryService', () => {
       'Lør',
       'Søn',
     ]);
-    expect(rings[0]?.tone).toBe('positive');
-    expect(rings[0]?.dashOffset).toBeCloseTo(0, 3);
-    expect(rings[2]?.tone).toBe('accent');
-    expect(rings[2]?.dashOffset).toBeCloseTo(RING_CIRCUMFERENCE * 0.14, 3);
+    expect(rings[0]?.tone).toBe('none');
+    expect(rings[0]?.dashOffset).toBeCloseTo(RING_CIRCUMFERENCE, 3);
+    expect(rings[THURSDAY_INDEX]?.tone).toBe('accent');
     expect(rings[THURSDAY_INDEX]?.isToday).toBe(true);
     expect(rings[THURSDAY_INDEX]?.isSelected).toBe(true);
     expect(rings[6]?.tone).toBe('none');
     expect(rings[6]?.isFuture).toBe(true);
-    expect(rings[6]?.dashOffset).toBeCloseTo(RING_CIRCUMFERENCE, 3);
   });
 
   it('titles the selected day relative to today', () => {
@@ -79,11 +131,15 @@ describe('HomeSummaryService', () => {
   });
 
   it('shows the logged totals for today', () => {
+    storeFoodLog([
+      { ...SKYR, meal: 'morgen' },
+      { ...SALAT, meal: 'frokost' },
+    ]);
     const service = setup();
     const target = TestBed.inject(UserProfileService).kcalTarget();
     const summary = service.daySummary();
 
-    // De to demo-varer: 380 + 450 kcal og 32 + 41 g protein.
+    // 380 + 450 kcal and 32 + 41 g protein.
     expect(summary.kcalEatenText).toBe('830');
     expect(summary.kcalTargetText).toBe(String(target));
     expect(summary.progress).toBeCloseTo(830 / target, 5);
@@ -92,35 +148,67 @@ describe('HomeSummaryService', () => {
     expect(summary.macros[0]?.text.startsWith('73 / ')).toBe(true);
   });
 
-  it('empties the card for a day that has not come yet', () => {
+  it('shows a dash for every day without data', () => {
     const service = setup();
 
-    service.selectDay(6);
-    const summary = service.daySummary();
+    // No food log: even today has no data to show.
+    for (const day of [1, 3, 6]) {
+      service.selectDay(day);
+      const summary = service.daySummary();
 
-    expect(summary.progress).toBe(0);
-    expect(summary.progressTone).toBe('muted');
-    expect(summary.kcalEatenText).toBe('–');
-    expect(summary.weightText).toBe('–');
-    expect(summary.macros.every((macro) => macro.text.startsWith('– / '))).toBe(true);
+      expect(summary.progress).toBe(0);
+      expect(summary.progressTone).toBe('muted');
+      expect(summary.kcalEatenText).toBe('–');
+      expect(summary.weightText).toBe('–');
+      expect(summary.macros.every((macro) => macro.text.startsWith('– / '))).toBe(true);
+    }
   });
 
-  it('sums the week from the demo history and the real day', () => {
+  it('shows the weighing of an earlier day when there is one', () => {
+    storeWeighHistory();
     const service = setup();
-    const summary = service.weekSummary();
 
-    expect(summary.progressLabel).toBe('Dag 4 af 7');
-    expect(summary.hitText).toBe('2');
-    expect(summary.proteinHitText).toBe('2');
-    expect(summary.streakText).toBe('3 dage');
-    expect(summary.note).toBe('Solid uge. Protein er det, der løfter resten.');
+    // The most recent weigh-in is three days before Thursday, i.e. on Monday.
+    service.selectDay(0);
+    expect(service.daySummary().weightText).toBe('75,0');
+
+    service.selectDay(1);
+    expect(service.daySummary().weightText).toBe('–');
   });
 
-  it('lists weighing and the missing meals as next steps', () => {
+  it('counts only the days that have data in the week card', () => {
+    const service = setup();
+
+    expect(service.weekSummary()).toMatchObject({
+      progressLabel: 'Dag 4 af 7',
+      hitText: '0',
+      proteinHitText: '0',
+      streakText: '0 dage',
+      averageKcalText: '–',
+      note: 'Ingen dage logget i denne uge endnu.',
+    });
+  });
+
+  it('counts today once the calorie target is met', () => {
+    const service = setup();
+    const target = TestBed.inject(UserProfileService).kcalTarget();
+    TestBed.inject(FoodLogService).add({ ...TEST_FOOD, kcal: target, protein: 500 }, 'aften');
+
+    expect(service.weekSummary()).toMatchObject({
+      hitText: '1',
+      proteinHitText: '1',
+      streakText: '1 dage',
+      note: 'Stærk uge – bliv ved.',
+    });
+  });
+
+  it('lists weighing and every unlogged meal as next steps', () => {
     const service = setup();
 
     expect(service.todos().map((todo) => todo.title)).toEqual([
       'Husk at veje dig i dag',
+      'Log din morgenmad',
+      'Log din frokost',
       'Log din aftensmad',
       'Log din snacks',
     ]);
@@ -130,10 +218,14 @@ describe('HomeSummaryService', () => {
       path: APP_PATH.WEIGHT,
       queryParams: null,
     });
-    expect(service.todoCountLabel()).toBe('1 / 3');
+    expect(service.todoCountLabel()).toBe('1 / 5');
   });
 
   it('sends a meal step to Mad with the meal as a query parameter', () => {
+    storeFoodLog([
+      { ...SKYR, meal: 'morgen' },
+      { ...SALAT, meal: 'frokost' },
+    ]);
     const service = setup();
     TestBed.inject(WeightLogService).add(74.2);
 
@@ -146,20 +238,16 @@ describe('HomeSummaryService', () => {
   });
 
   it('has no next step when everything is logged and weighed', () => {
+    storeFoodLog([
+      { ...SKYR, meal: 'morgen' },
+      { ...SALAT, meal: 'frokost' },
+    ]);
     const service = setup();
     const foodLog = TestBed.inject(FoodLogService);
     TestBed.inject(WeightLogService).add(74.2);
-    const bar = {
-      id: 'x',
-      name: 'Proteinbar',
-      quantity: '55 g',
-      kcal: 210,
-      protein: 20,
-      carbs: 22,
-      fat: 7,
-    };
-    foodLog.add(bar, 'aften');
-    foodLog.add(bar, 'snack');
+
+    foodLog.add(TEST_FOOD, 'aften');
+    foodLog.add(TEST_FOOD, 'snack');
 
     expect(service.todos()).toEqual([]);
     expect(service.nextTodo()).toBeNull();
@@ -172,18 +260,7 @@ describe('HomeSummaryService', () => {
 
     expect(service.goalReached()).toBe(false);
 
-    TestBed.inject(FoodLogService).add(
-      {
-        id: 'y',
-        name: 'Kæmpemåltid',
-        quantity: '1 portion',
-        kcal: target,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
-      },
-      'aften',
-    );
+    TestBed.inject(FoodLogService).add({ ...TEST_FOOD, kcal: target }, 'aften');
 
     expect(service.goalReached()).toBe(true);
     expect(service.daySummary().progressTone).toBe('positive');
@@ -191,6 +268,7 @@ describe('HomeSummaryService', () => {
 
   it('describes the way to the goal weight', () => {
     storeProfile({ goal: 'tabe', weightKg: 75, goalWeightKg: 70 });
+    storeWeighHistory();
     const service = setup();
 
     const goal = service.goalSummary();
@@ -199,8 +277,15 @@ describe('HomeSummaryService', () => {
     expect(goal.toGoalText).toBe('5,0 kg');
     expect(goal.goalWeightText).toBe('70');
     expect(goal.coach).toBe('Med dit tempo på 0,5 kg/uge er du der om ca. 10 uger.');
-    // Startvægten er den ældste demo-vejning, 76,1 kg.
+    // The starting weight is the oldest weigh-in, 76.1 kg.
     expect(goal.progress).toBeCloseTo(1 - 5 / 6.1, 5);
+  });
+
+  it('falls back to the profile weight when nothing is weighed yet', () => {
+    storeProfile({ goal: 'tabe', weightKg: 75, goalWeightKg: 70 });
+    const service = setup();
+
+    expect(service.goalSummary().toGoalText).toBe('5,0 kg');
   });
 
   it('hides the goal card when the goal is to maintain', () => {

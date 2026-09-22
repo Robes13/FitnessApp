@@ -1,15 +1,15 @@
 import { FoodItem } from '../../../core/models/food';
 import { MealId } from '../../../core/models/meal';
 
-/** Designets tre posttyper i historikken. Id'erne er også filtrenes id'er. */
+/** The design's three entry types in the history. The ids are also the filters' ids. */
 export type HistoryKind = 'vejning' | 'mad' | 'maal';
 
 export type HistoryFilterId = 'alle' | HistoryKind;
 
-/** Farven på postens tal til højre (designets `valColor`). */
+/** The color of the entry's number on the right (the design's `valColor`). */
 export type HistoryValueTone = 'default' | 'positive' | 'negative';
 
-/** Én linje i historikken. `food` + `meal` er kun sat på måltidsposter, der kan logges igen. */
+/** One line in the history. `food` + `meal` are only set on meal entries, which can be re-logged. */
 export interface HistoryEntry {
   readonly id: string;
   readonly kind: HistoryKind;
@@ -26,7 +26,7 @@ export interface HistoryEntry {
   readonly meal?: MealId;
 }
 
-/** Posterne for én dag under overskriften `'I dag · 21. sep'`. */
+/** The entries for one day under the heading `'I dag · 21. sep'`. */
 export interface HistoryGroup {
   readonly label: string;
   readonly entries: readonly HistoryEntry[];

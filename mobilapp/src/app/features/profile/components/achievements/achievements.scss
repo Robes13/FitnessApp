@@ -6,8 +6,8 @@
 
 .achievements {
   /*
-   * Hvert badge sætter sin egen farvefamilie som lokale variabler, så cirklen, kanten,
-   * ringen og statusteksten altid følges ad. Låste badges overskriver dem bagefter.
+   * Each badge sets its own color family as local variables, so the circle, border,
+   * ring, and status text always stay in sync. Locked badges override them afterward.
    */
   &__item {
     --achievement-color: var(--color-accent);
@@ -39,7 +39,7 @@
       --achievement-fill: var(--color-neutral-tint);
     }
 
-    /* Ikke klaret endnu: nedtonet, grå kant og tegn – ringen viser fremdriften. */
+    /* Not achieved yet: muted, grey border and glyph – the ring shows the progress. */
     &--locked {
       --achievement-fill: var(--color-surface);
 
@@ -54,8 +54,8 @@
   }
 
   /*
-   * Display-skriften, men uden `display-heading`s versaler: designets tegn er blandt andet
-   * "kg" og "P", og de skal stå, som de er skrevet.
+   * The display typeface, but without `display-heading`'s uppercase: the design's glyphs
+   * include things like "kg" and "P", and they should appear exactly as written.
    */
   &__disc {
     position: absolute;

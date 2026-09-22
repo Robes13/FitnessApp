@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { WeighLogRow } from '../../services/weight-view';
 
-/** "Seneste vejninger": dato, klokkeslæt, forskel til forrige vejning og vægten. */
+/** "Recent weigh-ins": date, time, difference from the previous weigh-in and the weight. */
 @Component({
   selector: 'app-weight-log-list',
   imports: [UiEmptyState],

@@ -5,24 +5,39 @@ import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
 import { SessionService } from '../../../../core/services/session';
 import { ThemeService } from '../../../../core/services/theme';
 import { UserProfileService } from '../../../../core/services/user-profile';
+import { STORAGE_KEY } from '../../../../core/constants/storage-key';
+import { DEFAULT_PROFILE } from '../../../../core/constants/profile-defaults';
 import { ProfilePage } from './profile-page';
-import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
+import {
+  provideComponentTestEnvironment,
+  resetComponentTestStorage,
+} from '../../../../core/testing/test-providers';
 
 /**
- * Komponenttests bruger `provideComponentTestEnvironment()`: jsdom's rigtige `DOCUMENT`,
- * fastfrosset `NOW` og 0 ms mock-forsinkelser. Browserens storage ryddes pr. test.
+ * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`, a
+ * frozen `NOW`, and 0 ms artificial delays. The app has no demo profile, so the tests
+ * put a filled-in profile in storage themselves.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
+
+const STORED_PROFILE = {
+  ...DEFAULT_PROFILE,
+  username: 'Mads',
+  email: 'dig@mail.dk',
+  trainingDays: [true, false, true, false, true, false, false],
+};
 
 @Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class Blank {}
 
-/** Lader et `timer(0)` fra mock-backenden løbe færdigt. */
-function flushMicroTimers(): Promise<void> {
-  return new Promise<void>((resolve) => setTimeout(resolve, 0));
-}
-
 describe('ProfilePage', () => {
+  beforeEach(() => {
+    resetComponentTestStorage({
+      [STORAGE_KEY.PROFILE]: STORED_PROFILE,
+      [STORAGE_KEY.SESSION]: { isLoggedIn: true, isEmailVerified: true },
+    });
+  });
+
   afterEach(() => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
@@ -134,8 +149,6 @@ describe('ProfilePage', () => {
   it('asks before logging out and then sends the user to login', async () => {
     const { fixture, host, router } = await setup();
     const session = TestBed.inject(SessionService);
-    session.login('mads', 'hemmeligt').subscribe();
-    await flushMicroTimers();
     expect(session.isLoggedIn()).toBe(true);
 
     Array.from(host.querySelectorAll<HTMLButtonElement>('button'))

@@ -6,10 +6,29 @@ import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-docum
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { FoodViewService } from './food-view';
 
-/** Fast dagsmål, så makromålene bliver runde tal (150 / 225 / 56 g). */
+/** Fixed daily target, so the macro goals come out as round numbers (150 / 225 / 56 g). */
 const KCAL_TARGET = 2000;
 
-/** Én stor vare, der skubber dagen over målet. */
+const SKYR: FoodItem = {
+  id: 'food-skyr',
+  name: 'Skyr-bowl',
+  quantity: '250 g',
+  kcal: 380,
+  protein: 32,
+  carbs: 38,
+  fat: 9,
+};
+const SALAT: FoodItem = {
+  id: 'food-salat',
+  name: 'Kyllingesalat',
+  quantity: '1 portion',
+  kcal: 450,
+  protein: 41,
+  carbs: 18,
+  fat: 22,
+};
+
+/** One large food that pushes the day over the target. */
 const CAKE: FoodItem = {
   id: 'food-kage',
   name: 'Fødselsdagskage',
@@ -28,14 +47,17 @@ describe('FoodViewService', () => {
       providers: [...provideCoreTestEnvironment({ storage }), FoodViewService],
     });
     TestBed.inject(UserProfileService).update({ kcalOverride: KCAL_TARGET });
-    return { view: TestBed.inject(FoodViewService), log: TestBed.inject(FoodLogService) };
+    const log = TestBed.inject(FoodLogService);
+    log.add(SKYR, 'morgen');
+    log.add(SALAT, 'frokost');
+    return { view: TestBed.inject(FoodViewService), log };
   }
 
   beforeEach(() => {
     storage = createFakeStorage();
   });
 
-  it('sums the seeded demo log against the daily target', () => {
+  it('sums the logged meals against the daily target', () => {
     const { view } = setup();
 
     expect(view.todayLabel).toBe('Mandag 21. sep');

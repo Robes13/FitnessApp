@@ -44,7 +44,7 @@
     color: var(--color-accent);
   }
 
-  /* Selve avataren er den delte `ProfileAvatar`; linket giver kun rammen og målet. */
+  /* The avatar itself is the shared `ProfileAvatar`; the link only provides the frame and target. */
   &__avatar {
     display: flex;
     flex: none;

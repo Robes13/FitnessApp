@@ -14,7 +14,7 @@ graf med intervallerne 1 uge / 4 uger / 3 mdr. samt en liste over de seneste vej
 
 Featuren har ingen egen persistens. Den læser og skriver via `core/services`:
 
-- `WeightLogService` – vejningerne (nyeste først), `add()` og den syntetiske graf `seriesFor()`.
+- `WeightLogService` – vejningerne (nyeste først), `add()` og grafens punkter `seriesFor()`.
 - `UserProfileService` – vægt, højde, mål og målvægt. `WeightLogService.add()` opdaterer selv
   profilens vægt, så Hjem, Mad og kaloriemålet følger med.
 

@@ -13,8 +13,8 @@ import { MealId } from '../../../../core/models/meal';
 const DEFAULT_ARIA_LABEL = 'Vælg måltid';
 
 /**
- * Piletasterne flytter valget som i en native radiogruppe. Gitteret har to kolonner,
- * så op/ned springer en hel række (±2) og venstre/højre én plads.
+ * The arrow keys move the selection like in a native radio group. The grid has two columns,
+ * so up/down jumps a whole row (±2) and left/right moves one place.
  */
 const KEY_DELTAS: Readonly<Record<string, number>> = {
   ArrowLeft: -1,
@@ -24,8 +24,8 @@ const KEY_DELTAS: Readonly<Record<string, number>> = {
 };
 
 /**
- * De fire måltider som 2×2-gitter (designets `newColMeals` og `recipeMealPicks`).
- * Bruges både i "Ny samling" (`filled`: udfyldt bund) og på opskriftsskærmen (gennemsigtig).
+ * The four meals as a 2×2 grid (the design's `newColMeals` and `recipeMealPicks`).
+ * Used both in "New collection" (`filled`: filled background) and on the recipe screen (transparent).
  */
 @Component({
   selector: 'app-meal-picker',
@@ -39,7 +39,7 @@ const KEY_DELTAS: Readonly<Record<string, number>> = {
 })
 export class MealPicker {
   readonly value = model.required<MealId>();
-  /** Ikke-valgte knapper får en svag flade i stedet for at være gennemsigtige. */
+  /** Unselected buttons get a faint fill instead of being transparent. */
   readonly filled = input(false, { transform: booleanAttribute });
   readonly ariaLabel = input(DEFAULT_ARIA_LABEL);
 
@@ -51,7 +51,7 @@ export class MealPicker {
     this.value.set(meal);
   }
 
-  /** Kun det valgte måltid er i tab-rækkefølgen – resten nås med piletasterne. */
+  /** Only the selected meal is in the tab order – the rest are reached with the arrow keys. */
   protected tabIndexFor(meal: MealId): number {
     return meal === this.value() ? 0 : -1;
   }

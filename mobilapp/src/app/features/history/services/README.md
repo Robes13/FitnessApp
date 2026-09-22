@@ -1,9 +1,8 @@
 # Historik – services
 
-| Fil                    | Indhold                                                                                           |
-| ---------------------- | ------------------------------------------------------------------------------------------------- |
-| `history.ts`           | `HistoryService` samt `HISTORY_FILTERS`, `RELOG_LABEL`, `RELOGGED_LABEL`, `RELOGGED_DURATION_MS`. |
-| `history-demo-data.ts` | Designets syntetiske måltider, målændringer og dagsopsamlinger.                                   |
+| Fil          | Indhold                                                                                           |
+| ------------ | ------------------------------------------------------------------------------------------------- |
+| `history.ts` | `HistoryService` samt `HISTORY_FILTERS`, `RELOG_LABEL`, `RELOGGED_LABEL`, `RELOGGED_DURATION_MS`. |
 
 ## HistoryService
 
@@ -14,14 +13,14 @@
 | ------------------------------------------- | ---------------------------------------------------------------------- |
 | `filters`                                   | Designets `histFilters`: Alle · Vejning · Mad · Mål.                   |
 | `filter` / `setFilter()`                    | Det valgte filter.                                                     |
-| `entries`                                   | Alle poster, flettet og sorteret faldende på dato.                     |
+| `entries`                                   | Alle poster, sorteret faldende på tidspunkt.                           |
 | `visibleEntries`                            | `entries` filtreret på posttype.                                       |
 | `groups`                                    | `visibleEntries` grupperet pr. dag (`I dag · 21. sep`).                |
 | `isEmpty`                                   | Sandt, når filteret ikke rammer nogen poster.                          |
 | `relog()` / `isRelogged()` / `relogLabel()` | Gen-log via `FoodLogService.add` og etiketten i 2,6 sekunder bagefter. |
 
-Afhængigheder: `WeightLogService` (rigtige vejninger), `UserProfileService` (kaloriemål,
-målvægt, højde, tempo), `FoodLogService` (gen-log) og `NOW` (så tests kan fastfryse tiden).
+Afhængigheder: `WeightLogService` (vejningerne), `FoodLogService` (dagens måltider og gen-log)
+og `NOW` (så tests kan fastfryse tiden).
 
-Flettningens rækkefølge og valget om at sortere på dato frem for klokkeslæt er forklaret i
-featurens [`README.md`](../README.md).
+Hvilke posttyper der findes, og hvorfor `maal`-filteret er tomt, står i featurens
+[`README.md`](../README.md).

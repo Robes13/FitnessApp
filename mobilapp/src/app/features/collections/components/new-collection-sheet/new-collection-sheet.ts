@@ -45,9 +45,9 @@ const MORE_ICONS_LABEL = {
   collapsed: `Vis flere (${HIDDEN_ICON_COUNT})`,
   expanded: 'Vis færre',
 } as const;
-/** Vare-vælgerens primærknap, når varen lander i en samling frem for i dagens log. */
+/** The food picker's primary button when the food lands in a collection instead of today's log. */
 const SAVE_AND_ADD_LABEL = 'Gem og føj til samlingen';
-/** Ikongitteret har seks kolonner, så op/ned springer en hel række. */
+/** The icon grid has six columns, so up/down jumps a whole row. */
 const ICON_KEY_DELTAS: Readonly<Record<string, number>> = {
   ArrowLeft: -1,
   ArrowRight: 1,
@@ -60,15 +60,16 @@ interface NewCollectionForm {
 }
 
 /**
- * Arket "Ny samling": navn, måltid, ikon og en kladde af varer.
+ * The "New collection" sheet: name, meal, icon and a draft of foods.
  *
- * Arket ejer kladden, men skriver ikke selv i `CollectionsService` – det udsender `created`
- * med en `NewCollectionInput`, så siden kan oprette samlingen og vælge det rigtige filter
- * bagefter (designets `createCol`, der også sætter `colId`).
+ * The sheet owns the draft but doesn't write to `CollectionsService` itself – it emits `created`
+ * with a `NewCollectionInput`, so the page can create the collection and select the right filter
+ * afterwards (the design's `createCol`, which also sets `colId`).
  *
- * "Søg vare" åbner `app-food-picker` i et ark oven på dette (`sheet-high`), og "Scan" åbner
- * `app-barcode-scanner`. Begge veje ender samme sted: varen lægges i kladden. Egne varer
- * gemmes samtidig under "Mine varer" via `FoodLogService`, så de kan søges frem igen.
+ * "Search food" opens `app-food-picker` in a sheet on top of this one (`sheet-high`), and "Scan"
+ * opens `app-barcode-scanner`. Both paths end up the same place: the food is put in the draft.
+ * Custom foods are simultaneously saved under "My foods" via `FoodLogService`, so they can be
+ * searched for again.
  */
 @Component({
   selector: 'app-new-collection-sheet',
@@ -90,7 +91,7 @@ interface NewCollectionForm {
 })
 export class NewCollectionSheet {
   readonly open = input.required<boolean>();
-  /** Måltidet, arket åbner med – det valgte filter på samlingsskærmen. */
+  /** The meal the sheet opens with – the selected filter on the collections screen. */
   readonly defaultMeal = input<MealId>(DEFAULT_MEAL);
 
   readonly closed = output<void>();
@@ -131,11 +132,11 @@ export class NewCollectionSheet {
   protected readonly saveAndAddLabel = SAVE_AND_ADD_LABEL;
 
   private readonly iconOptions = viewChildren<ElementRef<HTMLButtonElement>>('iconOption');
-  /** Indeks for det valgte ikon i det gitter, der faktisk vises – −1 når det er foldet væk. */
+  /** Index of the selected icon in the grid actually shown – −1 when it's folded away. */
   private readonly selectedIconIndex = computed(() => this.icons().indexOf(this.icon()));
 
   constructor() {
-    // Hver gang arket åbnes, starter det forfra (designets `openNewCol`).
+    // Every time the sheet opens, it starts over (the design's `openNewCol`).
     effect(() => {
       if (this.open()) {
         untracked(() => this.reset());
@@ -156,8 +157,8 @@ export class NewCollectionSheet {
   }
 
   /**
-   * Kun det valgte ikon er i tab-rækkefølgen. Er det valgte foldet væk ("Vis færre"),
-   * overtager det første synlige, så gitteret aldrig falder helt ud af tab-rækkefølgen.
+   * Only the selected icon is in the tab order. If the selected one is folded away ("Show fewer"),
+   * the first visible one takes over, so the grid never falls completely out of the tab order.
    */
   protected iconTabIndexFor(index: number): number {
     const selected = this.selectedIconIndex();
@@ -205,7 +206,7 @@ export class NewCollectionSheet {
     this.scannerOpen.set(true);
   }
 
-  /** Scanneren lægger sig øverst; vare-vælgeren lukkes, så der kun er én vej tilbage. */
+  /** The scanner sits on top; the food picker closes, so there's only one way back. */
   protected openScannerFromPicker(): void {
     this.pickerOpen.set(false);
     this.scannerOpen.set(true);
@@ -221,7 +222,7 @@ export class NewCollectionSheet {
     this.closePicker();
   }
 
-  /** Egne varer gemmes under "Mine varer"; kladden får dem først, når de også vælges. */
+  /** Custom foods are saved under "My foods"; the draft only gets them once they're also selected. */
   protected onCustomFoodCreated(item: FoodItem): void {
     this.foodLog.addCustomFood(item);
   }
@@ -255,7 +256,7 @@ export class NewCollectionSheet {
     this.created.emit({ name, icon: this.icon(), meal: this.meal(), items: this.draft() });
   }
 
-  /** Tilføjer varen eller erstatter den, der redigeres. Kladdens varer får eget id. */
+  /** Adds the food or replaces the one being edited. Draft foods get their own id. */
   private putInDraft(item: FoodItem): void {
     const index = this.editIndex();
     if (index !== null) {

@@ -6,12 +6,12 @@ import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-ic
 import { HistoryEntry, HistoryFilterId } from '../../models/history';
 import { HistoryService } from '../../services/history';
 
-/** Stregtykkelsen på gen-log-ikonet i SVG-enheder (designets `stroke-width="2.4"`). */
+/** The stroke width on the re-log icon in SVG units (the design's `stroke-width="2.4"`). */
 const RELOG_ICON_STROKE_WIDTH = 2.4;
 
 /**
- * Historik-fanen: overskrift, filter-chips og posterne grupperet pr. dag.
- * Al data og al tilstand ligger i `HistoryService`, som siden selv leverer.
+ * The History tab: heading, filter chips and the entries grouped by day.
+ * All data and all state live in `HistoryService`, which the page provides itself.
  */
 @Component({
   selector: 'app-history-page',

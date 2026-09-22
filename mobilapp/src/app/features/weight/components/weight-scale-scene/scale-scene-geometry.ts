@@ -2,16 +2,16 @@ import { FigureBandTone } from '../../../../shared/components/figure';
 import { roundTo } from '../../../../core/utils/math';
 
 /**
- * Vægt-scenens partikler og toner – en port af designets `vfig`.
+ * The weight scene's particles and tones – a port of the design's `vfig`.
  *
- * `progressKg` er designets `good`: hvor mange kilo kladden er kommet i den rigtige retning.
- * Jo større fremgang, desto flere sveddråber, større vandpyt, mørkere pandebånd – og fra
- * 2,5 kg damp over hovedet. Alle tal er SVG-enheder i `viewBox="0 0 200 300"`.
+ * `progressKg` is the design's `good`: how many kilos the draft has moved in the right direction.
+ * The greater the progress, the more sweat drops, the bigger the puddle, the darker the
+ * headband – and from 2.5 kg, steam above the head. All numbers are SVG units in `viewBox="0 0 200 300"`.
  */
 export interface SweatDrop {
   readonly x: number;
   readonly y: number;
-  /** Dryppets varighed i sekunder. */
+  /** The drop's duration in seconds. */
   readonly duration: number;
   readonly delay: number;
 }
@@ -29,7 +29,7 @@ export interface SaveSpark {
   readonly y: number;
   readonly radius: number;
   readonly tone: SparkTone;
-  /** Færdig BEM-modifier til gnisten, så templaten slipper for at bygge klassenavnet. */
+  /** Ready-made BEM modifier for the spark, so the template avoids building the class name. */
   readonly toneClass: string;
 }
 
@@ -38,30 +38,30 @@ export interface PuddleSize {
   readonly ry: number;
 }
 
-/** Humøret mættes ved 1,5 kg fremgang. */
+/** Mood saturates at 1.5 kg progress. */
 const MOOD_SCALE_KG = 1.5;
-/** Én sveddråbe pr. 0,2 kg fremgang, højst ti. */
+/** One sweat drop per 0.2 kg progress, at most ten. */
 const SWEAT_PER_KG = 0.2;
 const MAX_SWEAT_DROPS = 10;
-/** Sveden tegnes uden for figurens `translate(0 -8)`, så punkterne er flyttet med. */
+/** Sweat is drawn outside the figure's `translate(0 -8)`, so the points move with it. */
 const SWEAT_Y_OFFSET = -8;
 const PUDDLE_RX_PER_KG = 14;
 const PUDDLE_RX_MAX = 52;
 const PUDDLE_RY_PER_KG = 1.4;
 const PUDDLE_RY_MAX = 5;
-/** Damp fra 2,5 kg fremgang. */
+/** Steam from 2.5 kg progress. */
 const STEAM_FROM_KG = 2.5;
-/** Dampens tempo i sekunder (designets `steam 1.8s`). */
+/** The steam's tempo in seconds (design's `steam 1.8s`). */
 export const STEAM_DURATION_SECONDS = 1.8;
-/** Pandebåndet mørknes ved 0,5 og 1 kg fremgang. */
+/** The headband darkens at 0.5 and 1 kg progress. */
 const BAND_STRONG_FROM_KG = 0.5;
 const BAND_DEEP_FROM_KG = 1;
-/** Pupillerne kigger 1,6 enheder til siden og 2,2 ned, mens vægten ændres. */
+/** The pupils look 1.6 units sideways and 2.2 down while the weight changes. */
 export const PUPIL_LOOK_X = 1.6;
 export const PUPIL_LOOK_Y = 2.2;
-/** Figuren hopper 34 enheder op, når vejningen er gemt. */
+/** The figure jumps 34 units up when the weigh-in is saved. */
 export const SAVE_JUMP_Y = -34;
-/** Scenens tegneflade i CSS-pixel (designets 150 × 236). Bindes som lokale variabler. */
+/** The scene's canvas in CSS pixels (design's 150 × 236). Bound as local variables. */
 export const SCENE_WIDTH_PX = 150;
 export const SCENE_HEIGHT_PX = 236;
 
@@ -69,7 +69,7 @@ function positive(progressKg: number): number {
   return Math.max(0, progressKg);
 }
 
-/** −1 (ked af det) … 0 … 1 (glad). */
+/** −1 (sad) … 0 … 1 (happy). */
 export function sceneMood(progressKg: number): number {
   return Math.max(-1, Math.min(1, progressKg / MOOD_SCALE_KG));
 }
@@ -84,7 +84,7 @@ export function sceneBandTone(progressKg: number): FigureBandTone {
   return 'accent';
 }
 
-/** Designets ti svedpunkter, placeret i forhold til hoved og krop. */
+/** The design's ten sweat spots, positioned relative to head and body. */
 export function sweatDrops(progressKg: number, headY: number, bodyY: number): readonly SweatDrop[] {
   const count = Math.min(MAX_SWEAT_DROPS, Math.floor(positive(progressKg) / SWEAT_PER_KG));
   const spots: readonly (readonly [number, number])[] = [
@@ -126,7 +126,7 @@ export function steamPuffs(progressKg: number, headY: number): readonly SteamPuf
   ];
 }
 
-/** De fem gnister, der blinker, når vejningen gemmes. */
+/** The five sparks that flash when the weigh-in is saved. */
 export const SAVE_SPARKS: readonly SaveSpark[] = [
   { x: 40, y: 120, radius: 4, tone: 'accent', toneClass: 'weight-scale-scene__spark--accent' },
   { x: 165, y: 100, radius: 3, tone: 'positive', toneClass: 'weight-scale-scene__spark--positive' },
@@ -135,12 +135,12 @@ export const SAVE_SPARKS: readonly SaveSpark[] = [
   { x: 100, y: 30, radius: 3, tone: 'positive', toneClass: 'weight-scale-scene__spark--positive' },
 ];
 
-/** Sveddråbens form (designets `drip`-path). */
+/** The sweat drop's shape (design's `drip` path). */
 export function sweatPath(drop: SweatDrop): string {
   return `M${drop.x} ${drop.y} c -3 4 -3 6 -3 7 a 3 3 0 0 0 6 0 c 0 -1 0 -3 -3 -7 z`;
 }
 
-/** Dampens slyngede streg. */
+/** The steam's winding line. */
 export function steamPath(puff: SteamPuff): string {
   return `M${puff.x} ${puff.y} q 4 -6 0 -12 q -4 -6 0 -12`;
 }

@@ -1,14 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { STORAGE_KEY } from '../../../../core/constants/storage-key';
+import { TEST_FOOD, weighEntry } from '../../../../core/testing/fixtures';
 import {
+  TEST_NOW,
   provideComponentTestEnvironment,
   resetComponentTestStorage,
 } from '../../../../core/testing/test-providers';
 import { HistoryPage } from './history-page';
 
 /**
- * Komponenttests bruger `provideComponentTestEnvironment()`: jsdom's rigtige `DOCUMENT`,
- * fastfrosset `NOW` og 0 ms mock-forsinkelser. Storage nulstilles mellem testene, så hver
- * test starter med de seedede demo-data.
+ * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`,
+ * a frozen `NOW` and 0ms artificial delays. The app doesn't seed anything itself, so storage
+ * is filled here with the weigh-ins and the meal the tests need.
  */
 
 function rootOf(fixture: ComponentFixture<HistoryPage>): HTMLElement {
@@ -23,7 +26,19 @@ function textsOf(fixture: ComponentFixture<HistoryPage>, selector: string): read
 
 describe('HistoryPage', () => {
   beforeEach(() => {
-    resetComponentTestStorage();
+    resetComponentTestStorage({
+      [STORAGE_KEY.WEIGHT_LOG]: [
+        weighEntry('w-1', 75, 0, TEST_NOW),
+        weighEntry('w-2', 75.6, 1, TEST_NOW),
+        weighEntry('w-3', 76.1, 3, TEST_NOW),
+      ],
+      [STORAGE_KEY.FOOD_LOG]: {
+        date: '2026-09-21',
+        entries: [
+          { ...TEST_FOOD, logId: 'log-1', meal: 'aften', loggedAt: TEST_NOW.toISOString() },
+        ],
+      },
+    });
   });
 
   function setup(): ComponentFixture<HistoryPage> {
@@ -43,7 +58,7 @@ describe('HistoryPage', () => {
       root.querySelector('.history-page__title')?.textContent?.replace(/\s+/g, ' ').trim(),
     ).toBe('Din historik');
     expect(textsOf(fixture, '.history-page__filter')).toEqual(['Alle', 'Vejning', 'Mad', 'Mål']);
-    expect(textsOf(fixture, '.history-page__group-label')[0]).toBe('I går · 20. sep');
+    expect(textsOf(fixture, '.history-page__group-label')[0]).toBe('I dag · 21. sep');
     expect(root.querySelectorAll('.history-page__row').length).toBeGreaterThan(0);
     expect(root.querySelector('app-ui-empty-state')).toBeNull();
   });
@@ -74,7 +89,7 @@ describe('HistoryPage', () => {
     expect(updated?.getAttribute('aria-label')).toBe('Logget i dag');
     expect(updated?.classList.contains('history-page__relog--done')).toBe(true);
 
-    // Sidens service rydder 2,6-sekunders-timeren, når siden lukkes.
+    // The page's service clears the 2.6-second timer when the page closes.
     fixture.destroy();
   });
 });

@@ -1,8 +1,8 @@
 @use 'mixins';
 
 /*
- * Værten er selve gruppen. `:host` er nødvendig: under emuleret encapsulation bliver
- * `.food-meal-group { … }` scoped til indholdet og rammer aldrig host-elementet.
+ * The host is the group itself. `:host` is necessary: under emulated encapsulation,
+ * `.food-meal-group { … }` gets scoped to the content and never targets the host element.
  */
 :host {
   display: block;

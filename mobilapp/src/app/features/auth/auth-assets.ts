@@ -1,9 +1,10 @@
 /**
- * Billeder fra `public/`, refereret relativt til base href, så de også virker i
- * Capacitor-skallen. Samlet ét sted, så stierne ikke står som strenge i komponenterne.
+ * Images from `public/`, referenced relative to the base href so they also work in
+ * the Capacitor shell. Collected in one place so the paths aren't strings scattered
+ * across the components.
  */
 export const AUTH_ASSET = {
-  /** Fotobaggrunden på login og glemt adgangskode. */
+  /** The photo background on login and forgot password. */
   BACKDROP: 'images/login-bg.jpg',
   LOGO: 'images/nutrify-logo.svg',
 } as const;

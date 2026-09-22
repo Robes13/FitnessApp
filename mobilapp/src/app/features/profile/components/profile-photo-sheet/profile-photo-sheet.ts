@@ -31,7 +31,7 @@ interface DragStart extends PhotoCrop {
 }
 
 const PERCENT = 100;
-/** Teksterne findes ikke i designet – filvalget kan ikke fejle i prototypen. */
+/** These texts don't exist in the design – the file selection can't fail in the prototype. */
 const READ_ERROR = 'Billedet kunne ikke indlæses. Prøv et andet.';
 
 interface KeyDirection {
@@ -39,7 +39,7 @@ interface KeyDirection {
   readonly y: number;
 }
 
-/** Piletasterne svarer til et træk i samme retning. */
+/** The arrow keys correspond to a drag in the same direction. */
 const KEY_DIRECTIONS: Readonly<Record<string, KeyDirection | undefined>> = {
   ArrowLeft: { x: -1, y: 0 },
   ArrowRight: { x: 1, y: 0 },
@@ -47,17 +47,17 @@ const KEY_DIRECTIONS: Readonly<Record<string, KeyDirection | undefined>> = {
   ArrowDown: { x: 0, y: 1 },
 };
 
-/** Hvor mange pixels ét tastetryk svarer til – Shift giver et større spring. */
+/** How many pixels one key press corresponds to – Shift gives a bigger jump. */
 const KEY_STEP_PX = 8;
 const KEY_STEP_LARGE_PX = 24;
 
 /**
- * Bundarket "Profilbillede": vælg et billede fra filsystemet, og beskær det ved at trække og
- * zoome i cirklen. Der er hverken kamera eller galleri – designet bruger bevidst en
- * filvælger.
+ * The "Profilbillede" bottom sheet: pick an image from the file system and crop it by
+ * dragging and zooming within the circle. There's no camera or gallery – the design
+ * deliberately uses a file picker.
  *
- * Alle ændringer skrives direkte til profilen, så avataren bag arket følger med. "Brug
- * billedet" lukker derfor bare arket.
+ * All changes are written directly to the profile, so the avatar behind the sheet updates
+ * along with it. "Brug billedet" therefore just closes the sheet.
  */
 @Component({
   selector: 'app-profile-photo-sheet',
@@ -97,7 +97,7 @@ export class ProfilePhotoSheet {
   protected onFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    // Feltet nulstilles, så det samme billede kan vælges igen efter "Fjern foto".
+    // The field is reset so the same image can be selected again after "Fjern foto".
     input.value = '';
     if (!file) {
       return;
@@ -142,9 +142,9 @@ export class ProfilePhotoSheet {
   }
 
   /**
-   * Tastaturvejen til den samme beskæring som trækket. Hvert tryk regnes ud fra den
-   * *nuværende* beskæring, fordi `movePhotoCrop` forventer et samlet træk fra sit
-   * udgangspunkt – ikke en akkumuleret sum.
+   * The keyboard path to the same crop as the drag. Each press is computed from the
+   * *current* crop, because `movePhotoCrop` expects a total drag from its starting
+   * point – not an accumulated sum.
    */
   protected onKeydown(event: KeyboardEvent): void {
     const photo = this.photo();
@@ -191,8 +191,8 @@ interface LoadedImage {
 }
 
 /**
- * Læser filen som data-URL og måler dens billedformat. Formatet afgør, om beskæringen
- * skalerer efter højden eller bredden.
+ * Reads the file as a data URL and measures its image aspect ratio. The ratio determines
+ * whether the crop scales by height or width.
  */
 function readImage(file: File): Promise<LoadedImage> {
   return new Promise<LoadedImage>((resolve, reject) => {

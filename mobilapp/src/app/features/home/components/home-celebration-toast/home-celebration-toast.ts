@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, output } from '@angular/core';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 
 /**
- * Fejrings-toasten "Dagsmål nået". Den popper ind, fader ud af sig selv efter knap tre
- * sekunder og kan trykkes væk. `HomePage` ejer, hvor længe den er på skærmen.
+ * The "Dagsmål nået" celebration toast. It pops in, fades out on its own after just
+ * under three seconds, and can be dismissed with a tap. `HomePage` owns how long it stays
+ * on screen.
  */
 @Component({
   selector: 'app-home-celebration-toast',

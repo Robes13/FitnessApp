@@ -18,7 +18,7 @@ import { MealPicker } from '../../components/meal-picker/meal-picker';
 import { CollectionsViewService } from '../../services/collections-view';
 
 const DEFAULT_MEAL: MealId = 'morgen';
-/** Retter og bundter logges som én portion, præcis som i designets `logRecipe`. */
+/** Dishes and bundles are logged as one portion, exactly like the design's `logRecipe`. */
 const LOG_QUANTITY = '1 portion';
 const NOT_FOUND_MESSAGE = 'Vi kunne ikke finde den her opskrift.';
 const NO_CONTENTS_MESSAGE = 'Der er ingen varer i samlingen endnu.';
@@ -30,9 +30,9 @@ interface RecipeStat {
 }
 
 /**
- * Opskriftsskærmen. Rute-id'et kan være en ret, en hel samling (`col:<id>`) eller en løs
- * vare – `CollectionsViewService.detailFor` slår alle tre op, og siden viser en tom
- * tilstand, hvis intet passer. "Log X kcal" lægger posten i dagens log og skifter til Mad.
+ * The recipe screen. The route id can be a dish, a whole collection (`col:<id>`) or a standalone
+ * food – `CollectionsViewService.detailFor` looks up all three, and the page shows an empty
+ * state if nothing matches. "Log X kcal" puts the entry in today's log and switches to Mad.
  */
 @Component({
   selector: 'app-recipe-page',
@@ -44,9 +44,9 @@ interface RecipeStat {
 })
 export class RecipePage {
   /**
-   * Bindes fra ruten via `withComponentInputBinding()`. Feltnavnet skal være det samme som
-   * `ROUTE_PARAM.RECIPE_ID`. Angular kræver en statisk analyserbar alias, så konstanten kan
-   * ikke bruges her – specen binder de to sammen, så et navneskift fanges af testene.
+   * Bound from the route via `withComponentInputBinding()`. The field name must be the same as
+   * `ROUTE_PARAM.RECIPE_ID`. Angular requires a statically analyzable alias, so the constant can't
+   * be used here – the spec ties the two together, so a name change is caught by the tests.
    */
   readonly recipeId = input('');
 
@@ -55,7 +55,7 @@ export class RecipePage {
   private readonly router = inject(Router);
 
   protected readonly detail = computed(() => this.view.detailFor(this.recipeId()));
-  /** Valgt måltid – starter på rettens eget og nulstilles, når en ny ret åbnes. */
+  /** Selected meal – starts on the dish's own meal and resets when a new dish is opened. */
   protected readonly meal = linkedSignal<MealId>(() => this.detail()?.meal ?? DEFAULT_MEAL);
   protected readonly notFoundMessage = NOT_FOUND_MESSAGE;
   protected readonly noContentsMessage = NO_CONTENTS_MESSAGE;

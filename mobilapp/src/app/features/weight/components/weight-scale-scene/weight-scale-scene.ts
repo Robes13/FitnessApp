@@ -30,12 +30,12 @@ import {
 } from './scale-scene-geometry';
 
 /**
- * Badevægten med figuren ovenpå. Vægtens display viser kladden, og figuren reagerer på
- * fremgangen: humør, pandebåndets farve, sved, vandpyt og damp. Når vejningen gemmes,
- * hopper figuren og fem gnister blinker.
+ * The bathroom scale with the figure on top. The scale's display shows the draft, and the figure
+ * reacts to the progress: mood, headband color, sweat, puddle and steam. When the weigh-in is
+ * saved, the figure jumps and five sparks flash.
  *
- * Kroppen er `FigureBody` fra `shared/` – scenen tegner kun badevægten og partiklerne
- * omkring den.
+ * The body is `FigureBody` from `shared/` – the scene only draws the scale and the particles
+ * around it.
  */
 @Component({
   selector: 'app-weight-scale-scene',
@@ -50,17 +50,17 @@ import {
   },
 })
 export class WeightScaleScene {
-  /** Kladdevægten, figuren står med. */
+  /** The draft weight the figure is standing with. */
   readonly weightKg = input.required<number>();
   readonly heightCm = input.required<number>();
-  /** Designets `good`: kilo i den rigtige retning. Styrer humør, sved, damp og bånd. */
+  /** Design's `good`: kilos in the right direction. Drives mood, sweat, steam and band. */
   readonly progressKg = input.required<number>();
-  /** Lige efter "Gem vejning": figuren hopper, og gnisterne blinker. */
+  /** Right after "Save weigh-in": the figure jumps and the sparks flash. */
   readonly saved = input(false, { transform: booleanAttribute });
-  /** −1, 0 eller 1 – pupillerne følger den retning, vægten netop blev ændret i. */
+  /** −1, 0 or 1 – the pupils follow the direction the weight was just changed in. */
   readonly lookDirection = input(0);
 
-  /** Scenens tegneflade – bindes som lokale variabler, fordi det er SVG'ens egen geometri. */
+  /** The scene's canvas – bound as local variables, since it's the SVG's own geometry. */
   protected readonly sceneWidth = SCENE_WIDTH_PX;
   protected readonly sceneHeight = SCENE_HEIGHT_PX;
   protected readonly sparks = SAVE_SPARKS;

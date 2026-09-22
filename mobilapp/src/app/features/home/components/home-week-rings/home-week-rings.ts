@@ -2,9 +2,9 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } f
 import { WeekRing } from '../../services/home-summary';
 
 /**
- * Ugens syv dagsringe. Hver ring viser dagens andel af kaloriemålet; i dag har en orange
- * prik i midten, og den valgte dag en tynd orange yderring. Fejres dagsmålet, lukker dagens
- * ring med et pop og en grøn halo.
+ * The week's seven day rings. Each ring shows the day's share of the calorie goal; today
+ * has an orange dot in the center, and the selected day gets a thin orange outer ring.
+ * When the daily goal is celebrated, today's ring closes with a pop and a green halo.
  */
 @Component({
   selector: 'app-home-week-rings',
@@ -15,7 +15,7 @@ import { WeekRing } from '../../services/home-summary';
 })
 export class HomeWeekRings {
   readonly rings = input.required<readonly WeekRing[]>();
-  /** Dagsmålet er lige nået: dagens ring lukker med pop og halo. */
+  /** The daily goal was just hit: today's ring closes with a pop and halo. */
   readonly celebrating = input(false, { transform: booleanAttribute });
 
   readonly selected = output<number>();

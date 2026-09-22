@@ -14,56 +14,56 @@ import {
 import { clamp, roundTo } from '../../../core/utils/math';
 import { NOW } from '../../../core/utils/now';
 
-/** Tonen på et vægtskifte: grøn når det går den rigtige vej, rød når det ikke gør. */
+/** The tone of a weight change: green when it goes the right way, red when it doesn't. */
 export type WeightChangeTone = Extract<Tone, 'positive' | 'negative' | 'muted'>;
 
-/** En række i "Seneste vejninger". */
+/** A row in "Recent weigh-ins". */
 export interface WeighLogRow {
   readonly id: string;
   /** `'I dag'` · `'I går'` · `'3 dage siden'`. */
   readonly date: string;
   /** `'07:45'`. */
   readonly time: string;
-  /** Vægten med dansk komma, fx `'75,0'`. */
+  /** The weight with a Danish comma, e.g. `'75,0'`. */
   readonly kg: string;
-  /** Forskellen til vejningen før, eller `'Start'` for den ældste. */
+  /** The difference from the previous weigh-in, or `'Start'` for the oldest one. */
   readonly delta: string;
   readonly deltaTone: WeightChangeTone;
-  /** Færdig BEM-modifier til `delta`, så templaten slipper for at bygge klassenavnet. */
+  /** Ready-made BEM modifier for `delta`, so the template avoids building the class name. */
   readonly deltaClass: string;
 }
 
-/** Et interval-chip under grafen. */
+/** A range chip below the chart. */
 export interface WeightRangeOption {
   readonly id: WeightRange;
   readonly label: string;
 }
 
-/** Chip-teksterne fra designets `ranges` – kortere end grafens `rangeLabel`. */
+/** The chip texts from the design's `ranges` – shorter than the chart's `rangeLabel`. */
 export const WEIGHT_RANGE_OPTIONS: readonly WeightRangeOption[] = [
   { id: '1u', label: '1 uge' },
   { id: '4u', label: '4 uger' },
   { id: '3m', label: '3 mdr.' },
 ];
 
-/** Designets standardinterval. */
+/** The design's default range. */
 export const DEFAULT_WEIGHT_RANGE: WeightRange = '4u';
-/** Trinnet på −/+ og linealen. */
+/** The step for −/+ and the ruler. */
 export const WEIGHT_STEP_KG = 0.1;
 
 const TENTHS_PER_KG = 10;
-/** Under denne forskel regnes vægten som uændret (designets 0,05 kg). */
+/** Below this difference the weight counts as unchanged (design's 0.05 kg). */
 const NEUTRAL_DELTA_KG = 0.05;
-/** "Holde vægten" er tilfreds inden for ±0,5 kg. */
+/** "Maintain weight" is satisfied within ±0.5 kg. */
 const MAINTAIN_TOLERANCE_KG = 0.5;
-/** Designet viser højst seks vejninger i listen. */
+/** The design shows at most six weigh-ins in the list. */
 const MAX_LOG_ROWS = 6;
-/** Designets `good` for "hold": afvigelsen fra målet med en lille bonus. */
+/** Design's `good` for "maintain": the deviation from the goal with a small bonus. */
 const MAINTAIN_PROGRESS_BONUS_KG = 0.3;
 
 /**
- * Designets farvelogik for et vægtskifte: "tage på" belønner en stigning, "holde vægten"
- * belønner en lille bevægelse, alt andet belønner et fald. Næsten-nul er neutralt.
+ * The design's color logic for a weight change: "gain" rewards an increase, "maintain weight"
+ * rewards a small movement, everything else rewards a decrease. Near-zero is neutral.
  */
 export function weightChangeTone(deltaKg: number, goal: GoalId | null): WeightChangeTone {
   if (Math.abs(deltaKg) < NEUTRAL_DELTA_KG) {
@@ -79,13 +79,13 @@ export function weightChangeTone(deltaKg: number, goal: GoalId | null): WeightCh
 }
 
 /**
- * Vægt-skærmens afledte værdier: kladdevægten brugeren skruer på, forskellen til sidste
- * vejning, afstanden til målvægten, grafens punkter og listen over vejninger.
+ * The weight screen's derived values: the draft weight the user adjusts, the difference from
+ * the last weigh-in, the distance to the goal weight, the chart's points and the list of weigh-ins.
  *
- * Servicen er **feature-lokal** og udstilles af `WeightPage` (`providers: [WeightViewService]`),
- * så kladden og det valgte interval lever lige så længe som skærmen – præcis som i designet,
- * hvor `newWeight10` og `range` nulstilles, når man forlader fanen. Al vedvarende tilstand
- * (vejninger og profilvægt) ligger i `WeightLogService` og `UserProfileService`.
+ * The service is **feature-local** and provided by `WeightPage` (`providers: [WeightViewService]`),
+ * so the draft and the selected range live exactly as long as the screen – just like in the
+ * design, where `newWeight10` and `range` reset when leaving the tab. All persistent state
+ * (weigh-ins and profile weight) lives in `WeightLogService` and `UserProfileService`.
  */
 @Injectable()
 export class WeightViewService {
@@ -93,7 +93,7 @@ export class WeightViewService {
   private readonly log = inject(WeightLogService);
   private readonly now = inject(NOW);
 
-  /** `null` = brugeren har ikke rørt kladden endnu; så følger den profilens vægt. */
+  /** `null` = the user hasn't touched the draft yet; so it follows the profile's weight. */
   private readonly draftTenths = signal<number | null>(null);
   private readonly rangeState = signal<WeightRange>(DEFAULT_WEIGHT_RANGE);
 
@@ -104,20 +104,20 @@ export class WeightViewService {
   readonly heightCm = computed(() => this.profile.profile().heightCm);
   readonly goal = computed(() => this.profile.profile().goal);
 
-  /** Vægten fra den seneste vejning – designets `wlog[0].kg`. */
+  /** The weight from the most recent weigh-in – design's `wlog[0].kg`. */
   readonly lastWeighedKg = computed(() => this.log.latest()?.kg ?? this.profileWeightKg());
 
-  /** Kladdevægten, brugeren er ved at registrere (designets `nw`). */
+  /** The draft weight the user is registering (design's `nw`). */
   readonly draftKg = computed(() => {
     const override = this.draftTenths();
     return override === null ? roundTo(this.profileWeightKg(), 1) : override / TENTHS_PER_KG;
   });
 
   readonly draftText = computed(() => formatDecimal(this.draftKg()));
-  /** Over 100 kg fylder tallet for meget i 64 px – designet skifter til 52 px. */
+  /** Above 100 kg the number takes up too much space at 64 px – the design switches to 52 px. */
   readonly draftIsWide = computed(() => this.draftKg() >= 100);
 
-  /** Designets `gw`: "holde vægten" sigter mod den nuværende vægt. */
+  /** Design's `gw`: "maintain weight" targets the current weight. */
   readonly goalWeightKg = computed(() => {
     const profile = this.profile.profile();
     return profile.goal === 'hold'
@@ -125,7 +125,7 @@ export class WeightViewService {
       : clamp(profile.goalWeightKg, WEIGHT_MIN_KG, WEIGHT_MAX_KG);
   });
 
-  /** Kladden minus sidste vejning (designets `wDelta`). */
+  /** The draft minus the last weigh-in (design's `wDelta`). */
   readonly deltaKg = computed(() => this.draftKg() - this.lastWeighedKg());
   readonly deltaText = computed(() => formatSignedDecimal(this.deltaKg()));
   readonly deltaTone = computed(() => weightChangeTone(this.deltaKg(), this.goal()));
@@ -134,8 +134,8 @@ export class WeightViewService {
   readonly toGoalText = computed(() => formatDecimal(roundTo(this.toGoalKg(), 1)));
 
   /**
-   * Designets `good`: hvor langt kladden er kommet i den rigtige retning. Styrer figurens
-   * humør, sved, damp og pandebåndets farve.
+   * Design's `good`: how far the draft has moved in the right direction. Drives the figure's
+   * mood, sweat, steam and headband color.
    */
   readonly progressKg = computed(() => {
     const delta = this.deltaKg();
@@ -159,19 +159,17 @@ export class WeightViewService {
     return `Sidst vejet ${formatRelativeDay(new Date(latest.at), this.now()).toLowerCase()}`;
   });
 
-  /** Grafens 12 syntetiske punkter for det valgte interval. */
+  /** The weigh-ins in the selected range, oldest first. Empty until the user has weighed in. */
   readonly seriesKg = computed<readonly number[]>(() =>
-    this.log
-      .seriesFor(this.rangeState(), this.goal(), this.profileWeightKg())
-      .map((point) => point.kg),
+    this.log.seriesFor(this.rangeState()).map((point) => point.kg),
   );
 
-  /** `'Sidste 4 uger'` – overskriften til højre i grafkortet. */
+  /** `'Sidste 4 uger'` – the heading on the right in the chart card. */
   readonly rangeLabel = computed(() => this.log.rangeLabel(this.rangeState()));
-  /** `'-4 uger'` – grafens venstre fodnote. */
+  /** `'-4 uger'` – the chart's left-hand footer. */
   readonly rangeStartLabel = computed(() => this.rangeLabel().replace('Sidste ', '-'));
 
-  /** Forskellen mellem grafens første og sidste punkt. */
+  /** The difference between the chart's first and last point. */
   readonly rangeDeltaKg = computed(() => {
     const series = this.seriesKg();
     const first = series[0];
@@ -184,7 +182,7 @@ export class WeightViewService {
   readonly rangeDeltaText = computed(() => `${formatSignedDecimal(this.rangeDeltaKg())} kg`);
   readonly rangeDeltaTone = computed(() => rangeTone(this.rangeDeltaKg(), this.goal()));
 
-  /** Profilens vægt uden et overflødigt `,0` – designets `weightText`. */
+  /** The profile's weight without a redundant `,0` – design's `weightText`. */
   readonly profileWeightText = computed(() => trimZeroDecimal(this.profileWeightKg()));
   readonly goalWeightText = computed(() => trimZeroDecimal(this.goalWeightKg()));
 
@@ -208,13 +206,13 @@ export class WeightViewService {
     });
   });
 
-  /** Sætter kladden i hele tiendedele og holder den inden for 30–300 kg. */
+  /** Sets the draft in whole tenths and keeps it within 30–300 kg. */
   setDraftKg(kg: number): void {
     const clamped = clamp(kg, WEIGHT_MIN_KG, WEIGHT_MAX_KG);
     this.draftTenths.set(Math.round(clamped * TENTHS_PER_KG));
   }
 
-  /** −/+ knapperne: ét trin på 0,1 kg. */
+  /** The −/+ buttons: one step of 0.1 kg. */
   adjustDraftKg(stepKg: number): void {
     this.setDraftKg(this.draftKg() + stepKg);
   }
@@ -223,15 +221,15 @@ export class WeightViewService {
     this.rangeState.set(range);
   }
 
-  /** Gemmer kladden som en vejning. `WeightLogService` opdaterer også profilens vægt. */
+  /** Saves the draft as a weigh-in. `WeightLogService` also updates the profile's weight. */
   save(): WeighEntry {
     return this.log.add(this.draftKg());
   }
 }
 
 /**
- * Grafens delta farves som et vægtskifte, men "holde vægten" er tilfreds, så længe kurven
- * holder sig inden for ±0,5 kg – også når bevægelsen er nul (designets `deltaColor`).
+ * The chart's delta is colored like a weight change, but "maintain weight" is satisfied as long
+ * as the curve stays within ±0.5 kg – even when the movement is zero (design's `deltaColor`).
  */
 function rangeTone(deltaKg: number, goal: GoalId | null): WeightChangeTone {
   const good =
@@ -243,7 +241,7 @@ function rangeTone(deltaKg: number, goal: GoalId | null): WeightChangeTone {
   return good ? 'positive' : 'negative';
 }
 
-/** `75` → `'75'`, `74,5` → `'74,5'` (designets `weightText`). */
+/** `75` → `'75'`, `74,5` → `'74,5'` (design's `weightText`). */
 function trimZeroDecimal(kg: number): string {
   const text = formatDecimal(kg);
   return text.endsWith(',0') ? text.slice(0, -2) : text;

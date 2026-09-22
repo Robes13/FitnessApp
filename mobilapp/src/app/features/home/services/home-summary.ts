@@ -11,17 +11,20 @@ import { WeightLogService } from '../../../core/services/weight-log';
 import {
   DAY_NAMES_LONG,
   DAY_NAMES_SHORT,
+  addDays,
   formatDayLabel,
   formatDecimal,
   formatInteger,
   formatWeightKg,
+  isSameDay,
   mondayIndex,
+  startOfDay,
 } from '../../../core/utils/date-format';
 import { clamp } from '../../../core/utils/math';
 import { NOW } from '../../../core/utils/now';
 import { ProgressBarTone } from '../../../shared/components/ui-progress-bar/ui-progress-bar';
 
-/** Ringens farve: grøn ved lukket ring, orange undervejs, tom for dage der ikke er kommet. */
+/** The ring's color: green for a closed ring, orange in progress, empty for days not yet reached. */
 export type RingTone = 'positive' | 'accent' | 'none';
 
 export interface WeekRing {
@@ -29,7 +32,7 @@ export interface WeekRing {
   readonly label: string;
   readonly dashOffset: number;
   readonly tone: RingTone;
-  /** Færdigbygget BEM-modifier til ringens streg, så templaten slipper for at samle klassenavnet. */
+  /** Pre-built BEM modifier for the ring's stroke, so the template doesn't need to assemble the class name. */
   readonly toneClass: string;
   readonly isToday: boolean;
   readonly isFuture: boolean;
@@ -38,7 +41,7 @@ export interface WeekRing {
 
 export interface DayMacro {
   readonly label: string;
-  /** Andel af dagsmålet, 0..1. */
+  /** Share of the daily goal, 0..1. */
   readonly value: number;
   readonly tone: ProgressBarTone;
   readonly text: string;
@@ -46,7 +49,7 @@ export interface DayMacro {
 
 export interface DaySummary {
   readonly title: string;
-  /** Andel af kaloriemålet, 0..1. */
+  /** Share of the calorie goal, 0..1. */
   readonly progress: number;
   readonly progressTone: ProgressBarTone;
   readonly kcalEatenText: string;
@@ -67,7 +70,7 @@ export interface WeekSummary {
 export interface GoalSummary {
   readonly toGoalText: string;
   readonly goalWeightText: string;
-  /** Andel af vejen til målvægten, 0,04..1 som i designet. */
+  /** Share of the way to the goal weight, 0.04..1 as in the design. */
   readonly progress: number;
   readonly coach: string;
 }
@@ -79,33 +82,16 @@ export interface HomeTodo {
   readonly queryParams: Record<string, string> | null;
 }
 
-/** Designets demo-historik (`dayHist`) for ugens dage før i dag. */
-const DAY_HISTORY: readonly number[] = [1, 0.97, 0.86, 1, 1, 0.72, 0.95];
-
 const NO_VALUE = '–';
 
-/** Omkredsen af dagsringen (r = 16 i et 40×40 viewBox). */
+/** The circumference of the day ring (r = 16 in a 40×40 viewBox). */
 const RING_CIRCUMFERENCE = 100.5;
 const RING_FULL_THRESHOLD = 0.98;
-/** BEM-block for dagsringens streg i `HomeWeekRings` — bruges til at bygge tone-modifieren. */
+/** BEM block for the day ring's stroke in `HomeWeekRings` — used to build the tone modifier. */
 const RING_PROGRESS_BLOCK = 'home-week-rings__progress';
 
 const WEEK_HIT_THRESHOLD = 0.95;
-const STREAK_BONUS_DAYS = 3;
 const SOLID_WEEK_MIN_HITS = 2;
-
-/** Syntetiske historiske tal fra designet: dagens andel skaleres let op mod målet. */
-const HISTORIC_PROTEIN_BASE = 0.88;
-const HISTORIC_PROTEIN_SPAN = 0.16;
-const HISTORIC_MACRO_BASE = 0.88;
-const HISTORIC_MACRO_STEP = 0.06;
-const HISTORIC_MACRO_VARIANTS = 5;
-const HISTORIC_MACRO_DAY_FACTOR = 3;
-const HISTORIC_MACRO_INDEX_FACTOR = 7;
-
-/** Vægten falder 0,2 kg pr. dag bagud i designets demo-tal, dog højst 14 dage. */
-const WEIGHT_DRIFT_PER_DAY_KG = 0.2;
-const WEIGHT_DRIFT_MAX_DAYS = 14;
 
 const GOAL_REACHED_MARGIN_KG = 0.05;
 const MIN_GOAL_PROGRESS = 0.04;
@@ -125,15 +111,15 @@ const MACRO_DEFINITIONS: readonly MacroDefinition[] = [
 ];
 
 /**
- * Samler Hjem-skærmens tal ét sted: ugens ringe, den valgte dags kort, ugens nøgletal,
- * næste skridt og målkortet.
+ * Gathers the Home screen's numbers in one place: the week's rings, the selected day's
+ * card, the week's key figures, the next step, and the goal card.
  *
- * Kun i dag er rigtige data (madloggen og vejningerne). Ugens tidligere dage er designets
- * syntetiske demo-historik (`DAY_HISTORY`), og de samme formler bruges til makroer, protein
- * og dagens vægt, så skærmen ser ud som prototypen. Fremtidige dage er tomme.
+ * The app only knows today: the food log resets on day change, and there's no history
+ * until the backend supplies it. Days without data are `null` all the way through and are
+ * shown as empty rings and `–`, so the screen never claims a day had no food.
  *
- * Servicen er `providedIn: 'root'`, så den valgte dag overlever et faneskift. Fejrings-toastens
- * timere hører til siden og ligger derfor i `HomePage`.
+ * The service is `providedIn: 'root'` so the selected day survives a tab switch. The
+ * celebration toast's timers belong to the page and therefore live in `HomePage`.
  */
 @Injectable({ providedIn: 'root' })
 export class HomeSummaryService {
@@ -143,10 +129,10 @@ export class HomeSummaryService {
   private readonly calculator = inject(NutritionCalculator);
   private readonly now = inject(NOW);
 
-  /** `null` = følg dagen i dag, som designets `s.selDay ?? todayIdx`. */
+  /** `null` = follow today, matching the design's `s.selDay ?? todayIdx`. */
   private readonly selected = signal<number | null>(null);
 
-  /** 0 = mandag … 6 = søndag. */
+  /** 0 = Monday … 6 = Sunday. */
   readonly todayIndex = computed(() => mondayIndex(this.now()));
   readonly selectedDay = computed(() => this.selected() ?? this.todayIndex());
 
@@ -156,36 +142,42 @@ export class HomeSummaryService {
   readonly todayLabel = computed(() => formatDayLabel(this.now()));
   readonly weekProgressLabel = computed(() => `Dag ${this.todayIndex() + 1} af 7`);
 
-  /** Profilbilledet til avataren i headeren; `null` viser forbogstavet i stedet. */
+  /** The profile photo for the header avatar; `null` shows the initial instead. */
   readonly photo: Signal<ProfilePhoto | null> = computed(() => this.profileService.profile().photo);
 
-  /** Andel af dagens kaloriemål pr. ugedag. */
-  private readonly dayParts = computed<readonly number[]>(() => {
+  /**
+   * Share of the daily calorie goal per weekday. `null` = no data for that day – both the
+   * days the app doesn't know about, and today until the user has logged the first meal.
+   */
+  private readonly dayParts = computed<readonly (number | null)[]>(() => {
     const today = this.todayIndex();
     const target = this.kcalTarget();
-    const eaten = this.foodLog.totals().kcal;
-    const todayPart = target > 0 ? Math.min(1, eaten / target) : 0;
+    const totals = this.foodLog.totals();
+    const hasLog = this.foodLog.entries().length > 0;
     return DAY_NAMES_SHORT.map((_, index) => {
-      if (index === today) {
-        return todayPart;
+      if (index !== today || !hasLog) {
+        return null;
       }
-      return index > today ? 0 : (DAY_HISTORY[index] ?? 0);
+      return target > 0 ? Math.min(1, totals.kcal / target) : 0;
     });
   });
 
-  /** Sandt så snart dagens kalorier når målet – udløser fejrings-toasten. */
+  /** True as soon as today's calories reach the goal – triggers the celebration toast. */
   readonly goalReached = computed(() => (this.dayParts()[this.todayIndex()] ?? 0) >= 1);
+
+  /** False until the app knows the user's name – until then Home just greets with `'Hej'`. */
+  readonly hasName = computed(() => this.displayName() !== '');
 
   readonly weekRings = computed<readonly WeekRing[]>(() => {
     const today = this.todayIndex();
     const selected = this.selectedDay();
     return this.dayParts().map((part, index) => {
       const tone: RingTone =
-        index > today ? 'none' : part >= RING_FULL_THRESHOLD ? 'positive' : 'accent';
+        part === null ? 'none' : part >= RING_FULL_THRESHOLD ? 'positive' : 'accent';
       return {
         index,
         label: DAY_NAMES_SHORT[index] ?? '',
-        dashOffset: RING_CIRCUMFERENCE * (1 - part),
+        dashOffset: RING_CIRCUMFERENCE * (1 - (part ?? 0)),
         tone,
         toneClass: `${RING_PROGRESS_BLOCK}--${tone}`,
         isToday: index === today,
@@ -198,17 +190,16 @@ export class HomeSummaryService {
   readonly daySummary = computed<DaySummary>(() => {
     const today = this.todayIndex();
     const selected = this.selectedDay();
-    const part = this.dayParts()[selected] ?? 0;
-    const isFuture = selected > today;
-    const target = this.kcalTarget();
+    const part = this.dayParts()[selected] ?? null;
+    const weightKg = this.weightForDay(selected);
     return {
       title: `${DAY_NAMES_LONG[selected] ?? ''}${relativeDaySuffix(selected, today)}`,
-      progress: part,
-      progressTone: isFuture ? 'muted' : part >= RING_FULL_THRESHOLD ? 'positive' : 'accent',
-      kcalEatenText: isFuture ? NO_VALUE : String(Math.round(part * target)),
-      kcalTargetText: String(target),
-      weightText: isFuture ? NO_VALUE : formatDecimal(this.weightForDay(selected)),
-      macros: this.macrosForDay(selected, isFuture, part),
+      progress: part ?? 0,
+      progressTone: part === null ? 'muted' : part >= RING_FULL_THRESHOLD ? 'positive' : 'accent',
+      kcalEatenText: part === null ? NO_VALUE : String(this.foodLog.totals().kcal),
+      kcalTargetText: String(this.kcalTarget()),
+      weightText: weightKg === null ? NO_VALUE : formatDecimal(weightKg),
+      macros: this.macrosForDay(selected),
     };
   });
 
@@ -216,51 +207,45 @@ export class HomeSummaryService {
     () => this.calculator.macroGoals(this.kcalTarget()).protein,
   );
 
+  /** Only days with data count. Without data the average is `null`, not zero. */
   private readonly weekStats = computed(() => {
     const today = this.todayIndex();
-    const parts = this.dayParts();
+    const elapsed = this.dayParts().slice(0, today + 1);
+    const logged = elapsed.filter((part): part is number => part !== null);
     const target = this.kcalTarget();
     const proteinGoal = this.proteinGoalPerDay();
-    const loggedProtein = this.foodLog.totals().protein;
-    const days = today + 1;
-    const elapsed = parts.slice(0, days);
 
-    const hit = elapsed.filter((part) => part >= WEEK_HIT_THRESHOLD).length;
-    const averageKcal = Math.round(
-      elapsed.reduce((total, part) => total + part * target, 0) / Math.max(1, days),
-    );
-    const proteinHit = elapsed.filter((part, index) => {
-      const protein =
-        index === today
-          ? loggedProtein
-          : Math.round(proteinGoal * part * (HISTORIC_PROTEIN_BASE + part * HISTORIC_PROTEIN_SPAN));
-      return protein >= proteinGoal * WEEK_HIT_THRESHOLD;
-    }).length;
+    const hit = logged.filter((part) => part >= WEEK_HIT_THRESHOLD).length;
+    const averageKcal =
+      logged.length === 0
+        ? null
+        : Math.round(logged.reduce((total, part) => total + part * target, 0) / logged.length);
+    const proteinHit =
+      elapsed[today] !== null && this.foodLog.totals().protein >= proteinGoal * WEEK_HIT_THRESHOLD
+        ? 1
+        : 0;
 
     let streak = 0;
-    for (let index = today - 1; index >= 0; index--) {
-      if ((parts[index] ?? 0) >= WEEK_HIT_THRESHOLD) {
-        streak++;
-      } else {
+    for (let index = today; index >= 0; index--) {
+      const part = elapsed[index];
+      if (part === null || part === undefined || part < WEEK_HIT_THRESHOLD) {
         break;
       }
-    }
-    if ((parts[today] ?? 0) >= WEEK_HIT_THRESHOLD) {
       streak++;
     }
 
-    return { days, hit, averageKcal, proteinHit, streakDays: streak + STREAK_BONUS_DAYS };
+    return { loggedDays: logged.length, hit, averageKcal, proteinHit, streakDays: streak };
   });
 
   readonly weekSummary = computed<WeekSummary>(() => {
-    const { days, hit, averageKcal, proteinHit, streakDays } = this.weekStats();
+    const { loggedDays, hit, averageKcal, proteinHit, streakDays } = this.weekStats();
     return {
       progressLabel: this.weekProgressLabel(),
       hitText: String(hit),
-      averageKcalText: formatInteger(averageKcal),
+      averageKcalText: averageKcal === null ? NO_VALUE : formatInteger(averageKcal),
       proteinHitText: String(proteinHit),
       streakText: `${streakDays} dage`,
-      note: weekNote(hit, days),
+      note: weekNote(hit, loggedDays),
     };
   });
 
@@ -294,7 +279,7 @@ export class HomeSummaryService {
     return count > 1 ? `1 / ${count}` : 'Kun én';
   });
 
-  /** Målkortet er skjult, når målet er at holde vægten. */
+  /** The goal card is hidden when the goal is to maintain weight. */
   readonly showGoalCard = computed(() => this.profileService.profile().goal !== 'hold');
 
   readonly goalSummary = computed<GoalSummary>(() => {
@@ -324,37 +309,34 @@ export class HomeSummaryService {
     this.selected.set(index);
   }
 
-  /** Designets `pts[11]` minus 0,2 kg pr. dag tilbage i tiden. */
-  private weightForDay(index: number): number {
-    const { weightKg, goal } = this.profileService.profile();
-    const series = this.weightLog.seriesFor('1u', goal, weightKg);
-    const latest = series.at(-1)?.kg ?? weightKg;
-    const daysBack = Math.min(WEIGHT_DRIFT_MAX_DAYS, this.todayIndex() - index);
-    return latest - daysBack * WEIGHT_DRIFT_PER_DAY_KG;
+  /** The weigh-in from that weekday, or `null` if the user didn't weigh in that day. */
+  private weightForDay(index: number): number | null {
+    const day = addDays(startOfDay(this.now()), index - this.todayIndex());
+    const entry = this.weightLog
+      .entries()
+      .find((candidate) => isSameDay(new Date(candidate.at), day));
+    return entry?.kg ?? null;
   }
 
-  private macrosForDay(index: number, isFuture: boolean, part: number): readonly DayMacro[] {
+  /** Macros follow the same rule as calories: a day without data shows `–`, not 0. */
+  private macrosForDay(index: number): readonly DayMacro[] {
     const goals = this.calculator.macroGoals(this.kcalTarget());
     const logged = this.foodLog.totals();
-    const isToday = index === this.todayIndex();
-    return MACRO_DEFINITIONS.map((macro, macroIndex) => {
+    const hasData = this.dayParts()[index] !== null;
+    return MACRO_DEFINITIONS.map((macro) => {
       const goal = goals[macro.key];
-      const value = isFuture
-        ? 0
-        : isToday
-          ? logged[macro.key]
-          : Math.round(goal * part * historicMacroFactor(index, macroIndex));
+      const value = hasData ? logged[macro.key] : 0;
       return {
         label: macro.label,
         value: goal > 0 ? Math.min(1, value / goal) : 0,
         tone: macro.tone,
-        text: `${isFuture ? NO_VALUE : value} / ${goal} g`,
+        text: `${hasData ? value : NO_VALUE} / ${goal} g`,
       };
     });
   }
 }
 
-/** `' · i dag'` / `' · i går'` / `''` som i designets `dayTitle`. */
+/** `' · i dag'` / `' · i går'` / `''` matching the design's `dayTitle`. */
 function relativeDaySuffix(selected: number, today: number): string {
   if (selected === today) {
     return ' · i dag';
@@ -362,18 +344,14 @@ function relativeDaySuffix(selected: number, today: number): string {
   return selected === today - 1 ? ' · i går' : '';
 }
 
-function weekNote(hit: number, days: number): string {
-  if (hit >= days - 1) {
+function weekNote(hit: number, loggedDays: number): string {
+  if (loggedDays === 0) {
+    return 'Ingen dage logget i denne uge endnu.';
+  }
+  if (hit >= loggedDays) {
     return 'Stærk uge – bliv ved.';
   }
   return hit >= SOLID_WEEK_MIN_HITS
     ? 'Solid uge. Protein er det, der løfter resten.'
     : 'Ujævn uge. Sæt et enkelt mål: ram protein i morgen.';
-}
-
-function historicMacroFactor(dayIndex: number, macroIndex: number): number {
-  const variant =
-    (dayIndex * HISTORIC_MACRO_DAY_FACTOR + macroIndex * HISTORIC_MACRO_INDEX_FACTOR) %
-    HISTORIC_MACRO_VARIANTS;
-  return HISTORIC_MACRO_BASE + variant * HISTORIC_MACRO_STEP;
 }

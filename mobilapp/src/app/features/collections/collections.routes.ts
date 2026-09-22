@@ -9,7 +9,7 @@ export const COLLECTIONS_ROUTES: Routes = [
   {
     path: `:${ROUTE_PARAM.RECIPE_ID}`,
     component: RecipePage,
-    // Opskriften er en fuldskærm uden tab bar (designets `navVisible`).
+    // The recipe is a full screen without a tab bar (the design's `navVisible`).
     data: { [ROUTE_DATA.HIDE_TAB_BAR]: true },
   },
 ];

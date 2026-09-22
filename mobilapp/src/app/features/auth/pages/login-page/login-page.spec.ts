@@ -5,7 +5,7 @@ import { SessionService } from '../../../../core/services/session';
 import { LoginPage } from './login-page';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 
-/** `AuthApi` svarer via `timer(0)`; ét makrotask-tick er nok til at kaldet er færdigt. */
+/** `AuthApi` responds via `timer(0)`; one macrotask tick is enough for the call to finish. */
 async function settle(fixture: ComponentFixture<LoginPage>): Promise<void> {
   await new Promise<void>((resolve) => {
     setTimeout(resolve, 0);
@@ -28,7 +28,7 @@ function typeInto(root: HTMLElement, label: string, value: string): void {
 }
 
 describe('LoginPage', () => {
-  // Komponent-specs skal have det rigtige `DOCUMENT` for at kunne rendere, så
+  // Component specs need the right `DOCUMENT` to render, so
   beforeEach(() => {
     localStorage.clear();
   });
@@ -58,7 +58,7 @@ describe('LoginPage', () => {
       'password',
     );
     expect(requireElement(root, '.login-page__submit').textContent?.trim()).toBe('Log ind');
-    // Designet har ingen fejllinje mellem adgangskoden og knappen, før der er en fejl.
+    // The design has no error line between the password and the button until there is an error.
     expect(root.querySelector('app-ui-form-error')).toBeNull();
 
     const links = Array.from(root.querySelectorAll<HTMLAnchorElement>('a'));
@@ -81,33 +81,20 @@ describe('LoginPage', () => {
     expect(submit.classList.contains('ui-button--block')).toBe(true);
   });
 
-  it('logs in and goes to Hjem', async () => {
+  it('cannot log in without a backend and stays on the page', async () => {
     const { fixture, root, navigate } = await setup();
     typeInto(root, 'Brugernavn', 'mads');
     typeInto(root, 'Adgangskode', 'hemmelig1');
     await fixture.whenStable();
 
     requireElement<HTMLFormElement>(root, '.login-page__form').requestSubmit();
-    await fixture.whenStable();
-    expect(root.querySelector('app-ui-spinner')).not.toBeNull();
-
-    await settle(fixture);
-
-    expect(TestBed.inject(SessionService).isLoggedIn()).toBe(true);
-    expect(navigate).toHaveBeenCalledWith(APP_PATH.HOME);
-    expect(root.querySelector('app-ui-spinner')).toBeNull();
-  });
-
-  it('shows the backend error and stays on the page when the fields are empty', async () => {
-    const { fixture, root, navigate } = await setup();
-
-    requireElement<HTMLFormElement>(root, '.login-page__form').requestSubmit();
     await settle(fixture);
 
     expect(requireElement(root, 'app-ui-form-error').textContent?.trim()).toBe(
-      'Udfyld brugernavn og adgangskode.',
+      'Der er ingen forbindelse til en server endnu.',
     );
     expect(navigate).not.toHaveBeenCalled();
     expect(TestBed.inject(SessionService).isLoggedIn()).toBe(false);
+    expect(root.querySelector('app-ui-spinner')).toBeNull();
   });
 });

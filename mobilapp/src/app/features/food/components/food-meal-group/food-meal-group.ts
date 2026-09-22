@@ -4,11 +4,11 @@ import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { MealGroupView } from '../../services/food-view';
 
 /**
- * Én måltidsgruppe på Mad-skærmen (designets `sc-for list="{{ meals }}"`): overskrift med
- * kalorier, de loggede varer og linket "+ Tilføj til …".
+ * A meal group on the Mad screen (the design's `sc-for list="{{ meals }}"`): a heading with
+ * calories, the logged foods and the "+ Add to …" link.
  *
- * Gruppen er ren præsentation – siden ejer loggen og handler på `edit`, `removed` og `add`.
- * En tom gruppe viser kun tilføj-linket, præcis som i designet.
+ * The group is pure presentation – the page owns the log and acts on `edit`, `removed` and `add`.
+ * An empty group shows only the add link, exactly as in the design.
  */
 @Component({
   selector: 'app-food-meal-group',
@@ -21,9 +21,9 @@ import { MealGroupView } from '../../services/food-view';
 export class FoodMealGroup {
   readonly group = input.required<MealGroupView>();
 
-  /** Tryk på varens navn: redigér portionen. */
+  /** Tapping the food's name: edit the portion. */
   readonly edit = output<LoggedFood>();
   readonly removed = output<LoggedFood>();
-  /** "+ Tilføj til <måltid>". */
+  /** "+ Add to <meal>". */
   readonly add = output<void>();
 }

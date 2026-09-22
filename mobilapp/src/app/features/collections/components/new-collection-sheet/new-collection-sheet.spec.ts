@@ -4,6 +4,7 @@ import { NewCollectionInput } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
 import { NewCollectionSheet } from './new-collection-sheet';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
+import { FoodLogService } from '../../../../core/services/food-log';
 
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
@@ -81,6 +82,15 @@ describe('NewCollectionSheet', () => {
   beforeEach(async () => {
     localStorage.clear();
     TestBed.configureTestingModule({ imports: [Host], providers: TEST_PROVIDERS });
+    // Search only finds the user's own foods – the app has no food database.
+    TestBed.inject(FoodLogService).addCustomFood({
+      name: 'Havregryn',
+      quantity: '60 g',
+      kcal: 222,
+      protein: 8,
+      carbs: 38,
+      fat: 4,
+    });
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     root = fixture.nativeElement as HTMLElement;

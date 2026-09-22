@@ -21,9 +21,11 @@ Siden og kortene henter kun færdige værdier – ingen beregninger i templates.
 `selDay` ligger i den globale state. Servicen holder ingen timere – fejrings-toastens timer
 hører til siden og ryddes, når siden forlades.
 
-**Demo-tal:** kun i dag er rigtige data. Ugens tidligere dage kommer fra designets `dayHist`,
-og protein, makroer og dagens vægt skaleres med de samme formler som prototypen. Det er
-bevidst syntetisk og skal skiftes ud, når der findes en historik-backend.
+**Dage uden data:** `dayParts` giver `null` for hver dag, appen ikke kender – det vil sige
+alle dage undtagen i dag, og også i dag, indtil det første måltid er logget. `null` giver tom
+ring, `–` i dagskortet og ingen andel i ugens nøgletal. Gennemsnittet er `–`, ikke 0, når
+ingen dage tæller med. Når en historik-backend findes, er `dayParts` det ene sted, der skal
+fyldes ud.
 
 `photo()` giver profilbilledet videre til den delte `ProfileAvatar`
 (`shared/components/profile-avatar`), som ejer designets beskæringsformler

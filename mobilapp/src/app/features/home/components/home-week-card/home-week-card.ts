@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { UiCard } from '../../../../shared/components/ui-card/ui-card';
 import { WeekSummary } from '../../services/home-summary';
 
-/** "Denne uge": dage i mål, kcal i snit, protein ramt og streak – plus en kort opsamling. */
+/** "Denne uge": days on target, average kcal, protein hit, and streak – plus a short summary. */
 @Component({
   selector: 'app-home-week-card',
   imports: [UiCard],

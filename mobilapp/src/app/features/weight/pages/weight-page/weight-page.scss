@@ -1,8 +1,8 @@
 @use 'mixins';
 
 /*
- * Vægt-skærmen. Værten er sidens rod (flex-kolonne i fuld højde); en `.weight-page`-regel
- * ville under emuleret encapsulation kun ramme indholdet.
+ * The weight screen. The host is the page's root (full-height flex column); a `.weight-page`
+ * rule would, under emulated encapsulation, only hit the content.
  */
 :host {
   @include mixins.page-screen;
@@ -49,7 +49,7 @@
     white-space: nowrap;
   }
 
-  /* Tal og nøgletal til venstre, badevægten til højre. */
+  /* Numbers and key figures on the left, the bathroom scale on the right. */
   &__summary {
     display: flex;
     align-items: stretch;
@@ -151,7 +151,7 @@
     font-weight: var(--font-weight-bold);
   }
 
-  /* Linealen med −/+ knapperne liggende oven på hver sin ende. */
+  /* The ruler with the −/+ buttons sitting on top at either end. */
   &__scale {
     position: relative;
     flex: none;

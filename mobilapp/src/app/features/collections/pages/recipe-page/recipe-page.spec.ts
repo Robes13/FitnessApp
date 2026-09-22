@@ -50,30 +50,44 @@ describe('RecipePage', () => {
     return { harness, page, texts, button, click };
   }
 
-  it('shows the recipe, its macros and its ingredients', async () => {
-    const { page, texts } = await setup('skyr');
+  /** A collection with one food – the app has no dishes until the backend provides them. */
+  function createBundle(): string {
+    const created = TestBed.inject(CollectionsService).create({
+      name: 'Meal prep',
+      icon: 'bag',
+      meal: 'frokost',
+      items: [
+        {
+          id: 'item-tun',
+          name: 'Tunsalat',
+          quantity: '200 g',
+          kcal: 240,
+          protein: 28,
+          carbs: 6,
+          fat: 11,
+        },
+      ],
+    });
+    return `${BUNDLE_ID_PREFIX}${created.id}`;
+  }
 
-    expect(normalize(page.querySelector('.recipe-page__title')?.textContent)).toBe(
-      'Skyr-bowl med bær og nødder',
-    );
+  it('shows the macros of a bundle', async () => {
+    const { texts } = await setup(createBundle());
+
     expect(texts('.recipe-page__stat-label')).toEqual(['Kalorier', 'Protein', 'Kulhydrat', 'Fedt']);
-    expect(texts('.recipe-page__stat-value')).toEqual(['380', '32 g', '38 g', '11 g']);
-    expect(texts('.recipe-page__line')).toHaveLength(5);
-    expect(normalize(page.querySelector('.recipe-page__log-button')?.textContent)).toBe(
-      'Log 380 kcal',
-    );
+    expect(texts('.recipe-page__stat-value')).toEqual(['240', '28 g', '6 g', '11 g']);
   });
 
-  it('logs the recipe under the chosen meal and switches to Mad', async () => {
-    const { page, button, click } = await setup('skyr');
+  it('logs the bundle under the chosen meal and switches to Mad', async () => {
+    const { page, button, click } = await setup(createBundle());
 
     await click(button('Aftensmad'));
     await click(page.querySelector('.recipe-page__log-button'));
 
     const logged = TestBed.inject(FoodLogService)
       .entries()
-      .find((entry) => entry.name === 'Skyr-bowl med bær og nødder');
-    expect(logged).toMatchObject({ meal: 'aften', quantity: '1 portion', kcal: 380 });
+      .find((entry) => entry.name === 'Meal prep');
+    expect(logged).toMatchObject({ meal: 'aften', kcal: 240 });
     expect(TestBed.inject(Router).url).toBe(APP_PATH.FOOD);
   });
 

@@ -4,8 +4,9 @@ import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
 
 /**
- * Bekræftelsen før log ud. Arket har ingen luk-knap – som i designet træffes valget med
- * "Ja, log mig ud" eller "Annuller", og et utilsigtet tryk på scrimmen logger ikke ud.
+ * The confirmation before logging out. The sheet has no close button – as in the design
+ * the choice is made with "Ja, log mig ud" or "Annuller", and an accidental tap on the
+ * scrim doesn't log out.
  */
 @Component({
   selector: 'app-profile-logout-sheet',

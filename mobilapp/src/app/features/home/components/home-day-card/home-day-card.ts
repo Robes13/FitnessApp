@@ -4,8 +4,8 @@ import { UiProgressBar } from '../../../../shared/components/ui-progress-bar/ui-
 import { DaySummary } from '../../services/home-summary';
 
 /**
- * Kortet for den valgte dag: titel, fremdriftsbjælke, kalorier og vægt samt de tre
- * makrobjælker. Dage der ikke er kommet endnu viser `–` og tomme bjælker.
+ * The card for the selected day: title, progress bar, calories and weight, plus the
+ * three macro bars. Days that haven't happened yet show `–` and empty bars.
  */
 @Component({
   selector: 'app-home-day-card',

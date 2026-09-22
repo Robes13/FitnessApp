@@ -13,11 +13,12 @@ import { UiTabBar } from '../../../../shared/components/ui-tab-bar/ui-tab-bar';
 import { TAB_BAR_ITEMS } from '../../shell-navigation';
 
 /**
- * Rammen om tab-skærmene: en `<router-outlet>` til den aktive side og tab baren nederst.
- * Tab baren skjules, når den dybeste aktive rute har `data: { hideTabBar: true }` – det
- * afgøres ved oprettelsen og efter hver afsluttet navigation ved at følge snapshot-træet
- * (`ActivatedRouteSnapshot.firstChild`) til bunden. Snapshot-træet er komplet, før shell'en
- * oprettes; `ActivatedRoute.firstChild` er det ikke.
+ * The frame around the tab screens: a `<router-outlet>` for the active page and the tab
+ * bar at the bottom. The tab bar is hidden when the deepest active route has
+ * `data: { hideTabBar: true }` – this is determined on creation and after every completed
+ * navigation by walking the snapshot tree (`ActivatedRouteSnapshot.firstChild`) to the
+ * bottom. The snapshot tree is complete before the shell is created; `ActivatedRoute.firstChild`
+ * is not.
  */
 @Component({
   selector: 'app-shell-layout',

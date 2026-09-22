@@ -9,7 +9,7 @@
     @include mixins.scroll-area;
     @include mixins.hide-scrollbar;
 
-    /* Skærmen skjuler tab-baren, så bunden skal selv gå fri af home-indikatoren. */
+    /* The screen hides the tab bar, so the bottom has to clear the home indicator itself. */
     padding: 0 var(--layout-page-padding-x) calc(var(--safe-area-bottom) + var(--space-5));
   }
 

@@ -11,17 +11,10 @@ Arket kan:
 - **Gensend kode** – `SessionService.resendVerification()`; knappen skifter til
   "Kode sendt ✓" og hjælpeteksten til "Ny kode sendt – tjek også spam.".
 - **Tjek igen** – `SessionService.checkVerification()`; ikonet drejer en omgang, teksten går
-  fra "Tjekker…" til "Ikke bekræftet".
+  fra "Tjekker…" til "Ikke bekræftet", når backenden svarer, at mailen ikke er bekræftet.
 
 Fejler et kald, vises "Noget gik galt. Prøv igen." i `app-ui-form-error` (teksten findes ikke
 i designet, som ikke viser fejltilstande her).
-
-## Demo-genvej
-
-`AuthApi.checkVerification()` svarer **altid** "ikke bekræftet" – sådan er designet. Efter to
-forgæves tjek vises derfor **"Fortsæt uden bekræftelse"**, der kalder
-`SessionService.markEmailVerified()` og låser appen op lokalt. Det er en bevidst
-demo-affordance og skal fjernes, når der findes en rigtig backend.
 
 ## Afvigelse fra designet
 

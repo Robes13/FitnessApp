@@ -30,12 +30,12 @@ tastaturet, hvor et urealistisk tal ellers er nemt at ramme. Alle andre grænser
 ## Adgangskode
 
 Adgangskoden er ikke en del af `UserProfile`. "Ny adgangskode" sendes derfor til
-`AuthApi.resetPassword()` – mock-backenden er det eneste sted, en adgangskode kan ændres – og
+`AuthApi.resetPassword()` – backenden er det eneste sted, en adgangskode kan ændres – og
 arket viser spinner og fejltekst fra det kald.
 
 ## Præstationer
 
-`AchievementsService` blander rigtige data (madlog, vejninger, egne samlinger, scanninger) med
-designets syntetiske uge (`dayHist`) og faste forspring (`6 +`, `23 +`, `4 +` og gulvet på
-1,2 kg). Det er bevidst kopieret fra prototypen, så gitteret viser et realistisk mix af
-klarede og låste badges i stedet for tolv tomme ringe.
+`AchievementsService` regner de tolv badges ud af brugerens egne data: madloggen, vejningerne,
+egne samlinger og antallet af scanninger. Der er ingen forspring og ingen syntetisk uge, så
+gitteret starter på tolv tomme ringe. Appen kender kun dagen i dag, så ugetallene kan højst
+blive 1, indtil backenden kan levere tidligere dage.

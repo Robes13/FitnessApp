@@ -6,17 +6,22 @@ import { APP_PATH, APP_ROUTE, QUERY_PARAM } from '../../../../core/constants/app
 import { FoodLogService } from '../../../../core/services/food-log';
 import { UserProfileService } from '../../../../core/services/user-profile';
 import { FOOD_ROUTES } from '../../food.routes';
-import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
+import { STORAGE_KEY } from '../../../../core/constants/storage-key';
+import {
+  TEST_NOW,
+  provideComponentTestEnvironment,
+  resetComponentTestStorage,
+} from '../../../../core/testing/test-providers';
 
 /**
- * Siden tegnes i den rigtige (jsdom-)DOM, fordi ark og scanner læser `document.activeElement`.
- * Kun timere og "nu" overstyres; storage ryddes pr. test, så `FoodLogService` seeder demo-loggen.
+ * The page renders in the real (jsdom) DOM, because the sheet and scanner read `document.activeElement`.
+ * Only timers and "now" are overridden; storage is cleared per test, so `FoodLogService` seeds the demo log.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
 const ROUTES: Routes = [{ path: APP_ROUTE.FOOD, children: FOOD_ROUTES }];
 
-/** Fast dagsmål, så makroprocenterne er de samme i hver kørsel. */
+/** Fixed daily target, so the macro percentages are the same on every run. */
 const KCAL_TARGET = 2000;
 
 function normalize(value: string | null | undefined): string {
@@ -24,8 +29,39 @@ function normalize(value: string | null | undefined): string {
 }
 
 describe('FoodPage', () => {
+  /** The app doesn't seed a food log itself – the tests put in the day's two meals. */
   beforeEach(() => {
-    localStorage.clear();
+    resetComponentTestStorage({
+      [STORAGE_KEY.FOOD_LOG]: {
+        date: '2026-09-21',
+        entries: [
+          {
+            id: 'f-skyr',
+            name: 'Skyr-bowl med bær',
+            quantity: '250 g',
+            kcal: 380,
+            protein: 32,
+            carbs: 38,
+            fat: 9,
+            logId: 'log-1',
+            meal: 'morgen',
+            loggedAt: TEST_NOW.toISOString(),
+          },
+          {
+            id: 'f-salat',
+            name: 'Kyllingesalat',
+            quantity: '1 portion',
+            kcal: 450,
+            protein: 41,
+            carbs: 18,
+            fat: 22,
+            logId: 'log-2',
+            meal: 'frokost',
+            loggedAt: TEST_NOW.toISOString(),
+          },
+        ],
+      },
+    });
   });
 
   async function setup(url: string = APP_PATH.FOOD) {

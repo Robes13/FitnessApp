@@ -17,11 +17,11 @@ interface LoginForm {
 }
 
 /**
- * Designets loginskærm (linje 88–110): fotobaggrund, logo og wordmark øverst, overskriften
- * "Spis klogt. / Træn stærkt." og glasfelterne i bunden.
+ * The design's login screen (lines 88–110): photo background, logo and wordmark at the top, the
+ * heading "Spis klogt. / Træn stærkt." and the glass fields at the bottom.
  *
- * Selve loginet går gennem `SessionService`, der taler med mock-backenden. Knappen viser en
- * spinner, mens kaldet er i gang, og fejlteksten fra backenden vises i `app-ui-form-error`.
+ * The login itself goes through `SessionService`, which talks to `AuthApi`. The button shows a
+ * spinner while the call is in progress, and the backend's error text is shown in `app-ui-form-error`.
  */
 @Component({
   selector: 'app-login-page',

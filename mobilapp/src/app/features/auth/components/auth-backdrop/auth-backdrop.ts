@@ -2,11 +2,11 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@an
 import { AUTH_ASSET } from '../../auth-assets';
 
 /**
- * Fotobaggrunden bag login og glemt adgangskode: billedet fylder hele skærmen
- * (`object-fit: cover`, forankret i toppen som i designet).
+ * The photo background behind login and forgot password: the image fills the whole screen
+ * (`object-fit: cover`, anchored to the top as in the design).
  *
- * `gradient` lægger designets mørke forløb oven på fotoet, så teksten i bunden kan læses.
- * Kun glemt adgangskode bruger det – login har teksten på den mørke del af fotoet.
+ * `gradient` lays the design's dark gradient over the photo so the text at the bottom stays readable.
+ * Only forgot password uses it – login has its text over the dark part of the photo.
  */
 @Component({
   selector: 'app-auth-backdrop',

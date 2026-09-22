@@ -28,8 +28,9 @@ describe('ProfileRowsService', () => {
     expect(valueOf(rows.planRows(), 'Køn')).toBe('–');
   });
 
-  it('formats the plan from the demo defaults', () => {
-    const { rows } = setup();
+  it('formats the plan from the profile', () => {
+    const { rows, profiles } = setup();
+    profiles.update({ trainingDays: [true, false, true, false, true, false, false] });
 
     expect(valueOf(rows.planRows(), 'Højde')).toBe('178 cm');
     expect(valueOf(rows.planRows(), 'Aktivitet')).toBe('6.000 skridt · Aktiv');
@@ -62,6 +63,7 @@ describe('ProfileRowsService', () => {
 
   it('names the chosen intensity once an RPE is set', () => {
     const { rows, profiles } = setup();
+    profiles.update({ trainingDays: [true, false, true, false, true, false, false] });
 
     expect(valueOf(rows.planRows(), 'Intensitet')).toBe('–');
 

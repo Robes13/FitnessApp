@@ -18,7 +18,7 @@ og resten i bunden – præcis som designets `padding: 80px 24px 44px`.
 ## Login
 
 `submit()` kalder `SessionService.login()`. Knappen viser `UiButton`s spinner via `loading`, og
-en fejl fra mock-backenden (fx `Udfyld brugernavn og adgangskode.`) vises i
+en fejl fra backenden (fx `Der er ingen forbindelse til en server endnu.`) vises i
 `app-ui-form-error`. Fejllinjen står i et `@if`, så den **kun** findes i DOM'en, når der er en
 fejl – ellers ville dens reserverede højde lægge tom luft mellem adgangskodefeltet og
 `Log ind`, som designet ikke har. Ved succes navigeres til `APP_PATH.HOME`. Abonnementet lukkes

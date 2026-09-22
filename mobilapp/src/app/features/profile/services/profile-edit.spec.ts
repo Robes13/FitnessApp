@@ -108,17 +108,11 @@ describe('ProfileEditService', () => {
     expect(profiles.profile().email).toBe('mads@mail.dk');
   });
 
-  it('rejects a password shorter than eight characters', async () => {
+  it('cannot change the password without a backend', async () => {
     const { editor } = setup();
 
-    await expect(firstValueFrom(editor.changePassword('kort'))).rejects.toEqual({
-      message: 'Mindst 8 tegn.',
+    await expect(firstValueFrom(editor.changePassword('langnokkode'))).rejects.toEqual({
+      message: 'Der er ingen forbindelse til en server endnu.',
     });
-  });
-
-  it('accepts a long enough password', async () => {
-    const { editor } = setup();
-
-    await expect(firstValueFrom(editor.changePassword('langnokkode'))).resolves.toBeUndefined();
   });
 });

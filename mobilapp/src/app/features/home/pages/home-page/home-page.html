@@ -3,7 +3,10 @@
     <div class="home-page__intro">
       <p class="home-page__today">{{ summary.todayLabel() }}</p>
       <h1 class="home-page__greeting">
-        Hej, <span class="home-page__name">{{ summary.displayName() }}</span>
+        Hej
+        @if (summary.hasName()) {
+          , <span class="home-page__name">{{ summary.displayName() }}</span>
+        }
       </h1>
     </div>
     <a class="home-page__avatar" [routerLink]="profilePath" aria-label="Profil">

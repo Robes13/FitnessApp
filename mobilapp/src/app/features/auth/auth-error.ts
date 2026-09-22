@@ -1,8 +1,8 @@
 import { ApiError } from '../../core/models/api-error';
 
 /**
- * Sidste udvej, hvis noget andet end en `ApiError` fejler. Mock-backenden fejler altid med en
- * `ApiError`, så teksten er i praksis ikke synlig – men brugeren skal aldrig se en teknisk fejl.
+ * Last resort if something other than an `ApiError` fails. `AuthApi` always fails with an
+ * `ApiError`, so this text is practically never seen – but the user should never see a technical error.
  */
 const FALLBACK_MESSAGE = 'Noget gik galt. Prøv igen.';
 
@@ -14,7 +14,7 @@ function isApiError(error: unknown): error is ApiError {
   );
 }
 
-/** Oversætter en fejl fra `AuthApi` til en dansk tekst, der kan vises direkte til brugeren. */
+/** Translates an error from `AuthApi` into a Danish message that can be shown directly to the user. */
 export function authErrorMessage(error: unknown): string {
   return isApiError(error) ? error.message : FALLBACK_MESSAGE;
 }

@@ -1,6 +1,6 @@
 @use 'mixins';
 
-/* Værten er kun en beholder – `UiSheet` lægger selv scrim og panel over app-roden. */
+/* The host is just a container – `UiSheet` positions the scrim and panel over the app root itself. */
 :host {
   display: contents;
 }
@@ -11,7 +11,7 @@
     gap: var(--space-1-5);
   }
 
-  /* Fire chips på én række: lige brede og uden sidepadding, som i designet. */
+  /* Four chips on one row: equal width and no side padding, as in the design. */
   &__meal {
     flex: 1;
     min-width: 0;
@@ -23,8 +23,8 @@
   }
 
   /*
-   * Kun listen scroller; måltids-chips og Varer/Samlinger bliver stående øverst i arket
-   * (`UiSheet` med `column`). `display: flex` lader vare-vælgeren fylde resten af højden.
+   * Only the list scrolls; the meal chips and Foods/Collections stay fixed at the top of the sheet
+   * (`UiSheet` with `column`). `display: flex` lets the food picker fill the rest of the height.
    */
   &__scroll {
     @include mixins.scroll-area;

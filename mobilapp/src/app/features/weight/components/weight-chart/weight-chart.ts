@@ -8,11 +8,11 @@ import {
 } from './weight-chart-geometry';
 
 /**
- * Grafkortet på vægt-skærmen: den aktuelle vægt, intervallets navn og udvikling, kurven med
- * gradientflade, den stiplede mållinje og en fodnote med interval, målvægt og "I dag".
+ * The chart card on the weight screen: the current weight, the range's name and change, the
+ * curve with a gradient fill, the dashed goal line and a footer with range, goal weight and "Today".
  *
- * Komponenten er ren visning – værten er selve kortet, og intervallet vælges af chipsene
- * under den (i `WeightPage`).
+ * The component is pure presentation – the host is the card itself, and the range is selected by
+ * the chips beneath it (in `WeightPage`).
  */
 @Component({
   selector: 'app-weight-chart',
@@ -23,15 +23,15 @@ import {
   host: { class: 'weight-chart' },
 })
 export class WeightChart {
-  /** Vægten uden enhed, fx `'75'` eller `'74,5'`. */
+  /** The weight without a unit, e.g. `'75'` or `'74,5'`. */
   readonly weightText = input.required<string>();
-  /** Kurvens punkter i kg, ældste først. */
+  /** The curve's points in kg, oldest first. */
   readonly seriesKg = input.required<readonly number[]>();
   readonly goalWeightKg = input.required<number>();
   readonly goalWeightText = input.required<string>();
   /** `'Sidste 4 uger'`. */
   readonly rangeLabel = input.required<string>();
-  /** `'-4 uger'` – fodnotens venstre etiket. */
+  /** `'-4 uger'` – the footer's left-hand label. */
   readonly rangeStartLabel = input.required<string>();
   /** `'−2,6 kg'`. */
   readonly deltaText = input.required<string>();

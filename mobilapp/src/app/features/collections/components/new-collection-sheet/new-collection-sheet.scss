@@ -1,13 +1,13 @@
 @use 'mixins';
 
-/* Værten er kun en beholder – arkene lægger sig selv over app-roden. */
+/* The host is just a container – the sheets position themselves over the app root. */
 :host {
   display: contents;
 }
 
 .new-collection-sheet {
   &__name {
-    /* Arket lægger selv 12 px mellem overskrift og indhold – designet vil have 18 i alt. */
+    /* The sheet already adds 12px between the heading and the content – the design wants 18 total. */
     display: block;
     margin-top: var(--space-1-5);
   }

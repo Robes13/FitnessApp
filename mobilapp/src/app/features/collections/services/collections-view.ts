@@ -5,18 +5,21 @@ import { MEAL_TONES } from '../../../core/constants/meals';
 import { MealId, MealTone } from '../../../core/models/meal';
 import { CollectionsService } from '../../../core/services/collections';
 
-/** Præfikset foran en samlings id, når hele samlingen åbnes som ét "bundt". */
+/** The prefix in front of a collection's id when the whole collection opens as one "bundle". */
 export const BUNDLE_ID_PREFIX = 'col:';
+
+/** The icon on a dish that doesn't belong to any collection. */
+const RECIPE_FALLBACK_ICON: CollectionIconName = 'utensils';
 
 const EMPTY_SUBTITLE = 'Ingen varer endnu';
 const ALL_CHIP_LABEL = 'Alle';
 
-/** En række i listen på samlingsskærmen: et bundt, en løs vare eller en ret. */
+/** A row in the list on the collections screen: a bundle, a standalone food or a dish. */
 export interface CollectionEntry {
   readonly id: string;
   readonly title: string;
   readonly subtitle: string;
-  /** Den lille versale linje over titlen, fx `Morgenmad · 5 min`. */
+  /** The small uppercase line above the title, e.g. `Morgenmad · 5 min`. */
   readonly meta: string;
   readonly kcal: number;
   readonly protein: number;
@@ -24,20 +27,20 @@ export interface CollectionEntry {
   readonly tone: MealTone;
 }
 
-/** Filter-chip over listen. `id` er `null` på "Alle". */
+/** Filter chip above the list. `id` is `null` on "All". */
 export interface CollectionFilterChip {
   readonly id: string | null;
   readonly label: string;
 }
 
-/** Alt opskriftsskærmen skal bruge – uanset om kilden er en ret, et bundt eller en vare. */
+/** Everything the recipe screen needs – regardless of whether the source is a dish, a bundle or a food. */
 export interface RecipeDetail {
   readonly id: string;
   readonly title: string;
   readonly subtitle: string;
   readonly icon: CollectionIconName;
   readonly tone: MealTone;
-  /** Måltidet, "Log som spist under" starter på. */
+  /** The meal that "Log as eaten under" starts on. */
   readonly meal: MealId;
   readonly macros: Macros;
   readonly contents: readonly Ingredient[];
@@ -64,22 +67,22 @@ function sumMacros(parts: readonly Macros[]): Macros {
 }
 
 /**
- * Bygger samlingsskærmens rækker og opskriftsskærmens data ud fra `CollectionsService`.
+ * Builds the collections screen's rows and the recipe screen's data from `CollectionsService`.
  *
- * Designet blander tre slags rækker i én liste (`recipes` i `logic.js`): brugerens egne
- * samlinger vist som ét bundt, løse varer lagt i de faste samlinger, og retterne selv.
- * Rækkefølgen og filtreringen er en direkte oversættelse af `colsInView` / `userCols` /
- * `baseCols` derfra.
+ * The design mixes three kinds of rows into one list (`recipes` in `logic.js`): the user's own
+ * collections shown as a single bundle, standalone foods placed in the fixed collections, and the
+ * dishes themselves. The ordering and filtering is a direct translation of `colsInView` /
+ * `userCols` / `baseCols` from there.
  *
- * Farven er bundet til måltidet i stedet for designets samlings-id (`c1`–`c4`), fordi
- * modellen i `core` har et rigtigt `meal`-felt. Resultatet er det samme: morgenmad orange,
- * frokost grøn, aftensmad blå, snacks rød – også for brugerens egne samlinger.
+ * The color is tied to the meal instead of the design's collection id (`c1`–`c4`), because the
+ * model in `core` has a real `meal` field. The result is the same: breakfast orange, lunch green,
+ * dinner blue, snacks red – also for the user's own collections.
  */
 @Injectable({ providedIn: 'root' })
 export class CollectionsViewService {
   private readonly collections = inject(CollectionsService);
 
-  /** "Alle" efterfulgt af de fire faste samlinger. */
+  /** "All" followed by the fixed collections. None exist yet, so the list is short. */
   chips(): readonly CollectionFilterChip[] {
     return [
       { id: null, label: ALL_CHIP_LABEL },
@@ -90,8 +93,9 @@ export class CollectionsViewService {
   }
 
   /**
-   * Rækkerne for det valgte filter. `null` viser alt; ellers vises den valgte faste samling,
-   * dens løse varer, dens retter og brugerens egne samlinger med samme måltid.
+   * The rows for the selected filter. `null` shows everything; otherwise the selected fixed
+   * collection is shown, along with its standalone foods, its dishes and the user's own
+   * collections with the same meal.
    */
   entriesFor(selectedId: string | null): readonly CollectionEntry[] {
     const all = this.collections.collections();
@@ -111,7 +115,7 @@ export class CollectionsViewService {
     return [...bundles, ...items, ...recipes];
   }
 
-  /** Slår et rute-id op: en ret, et bundt (`col:<id>`) eller en løs vare. */
+  /** Looks up a route id: a dish, a bundle (`col:<id>`) or a standalone food. */
   detailFor(routeId: string): RecipeDetail | null {
     if (routeId.startsWith(BUNDLE_ID_PREFIX)) {
       const collection = this.collections.collectionById(routeId.slice(BUNDLE_ID_PREFIX.length));
@@ -128,7 +132,7 @@ export class CollectionsViewService {
     return owner && item ? this.itemDetail(owner, item) : null;
   }
 
-  // --- Rækker ---------------------------------------------------------------------------
+  // --- Rows ------------------------------------------------------------------------------
 
   private bundleEntry(collection: FoodCollection): CollectionEntry {
     const macros = sumMacros(collection.items);
@@ -165,15 +169,15 @@ export class CollectionsViewService {
       id: recipe.id,
       title: recipe.title,
       subtitle: recipe.subtitle,
-      meta: `${collection.name} · ${recipe.timeMinutes} min`,
+      meta: `${collection?.name ?? recipe.category} · ${recipe.timeMinutes} min`,
       kcal: recipe.kcal,
       protein: recipe.protein,
-      icon: collection.icon,
-      tone: MEAL_TONES[collection.meal],
+      icon: collection?.icon ?? RECIPE_FALLBACK_ICON,
+      tone: MEAL_TONES[recipe.meal],
     };
   }
 
-  // --- Opskriftsskærmen -----------------------------------------------------------------
+  // --- Recipe screen -----------------------------------------------------------------------
 
   private bundleDetail(collection: FoodCollection): RecipeDetail {
     return {
@@ -194,8 +198,8 @@ export class CollectionsViewService {
       id: recipe.id,
       title: recipe.title,
       subtitle: recipe.subtitle,
-      icon: collection.icon,
-      tone: MEAL_TONES[collection.meal],
+      icon: collection?.icon ?? RECIPE_FALLBACK_ICON,
+      tone: MEAL_TONES[recipe.meal],
       meal: recipe.meal,
       macros: { kcal: recipe.kcal, protein: recipe.protein, carbs: recipe.carbs, fat: recipe.fat },
       contents: recipe.ingredients,
@@ -215,6 +219,7 @@ export class CollectionsViewService {
     };
   }
 
+  /** The name of the fixed collection for the meal. Empty until the backend provides the collections. */
   private baseNameFor(meal: MealId): string {
     return this.collections.baseCollections().find((c) => c.meal === meal)?.name ?? '';
   }

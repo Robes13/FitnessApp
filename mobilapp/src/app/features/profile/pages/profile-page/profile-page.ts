@@ -19,11 +19,11 @@ import { ProfileEditRowId } from '../../services/profile-edit';
 import { ProfileRowsService } from '../../services/profile-rows';
 
 /**
- * Profilskærmen: avatar og nøgletal øverst, derefter "Min plan", "Konto", præstationerne og
- * "Log ud". Alle rækker åbner det samme redigeringsark, som kender sin egen variant.
+ * The profile screen: avatar and key figures at the top, then "Min plan", "Konto", the
+ * achievements, and "Log ud". All rows open the same edit sheet, which knows its own variant.
  *
- * Siden ligger uden for tab-rammen (den åbnes fra avataren på Hjem), så den har ingen
- * friplads til tab baren og går tilbage til Hjem.
+ * The page sits outside the tab shell (it's opened from the avatar on Home), so it doesn't
+ * reserve space for the tab bar and navigates back to Home instead.
  */
 @Component({
   selector: 'app-profile-page',

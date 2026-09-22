@@ -1,17 +1,21 @@
 import { TestBed } from '@angular/core/testing';
-import { DEMO_PROFILE_DEFAULTS } from '../../../core/constants/demo-data';
+import { DEFAULT_PROFILE } from '../../../core/constants/profile-defaults';
 import { STORAGE_KEY } from '../../../core/constants/storage-key';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
-import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
+import { weighHistory } from '../../../core/testing/fixtures';
+import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { WeightViewService, weightChangeTone } from './weight-view';
 
 describe('WeightViewService', () => {
   let storage: FakeStorage;
 
-  function setup(profile: Partial<typeof DEMO_PROFILE_DEFAULTS> = {}): WeightViewService {
-    storage.setItem(STORAGE_KEY.PROFILE, JSON.stringify({ ...DEMO_PROFILE_DEFAULTS, ...profile }));
+  function setup(profile: Partial<typeof DEFAULT_PROFILE> = {}): WeightViewService {
+    storage.setItem(STORAGE_KEY.PROFILE, JSON.stringify({ ...DEFAULT_PROFILE, ...profile }));
+    if (storage.getItem(STORAGE_KEY.WEIGHT_LOG) === null) {
+      storage.setItem(STORAGE_KEY.WEIGHT_LOG, JSON.stringify(weighHistory(TEST_NOW)));
+    }
     TestBed.configureTestingModule({
       providers: [provideCoreTestEnvironment({ storage }), WeightViewService],
     });
@@ -88,15 +92,16 @@ describe('WeightViewService', () => {
 
     expect(view.rangeLabel()).toBe('Sidste 4 uger');
     expect(view.rangeStartLabel()).toBe('-4 uger');
-    expect(view.seriesKg()).toHaveLength(12);
+    expect(view.seriesKg()).toEqual([76.1, 75.6, 75]);
     expect(view.rangeDeltaTone()).toBe('positive');
-    expect(view.rangeDeltaText()).toMatch(/^−\d+,\d kg$/);
+    expect(view.rangeDeltaText()).toBe('−1,1 kg');
 
     view.selectRange('1u');
 
     expect(view.range()).toBe('1u');
     expect(view.rangeLabel()).toBe('Sidste uge');
     expect(view.rangeStartLabel()).toBe('-uge');
+    expect(view.seriesKg()).toEqual([75]);
   });
 
   it('viser vejningerne med forskel til den forrige og "Start" på den ældste', () => {

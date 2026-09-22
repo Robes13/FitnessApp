@@ -36,11 +36,8 @@ Tilbage-knappen går ét trin tilbage; fra `email` (og fra `done`) videre til `/
   `FORGOT_PASSWORD_DONE_DELAY_MS` (1400 ms) og logger derefter ind med
   `SessionService.login()`. `takeUntilDestroyed` rydder timeren, hvis siden forlades inden, og
   et fejlet login sender brugeren tilbage til trin 3 med fejlteksten.
-  Loginet bruger profilens **rå** brugernavn (`profile().username`), ikke `displayName()` –
-  `SessionService.login()` gemmer det, den får, så demo-navnet "Mads" ville ellers blive skrevet
-  ind i en tom profil som brugerens rigtige brugernavn. Er brugernavnet tomt, er der intet at
-  logge ind med (`AuthApi.login('')` fejler), så siden sender i stedet brugeren til `/login`
-  efter ventetiden.
+  Loginet bruger profilens gemte brugernavn (`profile().username`). Er det tomt, er der intet
+  at logge ind med, så siden sender i stedet brugeren til `/login` efter ventetiden.
 
 ## Kendte afvigelser
 

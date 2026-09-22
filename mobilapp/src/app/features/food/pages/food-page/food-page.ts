@@ -26,30 +26,30 @@ import { FoodMealGroup } from '../../components/food-meal-group/food-meal-group'
 import { DEFAULT_MEAL, FoodViewService } from '../../services/food-view';
 
 /**
- * Query-parameteren, Hjem åbner arket med. Angulars compiler kræver en literal i
- * `input(…, { alias })` og kan ikke slå en konstant op, så navnet står også skrevet ud dér.
- * Typeannotationen her fejler i build, hvis `QUERY_PARAM.ADD_MEAL` ændres, så de to
- * steder ikke kan komme fra hinanden.
+ * The query parameter Home opens the sheet with. Angular's compiler requires a literal in
+ * `input(…, { alias })` and can't look up a constant, so the name is also spelled out there.
+ * The type annotation here fails the build if `QUERY_PARAM.ADD_MEAL` changes, so the two
+ * places can't drift apart.
  */
 const ADD_MEAL_PARAM: 'tilfoej' = QUERY_PARAM.ADD_MEAL;
 
 /**
- * Designets kaloriering: 84 px boks, streg 8,4 px (designets 10 enheder i en
- * 100-enheders viewBox skaleret ned til 84 px).
+ * The design's calorie ring: 84px box, 8.4px stroke (the design's 10 units in a
+ * 100-unit viewBox scaled down to 84px).
  */
 const KCAL_RING_DIAMETER = 84;
 const KCAL_RING_STROKE_WIDTH = 8.4;
 
 /**
- * Mad-skærmen: dagens kalorier og makroer, de fire måltidsgrupper og vejene ind i loggen –
- * "Tilføj mad"-arket og stregkodescanneren.
+ * The Mad screen: today's calories and macros, the four meal groups and the ways into the log –
+ * the "Add food" sheet and the barcode scanner.
  *
- * Siden ejer kun UI-tilstanden omkring arket (åbent, valgt måltid, vare under redigering).
- * Alle tal kommer fra `FoodViewService`, og loggen ændres udelukkende gennem `FoodLogService`.
+ * The page only owns the UI state around the sheet (open, selected meal, food being edited).
+ * All numbers come from `FoodViewService`, and the log is only ever changed through `FoodLogService`.
  *
- * `/mad?tilfoej=<måltid>` (fra Hjem) åbner arket på det måltid. Parameteren bindes som input
- * (`withComponentInputBinding()`) og fjernes fra URL'en igen, så en genindlæsning eller et
- * tilbage-tryk ikke åbner arket på ny.
+ * `/mad?tilfoej=<meal>` (from Home) opens the sheet on that meal. The parameter is bound as input
+ * (`withComponentInputBinding()`) and removed from the URL again, so a reload or a back press
+ * doesn't reopen the sheet.
  */
 @Component({
   selector: 'app-food-page',
@@ -69,7 +69,7 @@ const KCAL_RING_STROKE_WIDTH = 8.4;
   host: { class: 'food-page' },
 })
 export class FoodPage {
-  /** `?tilfoej=<måltid>` – ukendte værdier ignoreres. Aliaset er `ADD_MEAL_PARAM`. */
+  /** `?tilfoej=<meal>` – unknown values are ignored. The alias is `ADD_MEAL_PARAM`. */
   readonly addMealParam = input<string | undefined>(undefined, { alias: 'tilfoej' });
 
   protected readonly view = inject(FoodViewService);
@@ -86,7 +86,7 @@ export class FoodPage {
   protected readonly pickerStartStep = signal<FoodPickerStartStep>('search');
   protected readonly scannerOpen = signal(false);
 
-  /** Måltidet, scanneren gemmer under – teksten hører til scannerens CTA. */
+  /** The meal the scanner saves under – the text belongs to the scanner's CTA. */
   protected readonly scannerMealLabel = computed(() => this.view.mealLabel(this.addMeal()));
 
   constructor() {
@@ -96,7 +96,7 @@ export class FoodPage {
         return;
       }
       untracked(() => this.startAdd(meal, 'search'));
-      // Fjern kun vores egen parameter, så et genbesøg (eller tilbage) ikke åbner arket igen.
+      // Only remove our own parameter, so a revisit (or back) doesn't reopen the sheet.
       void this.router.navigate([], {
         relativeTo: this.route,
         queryParams: { [ADD_MEAL_PARAM]: null },
@@ -106,14 +106,14 @@ export class FoodPage {
     });
   }
 
-  // --- Arket ---------------------------------------------------------------------------------
+  // --- The sheet -------------------------------------------------------------------------------
 
-  /** "Tilføj mad" – beholder det måltid, arket sidst stod på (designets `openAdd`). */
+  /** "Add food" – keeps the meal the sheet was last on (the design's `openAdd`). */
   protected openAdd(): void {
     this.startAdd(this.addMeal(), 'search');
   }
 
-  /** "+ Tilføj til <måltid>" i en måltidsgruppe. */
+  /** "+ Add to <meal>" in a meal group. */
   protected openAddFor(meal: MealId): void {
     this.startAdd(meal, 'search');
   }
@@ -134,7 +134,7 @@ export class FoodPage {
     this.foodLog.remove(entry.logId);
   }
 
-  /** Én færdig vare fra arket: opdatér den redigerede post, ellers læg den i loggen. */
+  /** A finished food from the sheet: update the edited entry, otherwise add it to the log. */
   protected onSelected(item: FoodItem): void {
     const editing = this.editEntry();
     if (editing) {
@@ -149,11 +149,11 @@ export class FoodPage {
     this.foodLog.addCustomFood(toCustomFoodInput(item));
   }
 
-  // --- Scanneren -----------------------------------------------------------------------------
+  // --- The scanner -----------------------------------------------------------------------------
 
   /**
-   * Scanneren lægger sig oven på arket uden at lukke det, så et tryk på ✕ i scanneren
-   * fører tilbage til arket – som i designet, hvor `openScan` ikke rører `addOpen`.
+   * The scanner sits on top of the sheet without closing it, so tapping ✕ in the scanner
+   * leads back to the sheet – as in the design, where `openScan` doesn't touch `addOpen`.
    */
   protected openScanner(): void {
     this.scannerOpen.set(true);
@@ -164,7 +164,7 @@ export class FoodPage {
     this.closeAdd();
   }
 
-  /** "Ukendt vare" gemt: den bliver en egen vare og lægges samtidig i loggen. */
+  /** "Unknown food" saved: it becomes a custom food and is added to the log at the same time. */
   protected onScanCustomSaved(item: FoodItem): void {
     this.foodLog.add(this.foodLog.addCustomFood(toCustomFoodInput(item)), this.addMeal());
     this.closeAdd();
@@ -190,7 +190,7 @@ export class FoodPage {
   }
 }
 
-/** `FoodLogService.addCustomFood` sætter selv id og `isCustom`. */
+/** `FoodLogService.addCustomFood` sets `id` and `isCustom` itself. */
 function toCustomFoodInput(item: FoodItem): Omit<FoodItem, 'id' | 'isCustom'> {
   return {
     name: item.name,

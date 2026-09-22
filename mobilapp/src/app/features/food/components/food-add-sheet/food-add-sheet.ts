@@ -30,11 +30,11 @@ import {
 } from '../../../../shared/components/ui-segmented-control/ui-segmented-control';
 import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
 
-/** Designets `addTab`: varerne fra søgningen eller brugerens samlinger. */
+/** The design's `addTab`: the foods from search or the user's collections. */
 export type AddSheetTab = 'varer' | 'samlinger';
 
 const DEFAULT_TAB: AddSheetTab = 'varer';
-/** Vælgerens trin, indtil den er rejst (den starter altid i søgningen). */
+/** The picker's step until it has traveled (it always starts on search). */
 const DEFAULT_PICKER_STEP: FoodPickerStep = 'search';
 
 const TAB_OPTIONS: readonly SegmentOption<AddSheetTab>[] = [
@@ -42,7 +42,7 @@ const TAB_OPTIONS: readonly SegmentOption<AddSheetTab>[] = [
   { value: 'samlinger', label: 'Samlinger' },
 ];
 
-/** Designets `addSheetVerb` / `addSheetWhat`. */
+/** The design's `addSheetVerb` / `addSheetWhat`. */
 const TITLE = {
   add: 'Tilføj',
   edit: 'Rediger',
@@ -57,11 +57,11 @@ const CTA_VERB = { add: 'Tilføj', edit: 'Gem' } as const satisfies Record<
 const COLLECTIONS_EMPTY_MESSAGE =
   'Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her med ét tryk.';
 
-/** Én samling i "Samlinger"-fanen – hele samlingen logges som én vare. */
+/** A collection in the "Collections" tab – the whole collection is logged as one food. */
 interface CollectionRowView {
   readonly id: string;
   readonly name: string;
-  /** Designets `ac.sub`: navnene på retterne og varerne i samlingen. */
+  /** The design's `ac.sub`: the names of the dishes and foods in the collection. */
   readonly subtitle: string;
   readonly kcalLabel: string;
   readonly icon: CollectionIconName;
@@ -70,16 +70,16 @@ interface CollectionRowView {
 }
 
 /**
- * "Tilføj mad"-arket (designets `addOpen`): måltids-chips, fanerne Varer/Samlinger og
- * enten `app-food-picker` eller listen over samlinger.
+ * The "Add food" sheet (the design's `addOpen`): meal chips, the Foods/Collections tabs and
+ * either `app-food-picker` or the list of collections.
  *
- * Fanerne hører kun til søgetrinnet, mens måltids-chipsene også bliver stående på
- * portionstrinnet. Begge dele skjules i "Ny egen vare" og når en allerede logget vare
- * redigeres – så er måltidet givet, og arket hedder "Rediger vare".
+ * The tabs only belong to the search step, while the meal chips also stay put on the portion
+ * step. Both are hidden in "New custom food" and when an already logged food is being edited –
+ * then the meal is given, and the sheet is called "Edit food".
  *
- * Indholdet ligger bag `@if (open())`, så vælgeren starter forfra, hver gang arket åbnes.
- * Arket ejer ingen data: alt går videre til siden via `selected`, `customFoodCreated` og
- * `scanRequested`.
+ * The content sits behind `@if (open())`, so the picker starts over every time the sheet opens.
+ * The sheet owns no data: everything is passed on to the page via `selected`, `customFoodCreated`
+ * and `scanRequested`.
  */
 @Component({
   selector: 'app-food-add-sheet',
@@ -91,15 +91,15 @@ interface CollectionRowView {
 })
 export class FoodAddSheet {
   readonly open = input.required<boolean>();
-  /** Måltidet varen logges under. Arket ændrer den selv, når brugeren vælger en chip. */
+  /** The meal the food is logged under. The sheet changes it itself when the user picks a chip. */
   readonly meal = model.required<MealId>();
-  /** Sat, når en allerede logget vare redigeres: vælgeren åbner direkte på portionstrinnet. */
+  /** Set when an already logged food is being edited: the picker opens directly on the portion step. */
   readonly editEntry = input<LoggedFood | null>(null);
-  /** Vælgerens starttrin – scanneren kan sende brugeren direkte til "Ny egen vare". */
+  /** The picker's starting step – the scanner can send the user straight to "New custom food". */
   readonly startStep = input<FoodPickerStartStep>('search');
 
   readonly closed = output<void>();
-  /** En færdig vare, klar til loggen (fra vælgeren eller fra en hel samling). */
+  /** A finished food, ready for the log (from the picker or from a whole collection). */
   readonly selected = output<FoodItem>();
   readonly customFoodCreated = output<FoodItem>();
   readonly scanRequested = output<void>();
@@ -110,12 +110,12 @@ export class FoodAddSheet {
   protected readonly tabOptions = TAB_OPTIONS;
   protected readonly emptyMessage = COLLECTIONS_EMPTY_MESSAGE;
 
-  /** Hver åbning (og lukning) starter forfra på Varer-fanen. */
+  /** Every open (and close) starts over on the Foods tab. */
   protected readonly tab = linkedSignal<boolean, AddSheetTab>({
     source: this.open,
     computation: () => DEFAULT_TAB,
   });
-  /** Vælgeren ejer sit eget trin og oplyser det i `currentStep`; arket spejler det ikke. */
+  /** The picker owns its own step and exposes it via `currentStep`; the sheet doesn't mirror it. */
   private readonly picker = viewChild(FoodPicker);
   protected readonly pickerStep = computed<FoodPickerStep>(
     () => this.picker()?.currentStep() ?? DEFAULT_PICKER_STEP,
@@ -134,15 +134,15 @@ export class FoodAddSheet {
   );
 
   /**
-   * Designets `showMealPicks`: chipsene bliver stående på portionstrinnet, så måltidet kan
-   * skiftes, lige inden varen logges. De forsvinder kun i "Ny egen vare" og under redigering.
+   * The design's `showMealPicks`: the chips stay put on the portion step, so the meal can be
+   * changed right before the food is logged. They only disappear in "New custom food" and while editing.
    */
   protected readonly showMealPicks = computed(
     () => !this.isEditing() && this.pickerStep() !== 'new-food',
   );
-  /** Designets `addTabsVisible`: fanerne hører kun til søgetrinnet. */
+  /** The design's `addTabsVisible`: the tabs only belong to the search step. */
   protected readonly showTabs = computed(() => !this.isEditing() && this.pickerStep() === 'search');
-  /** Redigering går altid gennem vælgeren, uanset hvilken fane der sidst var valgt. */
+  /** Editing always goes through the picker, regardless of which tab was last selected. */
   protected readonly showPicker = computed(() => this.isEditing() || this.tab() === 'varer');
 
   protected readonly collectionRows = computed<readonly CollectionRowView[]>(() =>
@@ -169,7 +169,7 @@ export class FoodAddSheet {
     return MEALS.find((meal) => meal.id === id)?.label ?? '';
   }
 
-  /** Designets `colsFull`: kun samlinger med indhold vises, og de logges som én samlet vare. */
+  /** The design's `colsFull`: only collections with content are shown, and they're logged as one combined food. */
   private toRow(collection: FoodCollection): CollectionRowView | null {
     const totals = this.collections.collectionTotals(collection);
     if (totals.count === 0) {

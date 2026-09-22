@@ -56,16 +56,4 @@
       {{ checkLabel() }}
     </button>
   </div>
-
-  @if (showSkip()) {
-    <button
-      app-ui-button
-      type="button"
-      variant="subtle"
-      size="sm"
-      (click)="continueWithoutVerification()"
-    >
-      Fortsæt uden bekræftelse
-    </button>
-  }
 </app-ui-sheet>

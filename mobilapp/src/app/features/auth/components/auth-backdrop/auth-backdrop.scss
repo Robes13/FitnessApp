@@ -1,4 +1,4 @@
-/* Værten bærer `.auth-backdrop`; kun `:host` rammer den under emuleret encapsulation. */
+/* The host carries `.auth-backdrop`; only `:host` targets it under emulated encapsulation. */
 :host {
   position: absolute;
   inset: 0;
@@ -14,7 +14,7 @@
     object-position: top;
   }
 
-  /* Designets forløb ned over fotoet (linje 116) – mørkt i begge temaer. */
+  /* The design's gradient over the photo (line 116) – dark in both themes. */
   &__gradient {
     position: absolute;
     inset: 0;

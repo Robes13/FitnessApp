@@ -1,8 +1,8 @@
 @use 'mixins';
 
 /*
- * Værten bærer `.login-page`; kun `:host` rammer den under emuleret encapsulation.
- * Fotoet ligger absolut bagved, og indholdet lægges ovenpå i et almindeligt flow.
+ * The host carries `.login-page`; only `:host` targets it under emulated encapsulation.
+ * The photo sits absolutely behind it, and the content is laid on top in normal flow.
  */
 :host {
   position: relative;
@@ -39,7 +39,7 @@
     letter-spacing: var(--letter-spacing-wider);
   }
 
-  /* Skubber overskrift, felter og fodnote ned i bunden som i designet. */
+  /* Pushes the heading, fields and footnote down to the bottom, as in the design. */
   &__spacer {
     flex: 1;
   }

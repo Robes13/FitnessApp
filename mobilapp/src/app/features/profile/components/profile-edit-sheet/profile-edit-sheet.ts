@@ -51,19 +51,19 @@ interface PasswordForm {
   repeat: FormControl<string>;
 }
 
-/** Vises, hvis mock-backenden svarer med noget uventet. */
+/** Shown if the backend responds with something unexpected. */
 const GENERIC_ERROR = 'Adgangskoden kunne ikke gemmes. Prøv igen.';
 
 /**
- * "Rediger profil"-arket. Én komponent dækker alle designets `editDefs`-varianter:
+ * The "Rediger profil" sheet. One component covers all of the design's `editDefs` variants:
  *
- * - **options** – vælg mellem kort; valget gemmes med det samme, og arket lukker.
- * - **number** – −/+ omkring et talfelt, gemmes med "Gem".
+ * - **options** – pick between cards; the choice is saved immediately and the sheet closes.
+ * - **number** – −/+ around a number field, saved with "Gem".
  * - **text** – e-mail.
- * - **password** – to felter, der skal være ens og mindst 8 tegn. Adgangskoden hører ikke
- *   til profilen, så den sendes til mock-backenden; knappen viser spinner imens.
+ * - **password** – two fields that must match and be at least 8 characters. The password
+ *   isn't part of the profile, so it's sent to the backend; the button shows a spinner meanwhile.
  *
- * Forælderen ejer, hvilken række der er åben (`row`); `null` betyder lukket.
+ * The parent owns which row is open (`row`); `null` means closed.
  */
 @Component({
   selector: 'app-profile-edit-sheet',
@@ -150,7 +150,7 @@ export class ProfileEditSheet {
   protected readonly canSavePassword = computed(() => this.passwordStatus() && !this.saving());
 
   constructor() {
-    // Hver gang arket åbner på en ny række, fyldes det rigtige felt med den nuværende værdi.
+    // Every time the sheet opens on a new row, the right field is filled with the current value.
     effect(() => {
       const definition = this.definition();
       this.saving.set(false);
@@ -199,7 +199,7 @@ export class ProfileEditSheet {
     this.closed.emit();
   }
 
-  /** −/+ flytter ét trin ad gangen og klemmer inden for feltets grænser (designets `editMinus`). */
+  /** −/+ moves one step at a time and clamps within the field's bounds (the design's `editMinus`). */
   protected stepNumber(direction: -1 | 1): void {
     const definition = this.numberDefinition();
     if (definition === null) {

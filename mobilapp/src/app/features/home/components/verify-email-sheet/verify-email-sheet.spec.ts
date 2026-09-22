@@ -4,7 +4,7 @@ import { SessionService } from '../../../../core/services/session';
 import { VerifyEmailSheet } from './verify-email-sheet';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 
-/** Arket tegnes i den rigtige (jsdom-)DOM; kun svartid og "nu" overstyres. */
+/** The sheet renders in the real (jsdom) DOM; only response time and "now" are overridden. */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
 function normalize(value: string | null | undefined): string {
@@ -57,41 +57,29 @@ describe('VerifyEmailSheet', () => {
     );
   });
 
-  it('confirms that a new code has been sent', async () => {
+  it('reports that a new code could not be sent without a backend', async () => {
     buttonWithText('Gensend kode')?.click();
     await settle();
 
-    expect(buttonWithText('Kode sendt ✓')).toBeDefined();
-    expect(normalize(panel()?.querySelector('.verify-email-sheet__hint')?.textContent)).toBe(
-      'Ny kode sendt – tjek også spam.',
+    expect(buttonWithText('Kode sendt ✓')).toBeUndefined();
+    expect(normalize(panel()?.querySelector('app-ui-form-error')?.textContent)).toBe(
+      'Noget gik galt. Prøv igen.',
     );
   });
 
-  it('reports that the mail is still unconfirmed', async () => {
-    await checkAgain();
-
-    expect(normalize(panel()?.querySelector('.verify-email-sheet__check')?.textContent)).toBe(
-      'Ikke bekræftet',
-    );
-  });
-
-  it('offers the demo shortcut after two failed checks', async () => {
+  it('reports that the check could not be made without a backend', async () => {
     const session = TestBed.inject(SessionService);
-    expect(buttonWithText('Fortsæt uden bekræftelse')).toBeUndefined();
 
     await checkAgain();
-    expect(buttonWithText('Fortsæt uden bekræftelse')).toBeUndefined();
 
-    // Anden gang hedder knappen "Ikke bekræftet".
-    buttonWithText('Ikke bekræftet')?.click();
-    await settle();
-
-    const skip = buttonWithText('Fortsæt uden bekræftelse');
-    expect(skip).toBeDefined();
-
-    skip?.click();
-    await settle();
-    expect(session.isEmailVerified()).toBe(true);
+    // A failed call isn't the same as "not verified" – the button stays as is.
+    expect(normalize(panel()?.querySelector('.verify-email-sheet__check')?.textContent)).toBe(
+      'Tjek igen',
+    );
+    expect(normalize(panel()?.querySelector('app-ui-form-error')?.textContent)).toBe(
+      'Noget gik galt. Prøv igen.',
+    );
+    expect(session.isEmailVerified()).toBe(false);
   });
 
   it('rejects an invalid e-mail in the inline editor', async () => {

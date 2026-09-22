@@ -1,20 +1,20 @@
 import { roundTo } from '../../../../core/utils/math';
 
 /**
- * Vægtgrafens geometri – en port af designets `pts` / `linePath` / `areaPath` / `goalLineY`.
+ * The weight chart's geometry – a port of the design's `pts` / `linePath` / `areaPath` / `goalLineY`.
  *
- * Alle tal er SVG-enheder i `viewBox="0 0 320 110"`: kurven fylder x 0–320 og y 10–100, og de
- * nederste 10 enheder er luft til den afrundede endeprik. Skalaen strækkes altid, så både alle
- * punkter og mållinjen er med (±0,5 kg luft).
+ * All numbers are SVG units in `viewBox="0 0 320 110"`: the curve fills x 0–320 and y 10–100, and
+ * the bottom 10 units are room for the rounded end dot. The scale always stretches so both all
+ * points and the goal line are included (±0.5 kg padding).
  */
 export interface WeightChartGeometry {
-  /** `M…L…` gennem alle punkter. */
+  /** `M…L…` through all points. */
   readonly linePath: string;
-  /** Samme kurve lukket ned til bundlinjen – fyldes med gradienten. */
+  /** The same curve closed down to the baseline – filled with the gradient. */
   readonly areaPath: string;
-  /** Den stiplede mållinjes y. */
+  /** The y of the dashed goal line. */
   readonly goalLineY: number;
-  /** Endeprikkens position (sidste punkt). */
+  /** The end dot's position (last point). */
   readonly lastX: number;
   readonly lastY: number;
 }
@@ -22,13 +22,13 @@ export interface WeightChartGeometry {
 export const WEIGHT_CHART_WIDTH = 320;
 export const WEIGHT_CHART_HEIGHT = 110;
 
-/** Kurvens bundlinje i viewBox'en. */
+/** The curve's baseline in the viewBox. */
 const BASELINE_Y = 100;
-/** Kurvens lodrette udstrækning. */
+/** The curve's vertical extent. */
 const PLOT_HEIGHT = 90;
-/** Luft over og under yderpunkterne, så kurven ikke rører kanten. */
+/** Padding above and below the outer points, so the curve doesn't touch the edge. */
 const PADDING_KG = 0.5;
-/** Én decimal i path-data holder DOM'en læsbar. */
+/** One decimal in the path data keeps the DOM readable. */
 
 const EMPTY_GEOMETRY: WeightChartGeometry = {
   linePath: '',

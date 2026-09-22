@@ -15,7 +15,7 @@ const ROUTES: Routes = [
   { path: APP_ROUTE.COLLECTIONS, children: COLLECTIONS_ROUTES },
 ];
 
-/** Siden skal tegnes i den rigtige jsdom-DOM, så kun tid og mock-forsinkelser overstyres. */
+/** The page must render in the real jsdom DOM, so only time and mock delays are overridden. */
 const TEST_PROVIDERS: (Provider | EnvironmentProviders)[] = [
   provideRouter(ROUTES, withComponentInputBinding()),
   ...provideComponentTestEnvironment(),
@@ -45,7 +45,7 @@ describe('CollectionsPage', () => {
     return { harness, page, texts, click };
   }
 
-  it('renders the title, the filter chips and every recipe', async () => {
+  it('renders the title and an empty list until the user creates something', async () => {
     const { page, texts } = await setup();
 
     expect(normalize(page.querySelector('.collections-page__title')?.textContent)).toBe(
@@ -54,34 +54,23 @@ describe('CollectionsPage', () => {
     expect(normalize(page.querySelector('.collections-page__subtitle')?.textContent)).toBe(
       'Dine varer og retter – log dem direkte som spist.',
     );
-    expect(texts('.collections-page__chip')).toEqual([
-      'Alle',
-      'Morgenmad',
-      'Frokost',
-      'Aftensmad',
-      'Snacks',
-    ]);
-    expect(texts('.collections-page__card-title')).toHaveLength(8);
+    // Dishes and fixed collections must come from the backend, so only "All" remains.
+    expect(texts('.collections-page__chip')).toEqual(['Alle']);
+    expect(texts('.collections-page__card-title')).toEqual([]);
   });
 
-  it('filters the list when a chip is picked', async () => {
-    const { page, texts, click } = await setup();
-    const chips = page.querySelectorAll<HTMLButtonElement>('.collections-page__chip');
-
-    await click(chips[2]);
-
-    expect(texts('.collections-page__card-title')).toEqual([
-      'Kyllingesalat med kikærter',
-      'Tunwrap med rødkål',
-    ]);
-  });
-
-  it('opens the recipe screen when a card is tapped', async () => {
+  it('opens a user collection when its card is tapped', async () => {
+    const created = TestBed.inject(CollectionsService).create({
+      name: 'Meal prep',
+      icon: 'bag',
+      meal: 'frokost',
+      items: [],
+    });
     const { page, click } = await setup();
 
     await click(page.querySelector('.collections-page__card'));
 
-    expect(TestBed.inject(Router).url).toBe(APP_PATH.recipe('skyr'));
+    expect(TestBed.inject(Router).url).toBe(APP_PATH.recipe(`col:${created.id}`));
   });
 
   it('shows a user collection as one bundle row', async () => {
@@ -104,7 +93,7 @@ describe('CollectionsPage', () => {
     const { texts } = await setup();
 
     expect(texts('.collections-page__card-title')[0]).toBe('Meal prep');
-    expect(texts('.collections-page__meta')[0]).toBe('Frokost · 1 vare');
+    expect(texts('.collections-page__meta')[0]).toBe('1 vare');
   });
 
   it('opens the new-collection sheet from the plus button', async () => {

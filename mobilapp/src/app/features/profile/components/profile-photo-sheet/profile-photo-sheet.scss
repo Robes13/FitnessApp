@@ -11,7 +11,7 @@
     margin-top: var(--space-4);
   }
 
-  /* Trækfladen: cirklen er avataren, rammen og markøren hører til her. */
+  /* The drag surface: the circle is the avatar, the frame and cursor belong here. */
   &__crop {
     border: var(--border-width-medium) solid var(--color-accent-ring-strong);
     border-radius: var(--radius-circle);
@@ -66,7 +66,7 @@
     margin-top: var(--space-3);
   }
 
-  /* Designets 46 px – mellem `--size-control-sm` og `-md`, derfor knappens egen hook. */
+  /* The design's 46 px – between `--size-control-sm` and `-md`, hence the button's own hook. */
   &__action {
     --ui-button-min-height: var(--size-button-secondary);
 
@@ -75,7 +75,7 @@
     }
   }
 
-  /* Filvælgere kan ikke åbnes fra en knap – derfor et <label> med et skjult input. */
+  /* File pickers can't be opened from a button – hence a <label> with a hidden input. */
   &__replace,
   &__pick {
     position: relative;

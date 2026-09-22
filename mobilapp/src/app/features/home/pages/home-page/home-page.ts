@@ -19,18 +19,19 @@ import { HomeWeekRings } from '../../components/home-week-rings/home-week-rings'
 import { VerifyEmailSheet } from '../../components/verify-email-sheet/verify-email-sheet';
 import { HomeSummaryService } from '../../services/home-summary';
 
-/** Toasten er på skærmen i 3,4 s som i designet. */
+/** The toast stays on screen for 3.4 s, matching the design. */
 const CELEBRATION_DURATION_MS = 3400;
-/** Designets haptik, når dagsmålet rammes. */
+/** The design's haptic pattern for when the daily goal is hit. */
 const CELEBRATION_VIBRATION_MS: readonly number[] = [16, 45, 28];
 
 /**
- * Hjem: hilsen og avatar, ugens dagsringe, næste skridt, den valgte dags kort, målkortet
- * og ugens nøgletal.
+ * Home: greeting and avatar, the week's day rings, next step, the selected day's card,
+ * the goal card, and the week's key figures.
  *
- * Siden ejer fejrings-toasten: når dagens kalorier krydser målet, poppes den frem (med
- * vibration, hvor enheden kan), og timeren ryddes, når siden forlades. Rammes målet allerede,
- * inden siden åbnes, fejres der ikke – det er først overgangen, der tæller, som i designet.
+ * The page owns the celebration toast: when today's calories cross the goal, it pops up
+ * (with vibration where the device supports it), and the timer is cleared when the page is
+ * left. If the goal is already met before the page opens, there's no celebration – only the
+ * transition counts, as in the design.
  */
 @Component({
   selector: 'app-home-page',
@@ -58,7 +59,7 @@ export class HomePage {
   protected readonly isEmailVerified = this.session.isEmailVerified;
   protected readonly celebrating = signal(false);
 
-  /** `null` indtil første kørsel, så en allerede nået ring ikke fejres ved åbning. */
+  /** `null` until the first run, so an already-reached ring isn't celebrated on open. */
   private lastGoalReached: boolean | null = null;
   private celebrationTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -99,7 +100,7 @@ export class HomePage {
     try {
       navigator.vibrate?.([...CELEBRATION_VIBRATION_MS]);
     } catch {
-      // Vibration findes ikke på alle enheder; fejringen skal virke uden.
+      // Vibration isn't available on every device; the celebration should still work without it.
     }
   }
 }

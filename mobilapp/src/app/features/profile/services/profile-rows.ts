@@ -13,16 +13,17 @@ export interface ProfileRow {
   readonly value: string;
 }
 
-/** Designets `'–'` for en værdi, brugeren endnu ikke har valgt. */
+/** The design's `'–'` for a value the user hasn't chosen yet. */
 const EMPTY_VALUE = '–';
 const PASSWORD_MASK = '••••••••';
 
 /**
- * Rækkerne under "Min plan" og "Konto" på profilsiden – designets `profileRows` og
- * `accountRows`.
+ * The rows under "Min plan" and "Konto" on the profile page – the design's `profileRows`
+ * and `accountRows`.
  *
- * Tre rækker er betingede, præcis som i designet: "Målvægt" vises kun, når målet ikke er
- * "holde vægten", og "Længde"/"Intensitet" kun, når brugeren har mindst én træningsdag.
+ * Three rows are conditional, exactly as in the design: "Målvægt" only shows when the
+ * goal isn't "maintain weight", and "Længde"/"Intensitet" only when the user has at least
+ * one training day.
  */
 @Injectable({ providedIn: 'root' })
 export class ProfileRowsService {
@@ -79,12 +80,12 @@ export class ProfileRowsService {
     { id: 'units' as const, label: 'Enheder', value: this.unitsLabel() },
   ]);
 
-  /** Designets `profileEmail`: pladsholderen vises, indtil brugeren har skrevet sin mail. */
+  /** The design's `profileEmail`: the placeholder shows until the user has typed their e-mail. */
   readonly email = computed(() => this.profiles.profile().email || 'dig@mail.dk');
 
   readonly weightText = computed(() => formatWeightKg(this.profiles.profile().weightKg));
   readonly heightText = computed(() => String(Math.round(this.profiles.profile().heightCm)));
-  /** BMI vises altid med én decimal – designets `toFixed(1)`. */
+  /** BMI is always shown with one decimal – the design's `toFixed(1)`. */
   readonly bmiText = computed(() => formatDecimal(this.profiles.bmi(), 1));
 
   private readonly genderLabel = computed(() => {
@@ -97,7 +98,7 @@ export class ProfileRowsService {
     return UNIT_SYSTEMS.find((item) => item.id === units)?.description ?? EMPTY_VALUE;
   });
 
-  /** Målvægten holdes inden for de grænser, målet tillader (designets `gMin`/`gMax`). */
+  /** The goal weight is kept within the bounds the goal allows (the design's `gMin`/`gMax`). */
   private readonly goalWeightKg = computed(() => {
     const profile = this.profiles.profile();
     const bounds = this.calculator.goalWeightBounds(profile.goal, profile.weightKg);

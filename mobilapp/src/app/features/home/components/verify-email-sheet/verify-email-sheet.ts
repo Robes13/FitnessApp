@@ -22,23 +22,18 @@ interface VerifyEmailForm {
   email: FormControl<string>;
 }
 
-/** Vist i stedet for adressen, hvis profilen endnu ikke har en e-mail. */
+/** Shown in place of the address if the profile doesn't have an e-mail yet. */
 const EMAIL_FALLBACK = 'din mail';
 const INVALID_EMAIL_MESSAGE = 'Skriv en gyldig e-mail.';
 const REQUEST_FAILED_MESSAGE = 'Noget gik galt. Prøv igen.';
-/** Ét ekstra omdrejning pr. tjek, som designets `refreshRot`. */
+/** One extra rotation per check, matching the design's `refreshRot`. */
 const ROTATION_PER_CHECK_DEG = 360;
-/** Efter så mange forgæves tjek tilbydes demo-genvejen "Fortsæt uden bekræftelse". */
-const CHECKS_BEFORE_SKIP = 2;
-
 /**
- * "Tjek din mail" – arket, der låser Hjem, indtil e-mailen er bekræftet. Det kan ikke
- * lukkes (`hideClose`): hverken scrim, Escape eller en luk-knap afviser det.
+ * "Tjek din mail" – the sheet that locks Home until the e-mail is verified. It cannot be
+ * dismissed (`hideClose`): neither the scrim, Escape, nor a close button dismiss it.
  *
- * Brugeren kan rette sin mail, få en ny kode og trykke "Tjek igen". `AuthApi` er en attrap,
- * der altid svarer "ikke bekræftet", så efter to forgæves tjek vises **demo-genvejen**
- * "Fortsæt uden bekræftelse", der markerer mailen som bekræftet lokalt. Den skal fjernes,
- * når der kommer en rigtig backend.
+ * The user can correct their e-mail, request a new code, and press "Tjek igen". All three
+ * actions go through `SessionService` and fail until `AuthApi` has a real backend to talk to.
  */
 @Component({
   selector: 'app-verify-email-sheet',
@@ -92,7 +87,6 @@ export class VerifyEmailSheet {
     return this.failedChecks() > 0 ? 'Ikke bekræftet' : 'Tjek igen';
   });
   protected readonly rotation = computed(() => `${this.rotationDeg()}deg`);
-  protected readonly showSkip = computed(() => this.failedChecks() >= CHECKS_BEFORE_SKIP);
 
   protected toggleEmailEditor(): void {
     const opening = !this.editingEmail();
@@ -168,10 +162,5 @@ export class VerifyEmailSheet {
           this.errorMessage.set(REQUEST_FAILED_MESSAGE);
         },
       });
-  }
-
-  /** Demo-genvej: låser appen op uden en rigtig bekræftelse. */
-  protected continueWithoutVerification(): void {
-    this.session.markEmailVerified();
   }
 }

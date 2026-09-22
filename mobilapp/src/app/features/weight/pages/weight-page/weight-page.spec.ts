@@ -1,16 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DEMO_PROFILE_DEFAULTS } from '../../../../core/constants/demo-data';
+import { DEFAULT_PROFILE } from '../../../../core/constants/profile-defaults';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import { WeightLogService } from '../../../../core/services/weight-log';
+import { weighHistory } from '../../../../core/testing/fixtures';
 import {
+  TEST_NOW,
   provideComponentTestEnvironment,
   resetComponentTestStorage,
 } from '../../../../core/testing/test-providers';
 import { WeightPage } from './weight-page';
 
 /**
- * Komponenttests bruger `provideComponentTestEnvironment()`: jsdom's rigtige `DOCUMENT`,
- * fastfrosset `NOW` og 0 ms mock-forsinkelser. Storage seedes før hver test.
+ * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`,
+ * a frozen `NOW` and 0 ms mock delays. Storage is seeded before each test.
  */
 describe('WeightPage', () => {
   let fixture: ComponentFixture<WeightPage>;
@@ -26,7 +28,8 @@ describe('WeightPage', () => {
 
   beforeEach(() => {
     resetComponentTestStorage({
-      [STORAGE_KEY.PROFILE]: { ...DEMO_PROFILE_DEFAULTS, goal: 'tabe' },
+      [STORAGE_KEY.PROFILE]: { ...DEFAULT_PROFILE, goal: 'tabe' },
+      [STORAGE_KEY.WEIGHT_LOG]: weighHistory(TEST_NOW),
     });
   });
 

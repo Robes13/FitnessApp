@@ -4,42 +4,34 @@ Fanen **Historik** (`/historik`): én liste over dagens og de seneste dages post
 med chips (Alle · Vejning · Mad · Mål) og grupperet pr. dag. Skærmen er designets
 `tabHistorik` (HTML-linje 1066–1096) og logikken bag `historyGroups` / `histFilters` / `relog`.
 
-| Fil                             | Indhold                                                                                      |
-| ------------------------------- | -------------------------------------------------------------------------------------------- |
-| `history.routes.ts`             | `HISTORY_ROUTES` – én rute (`''`) med `HistoryPage`.                                         |
-| `models/history.ts`             | `HistoryEntry`, `HistoryGroup`, `HistoryFilter` og de tre posttyper.                         |
-| `services/history.ts`           | `HistoryService` – bygger, filtrerer og grupperer posterne; holder filter og gen-log-status. |
-| `services/history-demo-data.ts` | Designets syntetiske måltider, målændringer og dagsopsamlinger.                              |
-| `pages/history-page/`           | Skærmen.                                                                                     |
+| Fil                   | Indhold                                                                                      |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| `history.routes.ts`   | `HISTORY_ROUTES` – én rute (`''`) med `HistoryPage`.                                         |
+| `models/history.ts`   | `HistoryEntry`, `HistoryGroup`, `HistoryFilter` og de tre posttyper.                         |
+| `services/history.ts` | `HistoryService` – bygger, filtrerer og grupperer posterne; holder filter og gen-log-status. |
+| `pages/history-page/` | Skærmen.                                                                                     |
 
-## Data: hvad er rigtigt, og hvad er demo
+## Data
 
-Kun **vejninger** er rigtige data – de kommer fra `WeightLogService`, så en ny vejning på
-Vægt-fanen dukker op i historikken med det samme. Resten er prototypens demo-indhold:
+Alle poster er brugerens egne:
 
-| Type                  | Kilde                                       | Bemærkning                                             |
-| --------------------- | ------------------------------------------- | ------------------------------------------------------ |
-| Vejning               | `WeightLogService.entries()`                | Nyeste får underteksten `Morgen, før morgenmad`.       |
-| Dagsopsamling (`mad`) | `DEMO_DAY_SUMMARIES` + `UserProfileService` | `Dagsmål nået` / `Over dagsmål` mod dagens kaloriemål. |
-| Måltid (`mad`)        | `DEMO_HISTORY_MEALS`                        | Har `food` + `meal` og kan derfor logges igen.         |
-| Mål (`maal`)          | `DEMO_GOAL_CHANGES` + profilens tal         | Kaloriemål, målvægt, højde og tempo.                   |
+| Type           | Kilde                        | Bemærkning                                                   |
+| -------------- | ---------------------------- | ------------------------------------------------------------ |
+| Vejning        | `WeightLogService.entries()` | Nyeste får underteksten `Seneste vejning`.                   |
+| Måltid (`mad`) | `FoodLogService.entries()`   | Har `food` + `meal` og kan derfor logges igen.               |
+| Mål (`maal`)   | –                            | Målændringer registreres ikke endnu; filteret er altid tomt. |
 
-Demo-dataene ligger i featuren – ikke i `core/constants/demo-data.ts` – fordi de kun bruges
-her og ikke er en del af appens delte tilstand.
+Madloggen dækker kun dagen i dag, og der findes ingen historik-backend, så listen er kort:
+dagens måltider plus de vejninger, brugeren har registreret. Har brugeren intet registreret,
+viser skærmen sin tomme tilstand.
+
+`maal`-filteret bliver stående, fordi målændringer er et rigtigt domænebegreb, backenden
+kommer til at levere – indtil da viser det den tomme tilstand.
 
 ## Rækkefølge og gruppering
 
-Prototypen fletter posterne i en fast rækkefølge:
-
-```
-histAll[0..2) → histMeals[0..2) → histMaal[0..1) → histAll[2..] → histMeals[2..] → histMaal[1..]
-```
-
-hvor `histAll` skifter mellem vejning og dagsopsamling. `HistoryService.buildEntries()` gør
-det samme og sorterer derefter **faldende på dato – ikke på klokkeslæt**. Sorteringen i
-JavaScript er stabil, så rækkefølgen inden for en dag følger flettningen, præcis som i
-prototypen (hvor alle poster lå kl. 12). Ville vi sortere på tidspunkt, ville en rigtig
-vejning kl. 10.30 hoppe om bag demo-posterne fra samme dag.
+`HistoryService.buildEntries()` lægger vejninger og måltider sammen og sorterer **faldende på
+tidspunkt**.
 
 Grupperne får designets etiket `I dag · 21. sep` / `I går · 20. sep` / `Tir. · 19. sep`
 (`formatWeekdayAbbreviated` + `formatDayMonth` fra `core/utils/date-format.ts`).

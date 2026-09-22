@@ -16,20 +16,20 @@ import { WeightLogList } from '../../components/weight-log-list/weight-log-list'
 import { WeightScaleScene } from '../../components/weight-scale-scene/weight-scale-scene';
 import { WEIGHT_STEP_KG, WeightViewService } from '../../services/weight-view';
 
-/** Hvor længe knappen viser "Gemt ✓" efter en vejning. */
+/** How long the button shows "Saved ✓" after a weigh-in. */
 const SAVED_LABEL_MS = 1400;
-/** Hvor længe pupillerne følger den retning, vægten blev ændret i. */
+/** How long the pupils follow the direction the weight was changed in. */
 const LOOK_DURATION_MS = 900;
 
 const SAVE_LABEL = 'Gem vejning';
 const SAVED_LABEL = 'Gemt ✓';
 
 /**
- * Vægt-skærmen: registrér dagens vægt på badevægten, gem vejningen og se udviklingen.
+ * The weight screen: record today's weight on the bathroom scale, save the weigh-in and see the trend.
  *
- * Al afledt logik ligger i `WeightViewService`, som siden selv udstiller, så kladden og det
- * valgte interval hører til skærmen. Siden holder kun de to kortlivede animationstilstande:
- * "Gemt ✓" på knappen og figurens blik, der følger den retning, vægten blev ændret i.
+ * All derived logic lives in `WeightViewService`, which the page itself provides, so the draft
+ * and the selected range belong to the screen. The page only holds the two short-lived animation
+ * states: "Saved ✓" on the button and the figure's gaze, which follows the direction the weight was changed in.
  */
 @Component({
   selector: 'app-weight-page',
@@ -67,14 +67,14 @@ export class WeightPage {
     });
   }
 
-  /** Linealen: sæt kladden og lad blikket følge retningen. */
+  /** The ruler: set the draft and let the gaze follow the direction. */
   protected onDraftChange(kg: number): void {
     const direction = Math.sign(kg - this.view.draftKg()) || this.lookDirectionState();
     this.view.setDraftKg(kg);
     this.look(direction);
   }
 
-  /** −/+ knapperne: ét trin på 0,1 kg. */
+  /** The −/+ buttons: one step of 0.1 kg. */
   protected stepDraft(direction: number): void {
     this.view.adjustDraftKg(direction * WEIGHT_STEP_KG);
     this.look(direction);

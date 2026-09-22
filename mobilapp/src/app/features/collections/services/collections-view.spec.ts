@@ -34,117 +34,44 @@ describe('CollectionsViewService', () => {
     collections = TestBed.inject(CollectionsService);
   });
 
-  it('lists "Alle" plus the four base collections as filter chips', () => {
-    expect(view.chips().map((chip) => chip.label)).toEqual([
-      'Alle',
-      'Morgenmad',
-      'Frokost',
-      'Aftensmad',
-      'Snacks',
-    ]);
+  it('har kun "Alle" som filter, indtil backenden leverer faste samlinger', () => {
+    expect(view.chips().map((chip) => chip.label)).toEqual(['Alle']);
     expect(view.chips().at(0)?.id).toBeNull();
   });
 
-  it('shows every recipe when no filter is selected', () => {
-    const entries = view.entriesFor(null);
-
-    expect(entries).toHaveLength(8);
-    expect(entries[0]).toMatchObject({
-      id: 'skyr',
-      title: 'Skyr-bowl med bær og nødder',
-      meta: 'Morgenmad · 5 min',
-      tone: 'accent',
-      kcal: 380,
-      protein: 32,
-    });
-    expect(entries.map((entry) => entry.tone)).toEqual([
-      'accent',
-      'accent',
-      'positive',
-      'positive',
-      'selected',
-      'selected',
-      'negative',
-      'negative',
-    ]);
+  it('er tom, indtil brugeren selv opretter en samling', () => {
+    expect(view.entriesFor(null)).toEqual([]);
   });
 
-  it('keeps only the selected collection’s recipes when a chip is picked', () => {
-    const entries = view.entriesFor('c2');
-
-    expect(entries.map((entry) => entry.id)).toEqual(['kylsalat', 'wrap']);
-  });
-
-  it('puts a user collection first as one bundle and follows the meal tint', () => {
+  it('viser en brugersamling som ét bundt med måltidets farve', () => {
     collections.create({ name: 'Meal prep', icon: 'bag', meal: 'frokost', items: [TUN, RUGBROED] });
 
     const entries = view.entriesFor(null);
 
+    expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({
       title: 'Meal prep',
       subtitle: 'Tunsalat, Rugbrød',
-      meta: 'Frokost · 2 varer',
+      meta: '2 varer',
       tone: 'positive',
       icon: 'bag',
       kcal: 420,
       protein: 34,
     });
     expect(entries.at(0)?.id.startsWith(BUNDLE_ID_PREFIX)).toBe(true);
-    expect(entries).toHaveLength(9);
   });
 
-  it('shows an empty user collection with the design’s fallback texts', () => {
+  it('viser en tom brugersamling med designets reservetekster', () => {
     collections.create({ name: 'Tom', icon: 'star', meal: 'snack', items: [] });
 
     expect(view.entriesFor(null)[0]).toMatchObject({
       subtitle: 'Ingen varer endnu',
-      meta: 'Snacks · 0 varer',
+      meta: '0 varer',
       kcal: 0,
     });
   });
 
-  it('filters user collections by the meal of the selected chip', () => {
-    collections.create({ name: 'Meal prep', icon: 'bag', meal: 'frokost', items: [TUN] });
-
-    expect(view.entriesFor('c2').map((entry) => entry.title)).toEqual([
-      'Meal prep',
-      'Kyllingesalat med kikærter',
-      'Tunwrap med rødkål',
-    ]);
-    expect(view.entriesFor('c1').map((entry) => entry.title)).toEqual([
-      'Skyr-bowl med bær og nødder',
-      'Omelet med spinat og feta',
-    ]);
-  });
-
-  it('lists a loose item in a base collection as its own row', () => {
-    collections.addItem('c1', RUGBROED);
-
-    const entries = view.entriesFor('c1');
-
-    expect(entries[0]).toMatchObject({
-      id: RUGBROED.id,
-      title: 'Rugbrød',
-      subtitle: 'Bagerens',
-      meta: 'Morgenmad · 2 skiver',
-      tone: 'accent',
-    });
-  });
-
-  it('resolves a recipe id to its ingredients', () => {
-    const detail = view.detailFor('skyr');
-
-    expect(detail).toMatchObject({
-      title: 'Skyr-bowl med bær og nødder',
-      meal: 'morgen',
-      tone: 'accent',
-      icon: 'egg',
-      macros: { kcal: 380, protein: 32, carbs: 38, fat: 11 },
-    });
-    expect(detail?.contents).toHaveLength(5);
-  });
-
-  it('resolves a bundle id to the collection’s items and totals', () => {
+  it('slår et bundt-id op og summerer samlingens varer', () => {
     const created = collections.create({
       name: 'Meal prep',
       icon: 'bag',
@@ -165,8 +92,14 @@ describe('CollectionsViewService', () => {
     ]);
   });
 
-  it('resolves a loose item id to a one-line detail', () => {
-    collections.addItem('c3', TUN);
+  it('slår en løs vare op som en enkelt linje', () => {
+    const created = collections.create({
+      name: 'Aften',
+      icon: 'leaf',
+      meal: 'aften',
+      items: [],
+    });
+    collections.addItem(created.id, TUN);
 
     expect(view.detailFor(TUN.id)).toMatchObject({
       title: 'Tunsalat',
@@ -176,8 +109,8 @@ describe('CollectionsViewService', () => {
     });
   });
 
-  it('returns null for an unknown id or a base collection bundle', () => {
+  it('giver null for et ukendt id', () => {
     expect(view.detailFor('findes-ikke')).toBeNull();
-    expect(view.detailFor(`${BUNDLE_ID_PREFIX}c1`)).toBeNull();
+    expect(view.detailFor(`${BUNDLE_ID_PREFIX}findes-ikke`)).toBeNull();
   });
 });

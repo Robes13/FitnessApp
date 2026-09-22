@@ -6,8 +6,8 @@ import { ProfileEditSheet } from './profile-edit-sheet';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 
 /**
- * Komponenttests bruger `provideComponentTestEnvironment()`: jsdom's rigtige `DOCUMENT`,
- * fastfrosset `NOW` og 0 ms mock-forsinkelser. Browserens storage ryddes pr. test.
+ * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`, a
+ * frozen `NOW`, and 0 ms mock delays. Browser storage is cleared per test.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 

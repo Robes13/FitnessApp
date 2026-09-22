@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { APP_ROUTE } from '../../core/constants/app-route';
 import { ShellLayout } from './pages/shell-layout/shell-layout';
 
-/** Tab-skærmene. `ShellLayout` tegner tab baren, børnene lazy loades pr. feature. */
+/** The tab screens. `ShellLayout` renders the tab bar, the children are lazy loaded per feature. */
 export const SHELL_ROUTES: Routes = [
   {
     path: APP_ROUTE.ROOT,

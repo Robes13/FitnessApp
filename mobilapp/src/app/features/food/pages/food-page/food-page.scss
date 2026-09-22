@@ -1,9 +1,9 @@
 @use 'mixins';
 
 /*
- * `:host` er nødvendig: under emuleret encapsulation bliver `.food-page { … }` scoped til
- * indholdet og rammer aldrig host-elementet. Siden må ikke være `position: relative` –
- * arket og scanneren lægger sig med `position: absolute` over hele app-roden.
+ * `:host` is necessary: under emulated encapsulation, `.food-page { … }` gets scoped to
+ * the content and never targets the host element. The page must not be `position: relative` –
+ * the sheet and the scanner position themselves with `position: absolute` over the whole app root.
  */
 :host {
   @include mixins.page-screen;
@@ -42,7 +42,7 @@
     font-size: var(--font-size-sm);
   }
 
-  /* Kaloriering + tal */
+  /* Calorie ring + numbers */
 
   &__summary {
     @include mixins.surface-card;
@@ -89,7 +89,7 @@
     font-size: var(--font-size-sm);
   }
 
-  /* Makrokort */
+  /* Macro cards */
 
   &__macros {
     display: grid;
@@ -122,7 +122,7 @@
     font-weight: var(--font-weight-bold);
   }
 
-  /* Handlinger */
+  /* Actions */
 
   &__actions {
     display: flex;
@@ -130,7 +130,7 @@
     margin-top: var(--space-4);
   }
 
-  /* Designets "Tilføj mad": venstrestillet indhold med plus-ikonet foran. */
+  /* The design's "Add food": left-aligned content with the plus icon in front. */
   &__add {
     flex: 1;
     justify-content: flex-start;

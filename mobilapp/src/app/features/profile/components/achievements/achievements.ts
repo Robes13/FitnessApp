@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { UiProgressRing } from '../../../../shared/components/ui-progress-ring/ui-progress-ring';
 import { Achievement } from '../../services/achievements';
 
-/** Badgets ydre mål i px – ringen tegnes i samme koordinatsystem. */
+/** The badge's outer size in px – the ring is drawn in the same coordinate system. */
 const MEDAL_DIAMETER = 56;
 const MEDAL_STROKE_WIDTH = 3;
 
@@ -11,12 +11,13 @@ interface AchievementView extends Achievement {
 }
 
 /**
- * Gitteret med præstationer (4 kolonner). Hvert badge er en cirkel med et tegn, en ring, der
- * viser fremdriften, og en status nedenunder. Klarede badges står i fuld farve; låste er
- * nedtonede og viser, hvor langt der er igen.
+ * The achievements grid (4 columns). Each badge is a circle with a glyph, a ring showing
+ * progress, and a status underneath. Achieved badges are shown in full color; locked ones
+ * are muted and show how far there is left.
  *
- * Ringen tegnes kun, når badget **ikke** er klaret – som i designet, hvor `arcOp` bliver 0:
- * den farvede kant om cirklen fortæller alene, at målet er nået.
+ * The ring is only drawn when the badge is **not** achieved – as in the design, where
+ * `arcOp` becomes 0: the colored border around the circle alone signals that the goal was
+ * reached.
  */
 @Component({
   selector: 'app-achievements',

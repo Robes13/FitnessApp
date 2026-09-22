@@ -23,7 +23,7 @@
     flex: none;
   }
 
-  /* Den lille orange blyant i avatarens hjørne. Kanten skærer den fri af billedet. */
+  /* The small orange pencil in the avatar's corner. The border cuts it out from the image. */
   &__photo-button {
     position: absolute;
     right: 0;
@@ -116,7 +116,7 @@
     font-weight: var(--font-weight-regular);
   }
 
-  /* Samme rytme som rækkerne ovenfor, men med en kontakt i stedet for en chevron. */
+  /* Same rhythm as the rows above, but with a switch instead of a chevron. */
   &__toggle {
     display: flex;
     align-items: center;

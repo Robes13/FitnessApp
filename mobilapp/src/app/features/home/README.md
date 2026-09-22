@@ -18,11 +18,13 @@ Route-filen er [`home.routes.ts`](home.routes.ts) og eksporterer `HOME_ROUTES`, 
 
 ## Data
 
-Kun **i dag** er rigtige data: madloggen (`FoodLogService`), vejningerne
-(`WeightLogService`) og profilen (`UserProfileService`). Ugens tidligere dage er designets
-syntetiske demo-historik (`DAY_HISTORY = [1, .97, .86, 1, 1, .72, .95]`), og de samme formler
-bruges til makroer, protein og dagens vægt, så skærmen ser ud som prototypen. Dage, der ikke
-er kommet endnu, vises tomme (`–`).
+Alt på skærmen er brugerens egne data: madloggen (`FoodLogService`), vejningerne
+(`WeightLogService`) og profilen (`UserProfileService`).
+
+Appen har ingen historik. Madloggen nulstilles ved dagsskift, og der findes ikke et API at
+hente tidligere dage fra, så **kun dagen i dag kan have data** – og kun når brugeren har
+logget noget. Alle andre dage er `null` hele vejen igennem: tom ring, `–` i dagskortet og
+ingen andel i ugens nøgletal. Skærmen påstår aldrig, at en dag var uden mad.
 
 Der er ingen netværkskald på skærmen, så der er heller ingen loading-tilstand. Tomme
 tilstande er indbygget i designet: er alt logget og vejet, forsvinder "Næste skridt"-kortet,
@@ -41,13 +43,3 @@ asynkrone kald, og det viser fejl med `app-ui-form-error`.
 Det orange "Til mål"-kort er **skjult**, når profilens mål er `hold`: der er ingen afstand at
 tælle ned. Fremdriften måles fra den ældste vejning til målvægten og bundes ved 4 %, som i
 designet, så bjælken aldrig ser helt tom ud.
-
-## Demo-genvej i bekræftelses-arket
-
-`AuthApi.checkVerification()` er en attrap, der **altid** svarer "ikke bekræftet" (sådan er
-designet). For at appen kan afprøves, viser arket derfor efter **to** forgæves tryk på
-"Tjek igen" knappen **"Fortsæt uden bekræftelse"**, som kalder
-`SessionService.markEmailVerified()` og låser appen op lokalt.
-
-Det er en bevidst demo-affordance – den skal fjernes, når der kommer en rigtig backend, der
-kan bekræfte e-mailen.

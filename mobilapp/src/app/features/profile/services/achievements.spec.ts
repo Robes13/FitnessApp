@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { FoodLogService } from '../../../core/services/food-log';
 import { UserProfileService } from '../../../core/services/user-profile';
+import { WeightLogService } from '../../../core/services/weight-log';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { Achievement, AchievementsService } from './achievements';
 
@@ -17,12 +18,14 @@ describe('AchievementsService', () => {
     achievements: AchievementsService;
     profiles: UserProfileService;
     foodLog: FoodLogService;
+    weightLog: WeightLogService;
   } {
     TestBed.configureTestingModule({ providers: provideCoreTestEnvironment() });
     return {
       achievements: TestBed.inject(AchievementsService),
       profiles: TestBed.inject(UserProfileService),
       foodLog: TestBed.inject(FoodLogService),
+      weightLog: TestBed.inject(WeightLogService),
     };
   }
 
@@ -45,8 +48,12 @@ describe('AchievementsService', () => {
     ]);
   });
 
-  it('marks the first weigh-in as done, because the log is seeded', () => {
-    const { achievements } = setup();
+  it('marks the first weigh-in as missing until the user has weighed', () => {
+    const { achievements, weightLog } = setup();
+
+    expect(badge(achievements.achievements(), 'first-weigh').progressLabel).toBe('Mangler');
+
+    weightLog.add(74.2);
     const weigh = badge(achievements.achievements(), 'first-weigh');
 
     expect(weigh.complete).toBe(true);
@@ -60,21 +67,26 @@ describe('AchievementsService', () => {
     expect(badge(achievements.achievements(), 'own-collection').progressLabel).toBe('Mangler');
   });
 
-  it('counts logged meals on top of the demo head start', () => {
+  it('counts the meals the user has logged', () => {
     const { achievements, foodLog } = setup();
 
-    expect(badge(achievements.achievements(), 'meals-10').progressLabel).toBe('8/10 måltider');
+    expect(badge(achievements.achievements(), 'meals-10').progressLabel).toBe('0/10 måltider');
 
     foodLog.add(
       { id: 'x', name: 'Æble', quantity: '1 stk', kcal: 95, protein: 0, carbs: 25, fat: 0 },
       'snack',
     );
 
-    expect(badge(achievements.achievements(), 'meals-10').progressLabel).toBe('9/10 måltider');
+    expect(badge(achievements.achievements(), 'meals-10').progressLabel).toBe('1/10 måltider');
   });
 
-  it('writes kilos with a Danish comma and keeps the design floor', () => {
-    const { achievements } = setup();
+  it('starts the kilo badges at nothing lost and writes kilos with a Danish comma', () => {
+    const { achievements, weightLog } = setup();
+
+    expect(badge(achievements.achievements(), 'lost-2').progressLabel).toBe('0/2 kg');
+
+    weightLog.add(76);
+    weightLog.add(74.8);
 
     expect(badge(achievements.achievements(), 'lost-2').progressLabel).toBe('1,2/2 kg');
     expect(badge(achievements.achievements(), 'lost-5').progressLabel).toBe('1,2/5 kg');
@@ -85,7 +97,7 @@ describe('AchievementsService', () => {
 
     expect(badge(achievements.achievements(), 'perfect-week').progressLabel).toBe('0/7 dage');
 
-    // Mandag er ugens eneste dag i testen, så ét fuldt dagsmål rammer hele ugen.
+    // Only today has data, so one full daily goal is all the week can count.
     foodLog.add(
       {
         id: 'y',
@@ -101,7 +113,7 @@ describe('AchievementsService', () => {
 
     expect(badge(achievements.achievements(), 'perfect-week').progressLabel).toBe('1/7 dage');
     expect(badge(achievements.achievements(), 'protein-5').progressLabel).toBe('1/5 dage');
-    expect(badge(achievements.achievements(), 'streak-7').progressLabel).toBe('4/7 dage');
+    expect(badge(achievements.achievements(), 'streak-7').progressLabel).toBe('1/7 dage');
   });
 
   it('gives every badge a tone the progress ring understands', () => {

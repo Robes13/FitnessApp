@@ -34,19 +34,19 @@ import { AUTH_ASSET } from '../../auth-assets';
 import { authErrorMessage } from '../../auth-error';
 import { AuthBackdrop } from '../../components/auth-backdrop/auth-backdrop';
 
-/** Designets `fp1 → fp2 → fp3 → fpDone`. */
+/** The design's `fp1 → fp2 → fp3 → fpDone`. */
 export type ForgotPasswordStep = 'email' | 'code' | 'new-password' | 'done';
 
-/** Ventetiden på kvitteringstrinnet, før brugeren logges ind (designets `fpSave`). */
+/** The wait on the confirmation step before the user is logged in (the design's `fpSave`). */
 export const FORGOT_PASSWORD_DONE_DEFAULT_DELAY_MS = 1400;
 
-/** Kan sættes til 0 i tests, så specs ikke venter i halvandet sekund. */
+/** Can be set to 0 in tests, so specs don't wait a second and a half. */
 export const FORGOT_PASSWORD_DONE_DELAY_MS = new InjectionToken<number>(
   'FORGOT_PASSWORD_DONE_DELAY_MS',
   { providedIn: 'root', factory: () => FORGOT_PASSWORD_DONE_DEFAULT_DELAY_MS },
 );
 
-/** Designet viser først e-mail-hintet, når der er skrevet mere end tre tegn. */
+/** The design only shows the e-mail hint once more than three characters have been typed. */
 const EMAIL_HINT_MIN_LENGTH = 3;
 const MISMATCH_MESSAGE = 'Adgangskoderne er ikke ens.';
 const RESENT_MESSAGE = 'Sendt igen';
@@ -66,7 +66,7 @@ interface NewPasswordForm {
   repeat: FormControl<string>;
 }
 
-/** Teksten under det aktive felt: enten designets hint (orange) eller en fejl (rød). */
+/** The text below the active field: either the design's hint (orange) or an error (red). */
 interface StepMessage {
   readonly text: string;
   readonly tone: FormErrorTone;
@@ -75,12 +75,12 @@ interface StepMessage {
 const EMPTY_MESSAGE: StepMessage = { text: '', tone: 'accent' };
 
 /**
- * Designets "Glemt adgangskode" (linje 113–182) som ét route-komponent med fire trin i et
- * signal: e-mail → kode → ny adgangskode → kvittering.
+ * The design's "Forgot password" (lines 113–182) as a single route component with four steps in
+ * one signal: e-mail → code → new password → confirmation.
  *
- * Hvert trin kalder mock-backenden (`AuthApi`) og viser en spinner i knappen imens.
- * Kvitteringstrinnet venter `FORGOT_PASSWORD_DONE_DELAY_MS` og logger derefter ind via
- * `SessionService`; ventetiden ryddes af `takeUntilDestroyed`, hvis siden forlades først.
+ * Each step calls the backend through `AuthApi` and shows a spinner in the button meanwhile.
+ * The confirmation step waits `FORGOT_PASSWORD_DONE_DELAY_MS` and then logs in via
+ * `SessionService`; the wait is cleared by `takeUntilDestroyed` if the page is left first.
  */
 @Component({
   selector: 'app-forgot-password-page',
@@ -150,14 +150,14 @@ export class ForgotPasswordPage {
     initialValue: '',
   });
 
-  /** Vises på trin 2, så brugeren kan se hvilken adresse koden er sendt til. */
+  /** Shown on step 2, so the user can see which address the code was sent to. */
   protected readonly email = computed(() => this.emailValue());
 
   protected readonly emailInvalid = computed(
     () => !this.calculator.isValidEmail(this.emailValue()),
   );
   protected readonly codeInvalid = computed(() => this.codeValue().length !== RESET_CODE_LENGTH);
-  /** Designets `fpMismatch`: først når der er skrevet noget i gentag-feltet. */
+  /** The design's `fpMismatch`: only once something has been typed in the repeat field. */
   protected readonly mismatch = computed(
     () => this.repeatValue().length > 0 && this.passwordValue() !== this.repeatValue(),
   );
@@ -176,7 +176,7 @@ export class ForgotPasswordPage {
       `forgot-password-page__strength-label forgot-password-page__strength-label--${this.strength().tone}`,
   );
 
-  /** Ét sted at afgøre hvad der står under feltet: fejl slår designets hint. */
+  /** One place to decide what's shown below the field: an error beats the design's hint. */
   protected readonly message = computed<StepMessage>(() => {
     const error = this.errorMessage();
     if (error !== null) {
@@ -212,7 +212,7 @@ export class ForgotPasswordPage {
   });
 
   constructor() {
-    // Designets `setFpCode`: kun cifre, højst fire. Sættet udsender igen, så signalet følger med.
+    // The design's `setFpCode`: digits only, at most four. The set re-emits so the signal keeps up.
     this.codeForm.controls.code.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((value) => {
@@ -223,7 +223,7 @@ export class ForgotPasswordPage {
       });
   }
 
-  /** Trin tilbage; fra første trin (og fra kvitteringen) tilbage til login. */
+  /** Step back; from the first step (and from the confirmation) back to login. */
   protected back(): void {
     this.errorMessage.set(null);
     switch (this.step()) {
@@ -280,13 +280,11 @@ export class ForgotPasswordPage {
   }
 
   /**
-   * Kvitteringstrinnet: vent, log ind med profilens gemte brugernavn og den nye kode, og videre
-   * til Hjem. Fejler loginet, ryger brugeren tilbage til trin 3 med fejlteksten.
+   * The confirmation step: wait, log in with the profile's saved username and the new password, and
+   * proceed to Home. If the login fails, the user is sent back to step 3 with the error text.
    *
-   * Det er det rå brugernavn – ikke `displayName()`, hvis demo-navn ellers ville blive gemt som
-   * brugerens rigtige brugernavn af `SessionService.login()`. Er profilen tom, er der intet at
-   * logge ind med (`AuthApi.login('')` fejler med `MISSING_CREDENTIALS`), så brugeren sendes til
-   * login og skriver det selv.
+   * If the profile is empty, there's nothing to log in with, so the user is sent to login and
+   * types the username themselves.
    */
   private logInWithNewPassword(password: string): void {
     const username = this.profile.profile().username.trim();
