@@ -1,0 +1,36 @@
+<div class="food-meal-group__head">
+  <span class="food-meal-group__label">{{ group().label }}</span>
+  <span class="food-meal-group__total" [class.food-meal-group__total--empty]="!group().hasKcal">
+    {{ group().kcalText }}
+  </span>
+</div>
+
+@for (entry of group().entries; track entry.logId) {
+  <div class="food-meal-group__item">
+    <button
+      type="button"
+      class="food-meal-group__name"
+      [attr.aria-label]="'Rediger ' + entry.name"
+      (click)="edit.emit(entry)"
+    >
+      <span class="food-meal-group__dot"></span>
+      <span class="food-meal-group__name-text">{{ entry.name }}</span>
+      <span class="food-meal-group__quantity">{{ entry.quantity }}</span>
+    </button>
+    <span class="food-meal-group__end">
+      <span class="food-meal-group__kcal">{{ entry.kcal }} kcal</span>
+      <button
+        type="button"
+        class="food-meal-group__remove"
+        [attr.aria-label]="'Fjern ' + entry.name"
+        (click)="removed.emit(entry)"
+      >
+        <app-ui-icon name="close" size="xs" [strokeWidth]="2.4" />
+      </button>
+    </span>
+  </div>
+}
+
+<button type="button" class="food-meal-group__add" (click)="add.emit()">
+  {{ group().addLabel }}
+</button>

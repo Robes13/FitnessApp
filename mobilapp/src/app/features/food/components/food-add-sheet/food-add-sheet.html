@@ -1,0 +1,81 @@
+<app-ui-sheet
+  [open]="open()"
+  [title]="title()"
+  [titleAccent]="titleAccent()"
+  titleSize="md"
+  column
+  (closed)="closed.emit()"
+>
+  @if (open()) {
+    @if (showMealPicks()) {
+      <div class="food-add-sheet__meals">
+        @for (option of mealOptions; track option.id) {
+          <button
+            app-ui-chip
+            type="button"
+            size="sm"
+            class="food-add-sheet__meal"
+            [selected]="option.id === meal()"
+            (click)="meal.set(option.id)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+    }
+
+    @if (showTabs()) {
+      <app-ui-segmented-control
+        class="food-add-sheet__tabs"
+        variant="compact"
+        ariaLabel="Varer eller samlinger"
+        [options]="tabOptions"
+        [value]="tab()"
+        (valueChange)="onTabChange($event)"
+      />
+    }
+
+    <div class="food-add-sheet__scroll">
+      @if (showPicker()) {
+        <app-food-picker
+          [startStep]="startStep()"
+          [editItem]="editEntry()"
+          [ctaVerb]="ctaVerb()"
+          [saveAndLogLabel]="saveAndLogLabel()"
+          (picked)="onPicked($event)"
+          (customFoodCreated)="customFoodCreated.emit($event)"
+          (scanRequested)="scanRequested.emit()"
+          (cancelled)="closed.emit()"
+        />
+      } @else if (collectionRows().length === 0) {
+        <app-ui-empty-state [message]="emptyMessage" />
+      } @else {
+        <div class="food-add-sheet__collections">
+          @for (row of collectionRows(); track row.id) {
+            <button
+              type="button"
+              class="food-add-sheet__collection"
+              (click)="onCollectionPicked(row)"
+            >
+              <span class="food-add-sheet__collection-main">
+                <span class="food-add-sheet__icon" [class]="row.toneClass">
+                  <app-ui-icon [name]="row.icon" size="sm" />
+                </span>
+                <span class="food-add-sheet__collection-text">
+                  <span class="food-add-sheet__collection-name">{{ row.name }}</span>
+                  <span class="food-add-sheet__collection-sub">{{ row.subtitle }}</span>
+                </span>
+              </span>
+              <span class="food-add-sheet__collection-end">
+                {{ row.kcalLabel }}
+                <span class="food-add-sheet__collection-add">
+                  <app-ui-icon name="plus" size="sm" />
+                </span>
+              </span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</app-ui-sheet>

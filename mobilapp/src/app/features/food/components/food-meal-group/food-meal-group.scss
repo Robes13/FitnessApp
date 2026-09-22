@@ -1,0 +1,125 @@
+@use 'mixins';
+
+/*
+ * Værten er selve gruppen. `:host` er nødvendig: under emuleret encapsulation bliver
+ * `.food-meal-group { … }` scoped til indholdet og rammer aldrig host-elementet.
+ */
+:host {
+  display: block;
+  padding-block: var(--space-3-5);
+  border-top: var(--border-width-thin) solid var(--color-border);
+}
+
+.food-meal-group {
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  &__label {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &__total {
+    color: var(--color-accent);
+    font-size: var(--font-size-md);
+
+    &--empty {
+      color: var(--color-text-muted);
+    }
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-top: var(--space-2-5);
+    font-size: var(--font-size-md);
+  }
+
+  &__name {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: color var(--duration-quick) var(--easing-standard);
+
+    &:hover {
+      color: var(--color-accent);
+    }
+  }
+
+  &__dot {
+    flex: none;
+    width: var(--size-dot-sm);
+    height: var(--size-dot-sm);
+    border-radius: var(--radius-circle);
+    background: var(--color-accent);
+  }
+
+  &__name-text {
+    @include mixins.text-truncate;
+  }
+
+  &__quantity {
+    flex: none;
+    color: var(--color-text-muted);
+  }
+
+  &__end {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-1-5);
+  }
+
+  &__kcal {
+    color: var(--color-text-secondary);
+  }
+
+  &__remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-control-3xs);
+    height: var(--size-control-3xs);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-2);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-quick) var(--easing-standard),
+      color var(--duration-quick) var(--easing-standard);
+
+    &:hover {
+      background: var(--color-negative-soft-strong);
+      color: var(--color-negative);
+    }
+  }
+
+  &__add {
+    margin-top: var(--space-2-5);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-accent);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+  }
+}

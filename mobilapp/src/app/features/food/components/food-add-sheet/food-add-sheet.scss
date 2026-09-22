@@ -1,0 +1,135 @@
+@use 'mixins';
+
+/* Værten er kun en beholder – `UiSheet` lægger selv scrim og panel over app-roden. */
+:host {
+  display: contents;
+}
+
+.food-add-sheet {
+  &__meals {
+    display: flex;
+    gap: var(--space-1-5);
+  }
+
+  /* Fire chips på én række: lige brede og uden sidepadding, som i designet. */
+  &__meal {
+    flex: 1;
+    min-width: 0;
+    padding-inline: 0;
+  }
+
+  &__tabs {
+    flex: none;
+  }
+
+  /*
+   * Kun listen scroller; måltids-chips og Varer/Samlinger bliver stående øverst i arket
+   * (`UiSheet` med `column`). `display: flex` lader vare-vælgeren fylde resten af højden.
+   */
+  &__scroll {
+    @include mixins.scroll-area;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__collections {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__collection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2-5);
+    width: 100%;
+    padding: var(--space-3) 0;
+    border: 0;
+    border-top: var(--border-width-thin) solid var(--color-border-soft);
+    background: transparent;
+    color: var(--color-text);
+    font-family: var(--font-family-base);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  &__collection-main {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2-5);
+    min-width: 0;
+  }
+
+  &__icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-control-2xs);
+    height: var(--size-control-2xs);
+    border-radius: var(--radius-md);
+
+    &--accent {
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+    }
+
+    &--positive {
+      background: var(--color-positive-tint);
+      color: var(--color-positive);
+    }
+
+    &--selected {
+      background: var(--color-selected-tint-2);
+      color: var(--color-selected-text);
+    }
+
+    &--negative {
+      background: var(--color-negative-soft);
+      color: var(--color-negative);
+    }
+  }
+
+  &__collection-text {
+    display: block;
+    min-width: 0;
+  }
+
+  &__collection-name {
+    @include mixins.text-truncate;
+
+    display: block;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  &__collection-sub {
+    @include mixins.text-truncate;
+
+    display: block;
+    margin-top: var(--space-0-5);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  &__collection-end {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-2-5);
+    color: var(--color-accent);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &__collection-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-control-3xs);
+    height: var(--size-control-3xs);
+    border-radius: var(--radius-circle);
+    background: var(--color-accent-soft);
+  }
+}
