@@ -1,0 +1,44 @@
+<div class="home-page__scroll">
+  <header class="home-page__header">
+    <div class="home-page__intro">
+      <p class="home-page__today">{{ summary.todayLabel() }}</p>
+      <h1 class="home-page__greeting">
+        Hej, <span class="home-page__name">{{ summary.displayName() }}</span>
+      </h1>
+    </div>
+    <a class="home-page__avatar" [routerLink]="profilePath" aria-label="Profil">
+      <app-profile-avatar size="sm" [photo]="summary.photo()" [initial]="summary.initial()" />
+    </a>
+  </header>
+
+  <app-home-week-rings
+    class="home-page__rings"
+    [rings]="summary.weekRings()"
+    [celebrating]="celebrating()"
+    (selected)="summary.selectDay($event)"
+  />
+
+  @if (summary.nextTodo(); as todo) {
+    <app-home-todo-card
+      class="home-page__todo"
+      [todo]="todo"
+      [countLabel]="summary.todoCountLabel()"
+    />
+  }
+
+  <app-home-day-card class="home-page__day" [summary]="summary.daySummary()" />
+
+  @if (summary.showGoalCard()) {
+    <app-home-goal-card class="home-page__goal" [summary]="summary.goalSummary()" />
+  }
+
+  <app-home-week-card class="home-page__week" [summary]="summary.weekSummary()" />
+
+  <div class="home-page__spacer"></div>
+</div>
+
+@if (celebrating()) {
+  <app-home-celebration-toast (dismissed)="dismissCelebration()" />
+}
+
+<app-verify-email-sheet [open]="!isEmailVerified()" />

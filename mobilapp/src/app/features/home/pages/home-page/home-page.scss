@@ -1,0 +1,75 @@
+@use 'mixins';
+
+:host {
+  @include mixins.page-screen;
+
+  position: relative;
+}
+
+.home-page {
+  &__scroll {
+    @include mixins.scroll-area;
+    @include mixins.hide-scrollbar;
+
+    padding-inline: var(--layout-page-padding-x);
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__intro {
+    min-width: 0;
+  }
+
+  &__today {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    letter-spacing: var(--letter-spacing-widest);
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  &__greeting {
+    @include mixins.display-heading;
+
+    margin: var(--space-1-5) 0 0;
+    font-size: var(--font-size-display-xl);
+  }
+
+  &__name {
+    color: var(--color-accent);
+  }
+
+  /* Selve avataren er den delte `ProfileAvatar`; linket giver kun rammen og målet. */
+  &__avatar {
+    display: flex;
+    flex: none;
+    border-radius: var(--radius-circle);
+    text-decoration: none;
+  }
+
+  &__rings {
+    margin-top: var(--space-5);
+  }
+
+  &__todo {
+    margin-top: var(--space-4-5);
+  }
+
+  &__day {
+    margin-top: var(--space-3);
+  }
+
+  &__goal,
+  &__week {
+    margin-top: var(--space-2-5);
+  }
+
+  &__spacer {
+    height: var(--layout-tab-bar-clearance);
+  }
+}
