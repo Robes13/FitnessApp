@@ -1,0 +1,94 @@
+<div class="food-page__scroll">
+  <header class="food-page__header">
+    <h1 class="food-page__title">Dagens <span class="food-page__title-accent">mad</span></h1>
+    <p class="food-page__date">{{ view.todayLabel }}</p>
+  </header>
+
+  <section class="food-page__summary" aria-label="Kalorier i dag">
+    <app-ui-progress-ring
+      class="food-page__ring"
+      [value]="view.kcalProgress()"
+      [diameter]="ringDiameter"
+      [strokeWidth]="ringStrokeWidth"
+    />
+    <div class="food-page__summary-text">
+      <p class="food-page__summary-label">Tilbage i dag</p>
+      <p class="food-page__summary-value">
+        {{ view.kcalLeft() }}<span class="food-page__summary-unit">kcal</span>
+      </p>
+      <p class="food-page__summary-meta">
+        {{ view.kcalEaten() }} spist · mål {{ view.kcalTarget() }}
+      </p>
+    </div>
+  </section>
+
+  <div class="food-page__macros">
+    @for (macro of view.macroCards(); track macro.key) {
+      <div class="food-page__macro">
+        <div class="food-page__macro-head">
+          <span>{{ macro.label }}</span>
+          <span>{{ macro.percentLabel }}</span>
+        </div>
+        <app-ui-progress-bar
+          class="food-page__macro-bar"
+          thickness="thin"
+          [value]="macro.progress"
+          [tone]="macro.tone"
+        />
+        <div class="food-page__macro-text">{{ macro.text }}</div>
+      </div>
+    }
+  </div>
+
+  <div class="food-page__actions">
+    <button app-ui-button type="button" class="food-page__add" (click)="openAdd()">
+      <app-ui-icon name="plus" size="md" [strokeWidth]="3" />
+      Tilføj mad
+    </button>
+    <button
+      app-ui-icon-button
+      type="button"
+      tone="outline"
+      class="food-page__scan"
+      aria-label="Scan stregkode"
+      (click)="openScanner()"
+    >
+      <app-ui-icon name="scan" size="2xl" />
+    </button>
+  </div>
+
+  <div class="food-page__meals">
+    @for (group of view.mealGroups(); track group.id) {
+      <app-food-meal-group
+        [group]="group"
+        (edit)="openEdit($event)"
+        (removed)="removeEntry($event)"
+        (add)="openAddFor(group.id)"
+      />
+    }
+  </div>
+
+  <div class="food-page__clearance"></div>
+</div>
+
+<app-food-add-sheet
+  [open]="addOpen()"
+  [(meal)]="addMeal"
+  [editEntry]="editEntry()"
+  [startStep]="pickerStartStep()"
+  (closed)="closeAdd()"
+  (selected)="onSelected($event)"
+  (customFoodCreated)="onCustomFoodCreated($event)"
+  (scanRequested)="openScanner()"
+/>
+
+<app-barcode-scanner
+  [open]="scannerOpen()"
+  [kcalRemaining]="view.kcalRemaining()"
+  [mealLabel]="scannerMealLabel()"
+  (found)="onScanFound($event)"
+  (customSaved)="onScanCustomSaved($event)"
+  (manualRequested)="onScanManual()"
+  (noBarcodeRequested)="onScanNoBarcode()"
+  (closed)="onScannerClosed()"
+/>

@@ -1,0 +1,151 @@
+@use 'mixins';
+
+/*
+ * `:host` er nødvendig: under emuleret encapsulation bliver `.food-page { … }` scoped til
+ * indholdet og rammer aldrig host-elementet. Siden må ikke være `position: relative` –
+ * arket og scanneren lægger sig med `position: absolute` over hele app-roden.
+ */
+:host {
+  @include mixins.page-screen;
+}
+
+.food-page {
+  &__scroll {
+    @include mixins.scroll-area;
+    @include mixins.hide-scrollbar;
+
+    padding-inline: var(--layout-page-padding-x);
+    padding-bottom: var(--space-4);
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-xl);
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  &__date {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  /* Kaloriering + tal */
+
+  &__summary {
+    @include mixins.surface-card;
+
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+    padding: var(--space-4-5);
+  }
+
+  &__ring {
+    flex: none;
+  }
+
+  &__summary-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__summary-label {
+    @include mixins.caption-uppercase;
+
+    margin: 0;
+  }
+
+  &__summary-value {
+    @include mixins.display-heading;
+
+    margin: var(--space-1) 0 0;
+    color: var(--color-accent);
+    font-size: var(--font-size-display-2xl);
+  }
+
+  &__summary-unit {
+    margin-left: var(--space-1);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+  }
+
+  &__summary-meta {
+    margin: var(--space-1) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  /* Makrokort */
+
+  &__macros {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+    margin-top: var(--space-2-5);
+  }
+
+  &__macro {
+    @include mixins.surface-card;
+
+    padding: var(--space-3);
+  }
+
+  &__macro-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-1);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+
+  &__macro-bar {
+    margin-top: var(--space-2);
+  }
+
+  &__macro-text {
+    margin-top: var(--space-2);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+  }
+
+  /* Handlinger */
+
+  &__actions {
+    display: flex;
+    gap: var(--space-2-5);
+    margin-top: var(--space-4);
+  }
+
+  /* Designets "Tilføj mad": venstrestillet indhold med plus-ikonet foran. */
+  &__add {
+    flex: 1;
+    justify-content: flex-start;
+    padding-inline: var(--space-5);
+  }
+
+  &__scan {
+    border: var(--border-width-thin) solid var(--color-border-stronger);
+  }
+
+  &__meals {
+    margin-top: var(--space-6);
+  }
+
+  &__clearance {
+    height: var(--layout-tab-bar-clearance);
+  }
+}
