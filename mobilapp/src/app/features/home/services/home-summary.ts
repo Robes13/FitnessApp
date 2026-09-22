@@ -84,6 +84,7 @@ export interface HomeTodo {
 }
 
 const NO_VALUE = '–';
+const GREETING = 'Hej';
 
 /** The circumference of the day ring (r = 16 in a 40×40 viewBox). */
 const RING_CIRCUMFERENCE = 100.5;
@@ -174,6 +175,8 @@ export class HomeSummaryService {
 
   /** False until the app knows the user's name – until then Home just greets with `'Hej'`. */
   readonly hasName = computed(() => this.displayName() !== '');
+  /** "Hej," when a name follows, so the comma sits right after the word and not before the name. */
+  readonly greeting = computed(() => (this.hasName() ? `${GREETING},` : GREETING));
 
   readonly weekRings = computed<readonly WeekRing[]>(() => {
     const today = this.todayIndex();

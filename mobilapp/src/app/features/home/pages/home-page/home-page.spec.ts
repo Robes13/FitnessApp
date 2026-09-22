@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
 import { SessionService } from '../../../../core/services/session';
+import { UserProfileService } from '../../../../core/services/user-profile';
 import { HomePage } from './home-page';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 
@@ -43,6 +44,16 @@ describe('HomePage', () => {
     expect(page.querySelector('.home-page__today')?.textContent?.trim()).toBe('Mandag 21. sep');
     expect(avatar?.getAttribute('href')).toBe(APP_PATH.PROFILE);
     expect(avatar?.textContent?.trim()).toBe('');
+  });
+
+  it('puts the comma right after "Hej" when the name is known', async () => {
+    const { settle, page } = await setup();
+
+    TestBed.inject(UserProfileService).update({ username: 'Mads' });
+    await settle();
+
+    const greeting = page.querySelector('.home-page__greeting')?.textContent ?? '';
+    expect(greeting.replace(/\s+/g, ' ').trim()).toBe('Hej, Mads');
   });
 
   it('renders the week rings, the next step and the day, goal and week cards', async () => {
