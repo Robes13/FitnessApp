@@ -1,0 +1,151 @@
+@use 'mixins';
+
+/*
+ * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
+ * ellers kan indholdet ikke scrolle.
+ * --goal-weight-*-width bindes fra TypeScript (GOAL_WEIGHT_LAYOUT).
+ */
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.goal-weight-step {
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-3xl);
+    color: var(--color-text);
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  &__quip {
+    max-width: var(--goal-weight-quip-width);
+    margin: var(--space-2-5) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    text-wrap: pretty;
+  }
+
+  /* Tal til venstre, figur til højre – begge bundjusteret over linealen. */
+  &__scene {
+    display: flex;
+    flex: 1;
+    gap: var(--space-3);
+    align-items: flex-end;
+    justify-content: space-between;
+    min-height: 0;
+    margin-top: var(--space-1);
+  }
+
+  &__readout {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    align-items: flex-start;
+    padding-bottom: var(--space-1);
+  }
+
+  &__value {
+    display: flex;
+    gap: var(--space-2);
+    align-items: baseline;
+    margin: 0;
+  }
+
+  &__number {
+    @include mixins.display-heading;
+    @include mixins.tabular-nums;
+
+    color: var(--color-accent);
+    font-size: var(--font-size-display-10xl);
+    line-height: var(--line-height-none);
+    letter-spacing: var(--letter-spacing-tighter);
+  }
+
+  &__unit {
+    @include mixins.display-heading;
+
+    color: var(--color-accent);
+    font-size: var(--font-size-display-2xs);
+  }
+
+  &__delta {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    margin: 0;
+    padding: var(--space-2) var(--space-3-5);
+    border: var(--border-width-thin) solid var(--color-selected-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-selected-soft);
+  }
+
+  &__delta-dot {
+    flex: none;
+    width: var(--size-dot-md);
+    height: var(--size-dot-md);
+    border-radius: var(--radius-circle);
+    background: var(--color-selected-text);
+  }
+
+  &__delta-text {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+    white-space: nowrap;
+  }
+
+  &__now {
+    max-width: var(--goal-weight-aside-width);
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    text-wrap: pretty;
+  }
+
+  /* Pladsen er reserveret, så layoutet ikke hopper, når advarslen kommer og går. */
+  &__hint {
+    max-width: var(--goal-weight-aside-width);
+    min-height: var(--size-icon-sm);
+    margin: 0;
+    color: var(--color-accent);
+    font-size: var(--font-size-sm);
+    text-wrap: pretty;
+  }
+
+  &__figure {
+    display: block;
+    flex: 1;
+    align-self: stretch;
+    min-width: 0;
+    max-width: var(--goal-weight-figure-width);
+    height: 100%;
+    overflow: visible;
+  }
+
+  &__shadow {
+    fill: var(--color-figure-shadow);
+    transition: all var(--duration-slow) var(--easing-standard);
+  }
+
+  /* Silhuetten af kroppen i dag – konstant grå i begge temaer. */
+  &__ghost {
+    opacity: 0.28;
+    stroke: var(--color-figure-ghost);
+    transition: all var(--duration-slow) var(--easing-standard);
+  }
+
+  /* Linealen går ud til skærmkanten, som i designet. */
+  &__ruler {
+    flex: none;
+    margin-top: var(--space-3);
+    margin-inline: calc(var(--layout-page-padding-x) * -1);
+  }
+}

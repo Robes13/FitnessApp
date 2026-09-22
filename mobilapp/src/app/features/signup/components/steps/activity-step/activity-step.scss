@@ -1,0 +1,393 @@
+@use 'mixins';
+
+/*
+ * Aktivitetstrinnet. Scenens tempi og forskydninger bindes fra TypeScript (skridttallet
+ * styrer dem), mens farver, spacing og typografi er tokens. SVG-koordinaterne står som
+ * attributter i templaten; her sættes kun fyld, streg og animationsnavne.
+ */
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.activity-step {
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-3xl);
+    color: var(--color-text);
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  /* Bredderne er sat i ch, fordi designets 290/140 px svarer til en tekstspalte. */
+  &__subtitle {
+    max-width: 40ch;
+    margin: var(--space-2-5) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    text-wrap: pretty;
+  }
+
+  &__body {
+    display: flex;
+    flex: 1;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-2-5);
+    min-height: 0;
+    margin-top: var(--space-1);
+  }
+
+  &__readout {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3-5);
+    padding-bottom: var(--space-1);
+  }
+
+  &__count-block {
+    position: relative;
+  }
+
+  &__count {
+    @include mixins.display-heading;
+    @include mixins.tabular-nums;
+
+    color: var(--color-accent);
+    font-size: var(--font-size-display-8xl);
+    line-height: var(--line-height-none);
+    letter-spacing: var(--letter-spacing-tighter);
+    /* Navnet skifter mellem `numtickA` og `numtickB`, så hoppet starter forfra pr. tusinde. */
+    animation-duration: var(--duration-quick);
+    animation-timing-function: ease;
+  }
+
+  &__count-caption {
+    max-width: 22ch;
+    margin-top: var(--space-1-25);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    text-wrap: pretty;
+  }
+
+  &__confetti {
+    position: absolute;
+    top: var(--space-4-5);
+    width: var(--size-dot-sm);
+    height: var(--size-dot-md);
+    border-radius: var(--radius-hairline);
+    animation-name: conf;
+    animation-duration: var(--duration-confetti);
+    animation-timing-function: ease-in;
+    animation-fill-mode: forwards;
+    pointer-events: none;
+
+    &--accent {
+      background: var(--color-accent);
+    }
+
+    &--positive {
+      background: var(--color-positive);
+    }
+
+    &--info {
+      background: var(--color-info);
+    }
+
+    &--warning {
+      background: var(--color-warning);
+    }
+  }
+
+  &__pill {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3-5);
+    border: var(--border-width-thin) solid var(--color-selected-border);
+    border-radius: var(--radius-pill);
+    background: var(--color-selected-soft);
+  }
+
+  &__pill-dot {
+    flex: none;
+    width: var(--size-dot-md);
+    height: var(--size-dot-md);
+    border-radius: var(--radius-circle);
+    background: var(--color-info);
+  }
+
+  &__pill-label {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+    white-space: nowrap;
+  }
+
+  &__facts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1-25);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  &__fact-value {
+    color: var(--color-text);
+    font-weight: var(--font-weight-bold);
+  }
+
+  &__scene {
+    display: block;
+    flex: 1;
+    align-self: stretch;
+    min-width: 0;
+    max-width: var(--size-scene-width);
+    height: 100%;
+    overflow: visible;
+  }
+
+  /* Linealen går ud til begge kanter, som i designet. */
+  &__ruler {
+    flex: none;
+    margin-top: var(--space-3);
+    margin-inline: calc(-1 * var(--layout-page-padding-x));
+  }
+
+  /* --- Scenerne: gå-scenen og sofa-scenen krydsfader. --- */
+  &__walk,
+  &__lazy {
+    transform-box: view-box;
+    transform-origin: 50% 100%;
+    transform: translateX(var(--scene-shift)) scale(var(--scene-scale));
+    transition:
+      opacity var(--duration-slow) ease,
+      transform var(--duration-scene-swap) var(--easing-bounce);
+  }
+
+  &__lazy {
+    pointer-events: none;
+  }
+
+  &__ground {
+    transform-box: view-box;
+    animation-name: ground;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: reverse;
+  }
+
+  &__ground-dash {
+    fill: var(--color-border-stronger);
+  }
+
+  &__shadow {
+    fill: var(--color-figure-shadow);
+  }
+
+  &__speed {
+    transition: opacity var(--duration-slow) ease;
+  }
+
+  &__speed-line {
+    stroke: var(--color-text-secondary);
+  }
+
+  &__bob {
+    transform-box: view-box;
+    animation-name: walkbob;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  &__stride,
+  &__swing {
+    transform-box: view-box;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  &__stride {
+    animation-direction: reverse;
+
+    &--back {
+      animation-name: strideB;
+    }
+
+    &--front {
+      animation-name: strideA;
+    }
+  }
+
+  &__swing {
+    &--back {
+      animation-name: swingA;
+    }
+
+    &--front {
+      animation-name: swingB;
+    }
+  }
+
+  &__leg,
+  &__arm,
+  &__body-shape,
+  &__head,
+  &__sofa-seat {
+    fill: var(--color-figure);
+  }
+
+  &__leg--back,
+  &__arm--back,
+  &__sofa-arm,
+  &__lazy-limb {
+    fill: var(--color-figure-dark);
+  }
+
+  &__arm--front,
+  &__lazy-arm {
+    fill: var(--color-figure-light);
+  }
+
+  &__shoe {
+    fill: var(--color-figure-shoe);
+
+    &--back {
+      fill: var(--color-figure-shoe-dark);
+    }
+  }
+
+  &__belt,
+  &__sofa-back,
+  &__tv-screen {
+    fill: var(--color-figure-belt);
+  }
+
+  &__medal,
+  &__dog {
+    transition: opacity var(--duration-slower);
+  }
+
+  &__medal-ribbon {
+    fill: none;
+    stroke: var(--color-medal-ribbon);
+  }
+
+  &__medal-disc {
+    fill: var(--color-medal-gold);
+    stroke: var(--color-medal-ring);
+  }
+
+  &__band {
+    fill: var(--color-accent);
+
+    &--pink {
+      fill: var(--color-figure-band-pink);
+    }
+
+    &--white {
+      fill: var(--color-figure-band-white);
+    }
+  }
+
+  &__eye {
+    fill: var(--color-figure-face);
+  }
+
+  &__pupil,
+  &__dog-eye {
+    fill: var(--color-figure-pupil);
+  }
+
+  &__cheek {
+    fill: var(--color-figure-cheek);
+  }
+
+  &__smile {
+    fill: none;
+    stroke: var(--color-figure-face);
+  }
+
+  &__mouth {
+    fill: var(--color-figure-mouth);
+  }
+
+  &__tongue {
+    fill: var(--color-accent);
+  }
+
+  /* Hunden spejlvendes, så den trasker samme vej som figuren. */
+  &__dog {
+    transform-box: view-box;
+    transform-origin: 17% 90%;
+    transform: scaleX(-1);
+  }
+
+  &__dog-trot {
+    transform-box: view-box;
+    animation-name: trot;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  &__dog-body,
+  &__dog-ear,
+  &__snooze-dot {
+    fill: var(--color-text-secondary);
+  }
+
+  &__dog-tail {
+    fill: none;
+    stroke: var(--color-text-secondary);
+  }
+
+  &__dog-head {
+    fill: var(--color-text-soft);
+  }
+
+  &__sweat {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-name: drip;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  &__sweat-drop {
+    fill: var(--color-figure-sweat);
+  }
+
+  &__tv-case {
+    fill: var(--color-background);
+    stroke: var(--color-scene-frame);
+  }
+
+  &__tv-text {
+    fill: color-mix(in srgb, var(--color-info) 60%, transparent);
+
+    &--faint {
+      fill: color-mix(in srgb, var(--color-info) 35%, transparent);
+    }
+  }
+
+  &__tv-stand {
+    fill: var(--color-scene-frame);
+  }
+
+  &__tv-beam,
+  &__snooze {
+    animation-name: tvglow;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  &__tv-beam {
+    fill: var(--color-info);
+  }
+}

@@ -1,0 +1,110 @@
+@use 'mixins';
+
+/*
+ * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
+ * ellers kan indholdet ikke scrolle.
+ * --notifications-* bindes fra TypeScript (NOTIFICATIONS_LAYOUT).
+ */
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.notifications-step {
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-3xl);
+    color: var(--color-text);
+    text-wrap: balance;
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  /* Højden er reserveret, så scenen ikke hopper, når teksten skifter med valget. */
+  &__caption {
+    max-width: var(--notifications-caption-width);
+    min-height: var(--notifications-caption-height);
+    margin: var(--space-2-5) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    text-wrap: pretty;
+  }
+
+  &__scene {
+    display: flex;
+    flex: 1;
+    align-items: flex-end;
+    justify-content: center;
+    min-height: 0;
+    margin-top: var(--space-1);
+  }
+
+  &__figure {
+    display: block;
+    width: 100%;
+    max-height: var(--notifications-scene-height);
+    height: 100%;
+    overflow: visible;
+  }
+
+  /*
+   * Klokken svinger om sit ophæng. Tempoet (0,9 s) er designets eget scene-tempo,
+   * ikke en overgang, og hører derfor ikke til --duration-*-skalaen.
+   */
+  &__bell {
+    transform-box: view-box;
+
+    &--ringing {
+      animation: ring 0.9s ease-in-out infinite;
+    }
+  }
+
+  &__bell-shell {
+    fill: var(--color-neutral-soft-25);
+    stroke: var(--color-text-secondary);
+    transition: all var(--duration-medium) var(--easing-standard);
+
+    &--on {
+      fill: var(--color-accent);
+      stroke: var(--color-accent);
+    }
+  }
+
+  &__bell-clapper {
+    stroke: var(--color-text-secondary);
+    transition: all var(--duration-medium) var(--easing-standard);
+
+    &--on {
+      stroke: var(--color-accent);
+    }
+  }
+
+  &__bell-slash {
+    stroke: var(--color-text-secondary);
+    transition: opacity var(--duration-medium) var(--easing-standard);
+  }
+
+  &__waves {
+    fill: none;
+    stroke: var(--color-accent);
+    transition: opacity var(--duration-medium) var(--easing-standard);
+  }
+
+  &__snore {
+    fill: var(--color-text-secondary);
+    font-family: var(--font-family-display);
+    font-weight: var(--font-weight-extrabold);
+    transition: opacity var(--duration-medium) var(--easing-standard);
+  }
+
+  &__choice {
+    flex: none;
+    margin-top: var(--space-4-5);
+  }
+}

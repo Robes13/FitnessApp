@@ -1,0 +1,77 @@
+<h1 class="notifications-step__title">
+  Et lille <span class="notifications-step__title-accent">puf</span> i hverdagen?
+</h1>
+<p class="notifications-step__caption">{{ caption() }}</p>
+
+<div class="notifications-step__scene">
+  <svg
+    class="notifications-step__figure"
+    viewBox="0 0 200 300"
+    preserveAspectRatio="xMidYMax meet"
+    role="img"
+    aria-label="Figur med klokke"
+    focusable="false"
+  >
+    <g
+      app-figure-body
+      [geometry]="geometry()"
+      [bandTone]="bandTone()"
+      [expression]="expression()"
+    ></g>
+
+    <g
+      class="notifications-step__bell"
+      [class.notifications-step__bell--ringing]="ringing()"
+      [style.transform-origin]="bellOrigin()"
+    >
+      <g [attr.transform]="bellTransform()">
+        <path
+          class="notifications-step__bell-shell"
+          [class.notifications-step__bell-shell--on]="ringing()"
+          d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
+          stroke-width="1.6"
+          stroke-linejoin="round"
+        />
+        <path
+          class="notifications-step__bell-clapper"
+          [class.notifications-step__bell-clapper--on]="ringing()"
+          d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
+          fill="none"
+          stroke-width="1.8"
+          stroke-linecap="round"
+        />
+        <path
+          class="notifications-step__bell-slash"
+          d="M2 2 22 22"
+          stroke-width="2"
+          stroke-linecap="round"
+          [style.opacity]="bellSlashOpacity()"
+        />
+      </g>
+    </g>
+
+    <g class="notifications-step__waves" [style.opacity]="waveOpacity()">
+      <path [attr.d]="wavePath1()" stroke-width="2.5" stroke-linecap="round" fill="none" />
+      <path [attr.d]="wavePath2()" stroke-width="2.5" stroke-linecap="round" fill="none" />
+    </g>
+
+    <text
+      class="notifications-step__snore"
+      x="46"
+      [attr.y]="bell().sleepY"
+      font-size="16"
+      [style.opacity]="snoreOpacity()"
+    >
+      z z z
+    </text>
+  </svg>
+</div>
+
+<app-ui-segmented-control
+  class="notifications-step__choice"
+  [options]="choices"
+  [value]="state.notifications()"
+  (valueChange)="onChoice($event)"
+  variant="pill"
+  ariaLabel="Påmindelser"
+/>

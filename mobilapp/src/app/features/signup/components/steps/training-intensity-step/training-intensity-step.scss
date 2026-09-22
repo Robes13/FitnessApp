@@ -1,0 +1,273 @@
+@use 'mixins';
+
+/*
+ * Træningsintensitet. RPE-tallet farver både tallet, søjleskalaen og figuren; højder og
+ * tempi bindes fra TypeScript, mens farver, spacing og typografi er tokens.
+ */
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.training-intensity-step {
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-3xl);
+    color: var(--color-text);
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  /* Bredderne er sat i ch, fordi designets 290/150 px svarer til en tekstspalte. */
+  &__subtitle {
+    max-width: 40ch;
+    margin: var(--space-2-5) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    text-wrap: pretty;
+  }
+
+  &__body {
+    display: flex;
+    flex: 1;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-2-5);
+    min-height: 0;
+    margin-top: var(--space-1);
+  }
+
+  &__readout {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3-5);
+    padding-bottom: var(--space-1);
+  }
+
+  &__count-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-1-5);
+  }
+
+  &__count {
+    @include mixins.display-heading;
+    @include mixins.tabular-nums;
+
+    font-size: var(--font-size-display-9xl);
+    line-height: var(--line-height-none);
+    letter-spacing: var(--letter-spacing-tighter);
+    transition: color var(--duration-medium) var(--easing-standard);
+
+    &--none {
+      color: var(--color-text-muted);
+    }
+
+    &--positive {
+      color: var(--color-positive);
+    }
+
+    &--accent {
+      color: var(--color-accent);
+    }
+
+    &--negative {
+      color: var(--color-negative);
+    }
+  }
+
+  &__scale {
+    @include mixins.display-heading;
+
+    color: var(--color-text-muted);
+    font-size: var(--font-size-display-2xs);
+  }
+
+  &__caption {
+    max-width: 25ch;
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    text-wrap: pretty;
+  }
+
+  &__hint {
+    max-width: 25ch;
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    text-wrap: pretty;
+  }
+
+  &__scene {
+    display: block;
+    flex: 1;
+    align-self: stretch;
+    min-width: 0;
+    max-width: var(--size-scene-width);
+    height: 100%;
+    overflow: visible;
+  }
+
+  &__shadow {
+    fill: var(--color-figure-shadow);
+  }
+
+  &__heat {
+    transition: opacity var(--duration-medium);
+  }
+
+  &__heat-line {
+    fill: none;
+    stroke: color-mix(in srgb, var(--color-negative) 70%, transparent);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-name: tvglow;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  &__bob {
+    transform-box: view-box;
+    animation-name: walkbob;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+
+  &__sweat {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-name: drip;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  &__sweat-drop {
+    fill: var(--color-figure-sweat);
+  }
+
+  /* Anstrengelsesskalaen: ti søjler, der vokser mod højre. */
+  &__segments {
+    display: flex;
+    flex: none;
+    align-items: flex-end;
+    gap: var(--space-1);
+    height: var(--size-control-md);
+    margin-top: var(--space-3-5);
+  }
+
+  &__segment {
+    display: flex;
+    flex: 1;
+    align-items: flex-end;
+    justify-content: center;
+    height: var(--size-control-md);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  &__segment-fill {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    transition:
+      background-color var(--duration-base) var(--easing-standard),
+      height var(--duration-base) var(--easing-standard);
+
+    &--empty {
+      background: var(--color-neutral-dim);
+    }
+
+    &--positive {
+      background: var(--color-positive);
+    }
+
+    &--accent {
+      background: var(--color-accent);
+    }
+
+    &--negative {
+      background: var(--color-negative);
+    }
+  }
+
+  &__scale-labels {
+    display: flex;
+    flex: none;
+    justify-content: space-between;
+    margin-top: var(--space-1-5);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  &__tiles {
+    display: grid;
+    flex: none;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+    margin-top: var(--space-3-5);
+  }
+
+  &__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-1);
+    height: var(--space-5);
+  }
+
+  &__bar {
+    width: var(--size-dot-xs);
+    border-radius: var(--radius-pill);
+
+    &--sm {
+      height: var(--space-2);
+    }
+
+    &--md {
+      height: var(--space-3-5);
+    }
+
+    &--lg {
+      height: var(--space-5);
+    }
+
+    &--muted {
+      background: var(--color-text-muted);
+    }
+
+    &--dim {
+      background: var(--color-neutral-dim-2);
+    }
+
+    &--positive {
+      background: var(--color-positive);
+    }
+
+    &--accent {
+      background: var(--color-accent);
+    }
+
+    &--negative {
+      background: var(--color-negative);
+    }
+  }
+
+  /* Én linje – talk-testen må ikke skubbe knapperne ned. */
+  &__talk-test {
+    @include mixins.text-truncate;
+
+    flex: none;
+    min-height: var(--space-4-5);
+    margin: var(--space-2-5) 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+}

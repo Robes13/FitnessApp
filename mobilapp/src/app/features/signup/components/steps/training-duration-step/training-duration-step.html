@@ -1,0 +1,85 @@
+<h1 class="training-duration-step__title">
+  Hvor længe <span class="training-duration-step__title-accent">ad gangen?</span>
+</h1>
+<p class="training-duration-step__subtitle">{{ subtitle() }}</p>
+
+<div class="training-duration-step__body">
+  <div class="training-duration-step__readout">
+    <div class="training-duration-step__count-row">
+      <div class="training-duration-step__count">{{ minutesText() }}</div>
+      <div class="training-duration-step__unit">min</div>
+    </div>
+
+    <div class="training-duration-step__pill">
+      <span class="training-duration-step__pill-dot"></span>
+      <span class="training-duration-step__pill-label">{{ label() }}</span>
+    </div>
+
+    <p class="training-duration-step__hint">Træk i skalaen nedenfor.</p>
+  </div>
+
+  <svg
+    class="training-duration-step__scene"
+    viewBox="0 0 200 300"
+    preserveAspectRatio="xMidYMax meet"
+    aria-label="Stopur og figur"
+  >
+    <g class="training-duration-step__dial">
+      <circle
+        class="training-duration-step__dial-track"
+        cx="100"
+        cy="108"
+        r="58"
+        stroke-width="10"
+      />
+      <circle
+        class="training-duration-step__dial-arc"
+        cx="100"
+        cy="108"
+        r="58"
+        stroke-width="10"
+        stroke-linecap="round"
+        [attr.stroke-dasharray]="dialCircumference"
+        [attr.stroke-dashoffset]="arcOffset()"
+      />
+    </g>
+
+    <rect class="training-duration-step__crown" x="92" y="38" width="16" height="9" rx="4" />
+
+    <g class="training-duration-step__hand" [style.animation-duration.s]="sweepDuration()">
+      <rect class="training-duration-step__needle" x="98.5" y="68" width="3" height="42" rx="1.5" />
+    </g>
+    <circle class="training-duration-step__pin" cx="100" cy="108" r="5" />
+
+    <g class="training-duration-step__figure">
+      <ellipse
+        class="training-duration-step__shadow"
+        cx="100"
+        cy="292"
+        [attr.rx]="figure().shadowRx"
+        ry="6"
+      />
+      <g class="training-duration-step__bob" [style.animation-duration.s]="bobDuration">
+        <g
+          app-figure-body
+          [geometry]="figure()"
+          [bandTone]="bandTone()"
+          [expression]="expression"
+          [showShadow]="false"
+          [animated]="false"
+          shaded
+        ></g>
+      </g>
+    </g>
+  </svg>
+</div>
+
+<app-ui-ruler
+  class="training-duration-step__ruler"
+  [min]="rulerMin"
+  [max]="rulerMax"
+  [(value)]="state.trainingMinutes"
+  [step]="rulerStep"
+  [(dragging)]="dragging"
+  ariaLabel="Minutter pr. træning"
+/>

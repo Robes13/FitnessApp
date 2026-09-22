@@ -1,0 +1,112 @@
+<h1 class="training-intensity-step__title">
+  Hvor <span class="training-intensity-step__title-accent">hårdt?</span>
+</h1>
+<p class="training-intensity-step__subtitle">{{ intro() }}</p>
+
+<div class="training-intensity-step__body">
+  <div class="training-intensity-step__readout">
+    <div class="training-intensity-step__count-row">
+      <div class="training-intensity-step__count" [class]="toneClass()">{{ rpeText() }}</div>
+      <div class="training-intensity-step__scale">/10</div>
+    </div>
+    <p class="training-intensity-step__caption">{{ caption() }}</p>
+    <p class="training-intensity-step__hint">{{ hint() }}</p>
+  </div>
+
+  <svg
+    class="training-intensity-step__scene"
+    viewBox="0 0 200 300"
+    preserveAspectRatio="xMidYMax meet"
+    aria-label="Figur der træner"
+  >
+    <ellipse
+      class="training-intensity-step__shadow"
+      cx="100"
+      cy="292"
+      [attr.rx]="figure().shadowRx"
+      ry="6"
+    />
+
+    <g class="training-intensity-step__heat" [style.opacity]="heatOpacity()">
+      @for (line of heatLines(); track line.path) {
+        <path
+          class="training-intensity-step__heat-line"
+          [attr.d]="line.path"
+          stroke-width="3"
+          stroke-linecap="round"
+          [style.animation-duration.s]="heatDuration"
+          [style.animation-delay.s]="line.delay"
+        />
+      }
+    </g>
+
+    <g
+      class="training-intensity-step__bob"
+      [style.animation-duration.s]="bobDuration()"
+      [style.animation-play-state]="bobPlayState()"
+    >
+      <g
+        app-figure-body
+        [geometry]="figure()"
+        [bandTone]="bandTone()"
+        [expression]="expression()"
+        [showShadow]="false"
+        shaded
+      ></g>
+    </g>
+
+    @for (drop of sweat(); track drop.path) {
+      <g
+        class="training-intensity-step__sweat"
+        [style.animation-duration.s]="drop.duration"
+        [style.animation-delay.s]="drop.delay"
+      >
+        <path class="training-intensity-step__sweat-drop" [attr.d]="drop.path" />
+      </g>
+    }
+  </svg>
+</div>
+
+<div class="training-intensity-step__segments">
+  @for (segment of segments(); track segment.value) {
+    <button
+      class="training-intensity-step__segment"
+      type="button"
+      [attr.aria-label]="segment.ariaLabel"
+      (click)="select(segment.value)"
+    >
+      <span
+        class="training-intensity-step__segment-fill"
+        [class]="segment.toneClass"
+        [style.height.px]="segment.height"
+      ></span>
+    </button>
+  }
+</div>
+
+<div class="training-intensity-step__scale-labels">
+  <span>1 · meget let</span>
+  <span>10 · alt hvad du har</span>
+</div>
+
+<div class="training-intensity-step__tiles">
+  @for (tile of tiles(); track tile.id) {
+    <button
+      app-ui-option-card
+      layout="column"
+      selectionStyle="selected"
+      [label]="tile.label"
+      [description]="tile.scaleLabel"
+      [selected]="tile.selected"
+      (click)="select(tile.rpe)"
+    >
+      <span optionLeading class="training-intensity-step__bars">
+        @for (bar of tile.bars; track $index) {
+          <span class="training-intensity-step__bar" [class]="bar"></span>
+        }
+      </span>
+    </button>
+  }
+</div>
+
+<p class="training-intensity-step__talk-test">{{ talkTest() }}</p>

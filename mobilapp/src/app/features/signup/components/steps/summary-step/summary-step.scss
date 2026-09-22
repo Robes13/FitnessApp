@@ -1,0 +1,182 @@
+@use 'mixins';
+
+/*
+ * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
+ * ellers kan listen ikke scrolle.
+ * --summary-* bindes fra TypeScript (SUMMARY_LAYOUT).
+ */
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.summary-step {
+  &__header {
+    display: flex;
+    flex: none;
+    gap: var(--space-1-5);
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  &__intro {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-2xl);
+    color: var(--color-text);
+    text-wrap: balance;
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  /* Højden er reserveret, så listen ikke hopper, når teksten skifter. */
+  &__caption {
+    min-height: var(--summary-caption-height);
+    margin: var(--space-2) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+    text-wrap: pretty;
+  }
+
+  &__figure {
+    display: block;
+    flex: none;
+    width: var(--summary-figure-width);
+    height: var(--summary-figure-height);
+    overflow: visible;
+  }
+
+  /* Pennen banker utålmodigt, indtil betingelserne er accepteret. */
+  &__pen {
+    transform-box: fill-box;
+    transform-origin: bottom left;
+
+    &--tapping {
+      animation: pentap 1.1s ease-in-out infinite;
+    }
+  }
+
+  &__pen-barrel {
+    fill: none;
+    stroke: var(--color-figure-face);
+  }
+
+  &__pen-nib {
+    fill: none;
+    stroke: var(--color-accent);
+  }
+
+  &__spark {
+    fill: var(--color-warning);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: glow 1s ease-in-out infinite;
+  }
+
+  /*
+   * Listen er selve scroll-området. Den er en flex-kolonne (ikke `scroll-area`-mixinens
+   * `display: block`), fordi designet lægger luft mellem felt, rækker og betingelser med
+   * `gap`. `min-height: 0` er stadig nødvendig, ellers presser flex-forælderen den flad.
+   */
+  &__list {
+    @include mixins.hide-scrollbar;
+
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-height: 0;
+    margin-top: var(--space-3-5);
+    overflow-y: auto;
+  }
+
+  &__email {
+    flex: none;
+  }
+
+  &__rows {
+    @include mixins.surface-card;
+
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  &__terms {
+    display: flex;
+    flex: none;
+    gap: var(--space-3);
+    align-items: flex-start;
+    padding: var(--space-3-5) var(--space-4);
+    border: var(--border-width-thin) solid var(--color-surface-hover);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface-3);
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-relaxed);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color var(--duration-quick) var(--easing-standard),
+      background-color var(--duration-quick) var(--easing-standard);
+
+    &--accepted {
+      border-color: var(--color-accent-border-strong);
+      background: var(--color-accent-tint);
+    }
+  }
+
+  &__terms-box {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-icon-2xl);
+    height: var(--size-icon-2xl);
+    margin-top: var(--space-px);
+    border: var(--border-width-thin) solid var(--color-border-light);
+    border-radius: var(--radius-circle);
+    background: transparent;
+    color: var(--color-text-on-accent);
+    transition:
+      border-color var(--duration-quick) var(--easing-standard),
+      background-color var(--duration-quick) var(--easing-standard);
+  }
+
+  &__terms-check {
+    opacity: 0;
+    transition: opacity var(--duration-quick) var(--easing-standard);
+  }
+
+  &__terms--accepted &__terms-box {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+  }
+
+  &__terms--accepted &__terms-check {
+    opacity: 1;
+  }
+
+  &__terms-text {
+    text-wrap: pretty;
+  }
+
+  /* Ordene er fremhævet, men fører ingen steder hen – der er ingen sider bag dem. */
+  &__terms-link {
+    color: var(--color-accent);
+    font-weight: var(--font-weight-bold);
+    text-decoration: underline;
+  }
+}

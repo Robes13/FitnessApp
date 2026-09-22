@@ -1,0 +1,58 @@
+@use 'mixins';
+
+/*
+ * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
+ * ellers kan indholdet ikke scrolle.
+ */
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.goal-step {
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-3xl);
+    color: var(--color-text);
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  &__intro {
+    margin: var(--space-3) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2-5);
+    margin-top: var(--space-8);
+  }
+
+  /* Glyffen har fast farve pr. mål – den skifter ikke med valget. */
+  &__glyph {
+    @include mixins.display-heading;
+
+    font-size: var(--font-size-display-sm);
+
+    &--accent {
+      color: var(--color-accent);
+    }
+
+    &--muted {
+      color: var(--color-text-secondary);
+    }
+
+    &--selected {
+      color: var(--color-selected);
+    }
+  }
+}

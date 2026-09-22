@@ -1,0 +1,60 @@
+<h1 class="goal-weight-step__title">
+  Hvad er din <span class="goal-weight-step__title-accent">målvægt?</span>
+</h1>
+<p class="goal-weight-step__quip">{{ quip() }}</p>
+
+<div class="goal-weight-step__scene">
+  <div class="goal-weight-step__readout">
+    <p class="goal-weight-step__value">
+      <span class="goal-weight-step__number">{{ goalWeightText() }}</span>
+      <span class="goal-weight-step__unit">kg</span>
+    </p>
+
+    <p class="goal-weight-step__delta">
+      <span class="goal-weight-step__delta-dot" aria-hidden="true"></span>
+      <span class="goal-weight-step__delta-text">{{ deltaLabel() }}</span>
+    </p>
+
+    <p class="goal-weight-step__now">Nu: {{ currentWeightText() }} kg. Træk i skalaen nedenfor.</p>
+
+    <p class="goal-weight-step__hint">{{ hint() }}</p>
+  </div>
+
+  <svg
+    class="goal-weight-step__figure"
+    viewBox="0 0 200 300"
+    preserveAspectRatio="xMidYMax meet"
+    role="img"
+    aria-label="Figur ved målvægt"
+    focusable="false"
+  >
+    <ellipse
+      class="goal-weight-step__shadow"
+      cx="100"
+      cy="292"
+      [attr.rx]="goalGeometry().shadowRx"
+      ry="6"
+    />
+    <rect
+      class="goal-weight-step__ghost"
+      [attr.x]="currentGeometry().bodyX"
+      [attr.y]="currentGeometry().bodyY"
+      [attr.width]="currentGeometry().bodyW"
+      [attr.height]="currentGeometry().bodyH"
+      [attr.rx]="currentGeometry().bodyRx"
+      fill="none"
+      stroke-width="2"
+      stroke-dasharray="5 5"
+    />
+    <g app-figure-body [geometry]="goalGeometry()" [bandTone]="bandTone()" [showShadow]="false"></g>
+  </svg>
+</div>
+
+<app-ui-ruler
+  class="goal-weight-step__ruler"
+  [min]="bounds().min"
+  [max]="bounds().max"
+  [value]="goalWeightKg()"
+  (valueChange)="state.goalWeightKg.set($event)"
+  ariaLabel="Målvægt i kilo"
+/>

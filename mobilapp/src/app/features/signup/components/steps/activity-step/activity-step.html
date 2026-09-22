@@ -1,0 +1,372 @@
+<h1 class="activity-step__title">
+  Hvor mange <span class="activity-step__title-accent">skridt?</span>
+</h1>
+<p class="activity-step__subtitle">{{ subtitle() }}</p>
+
+<div class="activity-step__body">
+  <div class="activity-step__readout">
+    <div class="activity-step__count-block">
+      <div class="activity-step__count" [style.animation-name]="tickAnimation()">
+        {{ stepsText() }}
+      </div>
+      <div class="activity-step__count-caption">skridt på en almindelig dag</div>
+      @for (particle of confetti(); track $index) {
+        <span
+          class="activity-step__confetti"
+          [class]="particle.toneClass"
+          [style.left.px]="particle.left"
+          [style.--cx.px]="particle.driftX"
+          [style.--cr.deg]="particle.rotation"
+          [style.animation-delay.s]="particle.delay"
+        ></span>
+      }
+    </div>
+
+    <div class="activity-step__pill">
+      <span class="activity-step__pill-dot"></span>
+      <span class="activity-step__pill-label">{{ activityLabel() }}</span>
+    </div>
+
+    <div class="activity-step__facts">
+      <div>
+        ≈ <span class="activity-step__fact-value">{{ kmText() }} km</span> til fods
+      </div>
+      <div>
+        ≈ <span class="activity-step__fact-value">{{ kcalText() }} kcal</span> ekstra
+      </div>
+    </div>
+  </div>
+
+  <svg
+    class="activity-step__scene"
+    viewBox="0 0 200 300"
+    preserveAspectRatio="xMidYMax meet"
+    aria-label="Figur der går"
+  >
+    <g
+      class="activity-step__walk"
+      [style.opacity]="walkOpacity()"
+      [style.--scene-shift.px]="walkShift()"
+      [style.--scene-scale]="walkScale()"
+    >
+      <g
+        class="activity-step__ground"
+        [style.animation-duration.s]="groundDuration()"
+        [style.animation-play-state]="walkPlayState()"
+      >
+        @for (dash of groundDashes; track dash.x) {
+          <rect
+            class="activity-step__ground-dash"
+            [attr.x]="dash.x"
+            y="295"
+            width="18"
+            height="3"
+            rx="1.5"
+          />
+        }
+      </g>
+
+      <ellipse
+        class="activity-step__shadow"
+        cx="100"
+        cy="291"
+        [attr.rx]="figure().shadowRx"
+        ry="5"
+      />
+
+      <g class="activity-step__speed" [style.opacity]="speedOpacity()">
+        <line
+          class="activity-step__speed-line"
+          x1="146"
+          [attr.y1]="walk().speedY1"
+          x2="184"
+          [attr.y2]="walk().speedY1"
+          stroke-width="3"
+          stroke-linecap="round"
+        />
+        <line
+          class="activity-step__speed-line"
+          x1="156"
+          [attr.y1]="walk().speedY2"
+          x2="196"
+          [attr.y2]="walk().speedY2"
+          stroke-width="3"
+          stroke-linecap="round"
+        />
+      </g>
+
+      <g
+        class="activity-step__bob"
+        [style.animation-duration.s]="walkDuration()"
+        [style.animation-play-state]="walkPlayState()"
+      >
+        <g
+          class="activity-step__stride activity-step__stride--back"
+          [style.transform-origin]="walk().backLegOrigin"
+          [style.animation-duration.s]="walkDuration()"
+          [style.animation-play-state]="walkPlayState()"
+        >
+          <rect
+            class="activity-step__leg activity-step__leg--back"
+            [attr.x]="figure().legLX"
+            [attr.y]="figure().legY"
+            width="20"
+            [attr.height]="figure().legH"
+            rx="10"
+          />
+          <rect
+            class="activity-step__shoe activity-step__shoe--back"
+            [attr.x]="figure().shoeLX"
+            y="279"
+            width="30"
+            height="12"
+            rx="6"
+          />
+        </g>
+
+        <g
+          class="activity-step__swing activity-step__swing--back"
+          [style.transform-origin]="walk().backArmOrigin"
+          [style.animation-duration.s]="walkDuration()"
+          [style.animation-play-state]="walkPlayState()"
+        >
+          <rect
+            class="activity-step__arm activity-step__arm--back"
+            [attr.x]="walk().armBackX"
+            [attr.y]="walk().shoulderY"
+            width="15"
+            [attr.height]="walk().armHeight"
+            rx="7.5"
+          />
+        </g>
+
+        <g
+          class="activity-step__stride activity-step__stride--front"
+          [style.transform-origin]="walk().frontLegOrigin"
+          [style.animation-duration.s]="walkDuration()"
+          [style.animation-play-state]="walkPlayState()"
+        >
+          <rect
+            class="activity-step__leg"
+            [attr.x]="figure().legRX"
+            [attr.y]="figure().legY"
+            width="20"
+            [attr.height]="figure().legH"
+            rx="10"
+          />
+          <rect
+            class="activity-step__shoe"
+            [attr.x]="figure().shoeRX"
+            y="279"
+            width="30"
+            height="12"
+            rx="6"
+          />
+        </g>
+
+        <rect
+          class="activity-step__body-shape"
+          [attr.x]="figure().bodyX"
+          [attr.y]="figure().bodyY"
+          [attr.width]="figure().bodyW"
+          [attr.height]="figure().bodyH"
+          [attr.rx]="figure().bodyRx"
+        />
+        <rect
+          class="activity-step__belt"
+          [attr.x]="figure().beltX"
+          [attr.y]="figure().beltY"
+          [attr.width]="figure().beltW"
+          height="10"
+          rx="5"
+        />
+
+        <g class="activity-step__medal" [style.opacity]="medalOpacity()">
+          <path
+            class="activity-step__medal-ribbon"
+            [attr.d]="walk().medalRibbon"
+            stroke-width="4"
+            stroke-linecap="round"
+          />
+          <circle
+            class="activity-step__medal-disc"
+            cx="100"
+            [attr.cy]="walk().medalCy"
+            r="7"
+            stroke-width="1.5"
+          />
+        </g>
+
+        <g
+          class="activity-step__swing activity-step__swing--front"
+          [style.transform-origin]="walk().frontArmOrigin"
+          [style.animation-duration.s]="walkDuration()"
+          [style.animation-play-state]="walkPlayState()"
+        >
+          <rect
+            class="activity-step__arm activity-step__arm--front"
+            [attr.x]="walk().armFrontX"
+            [attr.y]="walk().shoulderY"
+            width="15"
+            [attr.height]="walk().armHeight"
+            rx="7.5"
+          />
+        </g>
+
+        <circle class="activity-step__head" cx="100" [attr.cy]="figure().headY" r="26" />
+        <rect
+          class="activity-step__band"
+          [class]="bandClass()"
+          x="74"
+          [attr.y]="figure().bandY"
+          width="52"
+          height="9"
+          rx="4.5"
+        />
+        <circle class="activity-step__eye" cx="90" [attr.cy]="figure().eyeY" r="4.5" />
+        <circle class="activity-step__eye" cx="110" [attr.cy]="figure().eyeY" r="4.5" />
+        <circle class="activity-step__pupil" cx="88" [attr.cy]="figure().eyeY" r="2.2" />
+        <circle class="activity-step__pupil" cx="108" [attr.cy]="figure().eyeY" r="2.2" />
+        <circle class="activity-step__cheek" cx="81" [attr.cy]="figure().cheekY" r="3.5" />
+        <circle class="activity-step__cheek" cx="119" [attr.cy]="figure().cheekY" r="3.5" />
+        <path
+          class="activity-step__smile"
+          [attr.d]="figure().smile"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          [style.opacity]="figure().smileOp"
+        />
+        <ellipse
+          class="activity-step__mouth"
+          cx="100"
+          [attr.cy]="figure().mouthY"
+          [attr.rx]="figure().mouthRx"
+          [attr.ry]="figure().mouthRy"
+        />
+        <ellipse
+          class="activity-step__tongue"
+          cx="100"
+          [attr.cy]="figure().mouthY"
+          [attr.rx]="figure().tongueRx"
+          [attr.ry]="figure().tongueRy"
+        />
+      </g>
+
+      <g class="activity-step__dog" [style.opacity]="dogOpacity()">
+        <g class="activity-step__dog-trot" [style.animation-duration.s]="trotDuration">
+          <ellipse class="activity-step__shadow" cx="34" cy="288" rx="17" ry="4" />
+          <rect class="activity-step__dog-body" x="18" y="264" width="30" height="16" rx="8" />
+          <rect class="activity-step__dog-body" x="20" y="276" width="6" height="12" rx="3" />
+          <rect class="activity-step__dog-body" x="40" y="276" width="6" height="12" rx="3" />
+          <path
+            class="activity-step__dog-tail"
+            d="M18 268 q-8 -6 -10 -14"
+            stroke-width="4"
+            stroke-linecap="round"
+          />
+          <circle class="activity-step__dog-head" cx="50" cy="260" r="10" />
+          <rect class="activity-step__dog-head" x="52" y="260" width="12" height="7" rx="3.5" />
+          <circle class="activity-step__dog-eye" cx="64" cy="263" r="2.4" />
+          <circle class="activity-step__dog-eye" cx="53" cy="257" r="2" />
+          <path class="activity-step__dog-ear" d="M44 250 l-2 -10 l9 5 z" />
+        </g>
+      </g>
+
+      @for (drop of sweat(); track drop.path) {
+        <g
+          class="activity-step__sweat"
+          [style.animation-duration.s]="drop.duration"
+          [style.animation-delay.s]="drop.delay"
+        >
+          <path class="activity-step__sweat-drop" [attr.d]="drop.path" />
+        </g>
+      }
+    </g>
+
+    <g
+      class="activity-step__lazy"
+      [style.opacity]="lazyOpacity()"
+      [style.--scene-shift.px]="lazyShift()"
+      [style.--scene-scale]="lazyScale()"
+    >
+      <rect
+        class="activity-step__tv-case"
+        x="2"
+        y="196"
+        width="56"
+        height="42"
+        rx="5"
+        stroke-width="2"
+      />
+      <rect class="activity-step__tv-screen" x="7" y="201" width="46" height="32" rx="3" />
+      <rect class="activity-step__tv-text" x="14" y="207" width="24" height="4" rx="2" />
+      <rect
+        class="activity-step__tv-text activity-step__tv-text--faint"
+        x="14"
+        y="216"
+        width="32"
+        height="4"
+        rx="2"
+      />
+      <rect class="activity-step__tv-stand" x="24" y="238" width="12" height="10" />
+      <rect class="activity-step__tv-stand" x="14" y="248" width="32" height="4" rx="2" />
+      <path
+        class="activity-step__tv-beam"
+        d="M58 202 L120 214 L120 250 L58 234 Z"
+        [style.animation-duration.s]="tvGlowDuration"
+      />
+      <ellipse class="activity-step__shadow" cx="140" cy="292" rx="56" ry="6" />
+      <rect class="activity-step__sofa-back" x="112" y="222" width="82" height="44" rx="12" />
+      <rect class="activity-step__sofa-seat" x="96" y="254" width="98" height="24" rx="10" />
+      <rect class="activity-step__sofa-arm" x="178" y="232" width="16" height="46" rx="8" />
+      <rect class="activity-step__sofa-back" x="96" y="278" width="14" height="12" rx="4" />
+      <rect class="activity-step__sofa-back" x="180" y="278" width="14" height="12" rx="4" />
+      <rect class="activity-step__lazy-limb" x="104" y="244" width="52" height="15" rx="7.5" />
+      <rect class="activity-step__lazy-limb" x="104" y="250" width="15" height="30" rx="7.5" />
+      <rect class="activity-step__shoe" x="92" y="277" width="30" height="11" rx="5.5" />
+      <rect class="activity-step__body-shape" x="128" y="220" width="42" height="38" rx="14" />
+      <rect class="activity-step__lazy-arm" x="122" y="236" width="14" height="26" rx="7" />
+      <circle class="activity-step__head" cx="150" cy="204" r="20" />
+      <rect
+        class="activity-step__band"
+        [class]="bandClass()"
+        x="134"
+        y="196"
+        width="32"
+        height="8"
+        rx="4"
+      />
+      <circle class="activity-step__eye" cx="142" cy="205" r="4" />
+      <circle class="activity-step__eye" cx="156" cy="205" r="4" />
+      <circle class="activity-step__pupil" cx="140" cy="205.6" r="2" />
+      <circle class="activity-step__pupil" cx="154" cy="205.6" r="2" />
+      <path
+        class="activity-step__smile"
+        d="M143 214 q7 5 14 0"
+        stroke-width="2.4"
+        stroke-linecap="round"
+      />
+      <g class="activity-step__snooze" [style.animation-duration.s]="tvGlowDuration">
+        <circle class="activity-step__snooze-dot" cx="172" cy="186" r="3" />
+        <circle class="activity-step__snooze-dot" cx="180" cy="176" r="4.5" />
+        <circle class="activity-step__snooze-dot" cx="190" cy="164" r="6" />
+      </g>
+    </g>
+  </svg>
+</div>
+
+<app-ui-ruler
+  class="activity-step__ruler"
+  [min]="rulerMin"
+  [max]="rulerMax"
+  [(value)]="state.stepsPerDay"
+  [step]="rulerStep"
+  [tickUnit]="rulerTickUnit"
+  [pxPerTick]="rulerPxPerTick"
+  [labelEvery]="rulerLabelEvery"
+  [labelFormatter]="rulerLabelFormatter"
+  [glowReach]="rulerGlowReach"
+  [glowStrength]="rulerGlowStrength"
+  [(dragging)]="dragging"
+  ariaLabel="Skridt om dagen"
+/>

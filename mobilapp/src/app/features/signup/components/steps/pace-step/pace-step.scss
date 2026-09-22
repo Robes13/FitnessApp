@@ -1,0 +1,57 @@
+@use 'mixins';
+
+/*
+ * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
+ * ellers kan indholdet ikke scrolle.
+ */
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pace-step {
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-3xl);
+    color: var(--color-text);
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  &__intro {
+    margin: var(--space-3) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2-5);
+    margin-top: var(--space-8);
+  }
+
+  &__rate {
+    color: var(--color-accent);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    white-space: nowrap;
+  }
+
+  /* Den grønne opsummeringsboks: grøn i venstre side, der toner ud i fladen. */
+  &__summary {
+    margin: var(--space-4) 0 0;
+    padding: var(--space-3-5) var(--space-4);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(90deg, var(--color-positive-tint-strong), var(--color-surface));
+    color: var(--color-text-soft-strong);
+    font-size: var(--font-size-md);
+    text-wrap: pretty;
+  }
+}

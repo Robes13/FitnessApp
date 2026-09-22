@@ -1,0 +1,97 @@
+<div class="summary-step__header">
+  <div class="summary-step__intro">
+    <h1 class="summary-step__title">
+      Tjek og <span class="summary-step__title-accent">bekræft</span>
+    </h1>
+    <p class="summary-step__caption">{{ caption() }}</p>
+  </div>
+
+  <svg
+    class="summary-step__figure"
+    viewBox="0 0 200 300"
+    preserveAspectRatio="xMidYMax meet"
+    role="img"
+    aria-label="Figur med kuglepen"
+    focusable="false"
+  >
+    <g app-figure-body [geometry]="geometry()" [bandTone]="bandTone()"></g>
+
+    <g
+      class="summary-step__pen"
+      [class.summary-step__pen--tapping]="!state.termsAccepted()"
+      aria-hidden="true"
+    >
+      <path
+        class="summary-step__pen-barrel"
+        [attr.d]="penPath()"
+        stroke-width="7"
+        stroke-linecap="round"
+      />
+      <path
+        class="summary-step__pen-nib"
+        [attr.d]="penPath()"
+        stroke-width="7"
+        stroke-linecap="round"
+        stroke-dasharray="9 200"
+      />
+    </g>
+
+    @for (spark of sparks(); track $index) {
+      <path
+        class="summary-step__spark"
+        [attr.d]="spark.path"
+        [style.animation-delay.s]="spark.delay"
+      />
+    }
+  </svg>
+</div>
+
+<form class="summary-step__list" [formGroup]="form">
+  <app-ui-text-input
+    class="summary-step__email"
+    formControlName="email"
+    type="email"
+    inputMode="email"
+    autocomplete="email"
+    ariaLabel="Din e-mail"
+    [placeholder]="emailPlaceholder"
+    [invalid]="emailInvalid()"
+  />
+
+  <div class="summary-step__rows">
+    @for (row of rows(); track row.step; let first = $first) {
+      <button
+        app-ui-row-button
+        density="compact"
+        [label]="row.label"
+        [value]="row.value"
+        [valueTone]="row.accent ? 'accent' : 'default'"
+        [divider]="!first"
+        [ariaLabel]="editLabel(row.label)"
+        (click)="edit(row.step)"
+      ></button>
+    }
+  </div>
+
+  <button
+    type="button"
+    class="summary-step__terms"
+    [class.summary-step__terms--accepted]="state.termsAccepted()"
+    role="checkbox"
+    [attr.aria-checked]="state.termsAccepted()"
+    (click)="toggleTerms()"
+  >
+    <span class="summary-step__terms-box" aria-hidden="true">
+      <app-ui-icon
+        class="summary-step__terms-check"
+        name="check"
+        size="xs"
+        [strokeWidth]="checkStrokeWidth"
+      />
+    </span>
+    <span class="summary-step__terms-text">
+      Jeg accepterer Nutrifys <span class="summary-step__terms-link">servicevilkår</span> og
+      <span class="summary-step__terms-link">privatlivspolitik</span>.
+    </span>
+  </button>
+</form>

@@ -1,0 +1,114 @@
+<h1 class="training-frequency-step__title">
+  Hvor ofte <span class="training-frequency-step__title-accent">træner du?</span>
+</h1>
+<p class="training-frequency-step__subtitle">{{ subtitle() }}</p>
+
+<div class="training-frequency-step__body">
+  <div class="training-frequency-step__readout">
+    <div>
+      <div class="training-frequency-step__count">{{ frequencyText() }}</div>
+      <div class="training-frequency-step__count-caption">planlagte træninger om ugen</div>
+    </div>
+
+    <div class="training-frequency-step__pill">
+      <span class="training-frequency-step__pill-dot"></span>
+      <span class="training-frequency-step__pill-label">{{ label() }}</span>
+    </div>
+  </div>
+
+  <svg
+    class="training-frequency-step__scene"
+    viewBox="0 0 200 300"
+    preserveAspectRatio="xMidYMax meet"
+    aria-label="Figur der løfter vægt"
+  >
+    <ellipse
+      class="training-frequency-step__shadow"
+      cx="100"
+      cy="292"
+      [attr.rx]="figure().shadowRx"
+      ry="6"
+    />
+
+    <g
+      class="training-frequency-step__bob"
+      [style.animation-duration.s]="curlDuration()"
+      [style.animation-play-state]="curlPlayState()"
+    >
+      <g
+        app-figure-body
+        [geometry]="figure()"
+        [bandTone]="bandTone()"
+        [showRightArm]="false"
+        [showShadow]="false"
+        [animated]="false"
+        shaded
+      ></g>
+
+      <g
+        class="training-frequency-step__curl"
+        [style.transform-origin]="curlOrigin()"
+        [style.animation-duration.s]="curlDuration()"
+        [style.animation-play-state]="curlPlayState()"
+      >
+        <path
+          class="training-frequency-step__arm"
+          [attr.d]="figure().armR"
+          stroke-width="16"
+          stroke-linecap="round"
+        />
+        <rect
+          class="training-frequency-step__dumbbell-bar"
+          [attr.x]="figure().dbX"
+          [attr.y]="figure().dbY"
+          width="40"
+          height="6"
+          rx="3"
+        />
+        <rect
+          class="training-frequency-step__dumbbell-cap"
+          [attr.x]="figure().dbX"
+          [attr.y]="figure().dbCapY"
+          width="9"
+          height="20"
+          rx="3"
+        />
+        <rect
+          class="training-frequency-step__dumbbell-cap"
+          [attr.x]="figure().dbCapRX"
+          [attr.y]="figure().dbCapY"
+          width="9"
+          height="20"
+          rx="3"
+        />
+      </g>
+    </g>
+
+    @for (drop of sweat(); track drop.path) {
+      <g
+        class="training-frequency-step__sweat"
+        [style.animation-duration.s]="drop.duration"
+        [style.animation-delay.s]="drop.delay"
+      >
+        <path class="training-frequency-step__sweat-drop" [attr.d]="drop.path" />
+      </g>
+    }
+  </svg>
+</div>
+
+<div class="training-frequency-step__days">
+  @for (day of days(); track day.index) {
+    <button
+      class="training-frequency-step__day"
+      type="button"
+      [class.training-frequency-step__day--selected]="day.selected"
+      [attr.aria-label]="day.name"
+      [attr.aria-pressed]="day.selected"
+      (click)="state.toggleTrainingDay(day.index)"
+    >
+      {{ day.label }}
+    </button>
+  }
+</div>
+
+<p class="training-frequency-step__hint">Tryk på de dage, du typisk træner.</p>
