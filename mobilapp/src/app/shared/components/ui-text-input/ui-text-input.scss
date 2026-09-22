@@ -8,6 +8,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-width: 0;
 }
 
 :host(.ui-text-input--md) .ui-text-input__field {
@@ -45,6 +46,8 @@
 .ui-text-input {
   &__field {
     width: 100%;
+    /* iOS gives date/time inputs an intrinsic width that ignores `width: 100%` otherwise. */
+    min-width: 0;
     min-height: var(--size-control-lg);
     padding: 0 var(--space-4);
     border: var(--border-width-thin) solid var(--color-border-strong);
@@ -60,6 +63,22 @@
     transition:
       border-color var(--duration-quick) var(--easing-standard),
       box-shadow var(--duration-quick) var(--easing-standard);
+
+    /*
+     * iOS keeps an intrinsic width on date/time inputs unless the native appearance is
+     * dropped, so the field would overflow its container.
+     */
+    &[type='time'] {
+      display: block;
+      padding-block: var(--space-3);
+      appearance: none;
+    }
+
+    /* iOS renders the native time picker's value in its own box; let it shrink to the field. */
+    &::-webkit-date-and-time-value {
+      min-width: 0;
+      text-align: start;
+    }
 
     &::placeholder {
       color: var(--color-text-muted);
