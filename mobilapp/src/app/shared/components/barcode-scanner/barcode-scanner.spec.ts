@@ -226,7 +226,7 @@ describe('BarcodeScanner', () => {
 
       expect(dialogs()).toEqual(['Scan stregkode']);
       expect(hint()).toBe(
-        'Kameraet er kun tilgængeligt i appen. Indtast stregkodens tal i stedet.',
+        'Kameraet kan ikke bruges her. Indtast stregkodens tal i stedet.',
       );
       expect(findButton('Scan stregkode')).toBeUndefined();
       expect(scanner.scanCalls).toBe(0);

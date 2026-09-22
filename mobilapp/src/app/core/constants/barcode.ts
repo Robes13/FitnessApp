@@ -60,7 +60,7 @@ export const BARCODE_PLUGIN_ERROR = {
 /** User-facing texts of the scanner (Danish). */
 export const BARCODE_SCANNER_TEXT = {
   HINT_IDLE_NATIVE: 'Tryk på "Scan stregkode" og hold kameraet over stregkoden',
-  HINT_IDLE_WEB: 'Kameraet er kun tilgængeligt i appen. Indtast stregkodens tal i stedet.',
+  HINT_IDLE_WEB: 'Kameraet kan ikke bruges her. Indtast stregkodens tal i stedet.',
   HINT_SCANNING: 'Læser stregkode…',
   HINT_LOOKING_UP: 'Slår varen op…',
   PERMISSION_DENIED:

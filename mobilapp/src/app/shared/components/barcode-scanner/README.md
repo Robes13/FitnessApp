@@ -44,7 +44,7 @@ egen vare med det id, den har fået (`addCustomFood(input, item.id)`).
 
 1. **Åbn.** Native og `autoStart`: `BarcodeScannerService.scan()` åbner kameraet med det
    samme, og hintet er _Læser stregkode…_. I browseren er `canScan` `false`: der vises et felt
-   til stregkoden og hintet _Kameraet er kun tilgængeligt i appen …_.
+   til stregkoden og hintet _Kameraet kan ikke bruges her …_ (browseren, eller en app uden kamera-plugin, fx iOS indtil ML Kit er med).
 2. **Kameraets udfald** (`BarcodeScanOutcome`):
    - `scanned` → opslag (trin 3).
    - `cancelled` → scanneren lukker uden at logge noget (8b).
