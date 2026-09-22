@@ -1,0 +1,167 @@
+@use 'mixins';
+
+:host {
+  @include mixins.page-screen;
+}
+
+.collections-page {
+  &__scroll {
+    @include mixins.scroll-area;
+    @include mixins.hide-scrollbar;
+
+    padding: 0 var(--layout-page-padding-x) var(--space-2);
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__intro {
+    min-width: 0;
+  }
+
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-xl);
+  }
+
+  &__subtitle {
+    margin: var(--space-1-5) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+  }
+
+  &__chips {
+    @include mixins.hide-scrollbar;
+
+    display: flex;
+    gap: var(--space-1-5);
+    margin: var(--space-4) calc(var(--layout-page-padding-x) * -1) 0;
+    padding: 0 var(--layout-page-padding-x) var(--space-0-5);
+    overflow-x: auto;
+
+    /* Designets bløde kant i højre side, så listen tydeligt kan scrolles. */
+    mask-image: linear-gradient(
+      90deg,
+      var(--color-white) 0,
+      var(--color-white) calc(100% - var(--space-8-5)),
+      transparent 100%
+    );
+  }
+
+  &__chip {
+    flex: none;
+  }
+
+  &__empty {
+    display: block;
+    margin-top: var(--space-4);
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2-5);
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3-5);
+    width: 100%;
+    padding: var(--space-3);
+    border: var(--border-width-thin) solid var(--color-border-soft);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: var(--font-family-base);
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--duration-quick) var(--easing-standard);
+
+    &:hover {
+      background: var(--color-surface-hover);
+    }
+
+    &--accent {
+      --collection-tint: var(--color-accent-soft);
+      --collection-ink: var(--color-accent);
+    }
+
+    &--positive {
+      --collection-tint: var(--color-positive-tint);
+      --collection-ink: var(--color-positive);
+    }
+
+    &--selected {
+      --collection-tint: var(--color-selected-tint-2);
+      --collection-ink: var(--color-selected-text);
+    }
+
+    &--negative {
+      --collection-tint: var(--color-negative-soft);
+      --collection-ink: var(--color-negative);
+    }
+  }
+
+  &__icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-control-xl);
+    height: var(--size-control-xl);
+    border-radius: var(--radius-lg);
+    background: var(--collection-tint);
+    color: var(--collection-ink);
+  }
+
+  &__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  &__meta {
+    color: var(--collection-ink);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-caps);
+    text-transform: uppercase;
+  }
+
+  &__card-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-snug);
+    text-wrap: pretty;
+  }
+
+  &__sub {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    text-wrap: pretty;
+  }
+
+  &__macros {
+    margin-top: var(--space-0-5);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  &__spacer {
+    flex: none;
+    height: var(--layout-tab-bar-clearance);
+  }
+}

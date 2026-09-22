@@ -1,0 +1,72 @@
+<div class="collections-page__scroll">
+  <header class="collections-page__header">
+    <div class="collections-page__intro">
+      <h1 class="collections-page__title">Samlinger</h1>
+      <p class="collections-page__subtitle">Dine varer og retter – log dem direkte som spist.</p>
+    </div>
+    <button
+      app-ui-icon-button
+      size="sm"
+      tone="accent"
+      type="button"
+      aria-label="Opret samling"
+      (click)="sheetOpen.set(true)"
+    >
+      <app-ui-icon name="plus" size="xl" [strokeWidth]="1.9" />
+    </button>
+  </header>
+
+  <div class="collections-page__chips" role="group" aria-label="Filtrér efter samling">
+    @for (chip of chips(); track chip.id) {
+      <button
+        app-ui-chip
+        size="sm"
+        type="button"
+        class="collections-page__chip"
+        [selected]="selectedId() === chip.id"
+        [attr.aria-pressed]="selectedId() === chip.id"
+        (click)="select(chip.id)"
+      >
+        {{ chip.label }}
+      </button>
+    }
+  </div>
+
+  @if (entries().length === 0) {
+    <app-ui-empty-state class="collections-page__empty" [message]="emptyMessage" />
+  } @else {
+    <ul class="collections-page__list">
+      @for (entry of entries(); track entry.id) {
+        <li class="collections-page__item">
+          <button
+            type="button"
+            class="collections-page__card"
+            [class]="toneClass(entry)"
+            (click)="open(entry)"
+          >
+            <span class="collections-page__icon">
+              <app-ui-icon [name]="entry.icon" size="3xl" [strokeWidth]="1.9" />
+            </span>
+            <span class="collections-page__body">
+              <span class="collections-page__meta">{{ entry.meta }}</span>
+              <span class="collections-page__card-title">{{ entry.title }}</span>
+              <span class="collections-page__sub">{{ entry.subtitle }}</span>
+              <span class="collections-page__macros">
+                {{ entry.kcal }} kcal · {{ entry.protein }} g protein
+              </span>
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<div class="collections-page__spacer" aria-hidden="true"></div>
+
+<app-new-collection-sheet
+  [open]="sheetOpen()"
+  [defaultMeal]="defaultMeal()"
+  (closed)="sheetOpen.set(false)"
+  (created)="onCreated($event)"
+/>

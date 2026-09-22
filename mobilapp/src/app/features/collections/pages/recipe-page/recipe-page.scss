@@ -1,0 +1,153 @@
+@use 'mixins';
+
+:host {
+  @include mixins.page-screen;
+}
+
+.recipe-page {
+  &__scroll {
+    @include mixins.scroll-area;
+    @include mixins.hide-scrollbar;
+
+    /* Skærmen skjuler tab-baren, så bunden skal selv gå fri af home-indikatoren. */
+    padding: 0 var(--layout-page-padding-x) calc(var(--safe-area-bottom) + var(--space-5));
+  }
+
+  &__hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: var(--size-recipe-hero);
+    border-radius: var(--radius-xl);
+    background: var(--collection-tint);
+    color: var(--collection-ink);
+
+    &--accent {
+      --collection-tint: var(--color-accent-soft);
+      --collection-ink: var(--color-accent);
+    }
+
+    &--positive {
+      --collection-tint: var(--color-positive-tint);
+      --collection-ink: var(--color-positive);
+    }
+
+    &--selected {
+      --collection-tint: var(--color-selected-tint-2);
+      --collection-ink: var(--color-selected-text);
+    }
+
+    &--negative {
+      --collection-tint: var(--color-negative-soft);
+      --collection-ink: var(--color-negative);
+    }
+  }
+
+  &__title {
+    @include mixins.display-heading;
+
+    margin: var(--space-4) 0 0;
+    font-size: var(--font-size-display-lg);
+    text-wrap: balance;
+  }
+
+  &__subtitle {
+    margin: var(--space-2) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-base);
+    text-wrap: pretty;
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-2);
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__stat {
+    @include mixins.surface-card;
+
+    padding: var(--space-2-5) var(--space-2);
+    border-radius: var(--radius-lg);
+  }
+
+  &__stat-label {
+    display: block;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-2xs);
+    letter-spacing: var(--letter-spacing-widest);
+    text-transform: uppercase;
+  }
+
+  &__stat-value {
+    @include mixins.tabular-nums;
+
+    display: block;
+    margin-top: var(--space-1);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-extrabold);
+
+    &--accent {
+      color: var(--color-accent);
+    }
+  }
+
+  &__caption {
+    @include mixins.caption-uppercase;
+
+    margin: var(--space-5-5) 0 var(--space-2);
+    font-weight: var(--font-weight-regular);
+
+    &--flush {
+      margin-top: 0;
+      margin-bottom: var(--space-2-5);
+    }
+  }
+
+  &__contents {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__line {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-top: var(--border-width-thin) solid var(--color-border-soft);
+    font-size: var(--font-size-base);
+  }
+
+  &__line-qty {
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+
+  &__log {
+    @include mixins.surface-card;
+
+    margin-top: var(--space-6);
+    padding: var(--space-4);
+  }
+
+  &__log-button {
+    margin-top: var(--space-3);
+  }
+
+  &__empty {
+    display: block;
+    margin-top: var(--space-2);
+  }
+
+  &__back {
+    margin-top: var(--space-4);
+  }
+}

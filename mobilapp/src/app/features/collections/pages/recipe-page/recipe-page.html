@@ -1,0 +1,66 @@
+<app-ui-page-header title="Opskrift" (back)="back()" />
+
+<div class="recipe-page__scroll">
+  @if (detail(); as recipe) {
+    <div class="recipe-page__hero" [class]="toneClass()">
+      <app-ui-icon [name]="recipe.icon" size="hero" [strokeWidth]="1.9" />
+    </div>
+    <h2 class="recipe-page__title">{{ recipe.title }}</h2>
+    <p class="recipe-page__subtitle">{{ recipe.subtitle }}</p>
+
+    <ul class="recipe-page__stats">
+      @for (stat of stats(); track stat.label) {
+        <li class="recipe-page__stat">
+          <span class="recipe-page__stat-label">{{ stat.label }}</span>
+          <span
+            class="recipe-page__stat-value"
+            [class.recipe-page__stat-value--accent]="stat.accent"
+            >{{ stat.value }}</span
+          >
+        </li>
+      }
+    </ul>
+
+    <h3 class="recipe-page__caption">Indhold</h3>
+    @if (recipe.contents.length === 0) {
+      <app-ui-empty-state class="recipe-page__empty" [message]="noContentsMessage" />
+    } @else {
+      <ul class="recipe-page__contents">
+        @for (line of recipe.contents; track $index) {
+          <li class="recipe-page__line">
+            <span>{{ line.name }}</span>
+            <span class="recipe-page__line-qty">{{ line.quantity }}</span>
+          </li>
+        }
+      </ul>
+    }
+
+    <section class="recipe-page__log">
+      <h3 class="recipe-page__caption recipe-page__caption--flush">Log som spist under</h3>
+      <app-meal-picker [(value)]="meal" ariaLabel="Log som spist under" />
+      <button
+        app-ui-button
+        variant="primary"
+        size="lg"
+        block
+        type="button"
+        class="recipe-page__log-button"
+        (click)="log()"
+      >
+        Log {{ recipe.macros.kcal }} kcal
+      </button>
+    </section>
+  } @else {
+    <app-ui-empty-state class="recipe-page__empty" [message]="notFoundMessage" />
+    <button
+      app-ui-button
+      variant="outline"
+      size="md"
+      type="button"
+      class="recipe-page__back"
+      (click)="back()"
+    >
+      Tilbage til samlinger
+    </button>
+  }
+</div>
