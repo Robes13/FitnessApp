@@ -35,3 +35,41 @@ export type CollectionIconName = (typeof COLLECTION_ICON_NAMES)[number];
 
 /** Antal ikoner der vises, før brugeren trykker "Vis flere". */
 export const COLLECTION_ICON_PREVIEW_COUNT = 12;
+
+/**
+ * Hvad ikonet forestiller, læst op af skærmlæsere. Designet har kun tegningerne
+ * (`colIconDefs`), så navnene er oversat her ved siden af `COLLECTION_ICON_NAMES`,
+ * så enhver ikonvælger kan bruge de samme danske navne.
+ */
+export const COLLECTION_ICON_LABELS: Readonly<Record<CollectionIconName, string>> = {
+  egg: 'Æg',
+  bolt: 'Lyn',
+  utensils: 'Bestik',
+  cookie: 'Småkage',
+  coffee: 'Kaffe',
+  salad: 'Salat',
+  fish: 'Fisk',
+  flame: 'Flamme',
+  leaf: 'Blad',
+  heart: 'Hjerte',
+  star: 'Stjerne',
+  dumbbell: 'Håndvægt',
+  apple: 'Æble',
+  carrot: 'Gulerod',
+  sprout: 'Spire',
+  soup: 'Suppe',
+  pizza: 'Pizza',
+  icecream: 'Is',
+  cake: 'Kage',
+  sandwich: 'Sandwich',
+  milk: 'Mælk',
+  droplet: 'Dråbe',
+  timer: 'Timer',
+  sun: 'Sol',
+  moon: 'Måne',
+  target: 'Mål',
+  trophy: 'Pokal',
+  bike: 'Cykel',
+  bag: 'Taske',
+  sparkles: 'Glimt',
+};

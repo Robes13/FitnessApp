@@ -51,6 +51,23 @@ describe('NewCollectionSheet', () => {
     await settle();
   }
 
+  function icons(): HTMLButtonElement[] {
+    return Array.from(root.querySelectorAll<HTMLButtonElement>('.new-collection-sheet__icon'));
+  }
+
+  function selectedIconLabel(): string | null | undefined {
+    return root
+      .querySelector('.new-collection-sheet__icon[aria-checked="true"]')
+      ?.getAttribute('aria-label');
+  }
+
+  async function pressOnIcons(key: string): Promise<void> {
+    root
+      .querySelector('.new-collection-sheet__icons')
+      ?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    await settle();
+  }
+
   async function typeName(value: string): Promise<void> {
     const input = root.querySelector<HTMLInputElement>('.new-collection-sheet__name input');
     if (!input) {
@@ -92,6 +109,60 @@ describe('NewCollectionSheet', () => {
     await click(root.querySelector('.new-collection-sheet__more'));
 
     expect(root.querySelectorAll('.new-collection-sheet__icon')).toHaveLength(12);
+  });
+
+  it('names every icon in Danish for screen readers', () => {
+    expect(icons()[0]?.getAttribute('aria-label')).toBe('Æg');
+    expect(icons()[11]?.getAttribute('aria-label')).toBe('Håndvægt');
+  });
+
+  it('walks the icon grid with the arrow keys and wraps around', async () => {
+    expect(selectedIconLabel()).toBe('Stjerne');
+
+    await pressOnIcons('ArrowRight');
+    expect(selectedIconLabel()).toBe('Håndvægt');
+
+    await pressOnIcons('ArrowRight');
+    expect(selectedIconLabel()).toBe('Æg');
+
+    await pressOnIcons('ArrowDown');
+    expect(selectedIconLabel()).toBe('Fisk');
+
+    await pressOnIcons('ArrowUp');
+    expect(selectedIconLabel()).toBe('Æg');
+
+    await pressOnIcons('ArrowLeft');
+    expect(selectedIconLabel()).toBe('Håndvægt');
+  });
+
+  it('keeps only the selected icon in the tab order and follows it with focus', async () => {
+    expect(icons().map((icon) => icon.tabIndex)).toEqual([
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, -1,
+    ]);
+
+    await pressOnIcons('ArrowRight');
+
+    expect(document.activeElement).toBe(icons()[11]);
+    expect(icons()[11]?.tabIndex).toBe(0);
+  });
+
+  it('leaves the icon grid alone on keys that are not arrows', async () => {
+    await pressOnIcons('Enter');
+
+    expect(selectedIconLabel()).toBe('Stjerne');
+  });
+
+  it('hands the tab order to the first icon when the selected one is folded away', async () => {
+    await click(root.querySelector('.new-collection-sheet__more'));
+    await click(icons()[20]);
+
+    expect(selectedIconLabel()).toBe('Mælk');
+
+    await click(root.querySelector('.new-collection-sheet__more'));
+
+    expect(icons()).toHaveLength(12);
+    expect(selectedIconLabel()).toBeUndefined();
+    expect(icons()[0]?.tabIndex).toBe(0);
   });
 
   it('starts with an empty draft and the design’s hint', () => {

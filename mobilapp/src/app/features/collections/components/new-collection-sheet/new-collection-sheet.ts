@@ -15,6 +15,7 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import {
+  COLLECTION_ICON_LABELS,
   COLLECTION_ICON_NAMES,
   COLLECTION_ICON_PREVIEW_COUNT,
   CollectionIconName,
@@ -52,43 +53,6 @@ const ICON_KEY_DELTAS: Readonly<Record<string, number>> = {
   ArrowRight: 1,
   ArrowUp: -6,
   ArrowDown: 6,
-};
-/**
- * Hvad ikonet forestiller, læst op af skærmlæsere. Designet har kun tegningerne
- * (`colIconDefs`), så navnene er oversat her. Hører hjemme ved siden af
- * `COLLECTION_ICON_NAMES` i `core/constants`, men featuren må ikke skrive i `core`.
- */
-const ICON_LABELS: Readonly<Record<CollectionIconName, string>> = {
-  egg: 'Æg',
-  bolt: 'Lyn',
-  utensils: 'Bestik',
-  cookie: 'Småkage',
-  coffee: 'Kaffe',
-  salad: 'Salat',
-  fish: 'Fisk',
-  flame: 'Flamme',
-  leaf: 'Blad',
-  heart: 'Hjerte',
-  star: 'Stjerne',
-  dumbbell: 'Håndvægt',
-  apple: 'Æble',
-  carrot: 'Gulerod',
-  sprout: 'Spire',
-  soup: 'Suppe',
-  pizza: 'Pizza',
-  icecream: 'Is',
-  cake: 'Kage',
-  sandwich: 'Sandwich',
-  milk: 'Mælk',
-  droplet: 'Dråbe',
-  timer: 'Timer',
-  sun: 'Sol',
-  moon: 'Måne',
-  target: 'Mål',
-  trophy: 'Pokal',
-  bike: 'Cykel',
-  bag: 'Taske',
-  sparkles: 'Glimt',
 };
 
 interface NewCollectionForm {
@@ -190,7 +154,7 @@ export class NewCollectionSheet {
   }
 
   protected iconLabel(icon: CollectionIconName): string {
-    return ICON_LABELS[icon];
+    return COLLECTION_ICON_LABELS[icon];
   }
 
   /**
