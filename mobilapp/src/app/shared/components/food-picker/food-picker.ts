@@ -26,6 +26,7 @@ import { DEFAULT_QUANTITY_UNIT } from '../../../core/constants/nutrition';
 import { FoodItem, Macros } from '../../../core/models/food';
 import { FoodSearchService } from '../../../core/services/food-search';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
+import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiButton } from '../ui-button/ui-button';
 import { UiChip } from '../ui-chip/ui-chip';
 import { UiEmptyState } from '../ui-empty-state/ui-empty-state';
@@ -119,6 +120,11 @@ interface DragState {
   readonly startAmount: number;
 }
 
+function nonNegative(control: AbstractControl<number | null>): ValidationErrors | null {
+  const value = control.value;
+  return value === null || (Number.isFinite(value) && value >= 0) ? null : { nonNegative: true };
+}
+
 /** `Validators.required` accepts whitespace – the design requires a name with actual content. */
 function notBlank(control: AbstractControl<string>): ValidationErrors | null {
   return control.value.trim() === '' ? { blank: true } : null;
@@ -138,6 +144,7 @@ function notBlank(control: AbstractControl<string>): ValidationErrors | null {
   selector: 'app-food-picker',
   imports: [
     ReactiveFormsModule,
+    UiFormError,
     UiButton,
     UiChip,
     UiEmptyState,
@@ -228,9 +235,9 @@ export class FoodPicker {
     amount: new FormControl<number | null>(null),
     unit: new FormControl<FoodUnitId>(DEFAULT_FOOD_UNIT, { nonNullable: true }),
     kcal: new FormControl<number | null>(null, [Validators.required, Validators.min(1)]),
-    protein: new FormControl<number | null>(null),
-    carbs: new FormControl<number | null>(null),
-    fat: new FormControl<number | null>(null),
+    protein: new FormControl<number | null>(null, [nonNegative]),
+    carbs: new FormControl<number | null>(null, [nonNegative]),
+    fat: new FormControl<number | null>(null, [nonNegative]),
   });
   private readonly formValue = toSignal(
     this.form.valueChanges.pipe(map(() => this.form.getRawValue())),
@@ -240,6 +247,14 @@ export class FoodPicker {
     this.form.statusChanges.pipe(map(() => this.form.valid)),
     { initialValue: this.form.valid },
   );
+  protected readonly macroError = computed(() => {
+    const { protein, carbs, fat } = this.formValue();
+    return [protein, carbs, fat].some(
+      (value) => value !== null && (!Number.isFinite(value) || value < 0),
+    )
+      ? 'Protein, kulhydrat og fedt skal være 0 eller større.'
+      : null;
+  });
   protected readonly selectedUnit = computed(() => this.formValue().unit);
   protected readonly showMore = signal(false);
   protected readonly moreLabel = computed(() =>
@@ -468,6 +483,10 @@ export class FoodPicker {
 
   /** Design's `ownFood`: name and calories are required, the rest is rounded (empty = 0). */
   private buildCustomFood(): FoodItem | null {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return null;
+    }
     const value = this.form.getRawValue();
     const name = value.name.trim();
     const kcal = Math.round(value.kcal ?? 0);

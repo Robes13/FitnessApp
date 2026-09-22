@@ -315,6 +315,32 @@ describe('FoodPicker', () => {
   });
 
   describe('new-food step', () => {
+    it.each([3, 4, 5])(
+      'rejects a negative macro in field %i, including direct form submission',
+      async (index) => {
+        const { host, root, click, typeInto, buttonByText, settle } = await setup();
+        await click('.food-picker__create');
+        await click('.food-picker__more');
+        await typeInto(formFields(root)[0] ?? null, 'Test food');
+        await typeInto(formFields(root)[2] ?? null, '100');
+        await typeInto(formFields(root)[index] ?? null, '-20');
+        expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(true);
+        expect(buttonByText('Gem uden at logge')?.disabled).toBe(true);
+        root
+          .querySelector('form')!
+          .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        await settle();
+        expect(host.created).toEqual([]);
+        expect(host.picked).toEqual([]);
+        expect(root.textContent).toContain('skal være 0 eller større');
+        await typeInto(formFields(root)[index] ?? null, '0');
+        buttonByText('Gem og log under morgenmad')?.click();
+        await settle();
+        expect(host.created).toHaveLength(1);
+        expect(host.picked).toHaveLength(1);
+      },
+    );
+
     function formFields(root: HTMLElement): HTMLInputElement[] {
       return Array.from(root.querySelectorAll<HTMLInputElement>('.food-picker__fields input'));
     }

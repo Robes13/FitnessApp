@@ -68,6 +68,9 @@
 
   @case ('new-food') {
     <form class="food-picker__step" [formGroup]="form" (ngSubmit)="saveNewFoodAndLog()">
+      @if (macroError()) {
+        <app-ui-form-error tone="negative" [message]="macroError()" />
+      }
       <div class="food-picker__heading">
         <button
           app-ui-icon-button
@@ -187,6 +190,7 @@
           size="sm"
           block
           class="food-picker__save-only"
+          [disabled]="!canSaveNewFood()"
           (click)="saveNewFood()"
         >
           Gem uden at logge

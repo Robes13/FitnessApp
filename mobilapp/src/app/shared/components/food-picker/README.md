@@ -71,3 +71,7 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
 - Talfeltet er `--size-portion-field` (designets 96 px) bredt, og plus-cirklen i
   resultatrækkerne `--size-control-3xs` (28 px). Den stiplede ikonboks i "Opret …"-rækken er
   `--size-control-2xs` (36 px) mod designets 34 px.
+
+Protein, kulhydrat og fedt må være tomme (0), men kan ikke være negative eller
+ikke-endelige tal. Ugyldige værdier vises med en formularfejl og blokerer begge
+gemmeknapper samt direkte formularindsendelse.
