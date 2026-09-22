@@ -1,0 +1,17 @@
+<div class="meal-picker__grid" role="radiogroup" [attr.aria-label]="ariaLabel()">
+  @for (meal of meals; track meal.id) {
+    <button
+      #option
+      type="button"
+      class="meal-picker__option"
+      [class.meal-picker__option--selected]="value() === meal.id"
+      [class.meal-picker__option--filled]="filled()"
+      role="radio"
+      [attr.aria-checked]="value() === meal.id"
+      [tabindex]="tabIndexFor(meal.id)"
+      (click)="select(meal.id)"
+    >
+      {{ meal.label }}
+    </button>
+  }
+</div>

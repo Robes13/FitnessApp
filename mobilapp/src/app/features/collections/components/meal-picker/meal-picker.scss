@@ -1,0 +1,38 @@
+:host {
+  display: block;
+}
+
+.meal-picker {
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
+
+  &__option {
+    min-height: var(--size-control-sm);
+    padding: 0 var(--space-2);
+    border: var(--border-width-thin) solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-quick) var(--easing-standard),
+      border-color var(--duration-quick) var(--easing-standard),
+      color var(--duration-quick) var(--easing-standard);
+
+    &--filled {
+      background: var(--color-surface);
+    }
+
+    &--selected {
+      border-color: var(--color-accent);
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+    }
+  }
+}

@@ -1,0 +1,179 @@
+@use 'mixins';
+
+/* Værten er kun en beholder – arkene lægger sig selv over app-roden. */
+:host {
+  display: contents;
+}
+
+.new-collection-sheet {
+  &__name {
+    /* Arket lægger selv 12 px mellem overskrift og indhold – designet vil have 18 i alt. */
+    display: block;
+    margin-top: var(--space-1-5);
+  }
+
+  &__caption {
+    @include mixins.caption-uppercase;
+
+    margin: var(--space-4-5) 0 var(--space-2-5);
+    font-weight: var(--font-weight-regular);
+
+    &--row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+    }
+  }
+
+  &__caption-text {
+    margin: 0;
+    font: inherit;
+    color: inherit;
+  }
+
+  &__more {
+    padding: var(--space-1) 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-accent);
+    font-family: inherit;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: var(--letter-spacing-widest);
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  &__icons {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--space-2);
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    padding: 0;
+    border: var(--border-width-thin) solid var(--color-border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition:
+      border-color var(--duration-quick) var(--easing-standard),
+      background-color var(--duration-quick) var(--easing-standard),
+      color var(--duration-quick) var(--easing-standard);
+
+    &--selected {
+      border-color: var(--color-accent);
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+    }
+  }
+
+  &__empty {
+    display: block;
+    margin-top: var(--space-2);
+  }
+
+  &__draft {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2-5) 0;
+    border-top: var(--border-width-thin) solid var(--color-border-soft);
+    font-size: var(--font-size-md);
+  }
+
+  &__item {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--color-accent);
+    }
+  }
+
+  &__dot {
+    flex: none;
+    width: var(--size-dot-sm);
+    height: var(--size-dot-sm);
+    border-radius: var(--radius-circle);
+    background: var(--color-accent);
+  }
+
+  &__item-name {
+    @include mixins.text-truncate;
+  }
+
+  &__item-qty {
+    flex: none;
+    color: var(--color-text-muted);
+  }
+
+  &__row-end {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-1-5);
+  }
+
+  &__kcal {
+    color: var(--color-text-secondary);
+  }
+
+  &__remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-control-4xs);
+    height: var(--size-control-4xs);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-2);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-quick) var(--easing-standard),
+      color var(--duration-quick) var(--easing-standard);
+
+    &:hover {
+      background: var(--color-negative-soft-strong);
+      color: var(--color-negative);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: var(--space-2-5);
+    margin-top: var(--space-3);
+  }
+
+  &__action {
+    flex: 1;
+    min-width: 0;
+  }
+}

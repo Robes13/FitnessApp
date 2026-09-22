@@ -1,0 +1,155 @@
+<app-ui-sheet
+  [open]="open()"
+  title="Ny"
+  titleAccent="samling"
+  titleSize="sm"
+  maxHeight="full"
+  scrollable
+  (closed)="close()"
+>
+  <app-ui-text-input
+    class="new-collection-sheet__name"
+    [formControl]="form.controls.name"
+    placeholder="Navn, f.eks. Meal prep"
+    ariaLabel="Navn på samlingen"
+    autocomplete="off"
+  />
+
+  <h3 class="new-collection-sheet__caption">Hører under</h3>
+  <app-meal-picker [(value)]="meal" filled ariaLabel="Hører under" />
+
+  <div class="new-collection-sheet__caption new-collection-sheet__caption--row">
+    <h3 class="new-collection-sheet__caption-text">Vælg ikon</h3>
+    <button type="button" class="new-collection-sheet__more" (click)="toggleIcons()">
+      {{ moreIconsLabel() }}
+    </button>
+  </div>
+  <div
+    class="new-collection-sheet__icons"
+    role="radiogroup"
+    aria-label="Vælg ikon"
+    (keydown)="onIconKeydown($event)"
+  >
+    @for (name of icons(); track name; let index = $index) {
+      <button
+        #iconOption
+        type="button"
+        class="new-collection-sheet__icon"
+        [class.new-collection-sheet__icon--selected]="icon() === name"
+        role="radio"
+        [attr.aria-checked]="icon() === name"
+        [attr.aria-label]="iconLabel(name)"
+        [tabindex]="iconTabIndexFor(index)"
+        (click)="selectIcon(name)"
+      >
+        <app-ui-icon [name]="name" size="xl" [strokeWidth]="1.9" />
+      </button>
+    }
+  </div>
+
+  <h3 class="new-collection-sheet__caption">Varer i samlingen</h3>
+  @if (draft().length === 0) {
+    <app-ui-empty-state
+      tone="subtle"
+      size="sm"
+      class="new-collection-sheet__empty"
+      message="Søg en vare eller scan en stregkode for at fylde samlingen."
+    />
+  } @else {
+    <ul class="new-collection-sheet__draft">
+      @for (item of draft(); track item.id; let index = $index) {
+        <li class="new-collection-sheet__row">
+          <button type="button" class="new-collection-sheet__item" (click)="editAt(index)">
+            <span class="new-collection-sheet__dot" aria-hidden="true"></span>
+            <span class="new-collection-sheet__item-name">{{ item.name }}</span>
+            <span class="new-collection-sheet__item-qty">{{ item.quantity }}</span>
+          </button>
+          <span class="new-collection-sheet__row-end">
+            <span class="new-collection-sheet__kcal">{{ item.kcal }} kcal</span>
+            <button
+              type="button"
+              class="new-collection-sheet__remove"
+              [attr.aria-label]="'Fjern ' + item.name"
+              (click)="removeAt(index)"
+            >
+              <app-ui-icon name="close" size="xs" [strokeWidth]="2.4" />
+            </button>
+          </span>
+        </li>
+      }
+    </ul>
+  }
+
+  <div class="new-collection-sheet__actions">
+    <button
+      app-ui-button
+      variant="surface"
+      size="md"
+      block
+      type="button"
+      class="new-collection-sheet__action"
+      (click)="openSearch()"
+    >
+      <app-ui-icon name="plus" size="sm" [strokeWidth]="2.4" />
+      Søg vare
+    </button>
+    <button
+      app-ui-button
+      variant="surface"
+      size="md"
+      block
+      type="button"
+      class="new-collection-sheet__action"
+      (click)="openScanner()"
+    >
+      <app-ui-icon name="scan" size="md" />
+      Scan
+    </button>
+  </div>
+
+  <button
+    sheetFooter
+    app-ui-button
+    variant="primary"
+    size="lg"
+    block
+    type="button"
+    [disabled]="!canCreate()"
+    (click)="create()"
+  >
+    Opret samling
+  </button>
+</app-ui-sheet>
+
+<app-ui-sheet
+  [open]="pickerOpen()"
+  title="Tilføj"
+  titleAccent="til samling"
+  titleSize="md"
+  layer="sheet-high"
+  maxHeight="full"
+  scrollable
+  (closed)="closePicker()"
+>
+  @if (pickerOpen()) {
+    <app-food-picker
+      [startStep]="pickerStartStep()"
+      [editItem]="editItem()"
+      [ctaVerb]="editItem() ? 'Gem' : 'Tilføj'"
+      [saveAndLogLabel]="saveAndAddLabel"
+      (picked)="onPicked($event)"
+      (customFoodCreated)="onCustomFoodCreated($event)"
+      (scanRequested)="openScannerFromPicker()"
+      (cancelled)="closePicker()"
+    />
+  }
+</app-ui-sheet>
+
+<app-barcode-scanner
+  [open]="scannerOpen()"
+  (closed)="scannerOpen.set(false)"
+  (found)="onScanned($event)"
+  (customSaved)="onScannerCustomSaved($event)"
+  (manualRequested)="onManualRequested()"
+  (noBarcodeRequested)="onNoBarcodeRequested()"
+/>
