@@ -61,7 +61,7 @@
   }
 
   @if (saved()) {
-    @for (spark of sparks; track spark.x + '-' + spark.y) {
+    @for (spark of sparks; track spark) {
       <circle
         class="weight-scale-scene__spark"
         [class]="spark.toneClass"

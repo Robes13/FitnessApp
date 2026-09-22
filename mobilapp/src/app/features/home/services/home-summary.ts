@@ -17,6 +17,7 @@ import {
   formatWeightKg,
   mondayIndex,
 } from '../../../core/utils/date-format';
+import { clamp } from '../../../core/utils/math';
 import { NOW } from '../../../core/utils/now';
 import { ProgressBarTone } from '../../../shared/components/ui-progress-bar/ui-progress-bar';
 
@@ -28,6 +29,8 @@ export interface WeekRing {
   readonly label: string;
   readonly dashOffset: number;
   readonly tone: RingTone;
+  /** Færdigbygget BEM-modifier til ringens streg, så templaten slipper for at samle klassenavnet. */
+  readonly toneClass: string;
   readonly isToday: boolean;
   readonly isFuture: boolean;
   readonly isSelected: boolean;
@@ -84,6 +87,8 @@ const NO_VALUE = '–';
 /** Omkredsen af dagsringen (r = 16 i et 40×40 viewBox). */
 const RING_CIRCUMFERENCE = 100.5;
 const RING_FULL_THRESHOLD = 0.98;
+/** BEM-block for dagsringens streg i `HomeWeekRings` — bruges til at bygge tone-modifieren. */
+const RING_PROGRESS_BLOCK = 'home-week-rings__progress';
 
 const WEEK_HIT_THRESHOLD = 0.95;
 const STREAK_BONUS_DAYS = 3;
@@ -174,15 +179,20 @@ export class HomeSummaryService {
   readonly weekRings = computed<readonly WeekRing[]>(() => {
     const today = this.todayIndex();
     const selected = this.selectedDay();
-    return this.dayParts().map((part, index) => ({
-      index,
-      label: DAY_NAMES_SHORT[index] ?? '',
-      dashOffset: RING_CIRCUMFERENCE * (1 - part),
-      tone: index > today ? 'none' : part >= RING_FULL_THRESHOLD ? 'positive' : 'accent',
-      isToday: index === today,
-      isFuture: index > today,
-      isSelected: index === selected,
-    }));
+    return this.dayParts().map((part, index) => {
+      const tone: RingTone =
+        index > today ? 'none' : part >= RING_FULL_THRESHOLD ? 'positive' : 'accent';
+      return {
+        index,
+        label: DAY_NAMES_SHORT[index] ?? '',
+        dashOffset: RING_CIRCUMFERENCE * (1 - part),
+        tone,
+        toneClass: `${RING_PROGRESS_BLOCK}--${tone}`,
+        isToday: index === today,
+        isFuture: index > today,
+        isSelected: index === selected,
+      };
+    });
   });
 
   readonly daySummary = computed<DaySummary>(() => {
@@ -366,8 +376,4 @@ function historicMacroFactor(dayIndex: number, macroIndex: number): number {
     (dayIndex * HISTORIC_MACRO_DAY_FACTOR + macroIndex * HISTORIC_MACRO_INDEX_FACTOR) %
     HISTORIC_MACRO_VARIANTS;
   return HISTORIC_MACRO_BASE + variant * HISTORIC_MACRO_STEP;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
