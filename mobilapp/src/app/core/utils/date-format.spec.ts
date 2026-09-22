@@ -10,7 +10,6 @@ import {
   formatDayMonth,
   formatDecimal,
   formatInteger,
-  formatLongDate,
   formatRelativeDay,
   formatSignedDecimal,
   formatTime,
@@ -63,7 +62,6 @@ describe('date-format', () => {
     expect(formatDayLabel(MONDAY)).toBe('Mandag 21. sep');
     expect(formatDayMonth(MONDAY)).toBe('21. sep');
     expect(formatWeekdayAbbreviated(addDays(MONDAY, 1))).toBe('Tir.');
-    expect(formatLongDate(new Date(1998, 4, 16))).toBe('16. maj 1998');
     expect(formatTime(new Date(2026, 8, 21, 7, 5))).toBe('07:05');
   });
 

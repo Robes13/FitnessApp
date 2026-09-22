@@ -107,11 +107,6 @@ export function formatWeekdayAbbreviated(date: Date): string {
   return `${DAY_NAMES_SHORT[mondayIndex(date)] ?? ''}.`;
 }
 
-/** `'16. maj 1998'`. */
-export function formatLongDate(date: Date): string {
-  return `${date.getDate()}. ${MONTH_NAMES_LONG[date.getMonth()] ?? ''} ${date.getFullYear()}`;
-}
-
 /** `'07:45'` – 24-timers klokkeslæt. */
 export function formatTime(date: Date): string {
   const hours = String(date.getHours()).padStart(2, '0');

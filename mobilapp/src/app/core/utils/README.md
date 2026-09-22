@@ -12,7 +12,6 @@ Dansk dato- og talformatering som i designet:
 | `formatDayLabel(date)`                              | `'Mandag 21. sep'`                         |
 | `formatDayMonth(date)`                              | `'21. sep'`                                |
 | `formatWeekdayAbbreviated(date)`                    | `'Tir.'`                                   |
-| `formatLongDate(date)`                              | `'16. maj 1998'`                           |
 | `formatTime(date)`                                  | `'07:45'`                                  |
 | `formatDecimal(74.5)`                               | `'74,5'`                                   |
 | `formatWeightKg(74.5)` / `formatWeightKg(75)`       | `'74,5'` · `'75'` (designets `weightText`) |

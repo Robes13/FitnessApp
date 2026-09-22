@@ -4,13 +4,12 @@ import {
   TRAINING_MAX_MINUTES,
   TRAINING_MIN_MINUTES,
 } from '../../../../../core/constants/nutrition';
-import { Gender } from '../../../../../core/models/profile';
 import { clamp, roundTo } from '../../../../../core/utils/math';
 import {
-  FigureBandTone,
   FigureBody,
   FigureExpression,
   animatedFigure,
+  bandToneForGender,
   computeFigureGeometry,
 } from '../../../../../shared/components/figure';
 import { UiRuler } from '../../../../../shared/components/ui-ruler/ui-ruler';
@@ -46,13 +45,6 @@ const BOB_DURATION_S = 1.6;
 const FIGURE_MOOD = 0.5;
 
 const RULER_STEP = 5;
-
-function bandToneFor(gender: Gender | null): FigureBandTone {
-  if (gender === 'kvinde') {
-    return 'pink';
-  }
-  return gender === 'andet' ? 'white' : 'accent';
-}
 
 /**
  * Trin 8: hvor længe træner du ad gangen?
@@ -131,5 +123,5 @@ export class TrainingDurationStep {
     computeFigureGeometry(this.state.weightKg(), this.state.heightCm(), FIGURE_MOOD),
   );
 
-  protected readonly bandTone = computed(() => bandToneFor(this.state.gender()));
+  protected readonly bandTone = computed(() => bandToneForGender(this.state.gender()));
 }
