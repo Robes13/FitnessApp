@@ -1,0 +1,107 @@
+<div class="weight-page__scroll">
+  <header class="weight-page__header">
+    <h1 class="weight-page__title">
+      Registrér<br /><span class="weight-page__title-accent">vægt</span>
+    </h1>
+    <p class="weight-page__last-weighed">{{ view.lastWeighLabel() }}</p>
+  </header>
+
+  <section class="weight-page__summary">
+    <div class="weight-page__summary-main">
+      <p class="weight-page__draft">
+        <span
+          class="weight-page__draft-value"
+          [class.weight-page__draft-value--wide]="view.draftIsWide()"
+          >{{ view.draftText() }}</span
+        >
+        <span class="weight-page__draft-unit">kg</span>
+      </p>
+      <div class="weight-page__tiles">
+        <div class="weight-page__tile">
+          <span class="weight-page__tile-label">Siden sidst</span>
+          <span class="weight-page__tile-value" [class]="deltaClass()">
+            <span class="weight-page__tile-number">{{ view.deltaText() }}</span>
+            <span class="weight-page__tile-unit">kg</span>
+          </span>
+        </div>
+        <div class="weight-page__tile">
+          <span class="weight-page__tile-label">Til mål</span>
+          <span class="weight-page__tile-value">
+            <span class="weight-page__tile-number">{{ view.toGoalText() }}</span>
+            <span class="weight-page__tile-unit">kg</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <app-weight-scale-scene
+      [weightKg]="view.draftKg()"
+      [heightCm]="view.heightCm()"
+      [progressKg]="view.progressKg()"
+      [saved]="isSaved()"
+      [lookDirection]="lookDirection()"
+    />
+  </section>
+
+  <div class="weight-page__scale">
+    <button
+      class="weight-page__step weight-page__step--minus"
+      type="button"
+      aria-label="Minus 0,1"
+      (click)="stepDraft(-1)"
+    >
+      −
+    </button>
+    <app-ui-ruler
+      size="lg"
+      ariaLabel="Vægt i kilo"
+      [min]="minKg"
+      [max]="maxKg"
+      [step]="stepKg"
+      [value]="view.draftKg()"
+      [glowStrength]="rulerGlowStrength"
+      (valueChange)="onDraftChange($event)"
+    />
+    <button
+      class="weight-page__step weight-page__step--plus"
+      type="button"
+      aria-label="Plus 0,1"
+      (click)="stepDraft(1)"
+    >
+      +
+    </button>
+  </div>
+
+  <button app-ui-button block type="button" class="weight-page__save" (click)="save()">
+    {{ saveLabel() }}
+  </button>
+
+  <app-weight-chart
+    class="weight-page__chart"
+    [weightText]="view.profileWeightText()"
+    [seriesKg]="view.seriesKg()"
+    [goalWeightKg]="view.goalWeightKg()"
+    [goalWeightText]="view.goalWeightText()"
+    [rangeLabel]="view.rangeLabel()"
+    [rangeStartLabel]="view.rangeStartLabel()"
+    [deltaText]="view.rangeDeltaText()"
+    [deltaTone]="view.rangeDeltaTone()"
+  />
+
+  <div class="weight-page__ranges" role="group" aria-label="Vælg periode">
+    @for (option of view.rangeOptions; track option.id) {
+      <button
+        app-ui-chip
+        class="weight-page__range"
+        [selected]="view.range() === option.id"
+        (click)="view.selectRange(option.id)"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  <app-weight-log-list class="weight-page__log" [rows]="view.logRows()" />
+</div>
+
+<div class="weight-page__clearance"></div>

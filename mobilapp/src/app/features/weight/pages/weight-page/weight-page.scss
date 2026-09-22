@@ -1,0 +1,218 @@
+@use 'mixins';
+
+/*
+ * Vægt-skærmen. Værten er sidens rod (flex-kolonne i fuld højde); en `.weight-page`-regel
+ * ville under emuleret encapsulation kun ramme indholdet.
+ */
+:host {
+  @include mixins.page-screen;
+}
+
+.weight-page {
+  &__scroll {
+    @include mixins.scroll-area;
+    @include mixins.hide-scrollbar;
+
+    padding-inline: var(--layout-page-padding-x);
+    padding-bottom: var(--space-2);
+  }
+
+  &__clearance {
+    flex: none;
+    height: var(--layout-tab-bar-clearance);
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-xl);
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  &__last-weighed {
+    flex: none;
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-tight);
+    white-space: nowrap;
+  }
+
+  /* Tal og nøgletal til venstre, badevægten til højre. */
+  &__summary {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-3);
+    margin-top: var(--space-2-5);
+  }
+
+  &__summary-main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  &__draft {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-1-5);
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  &__draft-value {
+    @include mixins.display-heading;
+    @include mixins.tabular-nums;
+
+    color: var(--color-accent);
+    font-size: var(--font-size-display-7xl);
+    letter-spacing: var(--letter-spacing-tighter);
+    line-height: var(--line-height-none);
+
+    &--wide {
+      font-size: var(--font-size-display-6xl);
+    }
+  }
+
+  &__draft-unit {
+    @include mixins.display-heading;
+
+    color: var(--color-accent);
+    font-size: var(--font-size-4xl);
+  }
+
+  &__tiles {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  &__tile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-2-5) var(--space-3);
+    border: var(--border-width-thin) solid var(--color-border-soft);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-3);
+  }
+
+  &__tile-label {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wider);
+    text-transform: uppercase;
+  }
+
+  &__tile-value {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-0-75);
+    white-space: nowrap;
+
+    &--positive {
+      color: var(--color-positive);
+    }
+
+    &--negative {
+      color: var(--color-negative);
+    }
+
+    &--muted {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  &__tile-number {
+    @include mixins.tabular-nums;
+
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-extrabold);
+  }
+
+  &__tile-unit {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+  }
+
+  /* Linealen med −/+ knapperne liggende oven på hver sin ende. */
+  &__scale {
+    position: relative;
+    flex: none;
+    margin-top: var(--space-3-5);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface-3);
+    overflow: hidden;
+  }
+
+  &__step {
+    position: absolute;
+    top: 50%;
+    z-index: var(--z-index-raised);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-control-sm);
+    height: var(--size-control-sm);
+    border: 0;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-display-sm);
+    font-weight: var(--font-weight-regular);
+    line-height: var(--line-height-none);
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: color var(--duration-quick) var(--easing-standard);
+
+    &:hover {
+      color: var(--color-accent);
+    }
+
+    &--minus {
+      left: var(--space-2);
+    }
+
+    &--plus {
+      right: var(--space-2);
+    }
+  }
+
+  &__save {
+    margin-top: var(--space-3-5);
+  }
+
+  &__chart {
+    margin-top: var(--space-5);
+  }
+
+  &__ranges {
+    display: flex;
+    gap: var(--space-1-5);
+    margin-top: var(--space-2-5);
+  }
+
+  &__range {
+    flex: 1;
+  }
+
+  &__log {
+    margin-top: var(--space-6);
+  }
+}
