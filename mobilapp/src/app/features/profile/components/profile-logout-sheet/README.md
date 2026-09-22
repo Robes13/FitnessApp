@@ -19,5 +19,7 @@ Designet placerer det røde log ud-mærke **over** overskriften. Her ligger det 
 den, i arkets `[sheetHeaderExtra]`-plads, fordi `app-ui-sheet` altid tegner overskriften
 øverst. Teksten og knapperne er uændrede.
 
+Arket til "Slet konto" (`profile-delete-account-sheet`) følger samme mønster.
+
 Selve log ud-kaldet (`SessionService.logout()`) sker på profilsiden, ikke her – arket
 spørger kun.

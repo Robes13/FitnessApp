@@ -93,8 +93,24 @@
   >
     Log ud
   </button>
+
+  <button
+    app-ui-button
+    type="button"
+    variant="subtle"
+    block
+    class="profile-page__delete-account"
+    (click)="askDeleteAccount()"
+  >
+    Slet konto
+  </button>
 </div>
 
 <app-profile-edit-sheet [row]="editRow()" (closed)="closeEdit()" />
 <app-profile-photo-sheet [open]="photoOpen()" (closed)="closePhoto()" />
 <app-profile-logout-sheet [open]="logoutOpen()" (closed)="closeLogout()" (confirmed)="logout()" />
+<app-profile-delete-account-sheet
+  [open]="deleteAccountOpen()"
+  (closed)="closeDeleteAccount()"
+  (confirmed)="deleteAccount()"
+/>

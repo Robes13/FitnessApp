@@ -167,4 +167,26 @@ describe('ProfilePage', () => {
     expect(session.isLoggedIn()).toBe(false);
     expect(router.url).toBe(APP_PATH.LOGIN);
   });
+
+  it('asks before deleting the account and then deletes it', async () => {
+    const { fixture, host } = await setup();
+    const session = TestBed.inject(SessionService);
+    const deleteAccount = vi.spyOn(session, 'deleteAccount').mockImplementation(() => undefined);
+
+    Array.from(host.querySelectorAll<HTMLButtonElement>('button'))
+      .find((element) => element.textContent?.trim() === 'Slet konto')
+      ?.click();
+    await fixture.whenStable();
+
+    const sheet = host.querySelector('app-profile-delete-account-sheet');
+    expect(sheet?.textContent).toContain('Alle dine data på denne enhed bliver slettet');
+    expect(deleteAccount).not.toHaveBeenCalled();
+
+    Array.from(sheet?.querySelectorAll<HTMLButtonElement>('button') ?? [])
+      .find((element) => element.textContent?.trim() === 'Ja, slet min konto')
+      ?.click();
+    await fixture.whenStable();
+
+    expect(deleteAccount).toHaveBeenCalledOnce();
+  });
 });

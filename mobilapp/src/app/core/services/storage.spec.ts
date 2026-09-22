@@ -44,6 +44,20 @@ describe('StorageService', () => {
     warn.mockRestore();
   });
 
+  it('clears every app key but leaves foreign keys alone', () => {
+    for (const key of Object.values(STORAGE_KEY)) {
+      service.write(key, 'x');
+    }
+    storage.setItem('other-app.key', '"keep"');
+
+    service.clearAll();
+
+    expect(Object.values(STORAGE_KEY).map((key) => storage.getItem(key))).toEqual(
+      Object.values(STORAGE_KEY).map(() => null),
+    );
+    expect(storage.getItem('other-app.key')).toBe('"keep"');
+  });
+
   it('degrades to no-ops when storage is unavailable', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -54,5 +68,6 @@ describe('StorageService', () => {
     expect(() => detached.write(STORAGE_KEY.THEME, 'dark')).not.toThrow();
     expect(detached.read(STORAGE_KEY.THEME)).toBeNull();
     expect(() => detached.remove(STORAGE_KEY.THEME)).not.toThrow();
+    expect(() => detached.clearAll()).not.toThrow();
   });
 });

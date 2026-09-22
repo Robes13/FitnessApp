@@ -132,6 +132,10 @@
   }
 
   &__logout {
-    margin: var(--space-6) 0 var(--space-4);
+    margin: var(--space-6) 0 var(--space-2);
+  }
+
+  &__delete-account {
+    margin-bottom: var(--space-4);
   }
 }

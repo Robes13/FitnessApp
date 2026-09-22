@@ -1,0 +1,28 @@
+<app-ui-sheet
+  [open]="open()"
+  title="Slet"
+  titleAccent="konto?"
+  titleAccentTone="negative"
+  titleSize="sm"
+  hideClose
+  scrollable
+  layer="overlay"
+>
+  <span sheetLeading class="profile-delete-account-sheet__mark" aria-hidden="true">
+    <app-ui-icon name="trash" size="xl" />
+  </span>
+
+  <p class="profile-delete-account-sheet__body">
+    Alle dine data på denne enhed bliver slettet: profil, madlog, vejninger, egne varer og
+    samlinger. Det kan ikke fortrydes.
+  </p>
+
+  <div sheetFooter class="profile-delete-account-sheet__actions">
+    <button app-ui-button type="button" variant="danger" block (click)="confirmed.emit()">
+      Ja, slet min konto
+    </button>
+    <button app-ui-button type="button" variant="outline" block (click)="closed.emit()">
+      Annuller
+    </button>
+  </div>
+</app-ui-sheet>

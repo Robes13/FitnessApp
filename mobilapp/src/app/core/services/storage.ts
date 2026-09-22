@@ -1,5 +1,5 @@
 import { DOCUMENT, Injectable, inject } from '@angular/core';
-import { StorageKey } from '../constants/storage-key';
+import { STORAGE_KEY, StorageKey } from '../constants/storage-key';
 
 /**
  * Thin, fail-safe wrapper around `localStorage` with JSON serialization.
@@ -41,6 +41,16 @@ export class StorageService {
       this.storage()?.removeItem(key);
     } catch (error: unknown) {
       this.warn('slette', key, error);
+    }
+  }
+
+  /**
+   * Removes every key the app owns (`STORAGE_KEY`). Keys from other origins/apps sharing
+   * the storage are left alone, so `localStorage.clear()` is deliberately not used.
+   */
+  clearAll(): void {
+    for (const key of Object.values(STORAGE_KEY)) {
+      this.remove(key);
     }
   }
 

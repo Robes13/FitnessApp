@@ -11,6 +11,7 @@ import { UiRowButton } from '../../../../shared/components/ui-row-button/ui-row-
 import { UiSwitch } from '../../../../shared/components/ui-switch/ui-switch';
 import { Achievements } from '../../components/achievements/achievements';
 import { ProfileAvatar } from '../../../../shared/components/profile-avatar/profile-avatar';
+import { ProfileDeleteAccountSheet } from '../../components/profile-delete-account-sheet/profile-delete-account-sheet';
 import { ProfileEditSheet } from '../../components/profile-edit-sheet/profile-edit-sheet';
 import { ProfileLogoutSheet } from '../../components/profile-logout-sheet/profile-logout-sheet';
 import { ProfilePhotoSheet } from '../../components/profile-photo-sheet/profile-photo-sheet';
@@ -20,7 +21,7 @@ import { ProfileRowsService } from '../../services/profile-rows';
 
 /**
  * The profile screen: avatar and key figures at the top, then "Min plan", "Konto", the
- * achievements, and "Log ud". All rows open the same edit sheet, which knows its own variant.
+ * achievements, "Log ud" and "Slet konto". All rows open the same edit sheet, which knows its own variant.
  *
  * The page sits outside the tab shell (it's opened from the avatar on Home), so it doesn't
  * reserve space for the tab bar and navigates back to Home instead.
@@ -30,6 +31,7 @@ import { ProfileRowsService } from '../../services/profile-rows';
   imports: [
     Achievements,
     ProfileAvatar,
+    ProfileDeleteAccountSheet,
     ProfileEditSheet,
     ProfileLogoutSheet,
     ProfilePhotoSheet,
@@ -70,6 +72,7 @@ export class ProfilePage {
   protected readonly editRow = signal<ProfileEditRowId | null>(null);
   protected readonly photoOpen = signal(false);
   protected readonly logoutOpen = signal(false);
+  protected readonly deleteAccountOpen = signal(false);
 
   protected goBack(): void {
     void this.router.navigateByUrl(APP_PATH.HOME);
@@ -97,6 +100,20 @@ export class ProfilePage {
 
   protected closeLogout(): void {
     this.logoutOpen.set(false);
+  }
+
+  protected askDeleteAccount(): void {
+    this.deleteAccountOpen.set(true);
+  }
+
+  protected closeDeleteAccount(): void {
+    this.deleteAccountOpen.set(false);
+  }
+
+  /** Clears all local data and reloads the app at login – see `SessionService.deleteAccount()`. */
+  protected deleteAccount(): void {
+    this.deleteAccountOpen.set(false);
+    this.session.deleteAccount();
   }
 
   protected setLight(light: boolean): void {

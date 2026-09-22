@@ -13,17 +13,18 @@ Profilbillede). Logikken er portet fra `logic.js`: `profileRows`, `accountRows`,
 ```
 profile/
 ├── profile.routes.ts                 PROFILE_ROUTES
-├── pages/profile-page/               Skærmen: hoved, nøgletal, rækker, præstationer, log ud
+├── pages/profile-page/               Skærmen: hoved, nøgletal, rækker, præstationer, log ud, slet konto
 ├── components/
 │   ├── profile-avatar/               Avataren i 72 / 132 / 196 px + beskæringsformlerne
 │   ├── achievements/                 Gitteret med de 12 badges
 │   ├── profile-edit-sheet/           "Rediger profil" – alle fire feltvarianter
 │   ├── profile-photo-sheet/          "Profilbillede" – filvalg, træk og zoom
-│   └── profile-logout-sheet/         "Log ud?" – bekræftelsen
+│   ├── profile-logout-sheet/         "Log ud?" – bekræftelsen
+│   └── profile-delete-account-sheet/ "Slet konto?" – bekræftelsen
 └── services/                         Rækker, redigeringsdefinitioner og præstationer
 ```
 
-Siden ejer kun, hvad der er åbent (`editRow`, `photoOpen`, `logoutOpen`). Alt andet er
+Siden ejer kun, hvad der er åbent (`editRow`, `photoOpen`, `logoutOpen`, `deleteAccountOpen`). Alt andet er
 afledt af `core/`-stores, så en ændring et andet sted i appen slår igennem med det samme.
 
 ## Skærmens dele
@@ -38,6 +39,7 @@ afledt af `core/`-stores, så en ændring et andet sted i appen slår igennem me
    "Notifikationer".
 5. **Præstationer** – 12 badges i fire kolonner.
 6. **Log ud** – rød tekst i en omrids-pille, der åbner bekræftelsen.
+7. **Slet konto** – en diskret tekstknap under "Log ud", der åbner sin egen bekræftelse.
 
 Hver række åbner det samme redigeringsark; arket finder selv ud af, om rækken er en liste,
 et tal, en tekst eller en adgangskode.
@@ -53,6 +55,22 @@ almindelige `app-ui-switch`.
 Bekræftelsen kalder `SessionService.logout()` og navigerer til `APP_PATH.LOGIN`. Kun
 sessionen ryddes – profil, madlog, vejninger og samlinger bliver liggende, som designets
 tekst lover: "Dine data bliver gemt."
+
+## Slet konto
+
+Kravet kommer fra GDPR: brugeren skal selv kunne slette sine data. Bekræftelsen
+(`profile-delete-account-sheet`) forklarer, at **alle** data på enheden slettes, og kalder
+derefter `SessionService.deleteAccount()`, som
+
+1. nulstiller session og profil i hukommelsen,
+2. sletter alle appens nøgler i storage (`StorageService.clearAll()`, der gennemløber
+   `STORAGE_KEY`), og
+3. genindlæser appen på login-siden (`document.location.replace`).
+
+Genindlæsningen er et bevidst valg: madlog, vejninger, samlinger, tema m.fl. ligger i hver
+sin root-store, og en fuld genindlæsning er den eneste måde at nulstille dem alle på én gang
+uden at give hver store sin egen reset-metode. Når backenden findes, skal dens
+slet-konto-kald ligge i `deleteAccount()`, før de lokale data ryddes.
 
 ## Profilbilledet
 

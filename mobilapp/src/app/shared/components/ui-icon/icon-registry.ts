@@ -21,6 +21,7 @@ export const UI_ICON_NAMES = [
   'refresh',
   'redo',
   'log-out',
+  'trash',
   'tab-food',
   'tab-weight',
   'tab-home',
@@ -146,6 +147,12 @@ const UI_ICON_PATHS: Record<UiIconName, readonly string[]> = {
   refresh: ['M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8', 'M21 3v5h-5'],
   redo: ['M3 12a9 9 0 1 0 3-6.7M3 4v5h5'],
   'log-out': ['M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'],
+  trash: [
+    'M3 6h18',
+    'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6',
+    'M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2',
+    'M10 11v6M14 11v6',
+  ],
   'tab-food': [
     'M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7',
   ],

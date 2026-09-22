@@ -1,5 +1,6 @@
-import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { DOCUMENT, Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
+import { APP_ROUTE } from '../constants/app-route';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { SessionState } from '../models/session';
 import { AuthApi } from './auth-api';
@@ -14,6 +15,7 @@ const LOGGED_OUT: SessionState = { isLoggedIn: false, isEmailVerified: false };
  */
 @Injectable({ providedIn: 'root' })
 export class SessionService {
+  private readonly document = inject(DOCUMENT);
   private readonly storage = inject(StorageService);
   private readonly authApi = inject(AuthApi);
   private readonly profile = inject(UserProfileService);
@@ -36,6 +38,25 @@ export class SessionService {
 
   logout(): void {
     this.set(LOGGED_OUT);
+  }
+
+  /**
+   * Deletes the account (GDPR): every app key in storage is removed, the session and the
+   * profile are reset in memory, and the app is reloaded at login.
+   *
+   * The reload is deliberate: food log, weigh-ins, collections, theme etc. live in their
+   * own root stores, and a full page load is the only way to reset all of them at once
+   * without every store needing its own reset method.
+   *
+   * TODO: once the API exists, call the backend's delete-account endpoint here first, and
+   * only clear local data after it has succeeded.
+   */
+  deleteAccount(): void {
+    this.state.set(LOGGED_OUT);
+    this.profile.resetToDefaults();
+    // Cleared last, so the in-memory resets above can't write anything back.
+    this.storage.clearAll();
+    this.document.location.replace(new URL(APP_ROUTE.LOGIN, this.document.baseURI).href);
   }
 
   /**

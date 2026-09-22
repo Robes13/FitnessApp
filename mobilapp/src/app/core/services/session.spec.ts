@@ -1,8 +1,9 @@
+import { DOCUMENT } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { DEFAULT_PROFILE } from '../constants/profile-defaults';
 import { STORAGE_KEY } from '../constants/storage-key';
-import { FakeStorage, createFakeStorage } from '../testing/fake-document';
+import { FakeStorage, createFakeDocument, createFakeStorage } from '../testing/fake-document';
 import { provideCoreTestEnvironment } from '../testing/test-providers';
 import { SessionService } from './session';
 import { UserProfileService } from './user-profile';
@@ -96,5 +97,39 @@ describe('SessionService', () => {
 
     expect(session.isLoggedIn()).toBe(true);
     expect(session.isEmailVerified()).toBe(false);
+  });
+
+  it('deletes the account: clears every app key and reloads at login', () => {
+    for (const key of Object.values(STORAGE_KEY)) {
+      storage.setItem(key, JSON.stringify('x'));
+    }
+    storage.setItem(
+      STORAGE_KEY.SESSION,
+      JSON.stringify({ isLoggedIn: true, isEmailVerified: true }),
+    );
+    storage.setItem(STORAGE_KEY.PROFILE, JSON.stringify({ ...DEFAULT_PROFILE, username: 'mads' }));
+    const replace = vi.fn<(url: string) => void>();
+    TestBed.configureTestingModule({
+      providers: [
+        ...provideCoreTestEnvironment({ storage }),
+        {
+          provide: DOCUMENT,
+          useValue: {
+            ...createFakeDocument(storage),
+            baseURI: 'https://localhost/',
+            location: { replace },
+          },
+        },
+      ],
+    });
+    const session = TestBed.inject(SessionService);
+    const profile = TestBed.inject(UserProfileService);
+
+    session.deleteAccount();
+
+    expect(session.isLoggedIn()).toBe(false);
+    expect(profile.profile().username).toBe('');
+    expect(storage.data.size).toBe(0);
+    expect(replace).toHaveBeenCalledWith('https://localhost/login');
   });
 });
