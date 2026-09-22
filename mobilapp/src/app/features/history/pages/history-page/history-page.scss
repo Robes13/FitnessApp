@@ -1,0 +1,149 @@
+@use 'mixins';
+
+:host {
+  @include mixins.page-screen;
+}
+
+.history-page {
+  &__scroll {
+    @include mixins.scroll-area;
+    @include mixins.hide-scrollbar;
+
+    padding: 0 var(--layout-page-padding-x) var(--space-4);
+  }
+
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-xl);
+    color: var(--color-text);
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  &__filters {
+    @include mixins.hide-scrollbar;
+
+    display: flex;
+    gap: var(--space-1-5);
+    margin: var(--space-4) calc(var(--layout-page-padding-x) * -1) 0;
+    padding: 0 var(--layout-page-padding-x) var(--space-0-5);
+    overflow-x: auto;
+  }
+
+  &__filter {
+    flex: none;
+  }
+
+  &__groups {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4-5);
+    margin-top: var(--space-5);
+  }
+
+  &__group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__group-label {
+    margin: 0;
+    padding-bottom: var(--space-1);
+    font-size: var(--font-size-2xs);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-caps);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2-5);
+    padding: var(--space-2-25) 0;
+    border-top: var(--border-width-thin) solid var(--color-border-soft);
+  }
+
+  &__dot {
+    flex: none;
+    width: var(--size-dot-xs);
+    height: var(--size-dot-xs);
+    border-radius: var(--radius-circle);
+    background: var(--color-text-muted);
+
+    &--vejning {
+      background: var(--color-accent);
+    }
+
+    &--mad {
+      background: var(--color-info);
+    }
+
+    &--maal {
+      background: var(--color-positive);
+    }
+  }
+
+  &__text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__row-title {
+    @include mixins.text-truncate;
+
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+  }
+
+  &__row-subtitle {
+    @include mixins.text-truncate;
+
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+
+  &__value {
+    @include mixins.tabular-nums;
+
+    flex: none;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text);
+    white-space: nowrap;
+
+    &--positive {
+      color: var(--color-positive);
+    }
+
+    &--negative {
+      color: var(--color-negative);
+    }
+  }
+
+  /* Designets 26 px genlog-knap: `UiIconButton` med `4xs`/`ghost` + feature-farverne. */
+  &__relog {
+    color: var(--color-text-muted);
+
+    &:hover {
+      color: var(--color-accent);
+    }
+
+    &--done,
+    &--done:hover {
+      color: var(--color-positive);
+    }
+  }
+
+  &__tab-bar-spacer {
+    flex: none;
+    height: var(--layout-tab-bar-clearance);
+  }
+}

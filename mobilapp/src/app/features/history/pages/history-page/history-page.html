@@ -1,0 +1,71 @@
+<div class="history-page__scroll">
+  <h1 class="history-page__title">Din <span class="history-page__title-accent">historik</span></h1>
+
+  <div class="history-page__filters" role="group" aria-label="Filtrér historik">
+    @for (item of filters; track item.id) {
+      <button
+        app-ui-chip
+        size="sm"
+        class="history-page__filter"
+        [selected]="item.id === filter()"
+        (click)="selectFilter(item.id)"
+      >
+        {{ item.label }}
+      </button>
+    }
+  </div>
+
+  <div class="history-page__groups">
+    @if (isEmpty()) {
+      <app-ui-empty-state message="Ingen poster endnu." />
+    }
+
+    @for (group of groups(); track group.label) {
+      <section class="history-page__group">
+        <h2 class="history-page__group-label">{{ group.label }}</h2>
+
+        @for (entry of group.entries; track entry.id) {
+          <div class="history-page__row">
+            <span
+              class="history-page__dot"
+              [class.history-page__dot--vejning]="entry.kind === 'vejning'"
+              [class.history-page__dot--mad]="entry.kind === 'mad'"
+              [class.history-page__dot--maal]="entry.kind === 'maal'"
+            ></span>
+
+            <span class="history-page__text">
+              <span class="history-page__row-title">{{ entry.title }}</span>
+              <span class="history-page__row-subtitle">{{ entry.subtitle }}</span>
+            </span>
+
+            <span
+              class="history-page__value"
+              [class.history-page__value--positive]="entry.valueTone === 'positive'"
+              [class.history-page__value--negative]="entry.valueTone === 'negative'"
+            >
+              {{ entry.value }}
+            </span>
+
+            @if (entry.food) {
+              <button
+                app-ui-icon-button
+                type="button"
+                size="4xs"
+                tone="ghost"
+                class="history-page__relog"
+                [class.history-page__relog--done]="isRelogged(entry)"
+                [attr.aria-label]="relogLabel(entry)"
+                [title]="relogLabel(entry)"
+                (click)="relog(entry)"
+              >
+                <app-ui-icon name="redo" size="xs" [strokeWidth]="relogIconStrokeWidth" />
+              </button>
+            }
+          </div>
+        }
+      </section>
+    }
+  </div>
+</div>
+
+<div class="history-page__tab-bar-spacer" aria-hidden="true"></div>
