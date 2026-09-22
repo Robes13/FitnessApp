@@ -1,0 +1,45 @@
+<app-auth-backdrop />
+
+<div class="login-page__content">
+  <div class="login-page__brand">
+    <img class="login-page__logo" [src]="logoSrc" alt="" />
+    <span class="login-page__wordmark">Nutrify</span>
+  </div>
+
+  <div class="login-page__spacer"></div>
+
+  <h1 class="login-page__heading">
+    Spis klogt.<br /><span class="login-page__heading-accent">Træn stærkt.</span>
+  </h1>
+
+  <form class="login-page__form" [formGroup]="form" (ngSubmit)="submit()">
+    <app-ui-text-input
+      formControlName="username"
+      placeholder="Brugernavn"
+      ariaLabel="Brugernavn"
+      autocomplete="username"
+      translucent
+    />
+    <app-ui-text-input
+      formControlName="password"
+      type="password"
+      placeholder="Adgangskode"
+      ariaLabel="Adgangskode"
+      autocomplete="current-password"
+      translucent
+    />
+    @if (errorMessage(); as message) {
+      <app-ui-form-error [message]="message" tone="negative" />
+    }
+    <button class="login-page__submit" app-ui-button type="submit" block [loading]="loading()">
+      Log ind
+    </button>
+  </form>
+
+  <div class="login-page__footer">
+    <span> Ny her? <a class="login-page__link" [routerLink]="signupPath">Opret konto</a> </span>
+    <a class="login-page__link login-page__link--muted" [routerLink]="forgotPasswordPath">
+      Glemt adgangskode?
+    </a>
+  </div>
+</div>

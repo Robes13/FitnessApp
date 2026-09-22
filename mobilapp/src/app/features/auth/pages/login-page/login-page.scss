@@ -1,0 +1,90 @@
+@use 'mixins';
+
+/*
+ * Værten bærer `.login-page`; kun `:host` rammer den under emuleret encapsulation.
+ * Fotoet ligger absolut bagved, og indholdet lægges ovenpå i et almindeligt flow.
+ */
+:host {
+  position: relative;
+  display: block;
+  height: 100%;
+  overflow: hidden;
+}
+
+.login-page {
+  &__content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--layout-page-padding-top-lg) var(--layout-page-padding-x)
+      var(--layout-page-padding-bottom);
+  }
+
+  &__brand {
+    display: flex;
+    gap: var(--space-2-5);
+    align-items: center;
+  }
+
+  &__logo {
+    width: var(--size-brand-logo-md);
+    height: var(--size-brand-logo-md);
+  }
+
+  &__wordmark {
+    @include mixins.display-heading;
+
+    font-size: var(--font-size-4xl);
+    letter-spacing: var(--letter-spacing-wider);
+  }
+
+  /* Skubber overskrift, felter og fodnote ned i bunden som i designet. */
+  &__spacer {
+    flex: 1;
+  }
+
+  &__heading {
+    @include mixins.display-heading;
+
+    font-size: var(--font-size-display-5xl);
+    text-wrap: balance;
+  }
+
+  &__heading-accent {
+    color: var(--color-accent);
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-7);
+  }
+
+  &__submit {
+    margin-top: var(--space-2);
+  }
+
+  &__footer {
+    display: flex;
+    gap: var(--space-4);
+    justify-content: space-between;
+    margin-top: var(--space-6);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+  }
+
+  &__link {
+    font-weight: var(--font-weight-bold);
+
+    &--muted {
+      color: var(--color-text-secondary);
+      font-weight: var(--font-weight-regular);
+
+      &:hover {
+        color: var(--color-accent);
+      }
+    }
+  }
+}
