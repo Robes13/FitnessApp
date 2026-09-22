@@ -83,15 +83,6 @@ Disse navne fra det oprindelige stillads er bevaret og peger ind i
 paletten, så gammel kode stadig virker. Ny kode bør bruge de semantiske
 roller ovenfor (`--color-accent`, `--color-selected` osv.).
 
-| Ældre token                                             | Peger på                                           |
-| ------------------------------------------------------- | -------------------------------------------------- |
-| `--color-primary` / `-strong` / `-soft` / `-contrast`   | Blå palette / hvid                                 |
-| `--color-secondary` / `-strong` / `-soft` / `-contrast` | Orange palette / `--color-accent-soft` / mørk navy |
-| `--color-surface-raised`                                | `--color-sheet`                                    |
-| `--color-text-on-primary`                               | Hvid                                               |
-| `--color-success` / `--color-danger`                    | `--color-positive` / `--color-negative`            |
-| `--color-overlay`                                       | `--color-scrim`                                    |
-
 ### Regel
 
 En komponent må **aldrig** skrive en hex-farve, en px-værdi til spacing

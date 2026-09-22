@@ -47,15 +47,11 @@
   --palette-slate-400: #94a3b8;
   --palette-slate-500: #64748b;
   --palette-slate-600: #475569;
-  --palette-slate-700: #334155;
   --palette-slate-800: #1e293b;
-  --palette-text-primary: #111827;
-  --palette-text-muted: #64748b;
   --palette-white: #ffffff;
 
   /* Feedback colours. */
   --palette-success: #4ade80;
-  --palette-success-strong: #16a34a;
   --palette-success-soft: #a7d8b8;
   --palette-success-pale: #eafbf0;
   --palette-danger: #f87171;
@@ -134,7 +130,6 @@
   --color-accent-strong: var(--palette-secondary-deep);
   --color-accent-deeper: var(--palette-secondary-deeper);
   --color-accent-soft: rgb(249 115 22 / 15%);
-  --color-accent-soft-strong: rgb(249 115 22 / 25%);
   --color-accent-tint: rgb(249 115 22 / 8%);
   --color-accent-tint-2: rgb(249 115 22 / 12%);
   --color-accent-tint-3: rgb(249 115 22 / 18%);
@@ -185,21 +180,6 @@
   /* Misc. */
   --color-focus-ring: var(--palette-secondary);
   --color-white: var(--palette-white);
-
-  /* Legacy names kept for compatibility — mapped onto the palette above. */
-  --color-primary: var(--palette-primary);
-  --color-primary-strong: var(--palette-primary-strong);
-  --color-primary-soft: var(--palette-primary-soft);
-  --color-primary-contrast: var(--palette-white);
-  --color-secondary: var(--palette-secondary);
-  --color-secondary-strong: var(--palette-secondary-strong);
-  --color-secondary-soft: var(--color-accent-soft);
-  --color-secondary-contrast: var(--palette-background-dark);
-  --color-surface-raised: var(--color-sheet);
-  --color-text-on-primary: var(--palette-white);
-  --color-success: var(--palette-success);
-  --color-danger: var(--palette-danger);
-  --color-overlay: var(--color-scrim);
 
   /* ---------------------------------------------------------------------
    * Figure (mascot) colours — constant in both themes.
@@ -281,15 +261,7 @@
   --space-8-5: 2.125rem; /* 34px – fade i chips-masken */
   --space-9: 2.25rem;
   --space-10: 2.5rem;
-  --space-11: 2.75rem;
-  --space-12: 3rem;
-  --space-13: 3.25rem;
-  --space-14: 3.5rem;
   --space-15: 3.75rem;
-  --space-16: 4rem;
-  --space-18: 4.5rem;
-  --space-20: 5rem;
-  --space-21: 5.25rem;
 
   /* ---------------------------------------------------------------------
    * Sizes — controls, icons, avatars, dots and fixed-size widgets.
@@ -401,7 +373,6 @@
   --line-height-snug: 1.3;
   --line-height-relaxed: 1.45;
   --line-height-base: 1.5;
-  --line-height-loose: 1.55;
 
   --letter-spacing-tighter: -0.03em;
   --letter-spacing-tight: -0.01em;
@@ -419,12 +390,10 @@
    * Radii and borders.
    * ------------------------------------------------------------------ */
   --radius-hairline: 1px;
-  --radius-xs: 0.25rem; /* 4px */
   --radius-sm: 0.375rem; /* 6px */
   --radius-md: 0.75rem; /* 12px */
   --radius-lg: 0.875rem; /* 14px */
   --radius-xl: 1rem; /* 16px */
-  --radius-2xl: 1.375rem; /* 22px */
   --radius-3xl: 1.75rem; /* 28px */
   --radius-pill: 999px;
   --radius-circle: 50%;
@@ -437,9 +406,6 @@
   /* ---------------------------------------------------------------------
    * Elevation.
    * ------------------------------------------------------------------ */
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
-  --shadow-md: 0 4px 12px rgb(0 0 0 / 45%);
-  --shadow-lg: 0 12px 32px rgb(0 0 0 / 50%);
   --shadow-sheet: 0 30px 80px rgb(0 0 0 / 60%);
   --shadow-nav: 0 12px 30px rgb(0 0 0 / 35%);
   --shadow-toast: 0 18px 40px rgb(0 0 0 / 45%);
@@ -475,7 +441,6 @@
   --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --easing-bounce: cubic-bezier(0.34, 1.2, 0.64, 1);
-  --easing-bounce-soft: cubic-bezier(0.34, 1.35, 0.64, 1);
 
   /* ---------------------------------------------------------------------
    * Blur (backdrop-filter on glass surfaces).
@@ -491,16 +456,13 @@
 
   /* Native safe areas (notch / home indicator), populated by the WebView. */
   --safe-area-top: env(safe-area-inset-top, 0px);
-  --safe-area-right: env(safe-area-inset-right, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-area-left: env(safe-area-inset-left, 0px);
 
   --layout-max-width: 32rem;
   --layout-page-padding-x: 1.5rem;
   --layout-page-padding-top: calc(var(--safe-area-top) + var(--space-5));
   --layout-page-padding-top-lg: calc(var(--safe-area-top) + var(--space-7));
   --layout-page-padding-bottom: 2.75rem;
-  --layout-tab-bar-height: 4rem;
   --layout-tab-bar-offset: calc(var(--safe-area-bottom) + var(--space-5));
   --layout-tab-bar-inset: 1rem;
   --layout-tab-bar-clearance: calc(var(--safe-area-bottom) + 5.25rem); /* 84px + home indicator */
@@ -519,7 +481,6 @@
 
   --z-index-base: 1;
   --z-index-raised: 2;
-  --z-index-sticky: 10;
   --z-index-tab-bar: 10;
   --z-index-toast: 15;
   --z-index-sheet: 20;
@@ -562,8 +523,4 @@
   --color-text-soft: var(--palette-light-ink-soft);
   --color-text-soft-strong: var(--palette-light-ink);
   --color-text-inactive: var(--palette-slate-400);
-
-  --shadow-sm: 0 1px 2px rgb(15 23 42 / 8%);
-  --shadow-md: 0 4px 12px rgb(15 23 42 / 10%);
-  --shadow-lg: 0 12px 32px rgb(15 23 42 / 14%);
 }

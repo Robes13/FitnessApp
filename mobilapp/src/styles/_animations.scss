@@ -47,18 +47,6 @@
   }
 }
 
-/* Figure fanning itself. */
-@keyframes fan {
-  0%,
-  100% {
-    transform: rotate(-14deg);
-  }
-
-  50% {
-    transform: rotate(14deg);
-  }
-}
-
 /* Walk scene: legs. */
 @keyframes strideA {
   0% {
@@ -185,35 +173,6 @@
   }
 }
 
-/* Number tick (alternate between A and B to restart the animation). */
-@keyframes numtickA {
-  0% {
-    transform: translateY(0);
-  }
-
-  40% {
-    transform: translateY(-3px);
-  }
-
-  100% {
-    transform: translateY(0);
-  }
-}
-
-@keyframes numtickB {
-  0% {
-    transform: translateY(0);
-  }
-
-  40% {
-    transform: translateY(-3px);
-  }
-
-  100% {
-    transform: translateY(0);
-  }
-}
-
 /* Confetti particle. */
 @keyframes conf {
   0% {
@@ -259,17 +218,6 @@
 
   to {
     transform: rotate(360deg);
-  }
-}
-
-/* ECG line on the TV. */
-@keyframes ecgmove {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-120px);
   }
 }
 
@@ -331,46 +279,6 @@
   100% {
     transform: scale(1.8);
     opacity: 0;
-  }
-}
-
-/* Celebration toast / badge in and out. */
-@keyframes badgePop {
-  0% {
-    transform: translateY(10px) scale(0.7);
-    opacity: 0;
-  }
-
-  45% {
-    transform: translateY(0) scale(1.08);
-    opacity: 1;
-  }
-
-  65% {
-    transform: scale(0.97);
-  }
-
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes badgeOut {
-  to {
-    transform: translateY(-8px) scale(0.94);
-    opacity: 0;
-  }
-}
-
-/* Signature stroke drawing (summary step). */
-@keyframes sign {
-  from {
-    stroke-dashoffset: 520;
-  }
-
-  to {
-    stroke-dashoffset: 0;
   }
 }
 
