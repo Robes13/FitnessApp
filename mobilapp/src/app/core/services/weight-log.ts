@@ -1,4 +1,5 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { newId } from '../utils/id';
 import { DEMO_WEIGHT_SEED } from '../constants/demo-data';
 import { STORAGE_KEY } from '../constants/storage-key';
 import {
@@ -15,7 +16,6 @@ import { WeighEntry, WeightPoint, WeightRange } from '../models/weight';
 import { addDays, isSameDay } from '../utils/date-format';
 import { roundTo } from '../utils/math';
 import { NOW } from '../utils/now';
-import { IdService } from './id';
 import { StorageService } from './storage';
 import { UserProfileService } from './user-profile';
 
@@ -29,7 +29,6 @@ import { UserProfileService } from './user-profile';
 @Injectable({ providedIn: 'root' })
 export class WeightLogService {
   private readonly storage = inject(StorageService);
-  private readonly ids = inject(IdService);
   private readonly now = inject(NOW);
   private readonly profile = inject(UserProfileService);
   private readonly entriesState = signal<readonly WeighEntry[]>(this.restore());
@@ -43,7 +42,7 @@ export class WeightLogService {
 
   add(kg: number, at: Date = this.now()): WeighEntry {
     const entry: WeighEntry = {
-      id: this.ids.next('weigh'),
+      id: newId('weigh'),
       kg: roundTo(kg, 1),
       at: at.toISOString(),
     };
@@ -91,7 +90,7 @@ export class WeightLogService {
     const { weightKg, goal } = this.profile.profile();
     const now = this.now();
     return DEMO_WEIGHT_SEED.map((seed) => ({
-      id: this.ids.next('weigh'),
+      id: newId('weigh'),
       kg: roundTo(weightKg + (goal === 'tage' ? seed.deltaKgWhenGaining : seed.deltaKg), 1),
       at: addDays(now, -seed.daysAgo).toISOString(),
     }));

@@ -24,7 +24,7 @@ varer. Bunden har "Opret samling", der er slået fra, indtil samlingen har et na
 - Vare-vælgerens primærknap hedder her **"Gem og føj til samlingen"**. Designet genbruger
   "Gem og log under <måltid>" fra Mad-skærmen, men varen havner i samlingen, ikke i dagens
   log, så teksten ville være forkert.
-- Kladdens varer får et nyt id (`IdService`), så den samme vare kan ligge i den flere gange.
+- Kladdens varer får et nyt id (`newId()`), så den samme vare kan ligge i den flere gange.
 - **Ikongitteret er en rigtig radiogruppe:** kun det valgte ikon er i tab-rækkefølgen, og
   piletasterne flytter valget (venstre/højre ±1, op/ned ±6, fordi gitteret har seks
   kolonner) og wrapper rundt om det antal ikoner, der faktisk vises — 12 eller 30. Er det

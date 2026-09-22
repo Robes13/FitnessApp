@@ -12,6 +12,7 @@ import {
   viewChildren,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { newId } from '../../../../core/utils/id';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import {
@@ -23,7 +24,6 @@ import {
 import { FoodItem, NewCollectionInput } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
 import { FoodLogService } from '../../../../core/services/food-log';
-import { IdService } from '../../../../core/services/id';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import {
   FoodPicker,
@@ -95,8 +95,6 @@ export class NewCollectionSheet {
 
   readonly closed = output<void>();
   readonly created = output<NewCollectionInput>();
-
-  private readonly ids = inject(IdService);
   private readonly foodLog = inject(FoodLogService);
 
   protected readonly form = new FormGroup<NewCollectionForm>({
@@ -269,7 +267,7 @@ export class NewCollectionSheet {
       this.editIndex.set(null);
       return;
     }
-    this.draft.update((items) => [...items, { ...item, id: this.ids.next(DRAFT_ID_PREFIX) }]);
+    this.draft.update((items) => [...items, { ...item, id: newId(DRAFT_ID_PREFIX) }]);
   }
 
   private reset(): void {

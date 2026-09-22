@@ -35,6 +35,11 @@ separatorer. Kun det typografiske minus i `formatSignedDecimal` sættes bagefter
 `NutritionCalculator`, Hjem, Historik, Vægt og opret-flowets skridt-, længde- og
 intensitetstrin, så den samme afgrænsning ikke skrives lokalt i hver fil.
 
+## `id.ts`
+
+`newId(prefix)` giver `<prefix>-<uuid>` via `crypto.randomUUID()`. Præfikset gør posten
+genkendelig i storage og fejlsøgning; unikheden kommer fra platformen.
+
 ## `now.ts`
 
 `NOW` er et `InjectionToken<() => Date>`. Injicér det i stedet for at kalde `new Date()`, så

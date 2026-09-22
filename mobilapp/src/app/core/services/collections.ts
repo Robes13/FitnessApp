@@ -1,8 +1,8 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { newId } from '../utils/id';
 import { BASE_COLLECTIONS, RECIPES } from '../constants/demo-data';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { FoodCollection, FoodItem, Macros, NewCollectionInput, Recipe } from '../models/food';
-import { IdService } from './id';
 import { StorageService } from './storage';
 
 export type CollectionTotals = Macros & { count: number };
@@ -23,7 +23,6 @@ const EMPTY_STORED: StoredCollections = { userCollections: [], baseItems: {} };
 @Injectable({ providedIn: 'root' })
 export class CollectionsService {
   private readonly storage = inject(StorageService);
-  private readonly ids = inject(IdService);
   private readonly stored = signal<StoredCollections>(this.restore());
 
   readonly recipes: readonly Recipe[] = RECIPES;
@@ -60,7 +59,7 @@ export class CollectionsService {
 
   create(input: NewCollectionInput): FoodCollection {
     const collection: FoodCollection = {
-      id: this.ids.next('c'),
+      id: newId('c'),
       name: input.name.trim(),
       icon: input.icon,
       meal: input.meal,

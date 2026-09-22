@@ -49,7 +49,7 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
 ## Beslutninger
 
 - **Core-services:** `FoodSearchService` og `NutritionCalculator` som i spec'en. Derudover
-  `IdService`, fordi `FoodItem.id` er påkrævet, og den nye vare skal kunne sendes som en
+  `newId()`, fordi `FoodItem.id` er påkrævet, og den nye vare skal kunne sendes som en
   hel `FoodItem`. Id'et er midlertidigt – `FoodLogService.addCustomFood` giver varen sit
   endelige id, når forælderen gemmer den.
 - **Søgningen** er en `toObservable(request) → switchMap(search)`-kæde, så en ny søgetekst

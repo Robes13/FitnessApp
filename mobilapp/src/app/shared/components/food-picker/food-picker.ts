@@ -12,6 +12,7 @@ import {
   signal,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { newId } from '../../../core/utils/id';
 import {
   AbstractControl,
   FormControl,
@@ -24,7 +25,6 @@ import { concat, map, of, switchMap } from 'rxjs';
 import { DEFAULT_QUANTITY_UNIT } from '../../../core/constants/nutrition';
 import { FoodItem, Macros } from '../../../core/models/food';
 import { FoodSearchService } from '../../../core/services/food-search';
-import { IdService } from '../../../core/services/id';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
 import { UiButton } from '../ui-button/ui-button';
 import { UiChip } from '../ui-chip/ui-chip';
@@ -173,7 +173,6 @@ export class FoodPicker {
 
   private readonly foodSearch = inject(FoodSearchService);
   private readonly calculator = inject(NutritionCalculator);
-  private readonly ids = inject(IdService);
 
   protected readonly step = linkedSignal<FoodPickerStep>(() =>
     this.editItem() ? 'portion' : this.startStep(),
@@ -478,7 +477,7 @@ export class FoodPicker {
     const amount =
       value.amount != null && value.amount > 0 ? value.amount : DEFAULT_NEW_FOOD_AMOUNT;
     return {
-      id: this.ids.next(ID_PREFIX),
+      id: newId(ID_PREFIX),
       name,
       quantity: `${amount} ${value.unit}`,
       kcal,

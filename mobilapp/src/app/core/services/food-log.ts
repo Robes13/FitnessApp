@@ -1,4 +1,5 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { newId } from '../utils/id';
 import { DEMO_LOGGED_FOODS } from '../constants/demo-data';
 import { MEAL_IDS } from '../constants/meals';
 import { STORAGE_KEY } from '../constants/storage-key';
@@ -6,7 +7,6 @@ import { FoodItem, LoggedFood, Macros } from '../models/food';
 import { MealId } from '../models/meal';
 import { toIsoDate } from '../utils/date-format';
 import { NOW } from '../utils/now';
-import { IdService } from './id';
 import { StorageService } from './storage';
 
 interface StoredFoodLog {
@@ -27,7 +27,6 @@ const EMPTY_MACROS: Macros = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
 @Injectable({ providedIn: 'root' })
 export class FoodLogService {
   private readonly storage = inject(StorageService);
-  private readonly ids = inject(IdService);
   private readonly now = inject(NOW);
   private readonly entriesState = signal<readonly LoggedFood[]>([]);
   private readonly customFoodsState = signal<readonly FoodItem[]>(this.restoreCustomFoods());
@@ -60,7 +59,7 @@ export class FoodLogService {
   add(food: FoodItem, meal: MealId): LoggedFood {
     const entry: LoggedFood = {
       ...food,
-      logId: this.ids.next('log'),
+      logId: newId('log'),
       meal,
       loggedAt: this.now().toISOString(),
     };
@@ -80,7 +79,7 @@ export class FoodLogService {
 
   /** Egne varer lægges forrest, så de også kommer først i søgningen. */
   addCustomFood(food: Omit<FoodItem, 'id' | 'isCustom'>): FoodItem {
-    const item: FoodItem = { ...food, id: this.ids.next('food'), isCustom: true };
+    const item: FoodItem = { ...food, id: newId('food'), isCustom: true };
     this.customFoodsState.set([item, ...this.customFoodsState()]);
     this.storage.write(STORAGE_KEY.CUSTOM_FOODS, this.customFoodsState());
     return item;

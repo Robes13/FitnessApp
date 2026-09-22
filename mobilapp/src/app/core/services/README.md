@@ -5,7 +5,6 @@ Singletons (`providedIn: 'root'`). Stores er signal-baserede og gemmer via `Stor
 | Fil                       | Klasse                                       | Ansvar                                                                                                                          |
 | ------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `storage.ts`              | `StorageService`                             | Fejlsikker JSON-indpakning af `localStorage`. Kaster aldrig; advarer i konsollen.                                               |
-| `id.ts`                   | `IdService`                                  | Unikke id'er `<prefix>-<tid>-<nr>` til alle lokale poster.                                                                      |
 | `theme.ts`                | `ThemeService`                               | Mørk/lys tilstand på `<html data-theme>`, gemmes. Genskabes ved konstruktion; `initialize()` kan kaldes fra en app initializer. |
 | `nutrition-calculator.ts` | `NutritionCalculator`                        | Rene beregninger: alder, BMR, kaloriemål, makroer, målvægt, adgangskodestyrke, portioner.                                       |
 | `auth-api.ts`             | `AuthApi` + `AUTH_API_DELAY_MS`              | Mock-backend. Svarer efter en forsinkelse; fejler med `ApiError`.                                                               |
@@ -24,7 +23,7 @@ SessionService ──► AuthApi
       └──────────► UserProfileService ──► NutritionCalculator
 WeightLogService ► UserProfileService
 FoodSearchService ► FoodLogService
-alle stores ─────► StorageService, IdService, NOW
+alle stores ─────► StorageService, NOW
 ```
 
 Ingen service kender til `shared/` eller `features/`.

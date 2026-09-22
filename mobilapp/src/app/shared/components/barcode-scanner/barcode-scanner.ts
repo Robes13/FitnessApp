@@ -16,11 +16,11 @@ import {
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { newId } from '../../../core/utils/id';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Subscription, map } from 'rxjs';
 import { FoodItem, ScanResult } from '../../../core/models/food';
 import { BarcodeScannerService } from '../../../core/services/barcode-scanner';
-import { IdService } from '../../../core/services/id';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
 import { UiButton } from '../ui-button/ui-button';
 import { UiIcon } from '../ui-icon/ui-icon';
@@ -173,7 +173,6 @@ export class BarcodeScanner {
 
   private readonly scanner = inject(BarcodeScannerService);
   private readonly calculator = inject(NutritionCalculator);
-  private readonly ids = inject(IdService);
   private readonly document = inject(DOCUMENT);
   private readonly overlay = viewChild<ElementRef<HTMLElement>>('overlay');
 
@@ -330,7 +329,7 @@ export class BarcodeScanner {
     }
     const value = this.form.getRawValue();
     this.customSaved.emit({
-      id: this.ids.next(CUSTOM_FOOD_ID_PREFIX),
+      id: newId(CUSTOM_FOOD_ID_PREFIX),
       name: value.name.trim(),
       quantity: value.quantity.trim() || DEFAULT_CUSTOM_QUANTITY,
       kcal: Math.round(value.kcal ?? 0),
