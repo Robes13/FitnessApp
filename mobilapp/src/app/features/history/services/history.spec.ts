@@ -6,7 +6,13 @@ import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-docum
 import { TEST_FOOD, weighEntry } from '../../../core/testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { HistoryEntry } from '../models/history';
-import { HistoryService, RELOGGED_DURATION_MS, RELOGGED_LABEL, RELOG_LABEL } from './history';
+import {
+  HistoryService,
+  RELOGGED_DURATION_MS,
+  formatFoodSummary,
+  RELOGGED_LABEL,
+  RELOG_LABEL,
+} from './history';
 
 interface Context {
   readonly history: HistoryService;
@@ -111,6 +117,47 @@ describe('HistoryService', () => {
 
     history.setFilter('alle');
     expect(history.visibleEntries()).toHaveLength(history.entries().length);
+  });
+
+  it('viser måltider fra tidligere dage med dagens samlede kalorier og makroer', () => {
+    storage.setItem(
+      STORAGE_KEY.FOOD_LOG,
+      JSON.stringify({
+        days: {
+          '2026-09-19': [
+            {
+              ...TEST_FOOD,
+              logId: 'log-1',
+              meal: 'frokost',
+              loggedAt: new Date(2026, 8, 19, 12).toISOString(),
+            },
+            {
+              ...TEST_FOOD,
+              logId: 'log-2',
+              meal: 'aften',
+              loggedAt: new Date(2026, 8, 19, 18).toISOString(),
+            },
+          ],
+        },
+      }),
+    );
+    const { history, foodLog } = setup();
+    foodLog.add(TEST_FOOD, 'morgen');
+
+    const groups = history.groups();
+    expect(groups.map((group) => group.label)).toEqual(['I dag · 21. sep', 'Lør. · 19. sep']);
+    expect(groups[1]?.entries).toHaveLength(2);
+    expect(groups[1]?.foodSummary).toBe(
+      formatFoodSummary(foodLog.totalsFor(new Date(2026, 8, 19))),
+    );
+    expect(groups[1]?.foodSummary).toMatch(/^420 kcal · P /);
+  });
+
+  it('viser ingen madopsummering på dage uden måltider', () => {
+    storeWeighings();
+    const { history } = setup();
+
+    expect(history.groups().every((group) => group.foodSummary === null)).toBe(true);
   });
 
   it('kun måltidsposter kan logges igen', () => {

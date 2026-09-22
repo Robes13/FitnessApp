@@ -14,6 +14,7 @@ import { MEALS, MEAL_TONES } from '../../../../core/constants/meals';
 import { FoodCollection, FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections';
+import { FoodLogService } from '../../../../core/services/food-log';
 import {
   FoodPicker,
   FoodPickerCtaVerb,
@@ -102,9 +103,12 @@ export class FoodAddSheet {
   /** A finished food, ready for the log (from the picker or from a whole collection). */
   readonly selected = output<FoodItem>();
   readonly customFoodCreated = output<FoodItem>();
+  /** A logged custom food's kcal/macros were edited – the page saves the custom food itself. */
+  readonly customFoodEdited = output<FoodItem>();
   readonly scanRequested = output<void>();
 
   private readonly collections = inject(CollectionsService);
+  private readonly foodLog = inject(FoodLogService);
 
   protected readonly mealOptions = MEALS;
   protected readonly tabOptions = TAB_OPTIONS;
@@ -122,6 +126,14 @@ export class FoodAddSheet {
   );
 
   protected readonly isEditing = computed(() => this.editEntry() !== null);
+  /** The user's own food the edited entry was logged from; `null` for system foods. */
+  protected readonly editBaseItem = computed<FoodItem | null>(() => {
+    const entry = this.editEntry();
+    if (!entry?.isCustom) {
+      return null;
+    }
+    return this.foodLog.customFoods().find((food) => food.id === entry.id) ?? null;
+  });
   protected readonly title = computed(() => (this.isEditing() ? TITLE.edit : TITLE.add));
   protected readonly titleAccent = computed(() =>
     this.isEditing() ? TITLE.editWhat : this.mealLabel().toLowerCase(),

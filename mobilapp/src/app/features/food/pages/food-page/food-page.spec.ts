@@ -1,10 +1,12 @@
 import { Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router, Routes, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { APP_PATH, APP_ROUTE, QUERY_PARAM } from '../../../../core/constants/app-route';
 import { FoodLogService } from '../../../../core/services/food-log';
 import { UserProfileService } from '../../../../core/services/user-profile';
+import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import { FOOD_ROUTES } from '../../food.routes';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import {
@@ -123,6 +125,111 @@ describe('FoodPage', () => {
 
     expect(texts('.food-meal-group__name-text')).toEqual(['Kyllingesalat']);
     expect(TestBed.inject(FoodLogService).entries()).toHaveLength(1);
+  });
+
+  it('edits the macros of a logged custom food and updates both the food and the entry', async () => {
+    const { page, settle } = await setup();
+    const foodLog = TestBed.inject(FoodLogService);
+    const bar = foodLog.addCustomFood({
+      name: 'Egen bar',
+      quantity: '50 g',
+      kcal: 200,
+      protein: 10,
+      carbs: 20,
+      fat: 8,
+    });
+    foodLog.add({ ...bar, quantity: '100 g', kcal: 400, protein: 20, carbs: 40, fat: 16 }, 'snack');
+    await settle();
+
+    page.querySelector<HTMLButtonElement>('[aria-label="Rediger Egen bar"]')?.click();
+    await settle();
+    const fields = Array.from(
+      document.querySelectorAll<HTMLInputElement>('.food-picker__edit-macros input'),
+    );
+    expect(fields.map((field) => field.value)).toEqual(['200', '10', '20', '8']);
+    fields[0]!.value = '250';
+    fields[0]!.dispatchEvent(new Event('input'));
+    await settle();
+    document.querySelector<HTMLButtonElement>('.food-picker__confirm')?.click();
+    await settle();
+
+    expect(foodLog.customFoods()[0]).toMatchObject({ id: bar.id, quantity: '50 g', kcal: 250 });
+    const entry = foodLog.entries().find((candidate) => candidate.id === bar.id);
+    expect(entry).toMatchObject({ quantity: '100 g', kcal: 500, protein: 20 });
+  });
+
+  it('lets a custom food created with "Gem og log" be edited afterwards', async () => {
+    const { page, settle } = await setup();
+    const foodLog = TestBed.inject(FoodLogService);
+    const typeInto = async (field: HTMLInputElement | undefined, value: string): Promise<void> => {
+      field!.value = value;
+      field!.dispatchEvent(new Event('input'));
+      await settle();
+    };
+
+    page.querySelector<HTMLButtonElement>('.food-page__add')?.click();
+    await settle();
+    document.querySelector<HTMLButtonElement>('.food-picker__create')?.click();
+    await settle();
+    const newFoodFields = (): HTMLInputElement[] =>
+      Array.from(document.querySelectorAll<HTMLInputElement>('.food-picker__fields input'));
+    await typeInto(newFoodFields()[0], 'Egen bar');
+    await typeInto(newFoodFields()[1], '50');
+    await typeInto(newFoodFields()[2], '200');
+    await typeInto(newFoodFields()[3], '10');
+    document
+      .querySelector<HTMLButtonElement>('.food-picker__actions button[type="submit"]')
+      ?.click();
+    await settle();
+
+    const custom = foodLog.customFoods()[0];
+    expect(custom).toMatchObject({ name: 'Egen bar', kcal: 200 });
+    expect(foodLog.entries().find((entry) => entry.name === 'Egen bar')?.id).toBe(custom?.id);
+
+    page.querySelector<HTMLButtonElement>('[aria-label="Rediger Egen bar"]')?.click();
+    await settle();
+    const macroFields = Array.from(
+      document.querySelectorAll<HTMLInputElement>('.food-picker__edit-macros input'),
+    );
+    expect(macroFields.map((field) => field.value)).toEqual(['200', '10', '0', '0']);
+    await typeInto(macroFields[0], '250');
+    document.querySelector<HTMLButtonElement>('.food-picker__confirm')?.click();
+    await settle();
+
+    expect(foodLog.customFoods()).toHaveLength(1);
+    expect(foodLog.customFoods()[0]).toMatchObject({ id: custom?.id, kcal: 250 });
+    expect(foodLog.entries().find((entry) => entry.id === custom?.id)?.kcal).toBe(250);
+  });
+
+  it('still logs a scanned food whose name is taken and explains why it was not saved', async () => {
+    const { harness, settle, text } = await setup();
+    const foodLog = TestBed.inject(FoodLogService);
+    const input = { quantity: '1 stk', kcal: 150, protein: 12, carbs: 0, fat: 0 };
+    foodLog.addCustomFood({ ...input, name: 'Egen bar' });
+
+    harness.fixture.debugElement
+      .query(By.directive(BarcodeScanner))
+      .triggerEventHandler('customSaved', {
+        ...input,
+        id: 'food-scan',
+        name: ' egen BAR',
+        isCustom: true,
+      });
+    await settle();
+
+    expect(foodLog.customFoods()).toHaveLength(1);
+    expect(foodLog.entries().some((entry) => entry.id === 'food-scan')).toBe(true);
+    expect(text('.food-page__notice')).toContain('allerede en egen vare med navnet');
+  });
+
+  it('only lets the amount be edited for a food that is not the user own', async () => {
+    const { page, settle } = await setup();
+
+    page.querySelector<HTMLButtonElement>('[aria-label="Rediger Kyllingesalat"]')?.click();
+    await settle();
+
+    expect(document.querySelector('.food-picker__amount')).not.toBeNull();
+    expect(document.querySelector('.food-picker__edit-macros')).toBeNull();
   });
 
   it('opens the add sheet on the meal from the query param and clears it again', async () => {

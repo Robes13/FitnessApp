@@ -49,11 +49,13 @@ function seedOwnFoods(): void {
     <app-food-picker
       [initialQuery]="initialQuery()"
       [editItem]="editItem()"
+      [editBaseItem]="editBaseItem()"
       [ctaVerb]="ctaVerb()"
       [showScan]="showScan()"
       saveAndLogLabel="Gem og log under morgenmad"
       (picked)="picked.push($event)"
       (customFoodCreated)="created.push($event)"
+      (customFoodEdited)="edited.push($event)"
       (scanRequested)="scans = scans + 1"
       (stepChange)="steps.push($event)"
       (cancelled)="cancels = cancels + 1"
@@ -63,10 +65,12 @@ function seedOwnFoods(): void {
 class Host {
   readonly initialQuery = signal('');
   readonly editItem = signal<FoodItem | null>(null);
+  readonly editBaseItem = signal<FoodItem | null>(null);
   readonly ctaVerb = signal<FoodPickerCtaVerb>('Tilføj');
   readonly showScan = signal(true);
   readonly picked: FoodPickerSelection[] = [];
   readonly created: FoodItem[] = [];
+  readonly edited: FoodItem[] = [];
   readonly steps: FoodPickerStep[] = [];
   scans = 0;
   cancels = 0;
@@ -314,7 +318,104 @@ describe('FoodPicker', () => {
     });
   });
 
+  describe('editing a logged custom food', () => {
+    const OWN_BAR: FoodItem = { ...SALAD, id: 'food-bar', name: 'Egen bar', isCustom: true };
+    /** Logged as 500 g – twice the custom food's 250 g base. */
+    const LOGGED_BAR: FoodItem = {
+      ...OWN_BAR,
+      quantity: '500 g',
+      kcal: 760,
+      protein: 60,
+      carbs: 40,
+      fat: 20,
+    };
+
+    function macroFields(root: HTMLElement): HTMLInputElement[] {
+      return Array.from(root.querySelectorAll<HTMLInputElement>('.food-picker__edit-macros input'));
+    }
+
+    it('shows the custom food base macros and starts on the logged amount', async () => {
+      const { root } = await setup({
+        configure: (h) => {
+          h.editItem.set(LOGGED_BAR);
+          h.editBaseItem.set(OWN_BAR);
+        },
+      });
+
+      expect(macroFields(root).map((field) => field.value)).toEqual(['380', '30', '20', '10']);
+      expect(root.querySelector<HTMLInputElement>('.food-picker__amount-field')?.value).toBe('500');
+    });
+
+    it('emits the edited custom food and the recalculated entry', async () => {
+      const { host, root, typeInto, click } = await setup({
+        configure: (h) => {
+          h.editItem.set(LOGGED_BAR);
+          h.editBaseItem.set(OWN_BAR);
+          h.ctaVerb.set('Gem');
+        },
+      });
+
+      await typeInto(macroFields(root)[0] ?? null, '400');
+      await typeInto(macroFields(root)[1] ?? null, '35');
+      await click('.food-picker__confirm');
+
+      expect(host.edited).toHaveLength(1);
+      expect(host.edited[0]).toMatchObject({
+        id: 'food-bar',
+        quantity: '250 g',
+        kcal: 400,
+        protein: 35,
+      });
+      expect(host.picked[0]?.item).toMatchObject({ quantity: '500 g', kcal: 800, protein: 70 });
+    });
+
+    it('blocks saving with invalid macros and shows the error', async () => {
+      const { host, root, typeInto, buttonByText } = await setup({
+        configure: (h) => {
+          h.editItem.set(LOGGED_BAR);
+          h.editBaseItem.set(OWN_BAR);
+          h.ctaVerb.set('Gem');
+        },
+      });
+
+      await typeInto(macroFields(root)[2] ?? null, '-1');
+
+      expect(buttonByText('Gem 500 g')?.disabled).toBe(true);
+      expect(root.textContent).toContain('skal være 0 eller større');
+      expect(host.edited).toEqual([]);
+    });
+
+    it('only edits the amount of a food that is not the user own', async () => {
+      const { root } = await setup({ configure: (h) => h.editItem.set(SALAD) });
+
+      expect(root.querySelector('.food-picker__edit-macros')).toBeNull();
+    });
+  });
+
   describe('new-food step', () => {
+    it('rejects a name the user already has, ignoring case and spaces', async () => {
+      const { host, root, click, typeInto, buttonByText, settle } = await setup({
+        prepare: seedOwnFoods,
+      });
+      await click('.food-picker__create');
+      await typeInto(formFields(root)[0] ?? null, '  havregryn ');
+      await typeInto(formFields(root)[2] ?? null, '100');
+
+      expect(root.querySelector('app-ui-form-error')?.textContent).toContain(
+        'allerede en egen vare med det navn',
+      );
+      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(true);
+      expect(buttonByText('Gem uden at logge')?.disabled).toBe(true);
+      root
+        .querySelector('form')!
+        .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      await settle();
+      expect(host.created).toEqual([]);
+
+      await typeInto(formFields(root)[0] ?? null, 'Havregryn med mælk');
+      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(false);
+    });
+
     it.each([3, 4, 5])(
       'rejects a negative macro in field %i, including direct form submission',
       async (index) => {

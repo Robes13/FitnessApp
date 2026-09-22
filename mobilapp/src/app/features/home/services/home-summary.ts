@@ -114,8 +114,8 @@ const MACRO_DEFINITIONS: readonly MacroDefinition[] = [
  * Gathers the Home screen's numbers in one place: the week's rings, the selected day's
  * card, the week's key figures, the next step, and the goal card.
  *
- * The app only knows today: the food log resets on day change, and there's no history
- * until the backend supplies it. Days without data are `null` all the way through and are
+ * Past days come from the food log's history (`FoodLogService.dailyTotals`). Days without
+ * a single logged entry – and days not yet reached – are `null` all the way through and are
  * shown as empty rings and `–`, so the screen never claims a day had no food.
  *
  * The service is `providedIn: 'root'` so the selected day survives a tab switch. The
@@ -146,16 +146,22 @@ export class HomeSummaryService {
   readonly photo: Signal<ProfilePhoto | null> = computed(() => this.profileService.profile().photo);
 
   /**
-   * Share of the daily calorie goal per weekday. `null` = no data for that day – both the
-   * days the app doesn't know about, and today until the user has logged the first meal.
+   * The logged totals per weekday (Monday … Sunday). `null` = no data for that day – days
+   * without a logged entry and days that haven't come yet.
    */
-  private readonly dayParts = computed<readonly (number | null)[]>(() => {
+  private readonly dayTotals = computed<readonly (Macros | null)[]>(() => {
     const today = this.todayIndex();
+    const monday = addDays(startOfDay(this.now()), -today);
+    return this.foodLog
+      .dailyTotals(monday, addDays(monday, DAY_NAMES_SHORT.length - 1))
+      .map((day, index) => (index > today || day.entryCount === 0 ? null : day.totals));
+  });
+
+  /** Share of the daily calorie goal per weekday; `null` where `dayTotals` has no data. */
+  private readonly dayParts = computed<readonly (number | null)[]>(() => {
     const target = this.kcalTarget();
-    const totals = this.foodLog.totals();
-    const hasLog = this.foodLog.entries().length > 0;
-    return DAY_NAMES_SHORT.map((_, index) => {
-      if (index !== today || !hasLog) {
+    return this.dayTotals().map((totals) => {
+      if (totals === null) {
         return null;
       }
       return target > 0 ? Math.min(1, totals.kcal / target) : 0;
@@ -196,7 +202,7 @@ export class HomeSummaryService {
       title: `${DAY_NAMES_LONG[selected] ?? ''}${relativeDaySuffix(selected, today)}`,
       progress: part ?? 0,
       progressTone: part === null ? 'muted' : part >= RING_FULL_THRESHOLD ? 'positive' : 'accent',
-      kcalEatenText: part === null ? NO_VALUE : String(this.foodLog.totals().kcal),
+      kcalEatenText: String(this.dayTotals()[selected]?.kcal ?? NO_VALUE),
       kcalTargetText: String(this.kcalTarget()),
       weightText: weightKg === null ? NO_VALUE : formatDecimal(weightKg),
       macros: this.macrosForDay(selected),
@@ -220,10 +226,11 @@ export class HomeSummaryService {
       logged.length === 0
         ? null
         : Math.round(logged.reduce((total, part) => total + part * target, 0) / logged.length);
-    const proteinHit =
-      elapsed[today] !== null && this.foodLog.totals().protein >= proteinGoal * WEEK_HIT_THRESHOLD
-        ? 1
-        : 0;
+    const proteinHit = this.dayTotals()
+      .slice(0, today + 1)
+      .filter(
+        (totals) => totals !== null && totals.protein >= proteinGoal * WEEK_HIT_THRESHOLD,
+      ).length;
 
     let streak = 0;
     for (let index = today; index >= 0; index--) {
@@ -321,11 +328,11 @@ export class HomeSummaryService {
   /** Macros follow the same rule as calories: a day without data shows `–`, not 0. */
   private macrosForDay(index: number): readonly DayMacro[] {
     const goals = this.calculator.macroGoals(this.kcalTarget());
-    const logged = this.foodLog.totals();
-    const hasData = this.dayParts()[index] !== null;
+    const logged = this.dayTotals()[index] ?? null;
     return MACRO_DEFINITIONS.map((macro) => {
       const goal = goals[macro.key];
-      const value = hasData ? logged[macro.key] : 0;
+      const hasData = logged !== null;
+      const value = logged?.[macro.key] ?? 0;
       return {
         label: macro.label,
         value: goal > 0 ? Math.min(1, value / goal) : 0,

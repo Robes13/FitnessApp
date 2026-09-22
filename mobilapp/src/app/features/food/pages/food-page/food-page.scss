@@ -130,6 +130,10 @@
     margin-top: var(--space-4);
   }
 
+  &__notice {
+    margin-top: var(--space-2);
+  }
+
   /* The design's "Add food": left-aligned content with the plus icon in front. */
   &__add {
     flex: 1;

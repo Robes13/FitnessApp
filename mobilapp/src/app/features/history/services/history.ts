@@ -1,5 +1,6 @@
 import { DestroyRef, Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { MEALS } from '../../../core/constants/meals';
+import { Macros } from '../../../core/models/food';
 import { MealId } from '../../../core/models/meal';
 import { FoodLogService } from '../../../core/services/food-log';
 import { WeightLogService } from '../../../core/services/weight-log';
@@ -7,6 +8,7 @@ import {
   daysBetween,
   formatDayMonth,
   formatDecimal,
+  formatInteger,
   formatWeekdayAbbreviated,
 } from '../../../core/utils/date-format';
 import { NOW } from '../../../core/utils/now';
@@ -33,8 +35,8 @@ const WEIGH_SUBTITLE_LATEST = 'Seneste vejning';
  * Builds the history entries and groups them by day.
  *
  * The entries are the user's own: weigh-ins from `WeightLogService` and meals from
- * `FoodLogService`. The food log only covers today, and goal changes aren't tracked at
- * all yet, so the list stays short until the backend can supply history.
+ * `FoodLogService.allEntries()` (the food log's retained history). A day with meals also gets
+ * the day's summed kcal and macros. Goal changes aren't tracked yet.
  *
  * The service is provided by `HistoryPage` (not `providedIn: 'root'`), because both the
  * filter and the "Logget i dag" state belong to the screen and should reset when you leave it.
@@ -63,7 +65,10 @@ export class HistoryService {
   });
 
   readonly groups: Signal<readonly HistoryGroup[]> = computed(() =>
-    groupByDay(this.visibleEntries()),
+    groupByDay(this.visibleEntries()).map((group) => ({
+      ...group,
+      foodSummary: this.foodSummaryFor(group.entries),
+    })),
   );
 
   readonly isEmpty: Signal<boolean> = computed(() => this.groups().length === 0);
@@ -121,7 +126,7 @@ export class HistoryService {
   }
 
   private mealEntries(): readonly HistoryEntry[] {
-    return this.foodLog.entries().map((logged) => {
+    return this.foodLog.allEntries().map((logged) => {
       const date = new Date(logged.loggedAt);
       const { logId, meal, loggedAt, ...food } = logged;
       return {
@@ -137,6 +142,12 @@ export class HistoryService {
         meal,
       } satisfies HistoryEntry;
     });
+  }
+
+  /** The day's food totals, when the group shows at least one meal – otherwise `null`. */
+  private foodSummaryFor(entries: readonly HistoryEntry[]): string | null {
+    const meal = entries.find((entry) => entry.kind === 'mad');
+    return meal ? formatFoodSummary(this.foodLog.totalsFor(meal.date)) : null;
   }
 
   /** `'I dag'` · `'I går'` · the weekday abbreviated, plus `'21. sep'`. */
@@ -158,7 +169,19 @@ function mealLabel(meal: MealId): string {
   return MEALS.find((definition) => definition.id === meal)?.label ?? '';
 }
 
-function groupByDay(entries: readonly HistoryEntry[]): readonly HistoryGroup[] {
+/** `'1.970 kcal · P 120 g · K 210 g · F 60 g'` */
+export function formatFoodSummary(totals: Macros): string {
+  return [
+    `${formatInteger(totals.kcal)} kcal`,
+    `P ${formatInteger(totals.protein)} g`,
+    `K ${formatInteger(totals.carbs)} g`,
+    `F ${formatInteger(totals.fat)} g`,
+  ].join(' · ');
+}
+
+function groupByDay(
+  entries: readonly HistoryEntry[],
+): readonly Omit<HistoryGroup, 'foodSummary'>[] {
   const order: string[] = [];
   const byLabel = new Map<string, HistoryEntry[]>();
   for (const entry of entries) {

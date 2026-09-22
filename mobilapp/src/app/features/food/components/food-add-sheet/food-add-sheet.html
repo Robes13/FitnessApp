@@ -40,10 +40,12 @@
         <app-food-picker
           [startStep]="startStep()"
           [editItem]="editEntry()"
+          [editBaseItem]="editBaseItem()"
           [ctaVerb]="ctaVerb()"
           [saveAndLogLabel]="saveAndLogLabel()"
           (picked)="onPicked($event)"
           (customFoodCreated)="customFoodCreated.emit($event)"
+          (customFoodEdited)="customFoodEdited.emit($event)"
           (scanRequested)="scanRequested.emit()"
           (cancelled)="closed.emit()"
         />

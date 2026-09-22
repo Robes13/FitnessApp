@@ -21,10 +21,11 @@ Route-filen er [`home.routes.ts`](home.routes.ts) og eksporterer `HOME_ROUTES`, 
 Alt på skærmen er brugerens egne data: madloggen (`FoodLogService`), vejningerne
 (`WeightLogService`) og profilen (`UserProfileService`).
 
-Appen har ingen historik. Madloggen nulstilles ved dagsskift, og der findes ikke et API at
-hente tidligere dage fra, så **kun dagen i dag kan have data** – og kun når brugeren har
-logget noget. Alle andre dage er `null` hele vejen igennem: tom ring, `–` i dagskortet og
-ingen andel i ugens nøgletal. Skærmen påstår aldrig, at en dag var uden mad.
+Madloggen gemmer tidligere dage (`FoodLogService.dailyTotals`), så ugens ringe, dagskortet
+og ugens nøgletal viser de rigtige kalorier og makroer for hver dag, brugeren har logget.
+Dage uden en eneste post og dage, der ikke er kommet endnu, er `null` hele vejen igennem: tom
+ring, `–` i dagskortet og ingen andel i ugens nøgletal. Skærmen påstår aldrig, at en dag var
+uden mad.
 
 Der er ingen netværkskald på skærmen, så der er heller ingen loading-tilstand. Tomme
 tilstande er indbygget i designet: er alt logget og vejet, forsvinder "Næste skridt"-kortet,

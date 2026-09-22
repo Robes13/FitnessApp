@@ -57,6 +57,10 @@
     </button>
   </div>
 
+  @if (notice(); as message) {
+    <app-ui-form-error class="food-page__notice" tone="negative" [message]="message" />
+  }
+
   <div class="food-page__meals">
     @for (group of view.mealGroups(); track group.id) {
       <app-food-meal-group
@@ -79,6 +83,7 @@
   (closed)="closeAdd()"
   (selected)="onSelected($event)"
   (customFoodCreated)="onCustomFoodCreated($event)"
+  (customFoodEdited)="onCustomFoodEdited($event)"
   (scanRequested)="openScanner()"
 />
 

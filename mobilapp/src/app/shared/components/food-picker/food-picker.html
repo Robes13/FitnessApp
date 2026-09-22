@@ -95,7 +95,11 @@
             formControlName="name"
             autocomplete="off"
             placeholder="f.eks. Mormors frikadeller"
+            [invalid]="nameInvalid()"
           />
+          @if (nameError()) {
+            <app-ui-form-error tone="negative" [message]="nameError()" />
+          }
         </label>
 
         <div class="food-picker__field">
@@ -293,6 +297,33 @@
           </div>
         }
       </div>
+
+      @if (canEditMacros()) {
+        <div class="food-picker__edit-macros" [formGroup]="macroForm">
+          <div class="food-picker__label">{{ macroBaseLabel() }}</div>
+          <div class="food-picker__grid">
+            <label class="food-picker__field">
+              <span class="food-picker__label">Kalorier</span>
+              <app-ui-text-input formControlName="kcal" type="number" inputMode="numeric" />
+            </label>
+            <label class="food-picker__field">
+              <span class="food-picker__label">Protein (g)</span>
+              <app-ui-text-input formControlName="protein" type="number" inputMode="numeric" />
+            </label>
+            <label class="food-picker__field">
+              <span class="food-picker__label">Kulhydrat (g)</span>
+              <app-ui-text-input formControlName="carbs" type="number" inputMode="numeric" />
+            </label>
+            <label class="food-picker__field">
+              <span class="food-picker__label">Fedt (g)</span>
+              <app-ui-text-input formControlName="fat" type="number" inputMode="numeric" />
+            </label>
+          </div>
+          @if (editMacroError()) {
+            <app-ui-form-error tone="negative" [message]="editMacroError()" />
+          }
+        </div>
+      }
 
       <button
         app-ui-button

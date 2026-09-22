@@ -60,6 +60,16 @@
     color: var(--color-text-muted);
   }
 
+  &__group-summary {
+    @include mixins.tabular-nums;
+
+    margin: 0;
+    padding-bottom: var(--space-1-5);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+  }
+
   &__row {
     display: flex;
     align-items: center;

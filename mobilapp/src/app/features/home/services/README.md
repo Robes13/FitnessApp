@@ -21,11 +21,12 @@ Siden og kortene henter kun færdige værdier – ingen beregninger i templates.
 `selDay` ligger i den globale state. Servicen holder ingen timere – fejrings-toastens timer
 hører til siden og ryddes, når siden forlades.
 
-**Dage uden data:** `dayParts` giver `null` for hver dag, appen ikke kender – det vil sige
-alle dage undtagen i dag, og også i dag, indtil det første måltid er logget. `null` giver tom
-ring, `–` i dagskortet og ingen andel i ugens nøgletal. Gennemsnittet er `–`, ikke 0, når
-ingen dage tæller med. Når en historik-backend findes, er `dayParts` det ene sted, der skal
-fyldes ud.
+**Dage og data:** `dayTotals` henter ugens syv dage (mandag–søndag) fra
+`FoodLogService.dailyTotals` og giver `null` for dage uden poster og for fremtidige dage.
+`dayParts` (andel af kaloriemålet), dagskortets kcal/makroer og ugens nøgletal (inkl.
+"protein ramt" for hver dag) bygger alle på `dayTotals`. `null` giver tom ring, `–` i
+dagskortet og ingen andel i ugens nøgletal. Gennemsnittet er `–`, ikke 0, når ingen dage
+tæller med.
 
 `photo()` giver profilbilledet videre til den delte `ProfileAvatar`
 (`shared/components/profile-avatar`), som ejer designets beskæringsformler

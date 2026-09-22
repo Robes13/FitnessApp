@@ -11,12 +11,13 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { QUERY_PARAM } from '../../../../core/constants/app-route';
 import { MEAL_IDS } from '../../../../core/constants/meals';
-import { FoodItem, LoggedFood } from '../../../../core/models/food';
+import { CustomFoodInput, FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
-import { FoodLogService } from '../../../../core/services/food-log';
+import { DuplicateCustomFoodNameError, FoodLogService } from '../../../../core/services/food-log';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import { FoodPickerStartStep } from '../../../../shared/components/food-picker/food-picker';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-icon-button';
 import { UiProgressBar } from '../../../../shared/components/ui-progress-bar/ui-progress-bar';
@@ -40,6 +41,10 @@ const ADD_MEAL_PARAM: 'tilfoej' = QUERY_PARAM.ADD_MEAL;
 const KCAL_RING_DIAMETER = 84;
 const KCAL_RING_STROKE_WIDTH = 8.4;
 
+/** Shown when a new custom food clashes with an existing one's name (e.g. from the scanner). */
+const DUPLICATE_CUSTOM_FOOD_NOTICE = (name: string): string =>
+  `Du har allerede en egen vare med navnet "${name}", så den blev ikke gemt igen.`;
+
 /**
  * The Mad screen: today's calories and macros, the four meal groups and the ways into the log –
  * the "Add food" sheet and the barcode scanner.
@@ -58,6 +63,7 @@ const KCAL_RING_STROKE_WIDTH = 8.4;
     FoodAddSheet,
     FoodMealGroup,
     UiButton,
+    UiFormError,
     UiIcon,
     UiIconButton,
     UiProgressBar,
@@ -85,6 +91,8 @@ export class FoodPage {
   protected readonly editEntry = signal<LoggedFood | null>(null);
   protected readonly pickerStartStep = signal<FoodPickerStartStep>('search');
   protected readonly scannerOpen = signal(false);
+  /** Feedback after a custom food couldn't be saved; cleared when the sheet or scanner opens. */
+  protected readonly notice = signal<string | null>(null);
 
   /** The meal the scanner saves under – the text belongs to the scanner's CTA. */
   protected readonly scannerMealLabel = computed(() => this.view.mealLabel(this.addMeal()));
@@ -119,6 +127,7 @@ export class FoodPage {
   }
 
   protected openEdit(entry: LoggedFood): void {
+    this.notice.set(null);
     this.editEntry.set(entry);
     this.addMeal.set(entry.meal);
     this.pickerStartStep.set('search');
@@ -145,8 +154,14 @@ export class FoodPage {
     this.closeAdd();
   }
 
+  /** Saved with the picker's id, so an entry logged via "Gem og log …" points at the custom food. */
   protected onCustomFoodCreated(item: FoodItem): void {
-    this.foodLog.addCustomFood(toCustomFoodInput(item));
+    this.saveCustomFood(item);
+  }
+
+  /** Editing a logged custom food also changes the custom food; the entry follows in `onSelected`. */
+  protected onCustomFoodEdited(item: FoodItem): void {
+    this.foodLog.updateCustomFood(item.id, toCustomFoodInput(item));
   }
 
   // --- The scanner -----------------------------------------------------------------------------
@@ -156,6 +171,7 @@ export class FoodPage {
    * leads back to the sheet – as in the design, where `openScan` doesn't touch `addOpen`.
    */
   protected openScanner(): void {
+    this.notice.set(null);
     this.scannerOpen.set(true);
   }
 
@@ -164,9 +180,12 @@ export class FoodPage {
     this.closeAdd();
   }
 
-  /** "Unknown food" saved: it becomes a custom food and is added to the log at the same time. */
+  /**
+   * "Unknown food" saved: it becomes a custom food and is added to the log at the same time.
+   * If the name is already taken, the food is still logged – only the custom food isn't saved again.
+   */
   protected onScanCustomSaved(item: FoodItem): void {
-    this.foodLog.add(this.foodLog.addCustomFood(toCustomFoodInput(item)), this.addMeal());
+    this.foodLog.add(this.saveCustomFood(item) ?? item, this.addMeal());
     this.closeAdd();
   }
 
@@ -183,15 +202,29 @@ export class FoodPage {
   }
 
   private startAdd(meal: MealId, step: FoodPickerStartStep): void {
+    this.notice.set(null);
     this.editEntry.set(null);
     this.addMeal.set(meal);
     this.pickerStartStep.set(step);
     this.addOpen.set(true);
   }
+
+  /** Returns the saved custom food, or `null` (with a notice) when the name is already taken. */
+  private saveCustomFood(item: FoodItem): FoodItem | null {
+    try {
+      return this.foodLog.addCustomFood(toCustomFoodInput(item), item.id);
+    } catch (error) {
+      if (!(error instanceof DuplicateCustomFoodNameError)) {
+        throw error;
+      }
+      this.notice.set(DUPLICATE_CUSTOM_FOOD_NOTICE(item.name));
+      return null;
+    }
+  }
 }
 
-/** `FoodLogService.addCustomFood` sets `id` and `isCustom` itself. */
-function toCustomFoodInput(item: FoodItem): Omit<FoodItem, 'id' | 'isCustom'> {
+/** `FoodLogService.addCustomFood` sets `isCustom` itself; the id is passed separately. */
+function toCustomFoodInput(item: FoodItem): CustomFoodInput {
   return {
     name: item.name,
     quantity: item.quantity,

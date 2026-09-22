@@ -30,6 +30,8 @@ export interface HistoryEntry {
 export interface HistoryGroup {
   readonly label: string;
   readonly entries: readonly HistoryEntry[];
+  /** The day's logged kcal and macros (`'1.970 kcal · P 120 g · K 210 g · F 60 g'`), or `null` without meals. */
+  readonly foodSummary: string | null;
 }
 
 export interface HistoryFilter {

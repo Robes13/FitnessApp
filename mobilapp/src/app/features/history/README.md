@@ -15,15 +15,18 @@ med chips (Alle · Vejning · Mad · Mål) og grupperet pr. dag. Skærmen er des
 
 Alle poster er brugerens egne:
 
-| Type           | Kilde                        | Bemærkning                                                   |
-| -------------- | ---------------------------- | ------------------------------------------------------------ |
-| Vejning        | `WeightLogService.entries()` | Nyeste får underteksten `Seneste vejning`.                   |
-| Måltid (`mad`) | `FoodLogService.entries()`   | Har `food` + `meal` og kan derfor logges igen.               |
-| Mål (`maal`)   | –                            | Målændringer registreres ikke endnu; filteret er altid tomt. |
+| Type           | Kilde                         | Bemærkning                                                                                  |
+| -------------- | ----------------------------- | ------------------------------------------------------------------------------------------- |
+| Vejning        | `WeightLogService.entries()`  | Nyeste får underteksten `Seneste vejning`.                                                  |
+| Måltid (`mad`) | `FoodLogService.allEntries()` | Dagens og tidligere dages måltider (90 dage). Har `food` + `meal` og kan logges igen i dag. |
+| Mål (`maal`)   | –                             | Målændringer registreres ikke endnu; filteret er altid tomt.                                |
 
-Madloggen dækker kun dagen i dag, og der findes ingen historik-backend, så listen er kort:
-dagens måltider plus de vejninger, brugeren har registreret. Har brugeren intet registreret,
-viser skærmen sin tomme tilstand.
+Madloggen gemmer de seneste 90 dage, så listen viser tidligere logget mad sammen med
+vejningerne. Hver dag med måltider får under etiketten dagens samlede kalorier og makroer
+(`1.970 kcal · P 120 g · K 210 g · F 60 g`, `HistoryGroup.foodSummary`) – det dækker "se
+tidligere logget kalorieindtag" og "se tidligere logget makronæringsstoffer". Opsummeringen
+er hele dagens log, også når kun en del af posterne er synlige. Har brugeren intet
+registreret, viser skærmen sin tomme tilstand.
 
 `maal`-filteret bliver stående, fordi målændringer er et rigtigt domænebegreb, backenden
 kommer til at levere – indtil da viser det den tomme tilstand.

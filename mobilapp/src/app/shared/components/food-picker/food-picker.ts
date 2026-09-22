@@ -24,6 +24,7 @@ import {
 import { concat, map, of, switchMap } from 'rxjs';
 import { DEFAULT_QUANTITY_UNIT } from '../../../core/constants/nutrition';
 import { FoodItem, Macros } from '../../../core/models/food';
+import { CUSTOM_FOOD_ID_PREFIX, FoodLogService } from '../../../core/services/food-log';
 import { FoodSearchService } from '../../../core/services/food-search';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
 import { UiFormError } from '../ui-form-error/ui-form-error';
@@ -66,6 +67,14 @@ interface NewFoodForm {
   fat: FormControl<number | null>;
 }
 
+/** The custom food's own nutrition, editable while a logged custom food is edited. */
+interface MacroForm {
+  kcal: FormControl<number | null>;
+  protein: FormControl<number | null>;
+  carbs: FormControl<number | null>;
+  fat: FormControl<number | null>;
+}
+
 interface PortionStat {
   readonly label: string;
   readonly value: number;
@@ -100,7 +109,6 @@ const PIECE_CHIP_VALUES: readonly number[] = [1, 2, 3, 4];
 const GRAM_CHIP_MULTIPLIERS: readonly number[] = [2, 3];
 const HALF = 2;
 
-const ID_PREFIX = 'food';
 const MORE_LABEL = {
   collapsed: 'Flere detaljer (kulhydrat, fedt)',
   expanded: 'Skjul kulhydrat og fedt',
@@ -113,11 +121,27 @@ const CREATE_LABEL = {
   blank: 'Opret en vare selv',
   named: (query: string) => `Opret "${query}" som ny vare`,
 } as const;
+const DUPLICATE_NAME_ERROR = 'Du har allerede en egen vare med det navn.';
+const MACRO_ERROR = 'Protein, kulhydrat og fedt skal være 0 eller større.';
+const KCAL_ERROR = 'Kalorier skal være mindst 1.';
 const STAT_LABEL = { kcal: 'kcal', protein: 'protein', carbs: 'kulhydrat', fat: 'fedt' } as const;
 
 interface DragState {
   readonly startX: number;
   readonly startAmount: number;
+}
+
+/** Validators shared by "New custom item" and the macro editing on the portion step. */
+function kcalControl(value: number | null): FormControl<number | null> {
+  return new FormControl<number | null>(value, [Validators.required, Validators.min(1)]);
+}
+
+function macroControl(value: number | null): FormControl<number | null> {
+  return new FormControl<number | null>(value, [nonNegative]);
+}
+
+function hasNegativeMacro(values: readonly (number | null)[]): boolean {
+  return values.some((value) => value !== null && (!Number.isFinite(value) || value < 0));
 }
 
 function nonNegative(control: AbstractControl<number | null>): ValidationErrors | null {
@@ -165,6 +189,12 @@ export class FoodPicker {
   readonly startStep = input<FoodPickerStartStep>('search');
   /** Edit an already logged item: starts on the portion step with the item's own amount. */
   readonly editItem = input<FoodItem | null>(null);
+  /**
+   * The user's own food that `editItem` was logged from. When set (and custom), the portion
+   * step uses it as the base and also lets the user edit its kcal and macros; saving then
+   * emits `customFoodEdited` before `picked`. Without it only the amount can be changed.
+   */
+  readonly editBaseItem = input<FoodItem | null>(null);
   readonly ctaVerb = input<FoodPickerCtaVerb>('Tilføj');
   /** Primary button on "New custom item", e.g. `'Save and log under breakfast'`. */
   readonly saveAndLogLabel = input.required<string>();
@@ -173,12 +203,15 @@ export class FoodPicker {
   readonly picked = output<FoodPickerSelection>();
   /** New custom item – both for "Save without logging" and "Save and log …" (here `picked` follows after). */
   readonly customFoodCreated = output<FoodItem>();
+  /** The edited custom food (base portion, new macros) – only while editing a custom food. */
+  readonly customFoodEdited = output<FoodItem>();
   readonly scanRequested = output<void>();
   readonly stepChange = output<FoodPickerStep>();
   /** Back from the portion step when there's no search to return to (editing). */
   readonly cancelled = output<void>();
 
   private readonly foodSearch = inject(FoodSearchService);
+  private readonly foodLog = inject(FoodLogService);
   private readonly calculator = inject(NutritionCalculator);
 
   protected readonly step = linkedSignal<FoodPickerStep>(() =>
@@ -234,26 +267,27 @@ export class FoodPicker {
     name: new FormControl('', { nonNullable: true, validators: [notBlank] }),
     amount: new FormControl<number | null>(null),
     unit: new FormControl<FoodUnitId>(DEFAULT_FOOD_UNIT, { nonNullable: true }),
-    kcal: new FormControl<number | null>(null, [Validators.required, Validators.min(1)]),
-    protein: new FormControl<number | null>(null, [nonNegative]),
-    carbs: new FormControl<number | null>(null, [nonNegative]),
-    fat: new FormControl<number | null>(null, [nonNegative]),
+    kcal: kcalControl(null),
+    protein: macroControl(null),
+    carbs: macroControl(null),
+    fat: macroControl(null),
   });
   private readonly formValue = toSignal(
     this.form.valueChanges.pipe(map(() => this.form.getRawValue())),
     { initialValue: this.form.getRawValue() },
   );
-  protected readonly canSaveNewFood = toSignal(
-    this.form.statusChanges.pipe(map(() => this.form.valid)),
-    { initialValue: this.form.valid },
+  private readonly formValid = toSignal(this.form.statusChanges.pipe(map(() => this.form.valid)), {
+    initialValue: this.form.valid,
+  });
+  /** Case-insensitive, trimmed match against the user's own foods. */
+  protected readonly nameError = computed(() =>
+    this.foodLog.hasCustomFoodNamed(this.formValue().name) ? DUPLICATE_NAME_ERROR : null,
   );
+  protected readonly nameInvalid = computed(() => this.nameError() !== null);
+  protected readonly canSaveNewFood = computed(() => this.formValid() && !this.nameInvalid());
   protected readonly macroError = computed(() => {
     const { protein, carbs, fat } = this.formValue();
-    return [protein, carbs, fat].some(
-      (value) => value !== null && (!Number.isFinite(value) || value < 0),
-    )
-      ? 'Protein, kulhydrat og fedt skal være 0 eller større.'
-      : null;
+    return hasNegativeMacro([protein, carbs, fat]) ? MACRO_ERROR : null;
   });
   protected readonly selectedUnit = computed(() => this.formValue().unit);
   protected readonly showMore = signal(false);
@@ -266,7 +300,55 @@ export class FoodPicker {
 
   // --- Portion -------------------------------------------------------------------------------
 
-  protected readonly portionItem = linkedSignal<FoodItem | null>(() => this.editItem());
+  /** True while a logged custom food is edited – then its kcal and macros can be changed too. */
+  protected readonly canEditMacros = computed(
+    () => this.editItem() !== null && this.editBaseItem()?.isCustom === true,
+  );
+  protected readonly portionItem = linkedSignal<FoodItem | null>(() =>
+    this.canEditMacros() ? this.editBaseItem() : this.editItem(),
+  );
+  protected readonly macroForm = new FormGroup<MacroForm>({
+    kcal: kcalControl(null),
+    protein: macroControl(null),
+    carbs: macroControl(null),
+    fat: macroControl(null),
+  });
+  private readonly macroFormValue = toSignal(
+    this.macroForm.valueChanges.pipe(map(() => this.macroForm.getRawValue())),
+    { initialValue: this.macroForm.getRawValue() },
+  );
+  private readonly macroFormValid = toSignal(
+    this.macroForm.statusChanges.pipe(map(() => this.macroForm.valid)),
+    { initialValue: this.macroForm.valid },
+  );
+  protected readonly editMacroError = computed(() => {
+    if (!this.canEditMacros()) {
+      return null;
+    }
+    const { kcal, protein, carbs, fat } = this.macroFormValue();
+    if (hasNegativeMacro([protein, carbs, fat])) {
+      return MACRO_ERROR;
+    }
+    return kcal === null || kcal < 1 ? KCAL_ERROR : null;
+  });
+  /** The base the portion is scaled from: the item, with the edited macros when editing is allowed. */
+  private readonly portionBase = computed<FoodItem | null>(() => {
+    const item = this.portionItem();
+    if (!item || !this.canEditMacros()) {
+      return item;
+    }
+    const { kcal, protein, carbs, fat } = this.macroFormValue();
+    return {
+      ...item,
+      kcal: Math.round(kcal ?? 0),
+      protein: Math.round(protein ?? 0),
+      carbs: Math.round(carbs ?? 0),
+      fat: Math.round(fat ?? 0),
+    };
+  });
+  protected readonly macroBaseLabel = computed(
+    () => `Næringsindhold pr. ${this.portionItem()?.quantity ?? ''}`,
+  );
   private readonly baseQuantity = computed(() =>
     this.calculator.parseQuantity(this.portionItem()?.quantity ?? ''),
   );
@@ -281,7 +363,7 @@ export class FoodPicker {
    */
   protected readonly amount = linkedSignal<FoodItem | null, number | null>({
     source: this.portionItem,
-    computation: (item) => this.calculator.parseQuantity(item?.quantity ?? '').amount,
+    computation: (item) => this.calculator.parseQuantity(this.initialQuantity(item)).amount,
   });
   protected readonly amountValue = computed(() => {
     const amount = this.amount();
@@ -289,12 +371,12 @@ export class FoodPicker {
   });
   protected readonly portionName = computed(() => this.portionItem()?.name ?? '');
   protected readonly baseLabel = computed(() => {
-    const item = this.portionItem();
+    const item = this.portionBase();
     return item ? `${item.quantity} · ${item.kcal} kcal` : '';
   });
   private readonly ratio = computed(() => (this.amount() ?? 0) / this.baseAmount());
   protected readonly scaled = computed<Macros>(() => {
-    const item = this.portionItem();
+    const item = this.portionBase();
     return item ? this.calculator.scaleMacros(item, this.ratio()) : EMPTY_MACROS;
   });
   protected readonly stats = computed<readonly PortionStat[]>(() => {
@@ -317,7 +399,9 @@ export class FoodPicker {
   protected readonly ctaLabel = computed(
     () => `${this.ctaVerb()} ${this.amount() ?? ''} ${this.unit()}`,
   );
-  protected readonly canConfirm = computed(() => (this.amount() ?? 0) > 0);
+  protected readonly canConfirm = computed(
+    () => (this.amount() ?? 0) > 0 && (!this.canEditMacros() || this.macroFormValid()),
+  );
   protected readonly dragging = signal(false);
 
   private drag: DragState | null = null;
@@ -325,6 +409,15 @@ export class FoodPicker {
   constructor() {
     effect(() => {
       this.queryControl.setValue(this.initialQuery());
+    });
+    effect(() => {
+      const base = this.canEditMacros() ? this.editBaseItem() : null;
+      this.macroForm.reset({
+        kcal: base?.kcal ?? null,
+        protein: base?.protein ?? null,
+        carbs: base?.carbs ?? null,
+        fat: base?.fat ?? null,
+      });
     });
   }
 
@@ -446,10 +539,13 @@ export class FoodPicker {
   }
 
   protected confirm(): void {
-    const item = this.portionItem();
+    const item = this.portionBase();
     const amount = this.amount();
-    if (!item || amount == null || amount <= 0) {
+    if (!item || amount == null || !this.canConfirm()) {
       return;
+    }
+    if (this.canEditMacros()) {
+      this.customFoodEdited.emit(item);
     }
     const unit = this.unit();
     this.picked.emit({
@@ -474,6 +570,14 @@ export class FoodPicker {
     this.stepChange.emit(step);
   }
 
+  /** When editing from the custom food, the amount starts at the logged entry's amount. */
+  private initialQuantity(item: FoodItem | null): string {
+    const edited = this.editItem();
+    return item !== null && edited !== null && item === this.editBaseItem()
+      ? edited.quantity
+      : (item?.quantity ?? '');
+  }
+
   /** After a saved custom item: back to an empty search that fetches the results again. */
   private finishNewFood(): void {
     this.queryControl.setValue('');
@@ -483,7 +587,7 @@ export class FoodPicker {
 
   /** Design's `ownFood`: name and calories are required, the rest is rounded (empty = 0). */
   private buildCustomFood(): FoodItem | null {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.nameInvalid()) {
       this.form.markAllAsTouched();
       return null;
     }
@@ -496,7 +600,7 @@ export class FoodPicker {
     const amount =
       value.amount != null && value.amount > 0 ? value.amount : DEFAULT_NEW_FOOD_AMOUNT;
     return {
-      id: newId(ID_PREFIX),
+      id: newId(CUSTOM_FOOD_ID_PREFIX),
       name,
       quantity: `${amount} ${value.unit}`,
       kcal,

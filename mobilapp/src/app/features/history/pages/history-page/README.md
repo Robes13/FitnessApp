@@ -18,6 +18,7 @@
     ├── .history-page__filters      UiChip size="sm", vandret scroll ud til kanten
     └── .history-page__groups       én sektion pr. dag
         ├── .history-page__group-label   "I går · 20. sep"
+        ├── .history-page__group-summary "1.970 kcal · P 120 g · K 210 g · F 60 g" (kun dage med mad)
         └── .history-page__row           prik · titel/undertekst · værdi · gen-log
 └── .history-page__tab-bar-spacer   --layout-tab-bar-clearance
 ```

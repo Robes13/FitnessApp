@@ -4,7 +4,8 @@ import { STORAGE_KEY } from '../constants/storage-key';
 import { FoodItem, LoggedFood } from '../models/food';
 import { FakeStorage, createFakeStorage } from '../testing/fake-document';
 import { TEST_NOW, provideCoreTestEnvironment } from '../testing/test-providers';
-import { FoodLogService } from './food-log';
+import { DuplicateCustomFoodNameError, FOOD_LOG_RETENTION_DAYS, FoodLogService } from './food-log';
+import { addDays, toIsoDate } from '../utils/date-format';
 
 const HAVREGRYN: FoodItem = {
   id: 'food-havregryn',
@@ -24,16 +25,24 @@ describe('FoodLogService', () => {
     return TestBed.inject(FoodLogService);
   }
 
-  function storedEntries(): readonly LoggedFood[] {
-    const raw = storage.getItem(STORAGE_KEY.FOOD_LOG) ?? '{}';
-    return (JSON.parse(raw) as { entries: readonly LoggedFood[] }).entries;
+  function storedDays(): Record<string, readonly LoggedFood[]> {
+    const raw = storage.getItem(STORAGE_KEY.FOOD_LOG) ?? '{"days":{}}';
+    return (JSON.parse(raw) as { days: Record<string, readonly LoggedFood[]> }).days;
+  }
+
+  function storedEntries(date = '2026-09-21'): readonly LoggedFood[] {
+    return storedDays()[date] ?? [];
+  }
+
+  function logged(logId: string, food: FoodItem = HAVREGRYN): LoggedFood {
+    return { ...food, logId, meal: 'snack', loggedAt: TEST_NOW.toISOString() };
   }
 
   beforeEach(() => {
     storage = createFakeStorage();
   });
 
-  it('clears yesterday before adding after midnight', () => {
+  it('starts a new day after midnight but keeps yesterday readable', () => {
     let now = new Date(TEST_NOW);
     TestBed.configureTestingModule({
       providers: [
@@ -48,7 +57,11 @@ describe('FoodLogService', () => {
     expect(service.entries()).toEqual([]);
     service.add(HAVREGRYN, 'morgen');
     expect(service.totals().kcal).toBe(222);
-    expect(storedEntries()).toHaveLength(1);
+    // The stale update after midnight didn't touch yesterday's entry.
+    expect(storedEntries('2026-09-21')[0]?.kcal).toBe(222);
+    expect(storedEntries('2026-09-22')).toHaveLength(1);
+    expect(service.entriesFor(new Date(2026, 8, 21))).toHaveLength(1);
+    expect(service.allEntries()).toHaveLength(2);
   });
 
   it('clears the visible log at midnight without user input', () => {
@@ -58,9 +71,11 @@ describe('FoodLogService', () => {
       TestBed.configureTestingModule({ providers: provideCoreTestEnvironment({ storage, now }) });
       const service = TestBed.inject(FoodLogService);
       service.add(HAVREGRYN, 'snack');
+      expect(service.today()).toBe('2026-09-21');
       now.setDate(22);
       now.setHours(0, 0, 0, 0);
       vi.advanceTimersByTime(1000);
+      expect(service.today()).toBe('2026-09-22');
       expect(service.entries()).toEqual([]);
       expect(service.totals().kcal).toBe(0);
     } finally {
@@ -77,7 +92,7 @@ describe('FoodLogService', () => {
     expect(storage.getItem(STORAGE_KEY.FOOD_LOG)).toBeNull();
   });
 
-  it('restores a stored log from the same day', () => {
+  it('migrates the old single-day format', () => {
     storage.setItem(
       STORAGE_KEY.FOOD_LOG,
       JSON.stringify({
@@ -94,7 +109,7 @@ describe('FoodLogService', () => {
     expect(service.entries()[0]?.name).toBe('Havregryn');
   });
 
-  it('starts a new day empty', () => {
+  it('starts a new day empty and keeps the previous day as history', () => {
     storage.setItem(
       STORAGE_KEY.FOOD_LOG,
       JSON.stringify({
@@ -109,6 +124,59 @@ describe('FoodLogService', () => {
 
     expect(service.entries()).toEqual([]);
     expect(service.totals().kcal).toBe(0);
+    expect(service.totalsFor(new Date(2026, 8, 20)).kcal).toBe(222);
+  });
+
+  it('restores the multi-day format and prunes days outside the retention window', () => {
+    const oldest = toIsoDate(addDays(TEST_NOW, 1 - FOOD_LOG_RETENTION_DAYS));
+    const tooOld = toIsoDate(addDays(TEST_NOW, -FOOD_LOG_RETENTION_DAYS));
+    storage.setItem(
+      STORAGE_KEY.FOOD_LOG,
+      JSON.stringify({
+        days: { [tooOld]: [logged('log-old')], [oldest]: [logged('log-kept')] },
+      }),
+    );
+
+    const service = setup();
+
+    expect(service.allEntries().map((entry) => entry.logId)).toEqual(['log-kept']);
+    expect(Object.keys(storedDays())).toEqual([oldest]);
+  });
+
+  it('drops malformed days from storage instead of crashing', () => {
+    storage.setItem(
+      STORAGE_KEY.FOOD_LOG,
+      JSON.stringify({
+        days: { '2026-09-19': 'broken', '2026-09-20': null, '2026-09-21': [logged('log-ok')] },
+      }),
+    );
+
+    const service = setup();
+
+    expect(service.entries().map((entry) => entry.logId)).toEqual(['log-ok']);
+    expect(service.allEntries().map((entry) => entry.logId)).toEqual(['log-ok']);
+    expect(service.entriesFor(new Date(2026, 8, 19))).toEqual([]);
+  });
+
+  it('sums a daily series over a date range, including days without a log', () => {
+    storage.setItem(
+      STORAGE_KEY.FOOD_LOG,
+      JSON.stringify({
+        days: {
+          '2026-09-19': [logged('log-1'), logged('log-2')],
+          '2026-09-21': [logged('log-3')],
+        },
+      }),
+    );
+
+    const service = setup();
+    const series = service.dailyTotals(new Date(2026, 8, 19), new Date(2026, 8, 21, 23));
+
+    expect(series.map((day) => day.date)).toEqual(['2026-09-19', '2026-09-20', '2026-09-21']);
+    expect(series.map((day) => day.entryCount)).toEqual([2, 0, 1]);
+    expect(series[0]?.totals).toEqual({ kcal: 444, protein: 16, carbs: 76, fat: 8 });
+    expect(series[1]?.totals.kcal).toBe(0);
+    expect(service.allEntries().map((entry) => entry.logId)).toEqual(['log-3', 'log-1', 'log-2']);
   });
 
   it('adds an entry with log id, meal and timestamp', () => {
@@ -181,5 +249,80 @@ describe('FoodLogService', () => {
     const service = setup();
 
     expect(service.customFoods()).toHaveLength(1);
+  });
+
+  it('updates a custom food and leaves logged entries untouched', () => {
+    const service = setup();
+    const food = service.addCustomFood({
+      name: 'Egen bar',
+      quantity: '1 stk',
+      kcal: 150,
+      protein: 12,
+      carbs: 10,
+      fat: 5,
+    });
+    service.add(food, 'snack');
+
+    const updated = service.updateCustomFood(food.id, {
+      name: 'Egen bar',
+      quantity: '1 stk',
+      kcal: 180,
+      protein: 15,
+      carbs: 12,
+      fat: 6,
+    });
+
+    expect(updated).toMatchObject({ id: food.id, kcal: 180, isCustom: true });
+    expect(service.customFoods()).toHaveLength(1);
+    expect(service.customFoods()[0]?.kcal).toBe(180);
+    expect(JSON.parse(storage.getItem(STORAGE_KEY.CUSTOM_FOODS) ?? '[]')[0].kcal).toBe(180);
+    expect(service.entries()[0]?.kcal).toBe(150);
+    expect(service.updateCustomFood('food-missing', food)).toBeNull();
+  });
+
+  it('finds custom foods by trimmed, case-insensitive name', () => {
+    const service = setup();
+    const food = service.addCustomFood({
+      name: 'Egen Bar',
+      quantity: '1 stk',
+      kcal: 150,
+      protein: 12,
+      carbs: 10,
+      fat: 5,
+    });
+
+    expect(service.hasCustomFoodNamed('  egen bar ')).toBe(true);
+    expect(service.hasCustomFoodNamed('Anden bar')).toBe(false);
+    expect(service.hasCustomFoodNamed('egen bar', food.id)).toBe(false);
+  });
+
+  it('keeps a caller-decided id for a new custom food', () => {
+    const service = setup();
+
+    const food = service.addCustomFood(
+      { name: 'Egen bar', quantity: '1 stk', kcal: 150, protein: 12, carbs: 10, fat: 5 },
+      'food-picked',
+    );
+
+    expect(food.id).toBe('food-picked');
+    expect(service.customFoods()[0]?.id).toBe('food-picked');
+  });
+
+  it('rejects a duplicate custom food name on add and update', () => {
+    const service = setup();
+    const input = { quantity: '1 stk', kcal: 150, protein: 12, carbs: 10, fat: 5 };
+    service.addCustomFood({ ...input, name: 'Egen Bar' });
+    const other = service.addCustomFood({ ...input, name: 'Anden bar' });
+
+    expect(() => service.addCustomFood({ ...input, name: ' egen bar ' })).toThrow(
+      DuplicateCustomFoodNameError,
+    );
+    expect(() => service.updateCustomFood(other.id, { ...input, name: 'EGEN BAR' })).toThrow(
+      DuplicateCustomFoodNameError,
+    );
+    expect(
+      service.updateCustomFood(other.id, { ...input, name: 'Anden bar', kcal: 99 })?.kcal,
+    ).toBe(99);
+    expect(service.customFoods()).toHaveLength(2);
   });
 });

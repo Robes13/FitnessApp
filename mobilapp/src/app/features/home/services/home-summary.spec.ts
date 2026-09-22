@@ -61,6 +61,22 @@ describe('HomeSummaryService', () => {
     );
   }
 
+  /** Puts meals on earlier days in the multi-day format, keyed by `YYYY-MM-DD`. */
+  function storeFoodDays(days: Record<string, readonly FoodItem[]>): void {
+    const stored = Object.fromEntries(
+      Object.entries(days).map(([date, foods]) => [
+        date,
+        foods.map((food, index) => ({
+          ...food,
+          meal: 'frokost',
+          logId: `log-${date}-${index}`,
+          loggedAt: new Date(`${date}T12:00:00`).toISOString(),
+        })),
+      ]),
+    );
+    storage.setItem(STORAGE_KEY.FOOD_LOG, JSON.stringify({ days: stored }));
+  }
+
   function storeWeighHistory(): void {
     storage.setItem(STORAGE_KEY.WEIGHT_LOG, JSON.stringify(weighHistory(THURSDAY)));
   }
@@ -95,7 +111,7 @@ describe('HomeSummaryService', () => {
     expect(service.hasName()).toBe(true);
   });
 
-  it('leaves every ring but today empty, because there is no history', () => {
+  it('leaves every ring without a logged day empty', () => {
     storeFoodLog([{ ...SKYR, meal: 'morgen' }]);
     const service = setup();
     const rings = service.weekRings();
@@ -116,6 +132,28 @@ describe('HomeSummaryService', () => {
     expect(rings[THURSDAY_INDEX]?.isSelected).toBe(true);
     expect(rings[6]?.tone).toBe('none');
     expect(rings[6]?.isFuture).toBe(true);
+  });
+
+  it('shows the kcal and macros of an earlier logged day', () => {
+    // Tuesday and Wednesday before Thursday, 24 September 2026.
+    storeFoodDays({ '2026-09-22': [SKYR, SALAT], '2026-09-23': [SALAT] });
+    const service = setup();
+    const target = TestBed.inject(UserProfileService).kcalTarget();
+
+    const rings = service.weekRings();
+    expect(rings[0]?.tone).toBe('none');
+    expect(rings[1]?.tone).toBe('accent');
+    expect(rings[1]?.dashOffset).toBeCloseTo(RING_CIRCUMFERENCE * (1 - 830 / target), 3);
+    expect(rings[2]?.tone).toBe('accent');
+    expect(rings[THURSDAY_INDEX]?.tone).toBe('none');
+
+    service.selectDay(1);
+    const summary = service.daySummary();
+    expect(summary.kcalEatenText).toBe('830');
+    expect(summary.progressTone).toBe('accent');
+    expect(summary.macros[0]?.text.startsWith('73 / ')).toBe(true);
+
+    expect(service.weekSummary().averageKcalText).toBe('640');
   });
 
   it('titles the selected day relative to today', () => {

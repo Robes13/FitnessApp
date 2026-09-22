@@ -12,5 +12,10 @@ Varer/Samlinger og enten `app-food-picker` eller listen over samlinger.
 - En samling logges som **én** vare: navn, `n varer` og summen fra
   `CollectionsService.collectionTotals`. Uden samlinger med indhold vises `app-ui-empty-state`.
 
+- Under redigering slår arket den egne vare op, som posten blev logget fra
+  (`FoodLogService.customFoods`, samme `id`), og giver den til vælgeren som `editBaseItem`.
+  Så kan kcal og makroer også rettes. Systemvarer (uden `isCustom`) kan kun få ny mængde.
+
 Arket ændrer ikke loggen. Det udsender `selected` (færdig vare), `customFoodCreated`,
-`scanRequested` og `closed`; `meal` er en `model`, så chipsene kan flytte måltidet.
+`customFoodEdited`, `scanRequested` og `closed`; `meal` er en `model`, så chipsene kan flytte
+måltidet.
