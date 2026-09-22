@@ -58,6 +58,16 @@ export class UserProfileService {
     this.storage.write(STORAGE_KEY.PROFILE, profile);
   }
 
+  /** Applies a change only after it has been persisted successfully. */
+  updatePersisted(patch: Partial<UserProfile>): boolean {
+    const profile = { ...this.state(), ...patch };
+    if (!this.storage.write(STORAGE_KEY.PROFILE, profile)) {
+      return false;
+    }
+    this.state.set(profile);
+    return true;
+  }
+
   resetToDefaults(): void {
     this.replace({ ...DEFAULT_PROFILE });
   }

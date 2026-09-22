@@ -46,3 +46,7 @@ efter højden eller bredden.
 Kan filen ikke læses eller afkodes, vises "Billedet kunne ikke indlæses. Prøv et andet." Den
 tekst findes ikke i designet – prototypen har ingen fejltilstand – men UI'et skal kunne
 håndtere det.
+
+Billeder nedskaleres til højst 768 pixels på længste led og gemmes som JPEG med
+kvalitet 0,8. Både valg, beskæring og fjernelse opdaterer kun profilen, når
+lagringen lykkes. Ved pladsmangel vises en fejl, og den tidligere profil bevares.

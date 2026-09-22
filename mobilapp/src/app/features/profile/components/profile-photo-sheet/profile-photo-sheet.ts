@@ -32,6 +32,9 @@ interface DragStart extends PhotoCrop {
 
 const PERCENT = 100;
 /** These texts don't exist in the design – the file selection can't fail in the prototype. */
+const PHOTO_MAX_DIMENSION = 768;
+const PHOTO_JPEG_QUALITY = 0.8;
+const SAVE_ERROR = 'Billedet kunne ikke gemmes. Frigør plads og prøv igen.';
 const READ_ERROR = 'Billedet kunne ikke indlæses. Prøv et andet.';
 
 interface KeyDirection {
@@ -168,11 +171,16 @@ export class ProfilePhotoSheet {
 
   protected removePhoto(): void {
     this.errorMessage.set(null);
-    this.profiles.update({ photo: null });
+    this.savePhoto(null);
+  }
+
+  private savePhoto(photo: ProfilePhoto | null): void {
+    const saved = this.profiles.updatePersisted({ photo });
+    this.errorMessage.set(saved ? null : SAVE_ERROR);
   }
 
   private setPhoto(dataUrl: string, aspectRatio: number): void {
-    this.profiles.update({ photo: { dataUrl, aspectRatio, ...CENTERED_CROP } });
+    this.savePhoto({ dataUrl, aspectRatio, ...CENTERED_CROP });
   }
 
   private updatePhoto(patch: Partial<PhotoCrop>): void {
@@ -181,7 +189,7 @@ export class ProfilePhotoSheet {
       return;
     }
     const next: ProfilePhoto = { ...photo, ...patch };
-    this.profiles.update({ photo: next });
+    this.savePhoto(next);
   }
 }
 
@@ -206,11 +214,28 @@ function readImage(file: File): Promise<LoadedImage> {
       }
       const image = new Image();
       image.onerror = () => reject(new Error('decode-failed'));
-      image.onload = () =>
-        resolve({
-          dataUrl,
-          aspectRatio: image.naturalHeight > 0 ? image.naturalWidth / image.naturalHeight : 1,
-        });
+      image.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const scale = Math.min(
+            1,
+            PHOTO_MAX_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight),
+          );
+          canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+          canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+          const context = canvas.getContext('2d');
+          if (!context) {
+            throw new Error('resize-failed');
+          }
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve({
+            dataUrl: canvas.toDataURL('image/jpeg', PHOTO_JPEG_QUALITY),
+            aspectRatio: canvas.width / canvas.height,
+          });
+        } catch (error: unknown) {
+          reject(error);
+        }
+      };
       image.src = dataUrl;
     };
     reader.readAsDataURL(file);

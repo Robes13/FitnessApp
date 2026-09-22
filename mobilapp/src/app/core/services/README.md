@@ -46,3 +46,7 @@ Ingen service kender til `shared/` eller `features/`.
   0 uden at ændre produktionskoden.
 - **Persistens sker eksplicit** i hver mutation frem for via `effect()`, så rækkefølgen er
   deterministisk og testbar uden change detection.
+
+`StorageService.write()` returnerer, om lagringen lykkedes.
+`UserProfileService.updatePersisted()` bevarer den tidligere profil ved fejl;
+profilbilledets editor bruger dette til at vise lagringsfejl uden at miste data.
