@@ -1,0 +1,12 @@
+/**
+ * Global stylesheet.
+ *
+ * Contains ONLY what is genuinely global: design tokens, the reset and the
+ * shared keyframes. Component-specific styling belongs in that component's
+ * own .scss file. The Archivo font-face rules are loaded before this file
+ * via the `styles` array in angular.json.
+ */
+
+@use 'styles/tokens';
+@use 'styles/reset';
+@use 'styles/animations';

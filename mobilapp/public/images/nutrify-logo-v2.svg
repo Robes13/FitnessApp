@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1024 1024"
+  role="img"
+  aria-labelledby="nutrify-logo-title nutrify-logo-description"
+>
+  <title id="nutrify-logo-title">Nutrify logo</title>
+  <desc id="nutrify-logo-description">
+    Et stiliseret N, hvor et blad former en opadgående pil.
+  </desc>
+
+  <path
+    fill="#0F172A"
+    d="M170 719V264c0-34 28-62 62-62h98c24 0 47 10 63 28l178 194c-87 4-168 21-239 54-68 31-122 75-162 131V719Z"
+  />
+  <path
+    fill="#0F172A"
+    d="M651 571c61-46 112-105 145-174l51-106v466c0 36-29 65-65 65h-66c-36 0-65-29-65-65V571Z"
+  />
+
+  <path
+    fill="#F97316"
+    fill-rule="evenodd"
+    d="M167 837c22-112 72-206 148-276 72-66 164-107 276-122 67-9 111-41 145-95l-54-39c-20-15-17-46 5-58l190-105c28-15 61 3 64 34l19 214c3 29-29 48-53 31l-49-35c-50 145-145 267-275 352-114 75-248 110-396 110-15 0-24-15-20-31Zm76-29c77-27 150-66 216-117 38-29 73-62 104-98-72 28-137 66-192 111-51 42-94 78-128 104Z"
+  />
+</svg>

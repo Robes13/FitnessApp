@@ -1,0 +1,116 @@
+/**
+ * Global reset.
+ *
+ * Only rules that genuinely apply to the whole system belong here.
+ * Everything else lives in the component that owns it.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/**
+ * Dark is the default theme. `color-scheme` tells the WebView which native
+ * form controls, scrollbars and default colours to use. The OS preference
+ * is not consulted — ThemeService flips `data-theme` explicitly.
+ */
+html {
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background-deep);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+
+  /* The design sets no body size, so text without an explicit size is 16px. */
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-base);
+
+  /* Native feel: no text inflation, no tap highlight, no page bounce. */
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The app root fills the viewport; the shell component handles the rest. */
+app-root {
+  display: block;
+  height: 100dvh;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--color-accent-hover);
+  }
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: var(--border-width-medium) solid var(--color-focus-ring);
+  outline-offset: var(--border-width-medium);
+}
+
+/**
+ * Reduced motion: collapse every animation and transition to a single
+ * frame. This is the one sanctioned use of `!important` in the system —
+ * it must win over every component animation.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,569 @@
+/**
+ * Design tokens.
+ *
+ * Single source of truth for every recurring design value in the system:
+ * colours, spacing, sizes, typography, radii, borders, elevation, motion,
+ * blur and layout. Values come from the Nutrify design export.
+ *
+ * Rules:
+ * - Components MUST reference these variables, never raw hex/px values.
+ * - New design values are added here first, then used.
+ * - Dark is the default theme (the design is dark-first). The light theme
+ *   only re-maps the semantic layer under `:root[data-theme='light']`; the
+ *   palette layer never changes.
+ * - The OS colour-scheme preference is deliberately NOT followed. The user
+ *   toggles "Lys tilstand" in the app and `ThemeService` sets `data-theme`
+ *   on <html>.
+ */
+
+:root {
+  /* ---------------------------------------------------------------------
+   * Palette — raw brand colours. Not used directly by components.
+   * ------------------------------------------------------------------ */
+
+  /* Blue: the figure (mascot) and "selected" state. */
+  --palette-primary: #2563eb;
+  --palette-primary-strong: #1d4ed8;
+  --palette-primary-light: #3b82f6;
+  --palette-primary-soft: #93c5fd;
+  --palette-navy: #1e3a8a;
+
+  /* Orange: action and emphasis (accent). */
+  --palette-secondary: #f97316;
+  --palette-secondary-light: #fb923c;
+  --palette-secondary-strong: #ea6a0c;
+  --palette-secondary-deep: #ea580c;
+  --palette-secondary-deeper: #c2410c;
+  --palette-secondary-brown: #9a3412;
+  --palette-secondary-brown-dark: #7c2d12;
+
+  /* Backgrounds and greys. */
+  --palette-background-dark: #0f172a;
+  --palette-background-deep: #0b1120;
+  --palette-background-abyss: #020617;
+  --palette-background-light: #f8fafc;
+  --palette-slate-200: #e2e8f0;
+  --palette-slate-300: #cbd5e1;
+  --palette-slate-400: #94a3b8;
+  --palette-slate-500: #64748b;
+  --palette-slate-600: #475569;
+  --palette-slate-700: #334155;
+  --palette-slate-800: #1e293b;
+  --palette-text-primary: #111827;
+  --palette-text-muted: #64748b;
+  --palette-white: #ffffff;
+
+  /* Feedback colours. */
+  --palette-success: #4ade80;
+  --palette-success-strong: #16a34a;
+  --palette-success-soft: #a7d8b8;
+  --palette-success-pale: #eafbf0;
+  --palette-danger: #f87171;
+  --palette-danger-strong: #dc2626;
+  --palette-danger-light: #fca5a5;
+  --palette-danger-ink: #160b0b;
+  --palette-warning: #facc15;
+  --palette-warning-strong: #fbbf24;
+  --palette-amber: #b45309;
+  --palette-pink: #f472b6;
+  --palette-sky: #7dd3fc;
+
+  /* Pastels — the birthday cake's candles. */
+  --palette-rose-light: #fda4af;
+  --palette-green-light: #86efac;
+  --palette-amber-light: #fde68a;
+
+  /* Light theme ink and paper. */
+  --palette-light-bg: #f6f5f2;
+  --palette-light-ink: #141a24;
+  --palette-light-ink-2: #5c6673;
+  --palette-light-ink-3: #79838f;
+  --palette-light-ink-soft: #3a424e;
+
+  /* ---------------------------------------------------------------------
+   * Semantic colours — what components actually consume. Dark defaults.
+   * ------------------------------------------------------------------ */
+
+  /* Backgrounds and surfaces. */
+  --color-background: var(--palette-background-dark);
+  --color-background-deep: var(--palette-background-deep);
+
+  /* Kameraoverlayet i scanneren er mørkt i begge temaer. */
+  --color-background-scanner: var(--palette-background-abyss);
+  --color-surface: rgb(255 255 255 / 5%);
+  --color-surface-2: rgb(255 255 255 / 6%);
+  --color-surface-3: rgb(255 255 255 / 4%);
+  --color-surface-4: rgb(255 255 255 / 7%);
+  --color-surface-hover: rgb(255 255 255 / 10%);
+  --color-control: rgb(255 255 255 / 8%);
+  --color-control-hover: rgb(255 255 255 / 14%);
+
+  /* Mørk 55 % bund til felter oven på fotos – fotoet er mørkt i begge temaer. */
+  --color-surface-translucent: rgb(15 23 42 / 55%);
+  --color-track: rgb(255 255 255 / 15%);
+  --color-sheet: var(--palette-slate-800);
+  --color-scrim: rgb(2 6 23 / 70%);
+
+  /* Borders. */
+  --color-border: rgb(255 255 255 / 10%);
+  --color-border-soft: rgb(255 255 255 / 8%);
+  --color-border-strong: rgb(255 255 255 / 12%);
+  --color-border-stronger: rgb(255 255 255 / 14%);
+
+  /* Stiplede kanter (18 / 20 %) og fluebenets lyse kant (25 %). */
+  --color-border-dashed-soft: rgb(255 255 255 / 18%);
+  --color-border-dashed: rgb(255 255 255 / 20%);
+  --color-border-light: rgb(255 255 255 / 25%);
+
+  /* Text. */
+  --color-text: var(--palette-background-light);
+  --color-text-secondary: var(--palette-slate-400);
+  --color-text-muted: var(--palette-slate-500);
+  --color-text-soft: var(--palette-slate-300);
+  --color-text-soft-strong: var(--palette-slate-200);
+  --color-text-inverse: var(--palette-background-dark);
+  --color-text-on-accent: var(--palette-background-dark);
+
+  /* Endnu ikke indtruffet (ugeringenes kommende dage) — svagere end `muted`. */
+  --color-text-inactive: var(--palette-slate-600);
+
+  /* Accent (orange) — action and emphasis. */
+  --color-accent: var(--palette-secondary);
+  --color-accent-hover: var(--palette-secondary-light);
+  --color-accent-active: var(--palette-secondary-strong);
+  --color-accent-strong: var(--palette-secondary-deep);
+  --color-accent-deeper: var(--palette-secondary-deeper);
+  --color-accent-soft: rgb(249 115 22 / 15%);
+  --color-accent-soft-strong: rgb(249 115 22 / 25%);
+  --color-accent-tint: rgb(249 115 22 / 8%);
+  --color-accent-tint-2: rgb(249 115 22 / 12%);
+  --color-accent-tint-3: rgb(249 115 22 / 18%);
+  --color-accent-tint-4: rgb(249 115 22 / 22%);
+  --color-accent-border: rgb(249 115 22 / 45%);
+  --color-accent-border-strong: rgb(249 115 22 / 50%);
+  --color-accent-ring: rgb(249 115 22 / 25%);
+
+  /* Den kraftige orange ring om beskæringscirklen i fotoarket. */
+  --color-accent-ring-strong: rgb(249 115 22 / 70%);
+
+  /* Selected (blue) — chosen option, active filter. */
+  --color-selected: var(--palette-primary);
+  --color-selected-soft: rgb(37 99 235 / 25%);
+  --color-selected-tint: rgb(37 99 235 / 20%);
+  --color-selected-tint-2: rgb(37 99 235 / 22%);
+  --color-selected-text: var(--palette-primary-soft);
+  --color-selected-border: rgb(147 197 253 / 35%);
+
+  /* Positive (green). */
+  --color-positive: var(--palette-success);
+  --color-positive-soft: rgb(74 222 128 / 18%);
+  --color-positive-tint: rgb(34 197 94 / 15%);
+  --color-positive-tint-strong: rgb(34 197 94 / 25%);
+  --color-positive-border: rgb(74 222 128 / 45%);
+  --color-positive-deep: rgb(20 40 28 / 92%);
+  --color-positive-text-soft: var(--palette-success-soft);
+  --color-positive-text-strong: var(--palette-success-pale);
+
+  /* Negative (red). */
+  --color-negative: var(--palette-danger);
+  --color-negative-soft: rgb(248 113 113 / 15%);
+  --color-negative-soft-strong: rgb(248 113 113 / 18%);
+  --color-negative-border: rgb(248 113 113 / 35%);
+  --color-negative-text-inverse: var(--palette-danger-ink);
+  --color-negative-hover: var(--palette-danger-light);
+
+  /* Warning, info, neutral. */
+  --color-warning: var(--palette-warning);
+  --color-info: var(--palette-primary-soft);
+  --color-neutral-soft: rgb(148 163 184 / 15%);
+  --color-neutral-tint: rgb(148 163 184 / 18%);
+  --color-neutral-soft-25: rgb(148 163 184 / 25%);
+  --color-neutral-dim: rgb(148 163 184 / 28%);
+  --color-neutral-dim-2: rgb(148 163 184 / 30%);
+  --color-neutral-strong: var(--palette-slate-300);
+
+  /* Misc. */
+  --color-focus-ring: var(--palette-secondary);
+  --color-white: var(--palette-white);
+
+  /* Legacy names kept for compatibility — mapped onto the palette above. */
+  --color-primary: var(--palette-primary);
+  --color-primary-strong: var(--palette-primary-strong);
+  --color-primary-soft: var(--palette-primary-soft);
+  --color-primary-contrast: var(--palette-white);
+  --color-secondary: var(--palette-secondary);
+  --color-secondary-strong: var(--palette-secondary-strong);
+  --color-secondary-soft: var(--color-accent-soft);
+  --color-secondary-contrast: var(--palette-background-dark);
+  --color-surface-raised: var(--color-sheet);
+  --color-text-on-primary: var(--palette-white);
+  --color-success: var(--palette-success);
+  --color-danger: var(--palette-danger);
+  --color-overlay: var(--color-scrim);
+
+  /* ---------------------------------------------------------------------
+   * Figure (mascot) colours — constant in both themes.
+   * ------------------------------------------------------------------ */
+  --color-figure: var(--palette-primary);
+  --color-figure-dark: var(--palette-primary-strong);
+  --color-figure-light: var(--palette-primary-light);
+  --color-figure-belt: var(--palette-navy);
+  --color-figure-face: var(--palette-background-light);
+  --color-figure-pupil: var(--palette-background-dark);
+  --color-figure-mouth: var(--palette-background-dark);
+  --color-figure-shoe: var(--palette-secondary);
+  --color-figure-shoe-dark: var(--palette-secondary-deep);
+  --color-figure-cheek: rgb(249 115 22 / 75%);
+  --color-figure-cheek-soft: rgb(249 115 22 / 50%);
+  --color-figure-shadow: var(--color-border-soft);
+  --color-figure-dumbbell: var(--palette-slate-400);
+  --color-figure-dumbbell-cap: var(--palette-slate-300);
+  --color-figure-sweat: var(--palette-sky);
+  --color-figure-band-pink: var(--palette-pink);
+  --color-figure-band-white: var(--palette-background-light);
+
+  /* Det stiplede omrids af kroppen "i dag" på opsummeringstrinnet. */
+  --color-figure-ghost: var(--palette-slate-400);
+
+  /* ---------------------------------------------------------------------
+   * Scene colours — props in the figure scenes. Constant in both themes.
+   * ------------------------------------------------------------------ */
+
+  /* Tv-ramme, fod og stativ i doven-scenen (solid slate-600). */
+  --color-scene-frame: var(--palette-slate-600);
+
+  /* Digital visning på vægten — mørk i begge temaer, som designet. */
+  --color-display-dark: var(--palette-background-dark);
+
+  /* Fødselsdagskagen. */
+  --color-cake-tier: var(--palette-secondary-brown);
+  --color-cake-tier-dark: var(--palette-secondary-brown-dark);
+  --color-candle-0: var(--palette-background-light);
+  --color-candle-1: var(--palette-primary-soft);
+  --color-candle-2: var(--palette-rose-light);
+  --color-candle-3: var(--palette-green-light);
+  --color-candle-4: var(--palette-amber-light);
+
+  /* Medaljen i gå-scenen (fra 25.000 skridt). */
+  --color-medal-gold: var(--palette-warning-strong);
+  --color-medal-ring: var(--palette-amber);
+  --color-medal-ribbon: var(--palette-danger-strong);
+
+  /* ---------------------------------------------------------------------
+   * Ruler (tick marks) — constant in both themes.
+   * ------------------------------------------------------------------ */
+  --color-ruler-tick-minor: var(--palette-slate-600);
+  --color-ruler-tick-major: var(--palette-slate-300);
+
+  /* ---------------------------------------------------------------------
+   * Spacing — 4px base scale (1rem = 16px).
+   * ------------------------------------------------------------------ */
+  --space-0: 0;
+  --space-px: 1px;
+  --space-0-5: 0.125rem;
+  --space-0-75: 0.1875rem; /* 3px – mellemrum mellem tal og enhed */
+  --space-1: 0.25rem;
+  --space-1-25: 0.3125rem; /* 5px – lodret padding i små badges */
+  --space-1-5: 0.375rem;
+  --space-2: 0.5rem;
+  --space-2-25: 0.5625rem; /* 9px – rækkepadding i historik */
+  --space-2-5: 0.625rem;
+  --space-3: 0.75rem;
+  --space-3-25: 0.8125rem; /* 13px – rækkepadding i vejningslisten */
+  --space-3-5: 0.875rem;
+  --space-4: 1rem;
+  --space-4-5: 1.125rem;
+  --space-5: 1.25rem;
+  --space-5-5: 1.375rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-8-5: 2.125rem; /* 34px – fade i chips-masken */
+  --space-9: 2.25rem;
+  --space-10: 2.5rem;
+  --space-11: 2.75rem;
+  --space-12: 3rem;
+  --space-13: 3.25rem;
+  --space-14: 3.5rem;
+  --space-15: 3.75rem;
+  --space-16: 4rem;
+  --space-18: 4.5rem;
+  --space-20: 5rem;
+  --space-21: 5.25rem;
+
+  /* ---------------------------------------------------------------------
+   * Sizes — controls, icons, avatars, dots and fixed-size widgets.
+   * ------------------------------------------------------------------ */
+  --size-control-4xs: 1.625rem; /* 26px – lille fjern-/genlog-knap */
+  --size-control-3xs: 1.75rem; /* 28px */
+  --size-control-2xs: 2.25rem; /* 36px */
+  --size-control-xs: 2.5rem; /* 40px */
+  --size-control-sm: 2.75rem; /* 44px */
+  --size-control-md: 3rem; /* 48px */
+  --size-control-lg: 3.25rem; /* 52px */
+  --size-control-xl: 3.5rem; /* 56px */
+  --size-control-2xl: 4.25rem; /* 68px */
+
+  /* Fotoarkets sekundære knapper ("Centrér igen", "Fjern foto"). */
+  --size-button-secondary: 2.875rem; /* 46px */
+
+  --size-icon-2xs: 0.75rem; /* 12px */
+  --size-icon-xs: 0.875rem; /* 14px */
+  --size-icon-sm: 1rem; /* 16px */
+  --size-icon-md: 1.125rem; /* 18px */
+  --size-icon-lg: 1.25rem; /* 20px */
+  --size-icon-xl: 1.375rem; /* 22px */
+  --size-icon-2xl: 1.5rem; /* 24px */
+  --size-icon-3xl: 1.625rem; /* 26px */
+  --size-icon-hero: 4rem; /* 64px */
+
+  --size-avatar-sm: 2.75rem; /* 44px */
+  --size-avatar-md: 4.5rem; /* 72px */
+  --size-avatar-lg: 8.25rem; /* 132px */
+  --size-avatar-xl: 12.25rem; /* 196px */
+
+  --size-dot-xs: 0.3125rem; /* 5px */
+  --size-dot-sm: 0.375rem; /* 6px */
+  --size-dot-md: 0.5rem; /* 8px */
+
+  --size-thumb: 1.375rem; /* 22px */
+  --size-switch-w: 3rem; /* 48px */
+  --size-switch-h: 1.75rem; /* 28px */
+  --size-ruler-h: 5.25rem; /* 84px */
+  --size-ruler-h-lg: 6rem; /* 96px */
+  --size-progress-thin: 0.25rem; /* 4px */
+  --size-progress: 0.375rem; /* 6px */
+  --size-option-tile-min-height: 6.5rem; /* 104px – intensitets-flisen */
+  --size-option-row-compact: 3.625rem; /* 58px – valgkort i redigeringsarket */
+  --size-portion-field: 6rem; /* 96px – talfeltet i portionstrinnet */
+  --size-field-number: 7.5rem; /* 120px – talfeltet i redigeringsarket */
+
+  /* Nutrify-logoet på login- og glemt-adgangskode-skærmene. */
+  --size-brand-logo-sm: 1.75rem; /* 28px */
+  --size-brand-logo-md: 2.25rem; /* 36px */
+
+  --size-tile-md: 2.625rem; /* 42px – afrundet ikonflise i gøremålskortet */
+  --size-badge-md: 2.125rem; /* 34px – flueben i fejrings-toasten */
+  --size-calendar-cell: 1.875rem; /* 30px – dag i fødselsdagskalenderen */
+  --size-recipe-hero: 9.375rem; /* 150px – opskriftsskærmens ikon-hero */
+  --size-scene-width: 12.5rem; /* 200px – figur-scenernes maksbredde */
+
+  /* ---------------------------------------------------------------------
+   * Typography — Archivo Variable (self-hosted, width axis 62–125%).
+   * ------------------------------------------------------------------ */
+  --font-family-base: 'Archivo Variable', system-ui, -apple-system, sans-serif;
+  --font-family-display: var(--font-family-base);
+  --font-stretch-display: 75%;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* Body sizes. */
+  --font-size-3xs: 0.5625rem; /* 9px */
+  --font-size-2xs: 0.625rem; /* 10px */
+  --font-size-xs: 0.6875rem; /* 11px */
+  --font-size-sm: 0.75rem; /* 12px */
+  --font-size-md: 0.8125rem; /* 13px */
+  --font-size-base: 0.875rem; /* 14px */
+  --font-size-lg: 0.9375rem; /* 15px */
+  --font-size-xl: 1rem; /* 16px */
+  --font-size-2xl: 1.0625rem; /* 17px */
+  --font-size-3xl: 1.125rem; /* 18px */
+  --font-size-4xl: 1.25rem; /* 20px */
+
+  /* Display sizes (headings and the big orange numbers). */
+  --font-size-display-2xs: 1.375rem; /* 22px */
+  --font-size-display-xs: 1.5rem; /* 24px */
+  --font-size-display-sm: 1.625rem; /* 26px */
+  --font-size-display-md: 1.75rem; /* 28px */
+  --font-size-display-lg: 1.875rem; /* 30px */
+  --font-size-display-xl: 2.125rem; /* 34px */
+  --font-size-display-2xl: 2.25rem; /* 36px */
+  --font-size-display-3xl: 2.375rem; /* 38px */
+  --font-size-display-4xl: 2.5rem; /* 40px */
+  --font-size-display-5xl: 2.75rem; /* 44px */
+  --font-size-display-6xl: 3.25rem; /* 52px */
+  --font-size-display-7xl: 4rem; /* 64px */
+  --font-size-display-8xl: 4.125rem; /* 66px */
+  --font-size-display-9xl: 4.5rem; /* 72px */
+  --font-size-display-10xl: 5.5rem; /* 88px */
+  --font-size-display-11xl: 5.75rem; /* 92px */
+
+  /* Initialen i den store avatar i fotoarket (mellem 6xl og 7xl). */
+  --font-size-avatar-initial: 3.5rem; /* 56px */
+
+  --line-height-none: 0.9;
+  --line-height-display: 0.95;
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.3;
+  --line-height-relaxed: 1.45;
+  --line-height-base: 1.5;
+  --line-height-loose: 1.55;
+
+  --letter-spacing-tighter: -0.03em;
+  --letter-spacing-tight: -0.01em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.03em;
+  --letter-spacing-wide-plus: 0.04em;
+  --letter-spacing-wider: 0.06em;
+  --letter-spacing-widest: 0.08em;
+  --letter-spacing-caps: 0.1em;
+  --letter-spacing-caps-wide: 0.12em;
+  --letter-spacing-caps-wider: 0.16em;
+  --letter-spacing-code: 0.45em;
+
+  /* ---------------------------------------------------------------------
+   * Radii and borders.
+   * ------------------------------------------------------------------ */
+  --radius-hairline: 1px;
+  --radius-xs: 0.25rem; /* 4px */
+  --radius-sm: 0.375rem; /* 6px */
+  --radius-md: 0.75rem; /* 12px */
+  --radius-lg: 0.875rem; /* 14px */
+  --radius-xl: 1rem; /* 16px */
+  --radius-2xl: 1.375rem; /* 22px */
+  --radius-3xl: 1.75rem; /* 28px */
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  --border-width-thin: 1px;
+  --border-width-medium: 2px;
+  --border-width-thick: 3px;
+  --border-width-heavy: 4px;
+
+  /* ---------------------------------------------------------------------
+   * Elevation.
+   * ------------------------------------------------------------------ */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 45%);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 50%);
+  --shadow-sheet: 0 30px 80px rgb(0 0 0 / 60%);
+  --shadow-nav: 0 12px 30px rgb(0 0 0 / 35%);
+  --shadow-toast: 0 18px 40px rgb(0 0 0 / 45%);
+  --shadow-accent-glow: 0 10px 24px -14px rgb(249 115 22 / 55%);
+  --shadow-accent-line-glow: 0 0 14px var(--palette-secondary);
+  --shadow-thumb: 0 1px 3px rgb(0 0 0 / 35%);
+
+  /* ---------------------------------------------------------------------
+   * Motion.
+   * ------------------------------------------------------------------ */
+  --duration-instant: 80ms;
+  --duration-fast: 120ms;
+  --duration-quick: 200ms;
+  --duration-base: 250ms;
+  --duration-medium: 300ms;
+  --duration-slow: 350ms;
+  --duration-slower: 400ms;
+  --duration-slowest: 500ms;
+
+  /* Scannerens linje fejer langsomt over rammen (designet: .9s). */
+  --duration-scan-sweep: 900ms;
+
+  /* Designets egne tempi til scener, ringe og toasts — længere end skalaen ovenfor. */
+  --duration-scene-swap: 550ms;
+  --duration-badge-pop: 600ms;
+  --duration-ring-close: 700ms;
+  --duration-confetti: 1000ms;
+  --duration-ring-halo: 1400ms;
+
+  /* Hvor længe fejrings-toasten bliver stående, før den glider ud. */
+  --duration-toast-hold: 2900ms;
+
+  --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --easing-bounce: cubic-bezier(0.34, 1.2, 0.64, 1);
+  --easing-bounce-soft: cubic-bezier(0.34, 1.35, 0.64, 1);
+
+  /* ---------------------------------------------------------------------
+   * Blur (backdrop-filter on glass surfaces).
+   * ------------------------------------------------------------------ */
+  --blur-sm: 6px;
+  --blur-md: 8px;
+  --blur-lg: 12px;
+  --blur-xl: 14px;
+
+  /* ---------------------------------------------------------------------
+   * Layout.
+   * ------------------------------------------------------------------ */
+
+  /* Native safe areas (notch / home indicator), populated by the WebView. */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+
+  --layout-max-width: 32rem;
+  --layout-page-padding-x: 1.5rem;
+  --layout-page-padding-top: calc(var(--safe-area-top) + var(--space-5));
+  --layout-page-padding-top-lg: calc(var(--safe-area-top) + var(--space-7));
+  --layout-page-padding-bottom: 2.75rem;
+  --layout-tab-bar-height: 4rem;
+  --layout-tab-bar-offset: calc(var(--safe-area-bottom) + var(--space-5));
+  --layout-tab-bar-inset: 1rem;
+  --layout-tab-bar-clearance: 5.25rem; /* 84px */
+  --layout-touch-target-min: 2.75rem;
+
+  /* Maksbredde på en brødtekstspalte (designets 300 px på glemt-adgangskode). */
+  --layout-text-measure: 18.75rem; /* 300px */
+
+  /* Fotoskærmenes forløb ned over billedet — mørkt i begge temaer. */
+  --gradient-photo-overlay: linear-gradient(
+    180deg,
+    rgb(15 23 42 / 30%),
+    rgb(15 23 42 / 82%) 46%,
+    var(--palette-background-dark) 92%
+  );
+
+  --z-index-base: 1;
+  --z-index-raised: 2;
+  --z-index-sticky: 10;
+  --z-index-tab-bar: 10;
+  --z-index-toast: 15;
+  --z-index-sheet: 20;
+  --z-index-sheet-high: 25;
+  --z-index-overlay: 30;
+  --z-index-sheet-top: 40;
+}
+
+/**
+ * Light theme ("Lys tilstand"). Opt-in only: `ThemeService` sets
+ * `data-theme="light"` on <html>. Values from the design's `.theme-light`.
+ * Only the semantic layer changes; accent, selected, feedback and figure
+ * colours are the same in both themes.
+ */
+:root[data-theme='light'] {
+  --color-background: var(--palette-light-bg);
+  --color-background-deep: var(--palette-light-bg);
+  --color-surface: rgb(20 26 36 / 4.5%);
+  --color-surface-2: rgb(20 26 36 / 5.5%);
+  --color-surface-3: rgb(20 26 36 / 3.5%);
+  --color-surface-4: rgb(255 255 255 / 75%);
+  --color-surface-hover: rgb(20 26 36 / 9%);
+  --color-control: rgb(20 26 36 / 7%);
+  --color-control-hover: rgb(20 26 36 / 13%);
+  --color-track: rgb(20 26 36 / 16%);
+  --color-sheet: var(--palette-white);
+  --color-scrim: rgb(20 26 36 / 45%);
+
+  --color-border: rgb(20 26 36 / 10%);
+  --color-border-soft: rgb(20 26 36 / 9%);
+  --color-border-strong: rgb(20 26 36 / 13%);
+  --color-border-stronger: rgb(20 26 36 / 15%);
+  --color-border-dashed-soft: rgb(20 26 36 / 18%);
+  --color-border-dashed: rgb(20 26 36 / 20%);
+  --color-border-light: rgb(20 26 36 / 25%);
+
+  --color-text: var(--palette-light-ink);
+  --color-text-secondary: var(--palette-light-ink-2);
+  --color-text-muted: var(--palette-light-ink-3);
+  --color-text-soft: var(--palette-light-ink-soft);
+  --color-text-soft-strong: var(--palette-light-ink);
+  --color-text-inactive: var(--palette-slate-400);
+
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 8%);
+  --shadow-md: 0 4px 12px rgb(15 23 42 / 10%);
+  --shadow-lg: 0 12px 32px rgb(15 23 42 / 14%);
+}
