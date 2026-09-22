@@ -1,0 +1,24 @@
+<h2 class="weight-log-list__title">Seneste vejninger</h2>
+
+@if (rows().length > 0) {
+  <ul class="weight-log-list__items">
+    @for (row of rows(); track row.id) {
+      <li class="weight-log-list__item">
+        <div>
+          <div class="weight-log-list__date">{{ row.date }}</div>
+          <div class="weight-log-list__time">{{ row.time }}</div>
+        </div>
+        <div class="weight-log-list__values">
+          <span class="weight-log-list__delta" [class]="row.deltaClass">
+            {{ row.delta }}
+          </span>
+          <span class="weight-log-list__kg">
+            {{ row.kg }}<span class="weight-log-list__unit">kg</span>
+          </span>
+        </div>
+      </li>
+    }
+  </ul>
+} @else {
+  <app-ui-empty-state message="Ingen vejninger endnu." />
+}

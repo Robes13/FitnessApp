@@ -1,0 +1,74 @@
+<svg
+  class="weight-scale-scene__svg"
+  viewBox="0 0 200 300"
+  preserveAspectRatio="xMidYMax meet"
+  role="img"
+  aria-label="Figur på vægt"
+>
+  <rect
+    class="weight-scale-scene__base"
+    x="40"
+    y="284"
+    width="120"
+    height="14"
+    rx="7"
+    stroke-width="2"
+  />
+  <rect class="weight-scale-scene__display" x="80" y="288" width="40" height="6" rx="3" />
+  <text class="weight-scale-scene__readout" x="100" y="293.5" text-anchor="middle" font-size="6">
+    {{ scaleText() }}
+  </text>
+
+  <g class="weight-scale-scene__figure" [attr.transform]="figureTransform()">
+    <g transform="translate(0 -8)">
+      <g
+        app-figure-body
+        [geometry]="geometry()"
+        [bandTone]="bandTone()"
+        [expression]="expression()"
+        showDumbbell
+      />
+    </g>
+  </g>
+
+  <ellipse
+    class="weight-scale-scene__puddle"
+    cx="100"
+    cy="286"
+    [attr.rx]="puddle().rx"
+    [attr.ry]="puddle().ry"
+  />
+
+  @for (drop of sweat(); track drop.x + '-' + drop.y) {
+    <g
+      class="weight-scale-scene__sweat"
+      [style.animation-duration.s]="drop.duration"
+      [style.animation-delay.s]="drop.delay"
+    >
+      <path class="weight-scale-scene__sweat-drop" [attr.d]="sweatPath(drop)" />
+    </g>
+  }
+
+  @for (puff of steam(); track puff.x) {
+    <path
+      class="weight-scale-scene__steam"
+      [attr.d]="steamPath(puff)"
+      [style.animation-duration.s]="steamDurationSeconds"
+      [style.animation-delay.s]="puff.delay"
+      stroke-width="2.5"
+      stroke-linecap="round"
+    />
+  }
+
+  @if (saved()) {
+    @for (spark of sparks; track spark.x + '-' + spark.y) {
+      <circle
+        class="weight-scale-scene__spark"
+        [class]="spark.toneClass"
+        [attr.cx]="spark.x"
+        [attr.cy]="spark.y"
+        [attr.r]="spark.radius"
+      />
+    }
+  }
+</svg>

@@ -1,0 +1,107 @@
+@use 'mixins';
+
+/*
+ * Værten er selve kortet. Kurvens højde er SVG-geometri (viewBox 320 × 110) og bindes derfor
+ * som `--weight-chart-plot-height` fra TypeScript – ikke som en px-værdi i stilarket.
+ */
+:host {
+  @include mixins.surface-card;
+
+  display: block;
+  padding: var(--space-4-5);
+}
+
+.weight-chart {
+  &__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__caption {
+    @include mixins.caption-uppercase;
+  }
+
+  &__weight {
+    @include mixins.display-heading;
+
+    margin-top: var(--space-1-5);
+    color: var(--color-accent);
+    font-size: var(--font-size-display-3xl);
+  }
+
+  &__unit {
+    margin-left: var(--space-0-75);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+  }
+
+  &__range {
+    text-align: right;
+  }
+
+  &__delta {
+    margin-top: var(--space-1-5);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+
+    &--positive {
+      color: var(--color-positive);
+    }
+
+    &--negative {
+      color: var(--color-negative);
+    }
+
+    &--muted {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  &__plot {
+    display: block;
+    width: 100%;
+    height: var(--weight-chart-plot-height);
+    margin-top: var(--space-3-5);
+    overflow: visible;
+  }
+
+  &__area-stop {
+    stop-color: var(--color-accent);
+
+    &--top {
+      stop-opacity: 0.35;
+    }
+
+    &--bottom {
+      stop-opacity: 0;
+    }
+  }
+
+  &__goal-line {
+    stroke: var(--color-selected);
+  }
+
+  &__line {
+    fill: none;
+    stroke: var(--color-accent);
+  }
+
+  &__dot {
+    fill: var(--color-accent);
+    stroke: var(--color-background);
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--space-1-5);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
+
+  &__footer-goal {
+    color: var(--color-selected);
+  }
+}

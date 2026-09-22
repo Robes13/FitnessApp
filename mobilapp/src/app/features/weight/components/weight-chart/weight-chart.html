@@ -1,0 +1,64 @@
+<div class="weight-chart__head">
+  <div>
+    <div class="weight-chart__caption">Vægt</div>
+    <div class="weight-chart__weight">
+      {{ weightText() }}<span class="weight-chart__unit">kg</span>
+    </div>
+  </div>
+  <div class="weight-chart__range">
+    <div class="weight-chart__caption">{{ rangeLabel() }}</div>
+    <div class="weight-chart__delta" [class]="deltaClass()">{{ deltaText() }}</div>
+  </div>
+</div>
+
+@if (hasSeries()) {
+  <svg
+    class="weight-chart__plot"
+    [attr.viewBox]="viewBox"
+    [style.--weight-chart-plot-height.px]="height"
+    role="img"
+    [attr.aria-label]="chartLabel()"
+  >
+    <defs>
+      <linearGradient id="weight-chart-area" x1="0" y1="0" x2="0" y2="1">
+        <stop class="weight-chart__area-stop weight-chart__area-stop--top" offset="0" />
+        <stop class="weight-chart__area-stop weight-chart__area-stop--bottom" offset="1" />
+      </linearGradient>
+    </defs>
+    <line
+      class="weight-chart__goal-line"
+      x1="0"
+      [attr.y1]="geometry().goalLineY"
+      [attr.x2]="width"
+      [attr.y2]="geometry().goalLineY"
+      stroke-width="1.5"
+      stroke-dasharray="4 5"
+    />
+    <path
+      class="weight-chart__area"
+      [attr.d]="geometry().areaPath"
+      fill="url(#weight-chart-area)"
+    />
+    <path
+      class="weight-chart__line"
+      [attr.d]="geometry().linePath"
+      stroke-width="3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <circle
+      class="weight-chart__dot"
+      [attr.cx]="geometry().lastX"
+      [attr.cy]="geometry().lastY"
+      r="6"
+      stroke-width="3"
+    />
+  </svg>
+  <div class="weight-chart__footer">
+    <span>{{ rangeStartLabel() }}</span>
+    <span class="weight-chart__footer-goal">– mål {{ goalWeightText() }} kg</span>
+    <span>I dag</span>
+  </div>
+} @else {
+  <app-ui-empty-state message="Ingen vægtdata endnu." />
+}

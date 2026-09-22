@@ -1,0 +1,84 @@
+/*
+ * Badevægt-scenen. Farver er tokens; geometrien er SVG-enheder fra TypeScript, og
+ * animationernes tempo bindes pr. partikel (designets `drip`/`steam` har hvert sit tempo).
+ */
+:host {
+  display: block;
+  flex: none;
+  align-self: flex-end;
+  width: var(--weight-scale-scene-width);
+  height: var(--weight-scale-scene-height);
+}
+
+.weight-scale-scene {
+  &__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  &__base {
+    fill: var(--color-sheet);
+    stroke: var(--color-border-stronger);
+  }
+
+  &__display {
+    fill: var(--color-display-dark);
+  }
+
+  &__readout {
+    fill: var(--color-accent);
+    font-family: var(--font-family-display);
+    font-weight: var(--font-weight-extrabold);
+    transition: all var(--duration-quick) var(--easing-standard);
+  }
+
+  &__figure {
+    transition: transform var(--duration-slow) var(--easing-spring);
+  }
+
+  &__puddle {
+    fill: var(--color-figure-sweat);
+    opacity: 0.55;
+    transition: all var(--duration-slowest) ease;
+  }
+
+  &__sweat {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation-name: drip;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  &__sweat-drop {
+    fill: var(--color-figure-sweat);
+  }
+
+  &__steam {
+    fill: none;
+    stroke: var(--color-neutral-strong);
+    transform-box: fill-box;
+    transform-origin: bottom;
+    animation-name: steam;
+    animation-timing-function: ease-out;
+    animation-iteration-count: infinite;
+  }
+
+  &__spark {
+    transition: all var(--duration-slowest) ease;
+
+    &--accent {
+      fill: var(--color-accent);
+    }
+
+    &--positive {
+      fill: var(--color-positive);
+    }
+
+    &--selected {
+      fill: var(--color-selected);
+    }
+  }
+}

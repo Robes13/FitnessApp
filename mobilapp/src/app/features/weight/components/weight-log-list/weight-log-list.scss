@@ -1,0 +1,79 @@
+@use 'mixins';
+
+:host {
+  display: block;
+}
+
+.weight-log-list {
+  &__title {
+    @include mixins.caption-uppercase;
+
+    margin: 0;
+    padding-bottom: var(--space-1-5);
+    font-weight: var(--font-weight-regular);
+  }
+
+  &__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3-25) 0;
+    border-top: var(--border-width-thin) solid var(--color-border);
+  }
+
+  &__date {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  &__time {
+    margin-top: var(--space-0-5);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+  }
+
+  &__values {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3-5);
+  }
+
+  &__delta {
+    @include mixins.tabular-nums;
+
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-bold);
+
+    &--positive {
+      color: var(--color-positive);
+    }
+
+    &--negative {
+      color: var(--color-negative);
+    }
+
+    &--muted {
+      color: var(--color-text-muted);
+    }
+  }
+
+  &__kg {
+    @include mixins.display-heading;
+    @include mixins.tabular-nums;
+
+    font-size: var(--font-size-4xl);
+  }
+
+  &__unit {
+    margin-left: var(--space-0-75);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+  }
+}
