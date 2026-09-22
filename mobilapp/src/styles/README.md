@@ -252,8 +252,9 @@ så værdierne kan overrides ét sted.
 Sidernes lodrette padding er allerede pakket ind i
 `--layout-page-padding-top` (`safe-area-top + 20px`) og
 `--layout-tab-bar-offset` (`safe-area-bottom + 20px`). En side med tab bar
-slutter med en spacer på `--layout-tab-bar-clearance`, så indholdet kan
-scrolles fri af baren.
+slutter med en spacer på `--layout-tab-bar-clearance`
+(`safe-area-bottom + 84px` = barens offset plus dens højde), så indholdet kan
+scrolles fri af baren — også på telefoner med home indicator.
 
 `body` har baggrunden `--color-background-deep`, og `app-root` fylder
 viewporten (`100dvh`) og begrænses til `--layout-max-width` af

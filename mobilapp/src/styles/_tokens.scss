@@ -503,7 +503,7 @@
   --layout-tab-bar-height: 4rem;
   --layout-tab-bar-offset: calc(var(--safe-area-bottom) + var(--space-5));
   --layout-tab-bar-inset: 1rem;
-  --layout-tab-bar-clearance: 5.25rem; /* 84px */
+  --layout-tab-bar-clearance: calc(var(--safe-area-bottom) + 5.25rem); /* 84px + home indicator */
   --layout-touch-target-min: 2.75rem;
 
   /* Maksbredde på en brødtekstspalte (designets 300 px på glemt-adgangskode). */
