@@ -463,9 +463,20 @@
   --layout-page-padding-top: calc(var(--safe-area-top) + var(--space-5));
   --layout-page-padding-top-lg: calc(var(--safe-area-top) + var(--space-7));
   --layout-page-padding-bottom: 2.75rem;
-  --layout-tab-bar-offset: calc(var(--safe-area-bottom) + var(--space-5));
+  /*
+   * The floating tab bar sits just above the home indicator, like iOS's own tab bars, so it
+   * follows the phone's rounded corners. Without a safe area (web, older phones) it keeps a
+   * small gap to the edge.
+   */
+  --layout-tab-bar-offset: max(var(--space-2), calc(var(--safe-area-bottom) - var(--space-3)));
   --layout-tab-bar-inset: 1rem;
-  --layout-tab-bar-clearance: calc(var(--safe-area-bottom) + 5.25rem); /* 84px + home indicator */
+  --layout-tab-bar-height: calc(
+    var(--size-control-md) + 2 * var(--space-2) + 2 * var(--border-width-thin)
+  );
+  /* Scroll space under the content, so the last element clears the bar with some air. */
+  --layout-tab-bar-clearance: calc(
+    var(--layout-tab-bar-offset) + var(--layout-tab-bar-height) + var(--space-4)
+  );
   --layout-touch-target-min: 2.75rem;
 
   /* Max width of a body text column (the design's 300 px on forgot-password). */
