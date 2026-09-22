@@ -29,6 +29,8 @@ begrænses af `--layout-max-width`.
   skalerbar og vedligeholdelsesvenlig.
 - TypeScript bruges med strict typing. `any` må som udgangspunkt ikke
   anvendes.
+- **Kode-kommentarer skrives på engelsk.** Al anden dokumentation (README,
+  commit-beskeder m.v.) skrives på dansk.
 
 ---
 
