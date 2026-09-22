@@ -25,6 +25,10 @@ Dansk dato- og talformatering som i designet:
 Navnelister: `DAY_NAMES_SHORT`, `DAY_NAMES_LONG`, `DAY_LETTERS`, `MONTH_NAMES_LONG`,
 `MONTH_NAMES_SHORT`.
 
+Talformateringen er `Number.prototype.toLocaleString('da-DK', …)` — ikke håndlavede
+separatorer. Kun det typografiske minus i `formatSignedDecimal` sættes bagefter, fordi
+`Intl` bruger en almindelig bindestreg.
+
 ## `math.ts`
 
 `clamp(value, min, max)` klemmer et tal fast til intervallet `[min, max]`. Brugt af

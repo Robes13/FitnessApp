@@ -41,11 +41,10 @@ export const MONTH_NAMES_SHORT = [
 const MS_PER_DAY = 86_400_000;
 const DAYS_PER_WEEK = 7;
 const SUNDAY_OFFSET = 6;
-const DECIMAL_SEPARATOR = ',';
-const THOUSANDS_SEPARATOR = '.';
-/** `74,0` vises som `74` – designets `weightText` fjerner en tom decimal. */
-const EMPTY_DECIMAL = ',0';
-const WEIGHT_DECIMAL_FACTOR = 10;
+/** Al tal- og datoformatering i appen er dansk (`LOCALE_ID` er `'da'`). */
+const LOCALE = 'da-DK';
+/** Designet skriver negative tal med typografisk minus, ikke bindestreg. */
+const TYPOGRAPHIC_MINUS = '−';
 
 /** 0 = mandag … 6 = søndag (JavaScript starter ugen søndag). */
 export function mondayIndex(date: Date): number {
@@ -122,33 +121,32 @@ export function formatTime(date: Date): string {
 
 /** Dansk decimaltal med komma: `formatDecimal(74.5, 1)` → `'74,5'`. */
 export function formatDecimal(value: number, digits = 1): string {
-  return value.toFixed(digits).replace('.', DECIMAL_SEPARATOR);
+  return value.toLocaleString(LOCALE, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
 }
 
 /**
- * Vægt som designets `weightText`: rundet til én decimal med dansk komma og uden decimalen,
+ * Vægt som designets `weightText`: højst én decimal med dansk komma, og uden decimalen,
  * når den er nul (`75` / `74,5`). Bruges af opret-flowet, Vægt, Hjem og Profil.
  */
 export function formatWeightKg(kg: number): string {
-  const rounded = Math.round(kg * WEIGHT_DECIMAL_FACTOR) / WEIGHT_DECIMAL_FACTOR;
-  return formatDecimal(rounded, 1).replace(EMPTY_DECIMAL, '');
+  return kg.toLocaleString(LOCALE, { maximumFractionDigits: 1 });
 }
 
 /** Dansk heltal med tusindtalspunktum: `formatInteger(6000)` → `'6.000'`. */
 export function formatInteger(value: number): string {
-  const rounded = Math.round(Math.abs(value));
-  const grouped = String(rounded).replace(/\B(?=(\d{3})+(?!\d))/g, THOUSANDS_SEPARATOR);
-  return value < 0 ? `-${grouped}` : grouped;
+  return value.toLocaleString(LOCALE, { maximumFractionDigits: 0 });
 }
 
 /** Fortegnet delta: `'+0,6'`, `'−1,2'` (typografisk minus) eller `'0,0'`. */
 export function formatSignedDecimal(value: number, digits = 1): string {
-  const magnitude = formatDecimal(Math.abs(value), digits);
-  if (value > 0) {
-    return `+${magnitude}`;
-  }
-  if (value < 0) {
-    return `−${magnitude}`;
-  }
-  return magnitude;
+  return value
+    .toLocaleString(LOCALE, {
+      signDisplay: 'exceptZero',
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    })
+    .replace('-', TYPOGRAPHIC_MINUS);
 }
