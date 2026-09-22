@@ -10,13 +10,11 @@ export interface ParsedQuantity {
   unit: string;
 }
 
-export type PasswordStrengthScore = 0 | 1 | 2 | 3 | 4;
-export type PasswordStrengthLabel = '' | 'Svag' | 'OK' | 'God' | 'Stærk';
-
 export interface PasswordStrength {
-  score: PasswordStrengthScore;
+  /** 0..4 – ét point pr. opfyldt krav. */
+  score: number;
   /** 0..100 til styrkemåleren. */
   percent: number;
-  label: PasswordStrengthLabel;
+  label: string;
   tone: Tone;
 }

@@ -1,11 +1,10 @@
 import { FigureTempo } from '../../../../../shared/components/figure';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Gender } from '../../../../../core/models/profile';
 import { DAY_LETTERS, DAY_NAMES_LONG } from '../../../../../core/utils/date-format';
 import {
-  FigureBandTone,
   FigureBody,
   animatedFigure,
+  bandToneForGender,
   computeFigureGeometry,
 } from '../../../../../shared/components/figure';
 import { SignupStateService } from '../../../services/signup-state';
@@ -53,13 +52,6 @@ interface SweatDrop {
 
 function dropPath(x: number, y: number): string {
   return `M${x} ${y} c -3 4 -3 6 -3 7 a 3 3 0 0 0 6 0 c 0 -1 0 -3 -3 -7 z`;
-}
-
-function bandToneFor(gender: Gender | null): FigureBandTone {
-  if (gender === 'kvinde') {
-    return 'pink';
-  }
-  return gender === 'andet' ? 'white' : 'accent';
 }
 
 /**
@@ -127,7 +119,7 @@ export class TrainingFrequencyStep {
     ),
   );
 
-  protected readonly bandTone = computed(() => bandToneFor(this.state.gender()));
+  protected readonly bandTone = computed(() => bandToneForGender(this.state.gender()));
 
   /** Curl-gruppens omdrejningspunkt: højre skulder. */
   protected readonly curlOrigin = computed(() => {

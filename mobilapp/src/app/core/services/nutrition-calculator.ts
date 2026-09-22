@@ -99,7 +99,7 @@ export class NutritionCalculator {
   activityLevelFor(steps: number): ActivityLevel {
     const clamped = clamp(steps, STEPS_MIN, STEPS_MAX);
     const level = ACTIVITY_LEVELS.find((candidate) => clamped < candidate.maxSteps);
-    return level ?? lastOf(ACTIVITY_LEVELS);
+    return level ?? ACTIVITY_LEVELS[ACTIVITY_LEVELS.length - 1]!;
   }
 
   /** Dagligt behov uden mål-justering, rundet til nærmeste 10 kcal. */
@@ -159,7 +159,7 @@ export class NutritionCalculator {
       return null;
     }
     const clamped = clamp(rpe, RPE_MIN, RPE_MAX);
-    return INTENSITIES.find((candidate) => clamped <= candidate.maxRpe) ?? lastOf(INTENSITIES);
+    return INTENSITIES.find((c) => clamped <= c.maxRpe) ?? INTENSITIES[INTENSITIES.length - 1]!;
   }
 
   paceFor(paceId: PaceDefinition['id'] | null): PaceDefinition | null {
@@ -248,12 +248,4 @@ function rawBmi(kg: number, cm: number): number {
   }
   const metres = cm / CM_PER_M;
   return kg / (metres * metres);
-}
-
-function lastOf<T>(list: readonly T[]): T {
-  const last = list[list.length - 1];
-  if (last === undefined) {
-    throw new Error('Listen er tom.');
-  }
-  return last;
 }

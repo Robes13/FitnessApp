@@ -78,6 +78,7 @@ const FLAME_OFFSET = 6;
 const CANDLE_COLOUR_COUNT = 5;
 const DELAY_STEP = 0.11;
 
+/** Designet skriver kagens mål med én decimal. */
 const DECIMALS = 1;
 
 export function cakeTierCount(age: number): number {

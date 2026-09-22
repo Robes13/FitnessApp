@@ -12,7 +12,6 @@ Dansk dato- og talformatering som i designet:
 | `formatDayLabel(date)`                              | `'Mandag 21. sep'`                         |
 | `formatDayMonth(date)`                              | `'21. sep'`                                |
 | `formatWeekdayAbbreviated(date)`                    | `'Tir.'`                                   |
-| `formatLongDate(date)`                              | `'16. maj 1998'`                           |
 | `formatTime(date)`                                  | `'07:45'`                                  |
 | `formatDecimal(74.5)`                               | `'74,5'`                                   |
 | `formatWeightKg(74.5)` / `formatWeightKg(75)`       | `'74,5'` · `'75'` (designets `weightText`) |
@@ -31,9 +30,13 @@ separatorer. Kun det typografiske minus i `formatSignedDecimal` sættes bagefter
 
 ## `math.ts`
 
-`clamp(value, min, max)` klemmer et tal fast til intervallet `[min, max]`. Brugt af
-`NutritionCalculator`, Hjem, Historik, Vægt og opret-flowets skridt-, længde- og
-intensitetstrin, så den samme afgrænsning ikke skrives lokalt i hver fil.
+`clamp(value, min, max)` klemmer et tal fast til intervallet `[min, max]`.
+`roundTo(value, decimals)` runder til et antal decimaler og normaliserer `-0` til `0`, så
+afrundede værdier kan sammenlignes strengt.
+
+Begge bruges overalt, hvor der ellers ville stå `Math.min(max, Math.max(min, x))` eller
+`Math.round(x * 10) / 10` lokalt — geometri-modulerne, opret-flowets trin, Vægt, Hjem og
+`NutritionCalculator`.
 
 ## `id.ts`
 

@@ -4,6 +4,7 @@ import { AUTH_ERROR_MESSAGE } from '../constants/auth';
 import { PASSWORD_MIN_LENGTH, RESET_CODE_LENGTH } from '../constants/nutrition';
 import { ApiError } from '../models/api-error';
 import { UserProfile } from '../models/profile';
+import { NutritionCalculator } from './nutrition-calculator';
 
 /** Forsinkelse på mock-backendens svar (login, nulstilling af kode m.m.). */
 const DEFAULT_DELAY_MS = 600;
@@ -14,7 +15,6 @@ export const AUTH_API_DELAY_MS = new InjectionToken<number>('AUTH_API_DELAY_MS',
   factory: () => DEFAULT_DELAY_MS,
 });
 
-const EMAIL_PATTERN = /\S+@\S+\.\S+/;
 const RESET_CODE_PATTERN = new RegExp(`^\\d{${RESET_CODE_LENGTH}}$`);
 
 /**
@@ -24,6 +24,7 @@ const RESET_CODE_PATTERN = new RegExp(`^\\d{${RESET_CODE_LENGTH}}$`);
 @Injectable({ providedIn: 'root' })
 export class AuthApi {
   private readonly delayMs = inject(AUTH_API_DELAY_MS);
+  private readonly calculator = inject(NutritionCalculator);
 
   login(username: string, password: string): Observable<void> {
     if (!username.trim() || !password) {
@@ -43,7 +44,7 @@ export class AuthApi {
   }
 
   requestPasswordReset(email: string): Observable<void> {
-    if (!EMAIL_PATTERN.test(email)) {
+    if (!this.calculator.isValidEmail(email)) {
       return this.fail(AUTH_ERROR_MESSAGE.INVALID_EMAIL);
     }
     return this.respond();
