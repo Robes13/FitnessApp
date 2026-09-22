@@ -12,6 +12,10 @@
     margin-top: var(--space-1-5);
   }
 
+  &__name-error {
+    margin-top: var(--space-1-5);
+  }
+
   &__caption {
     @include mixins.caption-uppercase;
 
@@ -170,6 +174,10 @@
     display: flex;
     gap: var(--space-2-5);
     margin-top: var(--space-3);
+  }
+
+  &__custom-error {
+    margin-top: var(--space-2);
   }
 
   &__action {

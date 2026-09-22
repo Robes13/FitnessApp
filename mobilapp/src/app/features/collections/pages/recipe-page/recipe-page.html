@@ -1,4 +1,17 @@
-<app-ui-page-header title="Opskrift" (back)="back()" />
+<app-ui-page-header title="Opskrift" (back)="back()">
+  @if (collection()) {
+    <button
+      headerAction
+      app-ui-icon-button
+      size="sm"
+      type="button"
+      aria-label="Rediger samling"
+      (click)="editOpen.set(true)"
+    >
+      <app-ui-icon name="pencil" size="lg" />
+    </button>
+  }
+</app-ui-page-header>
 
 <div class="recipe-page__scroll">
   @if (detail(); as recipe) {
@@ -50,6 +63,20 @@
         Log {{ recipe.macros.kcal }} kcal
       </button>
     </section>
+
+    @if (collection()) {
+      <button
+        app-ui-button
+        variant="outline-danger"
+        size="md"
+        block
+        type="button"
+        class="recipe-page__delete"
+        (click)="deleteOpen.set(true)"
+      >
+        Slet samling
+      </button>
+    }
   } @else {
     <app-ui-empty-state class="recipe-page__empty" [message]="notFoundMessage" />
     <button
@@ -64,3 +91,18 @@
     </button>
   }
 </div>
+
+@if (collection(); as editable) {
+  <app-new-collection-sheet
+    [open]="editOpen()"
+    [collection]="editable"
+    (closed)="editOpen.set(false)"
+    (updated)="onUpdated($event)"
+  />
+  <app-delete-collection-sheet
+    [open]="deleteOpen()"
+    [name]="editable.name"
+    (closed)="deleteOpen.set(false)"
+    (confirmed)="delete()"
+  />
+}

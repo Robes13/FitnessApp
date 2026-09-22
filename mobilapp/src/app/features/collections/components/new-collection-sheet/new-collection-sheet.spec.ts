@@ -1,10 +1,14 @@
 import { Component, Provider, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NewCollectionInput } from '../../../../core/models/food';
+import { By } from '@angular/platform-browser';
+import { FoodCollection, NewCollectionInput } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
 import { NewCollectionSheet } from './new-collection-sheet';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 import { FoodLogService } from '../../../../core/services/food-log';
+import { CollectionsService } from '../../../../core/services/collections';
+import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
+import { FoodPicker } from '../../../../shared/components/food-picker/food-picker';
 
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
@@ -14,7 +18,9 @@ const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
     <app-new-collection-sheet
       [open]="open()"
       [defaultMeal]="defaultMeal()"
+      [collection]="collection()"
       (created)="created.push($event)"
+      (updated)="updated.push($event)"
       (closed)="closes = closes + 1"
     />
   `,
@@ -22,7 +28,9 @@ const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 class Host {
   readonly open = signal(true);
   readonly defaultMeal = signal<MealId>('frokost');
+  readonly collection = signal<FoodCollection | null>(null);
   readonly created: NewCollectionInput[] = [];
+  readonly updated: NewCollectionInput[] = [];
   closes = 0;
 }
 
@@ -223,6 +231,51 @@ describe('NewCollectionSheet', () => {
     expect(root.querySelector('app-ui-empty-state')).not.toBeNull();
   });
 
+  it('saves a custom food from the picker under its own id', async () => {
+    await click(buttonByText('Søg vare'));
+    const custom = {
+      id: 'food-picked',
+      name: 'Egen bar',
+      quantity: '1 stk',
+      kcal: 150,
+      protein: 12,
+      carbs: 0,
+      fat: 0,
+      isCustom: true,
+    };
+
+    fixture.debugElement
+      .query(By.directive(FoodPicker))
+      .triggerEventHandler('customFoodCreated', custom);
+    await settle();
+
+    expect(TestBed.inject(FoodLogService).customFoods()[0]?.id).toBe('food-picked');
+  });
+
+  it('still drafts a scanned food whose name is taken and explains why it was not saved', async () => {
+    fixture.debugElement.query(By.directive(BarcodeScanner)).triggerEventHandler('customSaved', {
+      id: 'food-scan',
+      name: ' HAVREGRYN',
+      quantity: '1 stk',
+      kcal: 150,
+      protein: 5,
+      carbs: 0,
+      fat: 0,
+      isCustom: true,
+    });
+    await settle();
+
+    expect(TestBed.inject(FoodLogService).customFoods()).toHaveLength(1);
+    expect(
+      Array.from(root.querySelectorAll('.new-collection-sheet__item-name')).map((el) =>
+        normalize(el.textContent),
+      ),
+    ).toEqual(['HAVREGRYN']);
+    expect(
+      normalize(root.querySelector('.new-collection-sheet__custom-error')?.textContent),
+    ).toContain('allerede en egen vare med navnet');
+  });
+
   it('resets everything when the sheet is reopened', async () => {
     await typeName('Meal prep');
     await click(root.querySelector('.new-collection-sheet__more'));
@@ -237,5 +290,94 @@ describe('NewCollectionSheet', () => {
     );
     expect(root.querySelectorAll('.new-collection-sheet__icon')).toHaveLength(12);
     expect(buttonByText('Opret samling')?.disabled).toBe(true);
+  });
+
+  function nameError(): string {
+    return normalize(root.querySelector('app-ui-form-error')?.textContent);
+  }
+
+  async function reopen(): Promise<void> {
+    host.open.set(false);
+    await settle();
+    host.open.set(true);
+    await settle();
+  }
+
+  function existing(name: string): FoodCollection {
+    return TestBed.inject(CollectionsService).create({
+      name,
+      icon: 'fish',
+      meal: 'aften',
+      items: [
+        {
+          id: 'item-laks',
+          name: 'Laks',
+          quantity: '150 g',
+          kcal: 300,
+          protein: 30,
+          carbs: 0,
+          fat: 20,
+        },
+      ],
+    });
+  }
+
+  it('blocks a name another collection already has, ignoring case and spaces', async () => {
+    existing('Meal prep');
+
+    await typeName('  MEAL prep ');
+
+    expect(nameError()).toBe('Du har allerede en samling med det navn.');
+    expect(buttonByText('Opret samling')?.disabled).toBe(true);
+
+    await typeName('Meal prep 2');
+
+    expect(nameError()).toBe('');
+    expect(buttonByText('Opret samling')?.disabled).toBe(false);
+  });
+
+  describe('in edit mode', () => {
+    let collection: FoodCollection;
+
+    beforeEach(async () => {
+      collection = existing('Aftensmad');
+      host.collection.set(collection);
+      await reopen();
+    });
+
+    it('opens prefilled with the collection', () => {
+      expect(normalize(root.querySelector('.ui-sheet__title-text')?.textContent)).toBe('Rediger');
+      expect(root.querySelector<HTMLInputElement>('.new-collection-sheet__name input')?.value).toBe(
+        'Aftensmad',
+      );
+      expect(selectedIconLabel()).toBe('Fisk');
+      const meals = Array.from(root.querySelectorAll<HTMLElement>('.meal-picker__option'));
+      expect(
+        normalize(meals.find((meal) => meal.getAttribute('aria-checked') === 'true')?.textContent),
+      ).toBe('Aftensmad');
+      expect(
+        Array.from(root.querySelectorAll('.new-collection-sheet__item-name')).map((el) =>
+          normalize(el.textContent),
+        ),
+      ).toEqual(['Laks']);
+    });
+
+    it('lets the collection keep its own name and emits updated, not created', async () => {
+      await click(root.querySelector('.new-collection-sheet__remove'));
+      await click(buttonByText('Gem ændringer'));
+
+      expect(nameError()).toBe('');
+      expect(host.created).toEqual([]);
+      expect(host.updated).toEqual([{ name: 'Aftensmad', icon: 'fish', meal: 'aften', items: [] }]);
+    });
+
+    it('blocks renaming it to another collection’s name', async () => {
+      existing('Frokost');
+
+      await typeName('frokost');
+
+      expect(nameError()).toBe('Du har allerede en samling med det navn.');
+      expect(buttonByText('Gem ændringer')?.disabled).toBe(true);
+    });
   });
 });

@@ -1,0 +1,23 @@
+<app-ui-sheet
+  [open]="open()"
+  title="Slet"
+  titleAccent="samling?"
+  titleAccentTone="negative"
+  titleSize="sm"
+  hideClose
+  scrollable
+  layer="overlay"
+>
+  <p class="delete-collection-sheet__body">
+    «{{ name() }}» og varerne i den bliver slettet. Det kan ikke fortrydes.
+  </p>
+
+  <div sheetFooter class="delete-collection-sheet__actions">
+    <button app-ui-button type="button" variant="danger" block (click)="confirmed.emit()">
+      Ja, slet samlingen
+    </button>
+    <button app-ui-button type="button" variant="outline" block (click)="closed.emit()">
+      Annuller
+    </button>
+  </div>
+</app-ui-sheet>

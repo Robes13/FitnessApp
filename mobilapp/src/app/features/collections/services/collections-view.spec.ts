@@ -93,13 +93,12 @@ describe('CollectionsViewService', () => {
   });
 
   it('slår en løs vare op som en enkelt linje', () => {
-    const created = collections.create({
+    collections.create({
       name: 'Aften',
       icon: 'leaf',
       meal: 'aften',
-      items: [],
+      items: [TUN],
     });
-    collections.addItem(created.id, TUN);
 
     expect(view.detailFor(TUN.id)).toMatchObject({
       title: 'Tunsalat',
@@ -107,6 +106,19 @@ describe('CollectionsViewService', () => {
       tone: 'selected',
       contents: [{ name: 'Tunsalat', quantity: '200 g' }],
     });
+  });
+
+  it('finder kun brugerens egne samlinger som redigerbare', () => {
+    const created = collections.create({
+      name: 'Aften',
+      icon: 'leaf',
+      meal: 'aften',
+      items: [TUN],
+    });
+
+    expect(view.editableCollectionFor(`${BUNDLE_ID_PREFIX}${created.id}`)).toEqual(created);
+    expect(view.editableCollectionFor(TUN.id)).toBeNull();
+    expect(view.editableCollectionFor(`${BUNDLE_ID_PREFIX}findes-ikke`)).toBeNull();
   });
 
   it('giver null for et ukendt id', () => {

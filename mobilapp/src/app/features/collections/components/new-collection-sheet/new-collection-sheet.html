@@ -1,6 +1,6 @@
 <app-ui-sheet
   [open]="open()"
-  title="Ny"
+  [title]="text().title"
   titleAccent="samling"
   titleSize="sm"
   maxHeight="full"
@@ -13,6 +13,12 @@
     placeholder="Navn, f.eks. Meal prep"
     ariaLabel="Navn på samlingen"
     autocomplete="off"
+    [invalid]="nameTaken()"
+  />
+  <app-ui-form-error
+    class="new-collection-sheet__name-error"
+    tone="negative"
+    [message]="nameError()"
   />
 
   <h3 class="new-collection-sheet__caption">Hører under</h3>
@@ -107,6 +113,14 @@
     </button>
   </div>
 
+  @if (customFoodError(); as message) {
+    <app-ui-form-error
+      class="new-collection-sheet__custom-error"
+      tone="negative"
+      [message]="message"
+    />
+  }
+
   <button
     sheetFooter
     app-ui-button
@@ -114,10 +128,10 @@
     size="lg"
     block
     type="button"
-    [disabled]="!canCreate()"
-    (click)="create()"
+    [disabled]="!canSave()"
+    (click)="save()"
   >
-    Opret samling
+    {{ text().submit }}
   </button>
 </app-ui-sheet>
 

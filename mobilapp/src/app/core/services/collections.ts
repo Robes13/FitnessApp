@@ -1,10 +1,19 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { newId } from '../utils/id';
+import { normalizeName } from '../utils/name';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { FoodCollection, FoodItem, Macros, NewCollectionInput, Recipe } from '../models/food';
 import { StorageService } from './storage';
 
 export type CollectionTotals = Macros & { count: number };
+
+/** Thrown by `create()`/`update()` when another collection already has the name. */
+export class DuplicateCollectionNameError extends Error {
+  constructor(name: string) {
+    super(`A collection named "${name}" already exists.`);
+    this.name = 'DuplicateCollectionNameError';
+  }
+}
 
 interface StoredCollections {
   collections: readonly FoodCollection[];
@@ -15,7 +24,8 @@ interface StoredCollections {
  *
  * The app has no recipes and no base collections yet – they need to come from the backend.
  * Until then, `recipes` is empty, and `collections` only contains the collections the user
- * has created themselves with `create()`.
+ * has created themselves with `create()`. Only those can be edited (`update()`) and deleted
+ * (`remove()`); base collections are read-only.
  */
 @Injectable({ providedIn: 'root' })
 export class CollectionsService {
@@ -51,7 +61,20 @@ export class CollectionsService {
     );
   }
 
+  /**
+   * Whether another collection already has the name (trimmed, case-insensitive). `exceptId` is
+   * the collection being edited, so it doesn't clash with its own name.
+   */
+  isNameTaken(name: string, exceptId?: string): boolean {
+    const wanted = normalizeName(name);
+    return this.collections().some(
+      (collection) => collection.id !== exceptId && normalizeName(collection.name) === wanted,
+    );
+  }
+
+  /** @throws DuplicateCollectionNameError if the name is taken – check `isNameTaken()` first. */
   create(input: NewCollectionInput): FoodCollection {
+    this.assertNameFree(input.name);
     const collection: FoodCollection = {
       id: newId('c'),
       name: input.name.trim(),
@@ -65,14 +88,41 @@ export class CollectionsService {
     return collection;
   }
 
-  addItem(collectionId: string, item: FoodItem): void {
+  /**
+   * Replaces name, icon, meal and items of a user collection. Returns the updated collection, or
+   * `null` if the id is unknown or belongs to a base collection (those are read-only).
+   * @throws DuplicateCollectionNameError if another collection has the name.
+   */
+  update(id: string, input: NewCollectionInput): FoodCollection | null {
+    const current = this.userCollectionById(id);
+    if (!current) {
+      return null;
+    }
+    this.assertNameFree(input.name, id);
+    const updated: FoodCollection = {
+      ...current,
+      name: input.name.trim(),
+      icon: input.icon,
+      meal: input.meal,
+      items: [...input.items],
+    };
     this.set({
       collections: this.stored().collections.map((collection) =>
-        collection.id === collectionId
-          ? { ...collection, items: [...collection.items, item] }
-          : collection,
+        collection.id === id ? updated : collection,
       ),
     });
+    return updated;
+  }
+
+  /** Deletes a user collection. Returns `false` for an unknown id or a base collection. */
+  remove(id: string): boolean {
+    if (!this.userCollectionById(id)) {
+      return false;
+    }
+    this.set({
+      collections: this.stored().collections.filter((collection) => collection.id !== id),
+    });
+    return true;
   }
 
   /** Finds an item across all collections' `items`. */
@@ -102,6 +152,17 @@ export class CollectionsService {
       }),
       { kcal: 0, protein: 0, carbs: 0, fat: 0, count: 0 },
     );
+  }
+
+  private userCollectionById(id: string): FoodCollection | undefined {
+    const collection = this.collectionById(id);
+    return collection && !collection.isBase ? collection : undefined;
+  }
+
+  private assertNameFree(name: string, exceptId?: string): void {
+    if (this.isNameTaken(name, exceptId)) {
+      throw new DuplicateCollectionNameError(name.trim());
+    }
   }
 
   private set(stored: StoredCollections): void {

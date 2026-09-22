@@ -118,8 +118,8 @@ export class CollectionsViewService {
   /** Looks up a route id: a dish, a bundle (`col:<id>`) or a standalone food. */
   detailFor(routeId: string): RecipeDetail | null {
     if (routeId.startsWith(BUNDLE_ID_PREFIX)) {
-      const collection = this.collections.collectionById(routeId.slice(BUNDLE_ID_PREFIX.length));
-      return collection && !collection.isBase ? this.bundleDetail(collection) : null;
+      const collection = this.editableCollectionFor(routeId);
+      return collection ? this.bundleDetail(collection) : null;
     }
     const recipe = this.collections.recipeById(routeId);
     if (recipe) {
@@ -130,6 +130,18 @@ export class CollectionsViewService {
       .find((collection) => collection.items.some((item) => item.id === routeId));
     const item = owner?.items.find((candidate) => candidate.id === routeId);
     return owner && item ? this.itemDetail(owner, item) : null;
+  }
+
+  /**
+   * The user collection behind a bundle id (`col:<id>`), i.e. the one the recipe screen may edit
+   * and delete. `null` for dishes, standalone foods, base collections and unknown ids.
+   */
+  editableCollectionFor(routeId: string): FoodCollection | null {
+    if (!routeId.startsWith(BUNDLE_ID_PREFIX)) {
+      return null;
+    }
+    const collection = this.collections.collectionById(routeId.slice(BUNDLE_ID_PREFIX.length));
+    return collection && !collection.isBase ? collection : null;
   }
 
   // --- Rows ------------------------------------------------------------------------------

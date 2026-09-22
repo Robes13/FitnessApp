@@ -10,3 +10,6 @@ argument, så de kan kaldes fra en `computed()` og testes uden komponenter.
 
 `BUNDLE_ID_PREFIX` (`col:`) er præfikset foran en samlings id, når hele samlingen åbnes som
 én post. Se feature-README'en for de tre slags rute-id'er.
+
+`editableCollectionFor(routeId)` giver brugersamlingen bag et `col:`-id — den, opskriftsskærmen
+må redigere og slette. Retter, løse varer og faste samlinger giver `null`.

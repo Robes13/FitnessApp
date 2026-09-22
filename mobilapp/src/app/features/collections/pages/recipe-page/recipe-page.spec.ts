@@ -133,4 +133,62 @@ describe('RecipePage', () => {
 
     expect(TestBed.inject(Router).url).toBe(APP_PATH.COLLECTIONS);
   });
+
+  describe('editing and deleting a user collection', () => {
+    async function settle(harness: RouterTestingHarness): Promise<void> {
+      await harness.fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await harness.fixture.whenStable();
+    }
+
+    it('offers no edit or delete on an unknown id', async () => {
+      const { page, button } = await setup('findes-ikke');
+
+      expect(page.querySelector('[aria-label="Rediger samling"]')).toBeNull();
+      expect(button('Slet samling')).toBeUndefined();
+    });
+
+    it('saves the edited collection from the prefilled sheet', async () => {
+      const { harness, page, button, click } = await setup(createBundle());
+
+      await click(page.querySelector('[aria-label="Rediger samling"]'));
+      await settle(harness);
+      const input = page.querySelector<HTMLInputElement>('.new-collection-sheet__name input');
+      expect(input?.value).toBe('Meal prep');
+
+      if (input) {
+        input.value = 'Frokostboks';
+        input.dispatchEvent(new Event('input'));
+      }
+      await settle(harness);
+      await click(button('Gem ændringer'));
+      await settle(harness);
+
+      expect(TestBed.inject(CollectionsService).userCollections()[0]?.name).toBe('Frokostboks');
+      expect(normalize(page.querySelector('.recipe-page__title')?.textContent)).toBe('Frokostboks');
+    });
+
+    it('keeps the collection when the deletion is cancelled', async () => {
+      const { harness, button, click } = await setup(createBundle());
+
+      await click(button('Slet samling'));
+      await settle(harness);
+      await click(button('Annuller'));
+
+      expect(TestBed.inject(CollectionsService).userCollections()).toHaveLength(1);
+      expect(TestBed.inject(Router).url).not.toBe(APP_PATH.COLLECTIONS);
+    });
+
+    it('deletes the collection after confirmation and returns to the list', async () => {
+      const { harness, button, click } = await setup(createBundle());
+
+      await click(button('Slet samling'));
+      await settle(harness);
+      await click(button('Ja, slet samlingen'));
+      await settle(harness);
+
+      expect(TestBed.inject(CollectionsService).userCollections()).toEqual([]);
+      expect(TestBed.inject(Router).url).toBe(APP_PATH.COLLECTIONS);
+    });
+  });
 });

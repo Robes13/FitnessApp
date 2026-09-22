@@ -3,7 +3,7 @@ import { STORAGE_KEY } from '../constants/storage-key';
 import { FoodCollection, FoodItem } from '../models/food';
 import { FakeStorage, createFakeStorage } from '../testing/fake-document';
 import { provideCoreTestEnvironment } from '../testing/test-providers';
-import { CollectionsService } from './collections';
+import { CollectionsService, DuplicateCollectionNameError } from './collections';
 
 const BANAN: FoodItem = {
   id: 'food-banan',
@@ -13,6 +13,16 @@ const BANAN: FoodItem = {
   protein: 1,
   carbs: 27,
   fat: 0,
+};
+
+const BASE: FoodCollection = {
+  id: 'base-morgen',
+  name: 'Morgenmad',
+  icon: 'egg',
+  meal: 'morgen',
+  isBase: true,
+  recipeIds: [],
+  items: [],
 };
 
 describe('CollectionsService', () => {
@@ -64,21 +74,91 @@ describe('CollectionsService', () => {
     });
   });
 
-  it('adds items to a collection and ignores an unknown id', () => {
+  it('finds an item across the collections', () => {
     const service = setup();
-    const created = service.create({
-      name: 'Snacks til farten',
+    service.create({ name: 'Snacks', icon: 'bag', meal: 'snack', items: [BANAN] });
+
+    expect(service.itemById(BANAN.id)?.name).toBe('Banan');
+    expect(service.itemById('ukendt')).toBeUndefined();
+  });
+
+  it('rejects a duplicate name, trimmed and case-insensitive', () => {
+    const service = setup();
+    service.create({ name: 'Meal prep', icon: 'star', meal: 'frokost', items: [] });
+
+    expect(service.isNameTaken('  MEAL prep ')).toBe(true);
+    expect(service.isNameTaken('Meal prep 2')).toBe(false);
+    expect(() =>
+      service.create({ name: ' meal PREP', icon: 'bag', meal: 'aften', items: [] }),
+    ).toThrow(DuplicateCollectionNameError);
+    expect(service.collections()).toHaveLength(1);
+  });
+
+  it('updates a user collection and persists it', () => {
+    const service = setup();
+    const created = service.create({ name: 'Aften', icon: 'leaf', meal: 'aften', items: [] });
+
+    const updated = service.update(created.id, {
+      name: ' Frokost ',
       icon: 'bag',
-      meal: 'snack',
-      items: [],
+      meal: 'frokost',
+      items: [BANAN],
     });
 
-    service.addItem(created.id, { ...BANAN, id: 'banan-2' });
-    service.addItem('findes-ikke', BANAN);
+    expect(updated).toEqual({
+      ...created,
+      name: 'Frokost',
+      icon: 'bag',
+      meal: 'frokost',
+      items: [BANAN],
+    });
+    expect(service.collectionById(created.id)).toEqual(updated);
+    expect(JSON.parse(storage.getItem(STORAGE_KEY.COLLECTIONS) ?? '{}')).toMatchObject({
+      collections: [{ id: created.id, name: 'Frokost', items: [BANAN] }],
+    });
+  });
 
-    expect(service.collectionById(created.id)?.items.map((item) => item.id)).toEqual(['banan-2']);
-    expect(service.itemById('banan-2')?.name).toBe('Banan');
-    expect(service.itemById('ukendt')).toBeUndefined();
+  it('lets a collection keep its own name but not take another one', () => {
+    const service = setup();
+    const first = service.create({ name: 'Aften', icon: 'leaf', meal: 'aften', items: [] });
+    service.create({ name: 'Frokost', icon: 'bag', meal: 'frokost', items: [] });
+
+    expect(service.isNameTaken('aften', first.id)).toBe(false);
+    expect(service.update(first.id, { ...first, name: 'AFTEN' })?.name).toBe('AFTEN');
+    expect(() => service.update(first.id, { ...first, name: 'frokost' })).toThrow(
+      DuplicateCollectionNameError,
+    );
+    expect(service.collectionById(first.id)?.name).toBe('AFTEN');
+  });
+
+  it('removes a user collection and persists it', () => {
+    const service = setup();
+    const created = service.create({ name: 'Aften', icon: 'leaf', meal: 'aften', items: [] });
+
+    expect(service.remove(created.id)).toBe(true);
+    expect(service.collections()).toEqual([]);
+    expect(JSON.parse(storage.getItem(STORAGE_KEY.COLLECTIONS) ?? '{}')).toEqual({
+      collections: [],
+    });
+    expect(service.remove(created.id)).toBe(false);
+  });
+
+  it('never edits or deletes a base collection', () => {
+    storage.setItem(STORAGE_KEY.COLLECTIONS, JSON.stringify({ collections: [BASE] }));
+    const service = setup();
+
+    expect(service.update(BASE.id, { ...BASE, name: 'Ændret' })).toBeNull();
+    expect(service.remove(BASE.id)).toBe(false);
+    expect(service.collections()).toEqual([BASE]);
+  });
+
+  it('ignores unknown ids on update', () => {
+    const service = setup();
+
+    expect(
+      service.update('findes-ikke', { name: 'X', icon: 'bag', meal: 'snack', items: [] }),
+    ).toBeNull();
+    expect(service.collections()).toEqual([]);
   });
 
   it('restores collections from storage', () => {

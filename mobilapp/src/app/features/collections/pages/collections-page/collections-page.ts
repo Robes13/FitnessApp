@@ -57,7 +57,10 @@ export class CollectionsPage {
     void this.router.navigateByUrl(APP_PATH.recipe(entry.id));
   }
 
-  /** Creates the collection and switches to the filter it belongs under. */
+  /**
+   * Creates the collection and switches to the filter it belongs under. The sheet has already
+   * rejected a duplicate name, so `create()` won't throw here.
+   */
   protected onCreated(input: NewCollectionInput): void {
     const created = this.collections.create(input);
     const base = this.collections.baseCollections().find((c) => c.meal === created.meal);
