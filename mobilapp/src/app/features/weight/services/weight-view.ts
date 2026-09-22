@@ -11,6 +11,7 @@ import {
   formatSignedDecimal,
   formatTime,
 } from '../../../core/utils/date-format';
+import { clamp } from '../../../core/utils/math';
 import { NOW } from '../../../core/utils/now';
 
 /** Tonen på et vægtskifte: grøn når det går den rigtige vej, rød når det ikke gør. */
@@ -59,10 +60,6 @@ const MAINTAIN_TOLERANCE_KG = 0.5;
 const MAX_LOG_ROWS = 6;
 /** Designets `good` for "hold": afvigelsen fra målet med en lille bonus. */
 const MAINTAIN_PROGRESS_BONUS_KG = 0.3;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
-}
 
 function roundToTenths(kg: number): number {
   return Math.round(kg * TENTHS_PER_KG) / TENTHS_PER_KG;

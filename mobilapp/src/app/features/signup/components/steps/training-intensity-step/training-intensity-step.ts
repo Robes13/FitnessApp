@@ -4,12 +4,14 @@ import { INTENSITIES, RPE_MAX, RPE_MIN } from '../../../../../core/constants/nut
 import { IntensityId } from '../../../../../core/models/profile';
 import { Tone } from '../../../../../core/models/tone';
 import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator';
+import { clamp } from '../../../../../core/utils/math';
 import {
   FigureBandTone,
   FigureBody,
   FigureCheekTone,
   FigureExpression,
-  animatedFigure, computeFigureGeometry,
+  animatedFigure,
+  computeFigureGeometry,
 } from '../../../../../shared/components/figure';
 import { UiOptionCard } from '../../../../../shared/components/ui-option-card/ui-option-card';
 import { SignupStateService } from '../../../services/signup-state';
@@ -145,10 +147,6 @@ const BAR_BLOCK = 'training-intensity-step__bar';
 const SEGMENT_BLOCK = 'training-intensity-step__segment-fill';
 /** Flisens tre søjler er 8, 14 og 20 px høje. */
 const BAR_SIZES = ['sm', 'md', 'lg'] as const;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
 
 function dropPath(x: number, y: number): string {
   return `M${x} ${y} c -3 4 -3 6 -3 7 a 3 3 0 0 0 6 0 c 0 -1 0 -3 -3 -7 z`;

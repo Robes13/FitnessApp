@@ -39,6 +39,7 @@ import {
   PaceDefinition,
   UserProfile,
 } from '../models/profile';
+import { clamp } from '../utils/math';
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})/;
 const EMAIL_PATTERN = /\S+@\S+\.\S+/;
@@ -252,10 +253,6 @@ function rawBmi(kg: number, cm: number): number {
 
 function roundTo(value: number, factor: number): number {
   return Math.round(value * factor) / factor;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
 }
 
 function lastOf<T>(list: readonly T[]): T {

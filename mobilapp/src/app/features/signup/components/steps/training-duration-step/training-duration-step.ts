@@ -5,11 +5,13 @@ import {
   TRAINING_MIN_MINUTES,
 } from '../../../../../core/constants/nutrition';
 import { Gender } from '../../../../../core/models/profile';
+import { clamp } from '../../../../../core/utils/math';
 import {
   FigureBandTone,
   FigureBody,
   FigureExpression,
-  animatedFigure, computeFigureGeometry,
+  animatedFigure,
+  computeFigureGeometry,
 } from '../../../../../shared/components/figure';
 import { UiRuler } from '../../../../../shared/components/ui-ruler/ui-ruler';
 import { SignupStateService } from '../../../services/signup-state';
@@ -44,10 +46,6 @@ const BOB_DURATION_S = 1.6;
 const FIGURE_MOOD = 0.5;
 
 const RULER_STEP = 5;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
 
 /** Designet skriver buen med én og varigheden med to decimaler. */
 function round(value: number, factor: number): number {

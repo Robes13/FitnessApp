@@ -12,6 +12,7 @@ import {
   formatWeekdayAbbreviated,
   startOfDay,
 } from '../../../core/utils/date-format';
+import { clamp } from '../../../core/utils/math';
 import { NOW } from '../../../core/utils/now';
 import { HistoryEntry, HistoryFilter, HistoryFilterId, HistoryGroup } from '../models/history';
 import {
@@ -311,8 +312,4 @@ function groupByDay(entries: readonly HistoryEntry[]): readonly HistoryGroup[] {
 
 function signOf(value: number): string {
   return value > 0 ? '+' : TYPOGRAPHIC_MINUS;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }

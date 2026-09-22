@@ -12,6 +12,7 @@ import { STEPS_MAX, STEPS_MIN } from '../../../../../core/constants/nutrition';
 import { Gender } from '../../../../../core/models/profile';
 import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator';
 import { formatDecimal, formatInteger } from '../../../../../core/utils/date-format';
+import { clamp } from '../../../../../core/utils/math';
 import { animatedFigure, computeFigureGeometry } from '../../../../../shared/components/figure';
 import {
   RULER_BLEED_IDLE_STRONG,
@@ -114,10 +115,6 @@ interface WalkExtras {
   readonly medalRibbon: string;
   readonly speedY1: number;
   readonly speedY2: number;
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
 }
 
 /** Designet skriver animationernes varighed med to decimaler. */

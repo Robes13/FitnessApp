@@ -25,6 +25,12 @@ Dansk dato- og talformatering som i designet:
 Navnelister: `DAY_NAMES_SHORT`, `DAY_NAMES_LONG`, `DAY_LETTERS`, `MONTH_NAMES_LONG`,
 `MONTH_NAMES_SHORT`.
 
+## `math.ts`
+
+`clamp(value, min, max)` klemmer et tal fast til intervallet `[min, max]`. Brugt af
+`NutritionCalculator`, Hjem, Historik, Vægt og opret-flowets skridt-, længde- og
+intensitetstrin, så den samme afgrænsning ikke skrives lokalt i hver fil.
+
 ## `now.ts`
 
 `NOW` er et `InjectionToken<() => Date>`. Injicér det i stedet for at kalde `new Date()`, så
