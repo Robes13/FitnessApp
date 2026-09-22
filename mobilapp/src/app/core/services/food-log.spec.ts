@@ -1,3 +1,4 @@
+import { NOW } from '../utils/now';
 import { TestBed } from '@angular/core/testing';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { FoodItem, LoggedFood } from '../models/food';
@@ -30,6 +31,42 @@ describe('FoodLogService', () => {
 
   beforeEach(() => {
     storage = createFakeStorage();
+  });
+
+  it('clears yesterday before adding after midnight', () => {
+    let now = new Date(TEST_NOW);
+    TestBed.configureTestingModule({
+      providers: [
+        ...provideCoreTestEnvironment({ storage }),
+        { provide: NOW, useValue: () => new Date(now) },
+      ],
+    });
+    const service = TestBed.inject(FoodLogService);
+    const old = service.add(HAVREGRYN, 'snack');
+    now = new Date(2026, 8, 22, 1);
+    service.update(old.logId, { kcal: 999 });
+    expect(service.entries()).toEqual([]);
+    service.add(HAVREGRYN, 'morgen');
+    expect(service.totals().kcal).toBe(222);
+    expect(storedEntries()).toHaveLength(1);
+  });
+
+  it('clears the visible log at midnight without user input', () => {
+    vi.useFakeTimers();
+    try {
+      const now = new Date(2026, 8, 21, 23, 59, 59);
+      TestBed.configureTestingModule({ providers: provideCoreTestEnvironment({ storage, now }) });
+      const service = TestBed.inject(FoodLogService);
+      service.add(HAVREGRYN, 'snack');
+      now.setDate(22);
+      now.setHours(0, 0, 0, 0);
+      vi.advanceTimersByTime(1000);
+      expect(service.entries()).toEqual([]);
+      expect(service.totals().kcal).toBe(0);
+    } finally {
+      TestBed.resetTestingModule();
+      vi.useRealTimers();
+    }
   });
 
   it('starts empty on first run and writes nothing', () => {

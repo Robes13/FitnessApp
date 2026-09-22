@@ -1,4 +1,4 @@
-import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { DOCUMENT, DestroyRef, Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { newId } from '../utils/id';
 import { MEAL_IDS } from '../constants/meals';
 import { STORAGE_KEY } from '../constants/storage-key';
@@ -26,6 +26,8 @@ const EMPTY_MACROS: Macros = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
 export class FoodLogService {
   private readonly storage = inject(StorageService);
   private readonly now = inject(NOW);
+  private readonly document = inject(DOCUMENT);
+  private activeDate = this.today();
   private readonly entriesState = signal<readonly LoggedFood[]>([]);
   private readonly customFoodsState = signal<readonly FoodItem[]>(this.restoreCustomFoods());
 
@@ -52,9 +54,27 @@ export class FoodLogService {
 
   constructor() {
     this.restoreEntries();
+    let midnightTimer: ReturnType<typeof setTimeout>;
+    const refresh = (): void => {
+      clearTimeout(midnightTimer);
+      this.ensureCurrentDay();
+      const now = this.now();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      midnightTimer = setTimeout(refresh, midnight.getTime() - now.getTime());
+    };
+    refresh();
+    this.document.addEventListener?.('visibilitychange', refresh);
+    this.document.defaultView?.addEventListener?.('focus', refresh);
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(midnightTimer);
+      this.document.removeEventListener?.('visibilitychange', refresh);
+      this.document.defaultView?.removeEventListener?.('focus', refresh);
+    });
   }
 
   add(food: FoodItem, meal: MealId): LoggedFood {
+    this.ensureCurrentDay();
     const entry: LoggedFood = {
       ...food,
       logId: newId('log'),
@@ -66,12 +86,14 @@ export class FoodLogService {
   }
 
   update(logId: string, patch: Partial<Omit<LoggedFood, 'logId'>>): void {
+    this.ensureCurrentDay();
     this.setEntries(
       this.entriesState().map((entry) => (entry.logId === logId ? { ...entry, ...patch } : entry)),
     );
   }
 
   remove(logId: string): void {
+    this.ensureCurrentDay();
     this.setEntries(this.entriesState().filter((entry) => entry.logId !== logId));
   }
 
@@ -81,6 +103,14 @@ export class FoodLogService {
     this.customFoodsState.set([item, ...this.customFoodsState()]);
     this.storage.write(STORAGE_KEY.CUSTOM_FOODS, this.customFoodsState());
     return item;
+  }
+
+  private ensureCurrentDay(): void {
+    const today = this.today();
+    if (today !== this.activeDate) {
+      this.activeDate = today;
+      this.setEntries([]);
+    }
   }
 
   private setEntries(entries: readonly LoggedFood[]): void {

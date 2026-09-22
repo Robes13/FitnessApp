@@ -33,7 +33,8 @@ Ingen service kender til `shared/` eller `features/`.
 - **Ingen seed.** Alle stores starter tomme. Skærmene viser deres tomme tilstand, indtil
   brugeren selv registrerer noget – eller indtil backenden leverer data.
 - **Madloggen er dagens.** Den gemmes med dato; en ny dag starter tom. Egne varer gemmes
-  separat og bliver ved.
+  separat og bliver ved. Datoskift kontrolleres ved midnat, ved tilbagevenden til appen
+  og før ændringer i loggen, så gårsdagens mad aldrig gemmes som dagens.
 - **`completeSignup()`** markerer sessionen som logget ind men ubekræftet og "sender"
   bekræftelsesmailen via backenden. `AuthApi.register(profile, password)` kaldes af
   signup-flowet, der kender adgangskoden.
