@@ -40,6 +40,23 @@ Når arket åbner, flyttes fokus til panelet (`tabindex="-1"`), medmindre indhol
 taget fokus (fx et søgefelt med autofokus). Panelet har `role="dialog"`,
 `aria-modal="true"` og `aria-label` sat til titlen (inkl. accent).
 
+Samtidig huskes det element, der åbnede arket, og **fokus gives tilbage dertil**, når arket
+lukker eller destrueres — så tastatur- og skærmlæserbrugere lander på knappen, de kom fra, i
+stedet for på `<body>`. Tog arket aldrig fokus (indholdet havde det selv), rører komponenten
+ikke fokus ved luk.
+
+**Tab fanges i panelet.** Fordi panelet er `aria-modal="true"`, må Tab ikke føre ud i siden
+bagved. Komponenten lytter på `keydown.tab` og `keydown.shift.tab` på `document` og lukker
+ringen: fra det sidste fokuserbare element i panelet går Tab til det første, Shift+Tab fra det
+første (eller fra panelet selv) går til det sidste, og står fokus uden for panelet, hentes det
+tilbage til det første element. Har panelet ingen fokuserbare elementer, bliver fokus på
+panelet. Som med Escape er det **kun det øverste ark**, der fanger tasten. Indholdet bagved
+gøres ikke `inert` — fælden er nok, og `inert` ville også ramme stablede ark.
+
+Listen over fokuserbare elementer er eksporteret som `FOCUSABLE_SELECTOR`, så
+`BarcodeScanner` kan bruge den samme fælde på sit fuldskærms-overlay uden at duplikere
+selectoren.
+
 ## Titel
 
 `title` vises som display-overskrift, og `titleAccent` tilføjes orange efter et mellemrum:

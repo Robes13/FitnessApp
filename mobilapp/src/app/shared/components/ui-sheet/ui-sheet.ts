@@ -31,6 +31,19 @@ export type SheetTitleAccentTone = 'accent' | 'negative';
 const DEFAULT_CLOSE_LABEL = 'Luk';
 
 /**
+ * De elementer i panelet, Tab må lande på. Bruges til at holde fokus inde i det åbne ark –
+ * og af `BarcodeScanner`, hvis fuldskærms-overlay har samme behov.
+ */
+export const FOCUSABLE_SELECTOR = [
+  'button:not([disabled])',
+  '[href]',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
+/**
  * Åbne ark i den rækkefølge, de blev åbnet. Kun det øverste reagerer på Escape, så
  * stablede ark (fx "Ny samling" med en indlejret vare-søgning) lukker ét ad gangen.
  */
@@ -78,6 +91,8 @@ function isTopmost(sheet: UiSheet): boolean {
   host: {
     class: 'ui-sheet',
     '(document:keydown.escape)': 'onEscape($event)',
+    '(document:keydown.tab)': 'onTab($event, false)',
+    '(document:keydown.shift.tab)': 'onTab($event, true)',
   },
 })
 export class UiSheet {
@@ -108,6 +123,9 @@ export class UiSheet {
   private readonly document = inject(DOCUMENT);
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
 
+  /** Elementet, der havde fokus, da arket åbnede – fokus gives tilbage dertil ved luk. */
+  private previouslyFocused: HTMLElement | null = null;
+
   protected readonly dismissible = computed(() => !this.hideClose());
   protected readonly hasTitle = computed(() => this.title() !== '' || this.titleAccent() !== '');
   protected readonly hasHeader = computed(() => this.hasTitle() || this.dismissible());
@@ -126,14 +144,19 @@ export class UiSheet {
         registerOpen(this);
       } else {
         unregister(this);
+        this.restoreFocus();
       }
     });
-    inject(DestroyRef).onDestroy(() => unregister(this));
+    inject(DestroyRef).onDestroy(() => {
+      unregister(this);
+      this.restoreFocus();
+    });
 
     // Flyt fokus ind i panelet, når det åbner, medmindre indholdet selv har taget fokus.
     afterRenderEffect(() => {
       const panel = this.panel()?.nativeElement;
       if (panel && !panel.contains(this.document.activeElement)) {
+        this.rememberTrigger();
         panel.focus({ preventScroll: true });
       }
     });
@@ -153,9 +176,61 @@ export class UiSheet {
     this.requestClose();
   }
 
+  /**
+   * Holder Tab inde i panelet, så et `aria-modal`-ark ikke kan tabbes væk. Kun det øverste ark
+   * fanger tasten, så stablede ark opfører sig som med Escape. Retningen kommer fra
+   * host-bindingen (`keydown.tab` / `keydown.shift.tab`), da `$event` her kun er typet `Event`.
+   */
+  protected onTab(event: Event, backwards: boolean): void {
+    if (!this.open() || !isTopmost(this)) {
+      return;
+    }
+    const panel = this.panel()?.nativeElement;
+    if (!panel) {
+      return;
+    }
+    const focusable = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    const first = focusable.at(0);
+    const last = focusable.at(-1);
+    if (!first || !last) {
+      event.preventDefault();
+      panel.focus({ preventScroll: true });
+      return;
+    }
+    const active = this.document.activeElement;
+    if (!panel.contains(active)) {
+      event.preventDefault();
+      first.focus({ preventScroll: true });
+      return;
+    }
+    if (backwards && (active === first || active === panel)) {
+      event.preventDefault();
+      last.focus({ preventScroll: true });
+      return;
+    }
+    if (!backwards && active === last) {
+      event.preventDefault();
+      first.focus({ preventScroll: true });
+    }
+  }
+
   protected requestClose(): void {
     if (this.dismissible()) {
       this.closed.emit();
     }
+  }
+
+  /** Gemmer det element, der åbnede arket – kun første gang, arket tager fokus. */
+  private rememberTrigger(): void {
+    if (this.previouslyFocused === null) {
+      const active = this.document.activeElement;
+      this.previouslyFocused = active instanceof HTMLElement ? active : null;
+    }
+  }
+
+  /** Giver fokus tilbage til det gemte element. Gør intet, hvis arket aldrig tog fokus. */
+  private restoreFocus(): void {
+    this.previouslyFocused?.focus({ preventScroll: true });
+    this.previouslyFocused = null;
   }
 }

@@ -25,7 +25,7 @@ import { NutritionCalculator } from '../../../core/services/nutrition-calculator
 import { UiButton } from '../ui-button/ui-button';
 import { UiIcon } from '../ui-icon/ui-icon';
 import { UiIconButton } from '../ui-icon-button/ui-icon-button';
-import { UiSheet } from '../ui-sheet/ui-sheet';
+import { FOCUSABLE_SELECTOR, UiSheet } from '../ui-sheet/ui-sheet';
 import { UiTextInput } from '../ui-text-input/ui-text-input';
 
 /** Hvad der vises: kameraoverlay, resultat-ark eller "Ukendt vare"-ark (arkene ligger over overlayet). */
@@ -148,6 +148,8 @@ export function buildScanVerdict(kcalRemaining: number, item: FoodItem): ScanVer
   host: {
     class: 'barcode-scanner',
     '(document:keydown.escape)': 'onEscape($event)',
+    '(document:keydown.tab)': 'onTab($event, false)',
+    '(document:keydown.shift.tab)': 'onTab($event, true)',
   },
 })
 export class BarcodeScanner {
@@ -177,6 +179,8 @@ export class BarcodeScanner {
 
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
   private scanSubscription: Subscription | null = null;
+  /** Elementet, der havde fokus, da scanneren åbnede – fokus gives tilbage dertil ved luk. */
+  private previouslyFocused: HTMLElement | null = null;
 
   protected readonly frame = SCAN_FRAME;
   protected readonly barWeights = BARCODE_BAR_WEIGHTS;
@@ -277,6 +281,7 @@ export class BarcodeScanner {
         this.screen() === 'scanner' &&
         !overlay.contains(this.document.activeElement)
       ) {
+        this.rememberTrigger();
         overlay.focus({ preventScroll: true });
       }
     });
@@ -360,6 +365,45 @@ export class BarcodeScanner {
     this.finish();
   }
 
+  /**
+   * Holder Tab inde i kameraoverlayet, så et `aria-modal`-overlay ikke kan tabbes væk.
+   * Ligger et ark ovenpå (`screen() !== 'scanner'`), ejer `UiSheet` fælden – samme
+   * arbejdsdeling som for Escape. Retningen kommer fra host-bindingen, da `$event` her
+   * kun er typet `Event`.
+   */
+  protected onTab(event: Event, backwards: boolean): void {
+    if (!this.open() || this.screen() !== 'scanner') {
+      return;
+    }
+    const overlay = this.overlay()?.nativeElement;
+    if (!overlay) {
+      return;
+    }
+    const focusable = Array.from(overlay.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    const first = focusable.at(0);
+    const last = focusable.at(-1);
+    if (!first || !last) {
+      event.preventDefault();
+      overlay.focus({ preventScroll: true });
+      return;
+    }
+    const active = this.document.activeElement;
+    if (!overlay.contains(active)) {
+      event.preventDefault();
+      first.focus({ preventScroll: true });
+      return;
+    }
+    if (backwards && (active === first || active === overlay)) {
+      event.preventDefault();
+      last.focus({ preventScroll: true });
+      return;
+    }
+    if (!backwards && active === last) {
+      event.preventDefault();
+      first.focus({ preventScroll: true });
+    }
+  }
+
   private begin(): void {
     this.reset();
     if (this.autoStart()) {
@@ -375,6 +419,21 @@ export class BarcodeScanner {
   private stop(): void {
     this.cancelPending();
     this.reset();
+    this.restoreFocus();
+  }
+
+  /** Gemmer det element, der åbnede scanneren – kun første gang, overlayet tager fokus. */
+  private rememberTrigger(): void {
+    if (this.previouslyFocused === null) {
+      const active = this.document.activeElement;
+      this.previouslyFocused = active instanceof HTMLElement ? active : null;
+    }
+  }
+
+  /** Giver fokus tilbage til det gemte element. Gør intet, hvis overlayet aldrig tog fokus. */
+  private restoreFocus(): void {
+    this.previouslyFocused?.focus({ preventScroll: true });
+    this.previouslyFocused = null;
   }
 
   private reset(): void {

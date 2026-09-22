@@ -331,6 +331,21 @@ describe('BarcodeScanner', () => {
     expect(scanLine()).toBe('88%');
   });
 
+  it('gives focus back to the element that opened the scanner', () => {
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    trigger.focus();
+
+    setup();
+    expect(document.activeElement).toBe(root.querySelector('.barcode-scanner__overlay'));
+
+    host.open.set(false);
+    fixture.detectChanges();
+
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
   it('closes from the overlay close button and via Escape only while the scanner is on top', () => {
     setup();
 
@@ -350,6 +365,56 @@ describe('BarcodeScanner', () => {
 
     root.querySelector<HTMLButtonElement>('.barcode-scanner__header button')?.click();
     expect(host.closedCount).toBe(2);
+  });
+
+  it('holder Tab inde i overlayet, så længe scanneren ligger øverst', () => {
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+
+    setup();
+    const overlay = root.querySelector<HTMLElement>('.barcode-scanner__overlay');
+    const focusable = Array.from(
+      overlay?.querySelectorAll<HTMLElement>(
+        'button, input, [href], [tabindex]:not([tabindex="-1"])',
+      ) ?? [],
+    );
+    const first = focusable.at(0);
+    const last = focusable.at(-1);
+    expect(first).toBeDefined();
+    expect(last).toBeDefined();
+
+    // Tab fra det sidste element ruller rundt til det første i stedet for ud af overlayet.
+    last?.focus();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(document.activeElement).toBe(first);
+
+    // Shift+Tab fra det første ruller baglæns til det sidste.
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }),
+    );
+    expect(document.activeElement).toBe(last);
+
+    // Fokus uden for overlayet trækkes tilbage ind.
+    outside.focus();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(document.activeElement).toBe(first);
+
+    outside.remove();
+  });
+
+  it('overlader Tab til arket, når et ark ligger ovenpå scanneren', () => {
+    setup();
+    scanToResult();
+
+    const sheetButton = root.querySelector<HTMLElement>('.ui-sheet__panel button');
+    sheetButton?.focus();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    fixture.detectChanges();
+
+    // Scanneren har ikke revet fokus tilbage til kameraoverlayet.
+    const overlay = root.querySelector<HTMLElement>('.barcode-scanner__overlay');
+    expect(overlay?.contains(document.activeElement)).toBe(false);
   });
 });
 

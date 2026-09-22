@@ -87,3 +87,11 @@ Portionen skaleres med `NutritionCalculator.parseQuantity` + `scaleMacros`, så 
   designets `nfDisabled`. Der er ingen fejltekst i designet, så `UiFormError` bruges ikke.
 - Escape lukker overlayet, når det ligger øverst; ligger et ark ovenpå, håndterer `UiSheet`
   Escape, og scanneren lader det være.
+- **Tab holdes inde i overlayet.** Overlayet er `role="dialog" aria-modal="true"`, så Tab og
+  Shift+Tab ruller rundt mellem overlayets egne elementer i stedet for at forlade det. Fælden
+  bruger `FOCUSABLE_SELECTOR` fra `UiSheet` og følger samme arbejdsdeling som Escape: ligger et
+  ark ovenpå, ejer `UiSheet` fælden, og scanneren holder sig væk.
+- **Fokus gives tilbage.** Når overlayet åbner, flyttes fokus dertil, og det element, der åbnede
+  scanneren, huskes. Ved luk — og når komponenten destrueres — får det fokus igen, så
+  tastaturbrugere lander på knappen, de kom fra, i stedet for på `<body>`. Tog overlayet aldrig
+  fokus, rører komponenten ikke fokus.

@@ -88,8 +88,26 @@ class TitleSlotHost {
 })
 class TitleVariantsHost {}
 
+@Component({
+  imports: [UiSheet],
+  template: `
+    <button class="trigger" type="button" (click)="open.set(true)">Åbn</button>
+    <app-ui-sheet [open]="open()" title="Ny" titleAccent="samling" (closed)="open.set(false)">
+      <button class="one" type="button">Et</button>
+      <button class="two" type="button">To</button>
+    </app-ui-sheet>
+  `,
+})
+class TriggerHost {
+  readonly open = signal(false);
+}
+
 function pressEscape(): void {
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+}
+
+function pressTab(shiftKey = false): void {
+  document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey, bubbles: true }));
 }
 
 describe('UiSheet', () => {
@@ -158,6 +176,52 @@ describe('UiSheet', () => {
     const { dialog } = await setup();
 
     expect(document.activeElement).toBe(dialog());
+  });
+
+  it('gives focus back to the element that opened it when it closes', async () => {
+    TestBed.configureTestingModule({ imports: [TriggerHost] });
+    const fixture = TestBed.createComponent(TriggerHost);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const trigger = root.querySelector<HTMLButtonElement>('.trigger');
+
+    trigger?.focus();
+    trigger?.click();
+    await fixture.whenStable();
+    expect(document.activeElement).toBe(root.querySelector('[role="dialog"]'));
+
+    fixture.componentInstance.open.set(false);
+    await fixture.whenStable();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('wraps Tab and Shift+Tab inside the panel', async () => {
+    const { root, dialog } = await setup();
+    const first = root.querySelector<HTMLButtonElement>('.extra');
+    const last = root.querySelector<HTMLButtonElement>('.footer');
+
+    last?.focus();
+    pressTab();
+    expect(document.activeElement).toBe(first);
+
+    pressTab(true);
+    expect(document.activeElement).toBe(last);
+
+    dialog()?.focus();
+    pressTab(true);
+    expect(document.activeElement).toBe(last);
+  });
+
+  it('pulls focus back into the panel when it sits outside', async () => {
+    const { root } = await setup();
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+    outside.focus();
+
+    pressTab();
+
+    expect(document.activeElement).toBe(root.querySelector('.extra'));
+    outside.remove();
   });
 
   it('emits closed from the close button', async () => {
