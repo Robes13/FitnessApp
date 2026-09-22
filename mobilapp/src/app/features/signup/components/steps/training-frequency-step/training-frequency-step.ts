@@ -5,7 +5,8 @@ import { DAY_LETTERS, DAY_NAMES_LONG } from '../../../../../core/utils/date-form
 import {
   FigureBandTone,
   FigureBody,
-  animatedFigure, computeFigureGeometry,
+  animatedFigure,
+  computeFigureGeometry,
 } from '../../../../../shared/components/figure';
 import { SignupStateService } from '../../../services/signup-state';
 

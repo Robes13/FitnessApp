@@ -9,7 +9,8 @@ import { formatDecimal } from '../../../../core/utils/date-format';
 import {
   FigureBody,
   FigureExpression,
-  animatedFigure, computeFigureGeometry,
+  animatedFigure,
+  computeFigureGeometry,
 } from '../../../../shared/components/figure';
 import {
   PUPIL_LOOK_X,

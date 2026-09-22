@@ -3,7 +3,8 @@ import {
   FigureBandTone,
   FigureBody,
   FigureExpression,
-  animatedFigure, computeFigureGeometry,
+  animatedFigure,
+  computeFigureGeometry,
 } from '../../../../../../shared/components/figure';
 import { CAKE_NUMBER_MIN_AGE, computeCakeGeometry } from './cake-geometry';
 

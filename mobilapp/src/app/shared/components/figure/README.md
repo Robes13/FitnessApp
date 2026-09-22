@@ -6,13 +6,15 @@ Vægt-siden. Mappen indeholder geometrien, kroppen som genbrugelig SVG-del og en
 
 ## Filer
 
-| Fil                   | Indhold                                                                                                                                    |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `figure-geometry.ts`  | `FigureGeometry` + `computeFigureGeometry(weightKg, heightCm, mood)` – eksakt port af designets `figure(w, h, mood)`.                      |
-| `figure-body.ts`      | `FigureBody` (`g[app-figure-body]`) – kroppen som attribut-komponent på et SVG `<g>`. `FigureExpression`, `FigureBandTone`.                |
-| `figure-band-tone.ts` | `bandToneForGender(gender)` – designets `bandColor`: kvinde → pink, andet → hvidt, ellers orange. Deles af alle skærme, der viser figuren. |
-| `figure.ts`           | `Figure` (`app-figure`) – færdig SVG (`viewBox 0 0 200 300`) med krop og valgfrit loft/lampe.                                              |
-| `index.ts`            | Barrel: `Figure`, `FigureBody`, `computeFigureGeometry`, typerne.                                                                          |
+| Fil                   | Indhold                                                                                                                                            |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `figure-geometry.ts`  | `FigureGeometry` + `computeFigureGeometry(weightKg, heightCm, mood)` – eksakt port af designets `figure(w, h, mood)`.                              |
+| `figure-body.ts`      | `FigureBody` (`g[app-figure-body]`) – kroppen som attribut-komponent på et SVG `<g>`. `FigureExpression`, `FigureBandTone`.                        |
+| `figure-band-tone.ts` | `bandToneForGender(gender)` – designets `bandColor`: kvinde → pink, andet → hvidt, ellers orange. Deles af alle skærme, der viser figuren.         |
+| `figure.ts`           | `Figure` (`app-figure`) – færdig SVG (`viewBox 0 0 200 300`) med krop og valgfrit loft/lampe.                                                      |
+| `figure-motion.ts`    | `animatedFigure(factory, enabled?)` og `interpolateFigure(from, to, fraction)` – én afbrydelig frame-animation af hele geometrien.                 |
+| `figure-tempo.ts`     | `FigureTempo` (`[appFigureTempo]="sekunder"`) – skifter tempo på gentagne SVG-animationer uden at nulstille deres position.                        |
+| `index.ts`            | Barrel: `Figure`, `FigureBody`, `FigureTempo`, `animatedFigure`, `bandToneForGender`, `computeFigureGeometry`, `defaultFigureExpression`, typerne. |
 
 Importér fra `shared/components/figure` (den ene sanktionerede barrel i `shared`).
 
@@ -56,7 +58,7 @@ Tegnerækkefølgen er designets: skygge → ben → sko → arme → krop → b�
 | `showHead`                     | `true`     | Slå hovedet fra (fx når scenen tegner hoved med hat)                                                                   |
 | `showShadow`                   | `true`     | Skyggeellipsen under figuren                                                                                           |
 | `shaded`                       | `false`    | Dybdeskygge som i træningsscenerne: venstre ben/arm/sko mørkere, højre arm lysere                                      |
-| `animated`                     | `true`     | Farve- og opacitetsovergange; scenens geometri styres samlet af `animatedFigure`                                      |
+| `animated`                     | `true`     | Farve- og opacitetsovergange; scenens geometri styres samlet af `animatedFigure`                                       |
 | `expression`                   | `{}`       | `Partial<FigureExpression>` – overskriver ansigtet felt for felt                                                       |
 
 `FigureExpression` dækker smil-opacitet, åben mund/tunge, bryn (rotation + opacitet), kinder

@@ -4,7 +4,8 @@ import { formatDecimal, formatWeightKg } from '../../../../../core/utils/date-fo
 import {
   FigureBody,
   bandToneForGender,
-  animatedFigure, computeFigureGeometry,
+  animatedFigure,
+  computeFigureGeometry,
 } from '../../../../../shared/components/figure';
 import { UiRuler } from '../../../../../shared/components/ui-ruler/ui-ruler';
 import { SignupStateService } from '../../../services/signup-state';

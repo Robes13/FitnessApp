@@ -1,4 +1,14 @@
-import { DOCUMENT, DestroyRef, ElementRef, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+  DOCUMENT,
+  DestroyRef,
+  ElementRef,
+  Signal,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { FigureGeometry } from './figure-geometry';
 
 const NUMBER = /-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi;
@@ -19,18 +29,30 @@ function blendPath(from: string, to: string, fraction: number): string {
   });
 }
 
-export function interpolateFigure(from: FigureGeometry, to: FigureGeometry, fraction: number): FigureGeometry {
+export function interpolateFigure(
+  from: FigureGeometry,
+  to: FigureGeometry,
+  fraction: number,
+): FigureGeometry {
   if (fraction >= 1) return to;
-  return Object.fromEntries(Object.entries(to).map(([key, value]) => {
-    const initial = from[key as keyof FigureGeometry];
-    return [key, typeof value === 'number' && typeof initial === 'number'
-      ? initial + (value - initial) * fraction
-      : blendPath(String(initial), String(value), fraction)];
-  })) as unknown as FigureGeometry;
+  return Object.fromEntries(
+    Object.entries(to).map(([key, value]) => {
+      const initial = from[key as keyof FigureGeometry];
+      return [
+        key,
+        typeof value === 'number' && typeof initial === 'number'
+          ? initial + (value - initial) * fraction
+          : blendPath(String(initial), String(value), fraction),
+      ];
+    }),
+  ) as unknown as FigureGeometry;
 }
 
 /** One interruptible clock for the entire scene, including props derived from geometry. */
-export function animatedFigure(factory: () => FigureGeometry, enabled: () => boolean = () => true): Signal<FigureGeometry> {
+export function animatedFigure(
+  factory: () => FigureGeometry,
+  enabled: () => boolean = () => true,
+): Signal<FigureGeometry> {
   const target = computed(factory);
   const visible = signal<FigureGeometry | null>(null);
   const view = inject(DOCUMENT).defaultView;

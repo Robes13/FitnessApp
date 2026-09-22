@@ -5,7 +5,11 @@ import { INTENSITIES, RPE_MAX, RPE_MIN } from '../../../../../core/constants/nut
 import { IntensityDefinition } from '../../../../../core/models/profile';
 import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator';
 import { NOW } from '../../../../../core/utils/now';
-import { FigureBody, animatedFigure, computeFigureGeometry } from '../../../../../shared/components/figure';
+import {
+  FigureBody,
+  animatedFigure,
+  computeFigureGeometry,
+} from '../../../../../shared/components/figure';
 import { UiIcon } from '../../../../../shared/components/ui-icon/ui-icon';
 import { UiRowButton } from '../../../../../shared/components/ui-row-button/ui-row-button';
 import { UiTextInput } from '../../../../../shared/components/ui-text-input/ui-text-input';

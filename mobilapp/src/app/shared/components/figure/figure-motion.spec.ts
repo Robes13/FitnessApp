@@ -24,26 +24,32 @@ describe('figure motion', () => {
     let preferenceListener: (() => void) | undefined;
     const preference = {
       matches: false,
-      addEventListener: (_type: string, listener: () => void): void => { preferenceListener = listener; },
+      addEventListener: (_type: string, listener: () => void): void => {
+        preferenceListener = listener;
+      },
       removeEventListener: vi.fn(),
     };
     const element = document.createElement('div');
     element.style.setProperty('--duration-fast', '120ms');
     vi.stubGlobal('matchMedia', () => preference);
     vi.spyOn(window.performance, 'now').mockImplementation(() => now);
-    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => {
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
       callbacks.set(++id, callback);
       return id;
     });
-    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(key => { callbacks.delete(key); });
-    TestBed.configureTestingModule({ providers: [{ provide: ElementRef, useValue: new ElementRef(element) }] });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((key) => {
+      callbacks.delete(key);
+    });
+    TestBed.configureTestingModule({
+      providers: [{ provide: ElementRef, useValue: new ElementRef(element) }],
+    });
     const target = signal(computeFigureGeometry(75, 178));
     const visible = TestBed.runInInjectionContext(() => animatedFigure(target));
     const tick = (time: number): void => {
       now = time;
       const pending = [...callbacks.values()];
       callbacks.clear();
-      pending.forEach(callback => callback(now));
+      pending.forEach((callback) => callback(now));
     };
     try {
       TestBed.tick();

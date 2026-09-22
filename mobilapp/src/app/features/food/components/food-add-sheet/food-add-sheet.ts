@@ -141,9 +141,7 @@ export class FoodAddSheet {
     () => !this.isEditing() && this.pickerStep() !== 'new-food',
   );
   /** Designets `addTabsVisible`: fanerne hører kun til søgetrinnet. */
-  protected readonly showTabs = computed(
-    () => !this.isEditing() && this.pickerStep() === 'search',
-  );
+  protected readonly showTabs = computed(() => !this.isEditing() && this.pickerStep() === 'search');
   /** Redigering går altid gennem vælgeren, uanset hvilken fane der sidst var valgt. */
   protected readonly showPicker = computed(() => this.isEditing() || this.tab() === 'varer');
 

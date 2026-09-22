@@ -43,8 +43,8 @@ export class Figure {
   readonly expression = input<Partial<FigureExpression>>({});
   readonly ariaLabel = input(DEFAULT_ARIA_LABEL);
 
-  readonly geometry = animatedFigure(() =>
-    computeFigureGeometry(this.weightKg(), this.heightCm(), this.mood()),
+  readonly geometry = animatedFigure(
+    () => computeFigureGeometry(this.weightKg(), this.heightCm(), this.mood()),
     () => this.animated(),
   );
 

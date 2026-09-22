@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { FigureBody, animatedFigure, computeFigureGeometry } from '../../../../../shared/components/figure';
+import {
+  FigureBody,
+  animatedFigure,
+  computeFigureGeometry,
+} from '../../../../../shared/components/figure';
 import {
   SegmentOption,
   UiSegmentedControl,

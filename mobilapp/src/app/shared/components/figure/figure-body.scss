@@ -132,7 +132,10 @@
  * farver og opacitet, ellers får enkelte kropsdele endnu en forsinkelse efter hvert frame.
  */
 :host(.figure-body--animated) .figure-body__part {
-  transition: fill var(--duration-fast) linear, stroke var(--duration-fast) linear, opacity var(--duration-fast) linear;
+  transition:
+    fill var(--duration-fast) linear,
+    stroke var(--duration-fast) linear,
+    opacity var(--duration-fast) linear;
 }
 
 :host(.figure-body--animated) .figure-body__head {
