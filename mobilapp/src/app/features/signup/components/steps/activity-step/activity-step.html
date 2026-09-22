@@ -51,7 +51,7 @@
     >
       <g
         class="activity-step__ground"
-        [style.animation-duration.s]="groundDuration()"
+        [appFigureTempo]="groundDuration()"
         [style.animation-play-state]="walkPlayState()"
       >
         @for (dash of groundDashes; track dash.x) {
@@ -97,13 +97,13 @@
 
       <g
         class="activity-step__bob"
-        [style.animation-duration.s]="walkDuration()"
+        [appFigureTempo]="walkDuration()"
         [style.animation-play-state]="walkPlayState()"
       >
         <g
           class="activity-step__stride activity-step__stride--back"
           [style.transform-origin]="walk().backLegOrigin"
-          [style.animation-duration.s]="walkDuration()"
+          [appFigureTempo]="walkDuration()"
           [style.animation-play-state]="walkPlayState()"
         >
           <rect
@@ -127,7 +127,7 @@
         <g
           class="activity-step__swing activity-step__swing--back"
           [style.transform-origin]="walk().backArmOrigin"
-          [style.animation-duration.s]="walkDuration()"
+          [appFigureTempo]="walkDuration()"
           [style.animation-play-state]="walkPlayState()"
         >
           <rect
@@ -143,7 +143,7 @@
         <g
           class="activity-step__stride activity-step__stride--front"
           [style.transform-origin]="walk().frontLegOrigin"
-          [style.animation-duration.s]="walkDuration()"
+          [appFigureTempo]="walkDuration()"
           [style.animation-play-state]="walkPlayState()"
         >
           <rect
@@ -200,7 +200,7 @@
         <g
           class="activity-step__swing activity-step__swing--front"
           [style.transform-origin]="walk().frontArmOrigin"
-          [style.animation-duration.s]="walkDuration()"
+          [appFigureTempo]="walkDuration()"
           [style.animation-play-state]="walkPlayState()"
         >
           <rect
@@ -253,7 +253,7 @@
       </g>
 
       <g class="activity-step__dog" [style.opacity]="dogOpacity()">
-        <g class="activity-step__dog-trot" [style.animation-duration.s]="trotDuration">
+        <g class="activity-step__dog-trot" [appFigureTempo]="trotDuration">
           <ellipse class="activity-step__shadow" cx="34" cy="288" rx="17" ry="4" />
           <rect class="activity-step__dog-body" x="18" y="264" width="30" height="16" rx="8" />
           <rect class="activity-step__dog-body" x="20" y="276" width="6" height="12" rx="3" />
@@ -272,10 +272,10 @@
         </g>
       </g>
 
-      @for (drop of sweat(); track drop.path) {
+      @for (drop of sweat(); track $index) {
         <g
           class="activity-step__sweat"
-          [style.animation-duration.s]="drop.duration"
+          [appFigureTempo]="drop.duration"
           [style.animation-delay.s]="drop.delay"
         >
           <path class="activity-step__sweat-drop" [attr.d]="drop.path" />
@@ -313,7 +313,7 @@
       <path
         class="activity-step__tv-beam"
         d="M58 202 L120 214 L120 250 L58 234 Z"
-        [style.animation-duration.s]="tvGlowDuration"
+        [appFigureTempo]="tvGlowDuration"
       />
       <ellipse class="activity-step__shadow" cx="140" cy="292" rx="56" ry="6" />
       <rect class="activity-step__sofa-back" x="112" y="222" width="82" height="44" rx="12" />
@@ -346,7 +346,7 @@
         stroke-width="2.4"
         stroke-linecap="round"
       />
-      <g class="activity-step__snooze" [style.animation-duration.s]="tvGlowDuration">
+      <g class="activity-step__snooze" [appFigureTempo]="tvGlowDuration">
         <circle class="activity-step__snooze-dot" cx="172" cy="186" r="3" />
         <circle class="activity-step__snooze-dot" cx="180" cy="176" r="4.5" />
         <circle class="activity-step__snooze-dot" cx="190" cy="164" r="6" />

@@ -44,3 +44,7 @@ den.
   som ikke skifter med temaet.
 - Designets håndklæde (`towelOp` fra 1,5 kg fremgang) er beregnet i prototypens logik, men
   **tegnes ikke** i dens template. Det er derfor udeladt her.
+
+Figurens koordinater opdateres samlet gennem `animatedFigure`, så kropsdele og afledte
+rekvisitter deler samme frame ved hurtige inputskift. Se fælles figur-dokumentation for
+afbrydelse, tempo og reduceret bevægelse.

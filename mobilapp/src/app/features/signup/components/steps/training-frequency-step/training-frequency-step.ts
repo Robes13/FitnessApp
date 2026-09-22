@@ -1,11 +1,11 @@
+import { FigureTempo } from '../../../../../shared/components/figure';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Gender } from '../../../../../core/models/profile';
 import { DAY_LETTERS, DAY_NAMES_LONG } from '../../../../../core/utils/date-format';
 import {
   FigureBandTone,
   FigureBody,
-  FigureGeometry,
-  computeFigureGeometry,
+  animatedFigure, computeFigureGeometry,
 } from '../../../../../shared/components/figure';
 import { SignupStateService } from '../../../services/signup-state';
 
@@ -71,7 +71,7 @@ function bandToneFor(gender: Gender | null): FigureBandTone {
  */
 @Component({
   selector: 'app-training-frequency-step',
-  imports: [FigureBody],
+  imports: [FigureTempo, FigureBody],
   templateUrl: './training-frequency-step.html',
   styleUrl: './training-frequency-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -118,7 +118,7 @@ export class TrainingFrequencyStep {
     }));
   });
 
-  protected readonly figure = computed<FigureGeometry>(() =>
+  protected readonly figure = animatedFigure(() =>
     computeFigureGeometry(
       this.state.weightKg(),
       this.state.heightCm(),

@@ -3,7 +3,7 @@ import {
   FigureBandTone,
   FigureBody,
   FigureExpression,
-  computeFigureGeometry,
+  animatedFigure, computeFigureGeometry,
 } from '../../../../../../shared/components/figure';
 import { CAKE_NUMBER_MIN_AGE, computeCakeGeometry } from './cake-geometry';
 
@@ -57,7 +57,7 @@ export class BirthdayCake {
   /** Designets `tooYoung`: en valgt dato, der giver en alder under 16. */
   protected readonly tooYoung = computed(() => this.age() > 0 && this.age() < MIN_AGE);
 
-  protected readonly geometry = computed(() => {
+  protected readonly geometry = animatedFigure(() => {
     const mood = this.tooYoung() ? MOOD_SAD : this.age() >= MIN_AGE ? MOOD_HAPPY : MOOD_NEUTRAL;
     return computeFigureGeometry(this.weightKg(), this.heightCm(), mood);
   });

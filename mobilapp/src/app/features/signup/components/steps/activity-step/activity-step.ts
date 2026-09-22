@@ -1,3 +1,4 @@
+import { FigureTempo } from '../../../../../shared/components/figure';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -11,7 +12,7 @@ import { STEPS_MAX, STEPS_MIN } from '../../../../../core/constants/nutrition';
 import { Gender } from '../../../../../core/models/profile';
 import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator';
 import { formatDecimal, formatInteger } from '../../../../../core/utils/date-format';
-import { FigureGeometry, computeFigureGeometry } from '../../../../../shared/components/figure';
+import { animatedFigure, computeFigureGeometry } from '../../../../../shared/components/figure';
 import {
   RULER_BLEED_IDLE_STRONG,
   RulerLabelFormatter,
@@ -167,7 +168,7 @@ const GROUND_DASHES: readonly GroundDash[] = Array.from(
  */
 @Component({
   selector: 'app-activity-step',
-  imports: [UiRuler],
+  imports: [FigureTempo, UiRuler],
   templateUrl: './activity-step.html',
   styleUrl: './activity-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -227,7 +228,7 @@ export class ActivityStep {
     this.confettiOn() ? CONFETTI_PARTICLES : [],
   );
 
-  protected readonly figure = computed<FigureGeometry>(() =>
+  protected readonly figure = animatedFigure(() =>
     computeFigureGeometry(this.state.weightKg(), this.state.heightCm()),
   );
 

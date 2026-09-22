@@ -132,14 +132,14 @@
 
   &__shadow {
     fill: var(--color-figure-shadow);
-    transition: all var(--duration-instant) linear;
+    transition: none;
   }
 
   /* Silhuetten af kroppen i dag – konstant grå i begge temaer. */
   &__ghost {
     opacity: 0.28;
     stroke: var(--color-figure-ghost);
-    transition: all var(--duration-instant) linear;
+    transition: none;
   }
 
   /* Linealen går ud til skærmkanten, som i designet. */

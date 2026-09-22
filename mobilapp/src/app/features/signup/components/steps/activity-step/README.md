@@ -26,3 +26,7 @@ Signup-trinnet `activity` (`app-activity-step`): "Hvor mange **skridt?**".
   men er aldrig tegnet i prototypens skabelon. Her er de to neutrale streger bag figuren.
 - Tekstspalternes bredde er sat i `ch` frem for designets px, så der ikke står layout-px i
   stylesheetet.
+
+Figurens koordinater opdateres samlet gennem `animatedFigure`, så kropsdele og afledte
+rekvisitter deler samme frame ved hurtige inputskift. Se fælles figur-dokumentation for
+afbrydelse, tempo og reduceret bevægelse.

@@ -1,3 +1,4 @@
+import { FigureTempo } from '../../../../../shared/components/figure';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import {
   TRAINING_MAX_MINUTES,
@@ -8,8 +9,7 @@ import {
   FigureBandTone,
   FigureBody,
   FigureExpression,
-  FigureGeometry,
-  computeFigureGeometry,
+  animatedFigure, computeFigureGeometry,
 } from '../../../../../shared/components/figure';
 import { UiRuler } from '../../../../../shared/components/ui-ruler/ui-ruler';
 import { SignupStateService } from '../../../services/signup-state';
@@ -70,7 +70,7 @@ function bandToneFor(gender: Gender | null): FigureBandTone {
  */
 @Component({
   selector: 'app-training-duration-step',
-  imports: [FigureBody, UiRuler],
+  imports: [FigureTempo, FigureBody, UiRuler],
   templateUrl: './training-duration-step.html',
   styleUrl: './training-duration-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -134,7 +134,7 @@ export class TrainingDurationStep {
     ),
   );
 
-  protected readonly figure = computed<FigureGeometry>(() =>
+  protected readonly figure = animatedFigure(() =>
     computeFigureGeometry(this.state.weightKg(), this.state.heightCm(), FIGURE_MOOD),
   );
 

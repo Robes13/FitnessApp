@@ -22,3 +22,7 @@ Signup-trinnet `training-frequency` (`app-training-frequency-step`): "Hvor ofte 
   state.
 - Trinnet er altid "gyldigt": nul træningsdage er et lovligt svar, og servicen springer så
   varighed og intensitet over.
+
+Figurens koordinater opdateres samlet gennem `animatedFigure`, så kropsdele og afledte
+rekvisitter deler samme frame ved hurtige inputskift. Se fælles figur-dokumentation for
+afbrydelse, tempo og reduceret bevægelse.

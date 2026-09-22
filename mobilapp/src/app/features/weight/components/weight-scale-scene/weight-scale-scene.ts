@@ -9,7 +9,7 @@ import { formatDecimal } from '../../../../core/utils/date-format';
 import {
   FigureBody,
   FigureExpression,
-  computeFigureGeometry,
+  animatedFigure, computeFigureGeometry,
 } from '../../../../shared/components/figure';
 import {
   PUPIL_LOOK_X,
@@ -67,7 +67,7 @@ export class WeightScaleScene {
   protected readonly sweatPath = sweatPath;
   protected readonly steamPath = steamPath;
 
-  protected readonly geometry = computed(() =>
+  protected readonly geometry = animatedFigure(() =>
     computeFigureGeometry(this.weightKg(), this.heightCm(), sceneMood(this.progressKg())),
   );
   protected readonly bandTone = computed(() => sceneBandTone(this.progressKg()));

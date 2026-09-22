@@ -17,3 +17,7 @@ Signup-trinnet `training-duration` (`app-training-duration-step`): "Hvor længe 
   kun øjne og smil. Kinderne slås fra med `expression = { cheekRadius: 0 }`.
 - Rotationerne i scenen bruger procent af `viewBox`'en (`transform-box: view-box`), så der
   ikke står SVG-koordinater i stylesheetet.
+
+Figurens koordinater opdateres samlet gennem `animatedFigure`, så kropsdele og afledte
+rekvisitter deler samme frame ved hurtige inputskift. Se fælles figur-dokumentation for
+afbrydelse, tempo og reduceret bevægelse.

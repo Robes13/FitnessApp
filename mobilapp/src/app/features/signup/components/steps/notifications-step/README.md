@@ -26,3 +26,7 @@ figuren bliver højere eller bredere. Ophænget sættes med `transform-box: view
 `transform-origin` regnes i figurens egne viewBox-enheder.
 
 Scenens tempo (0,9 s) er designets eget og hører ikke til `--duration-*`-skalaen.
+
+Figurens koordinater opdateres samlet gennem `animatedFigure`, så kropsdele og afledte
+rekvisitter deler samme frame ved hurtige inputskift. Se fælles figur-dokumentation for
+afbrydelse, tempo og reduceret bevægelse.

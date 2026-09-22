@@ -4,7 +4,7 @@ import { formatDecimal, formatWeightKg } from '../../../../../core/utils/date-fo
 import {
   FigureBody,
   bandToneForGender,
-  computeFigureGeometry,
+  animatedFigure, computeFigureGeometry,
 } from '../../../../../shared/components/figure';
 import { UiRuler } from '../../../../../shared/components/ui-ruler/ui-ruler';
 import { SignupStateService } from '../../../services/signup-state';
@@ -92,7 +92,7 @@ export class GoalWeightStep {
     return this.state.goal() === 'tabe' ? HINT_TOO_LOW : HINT_TOO_HIGH;
   });
 
-  protected readonly goalGeometry = computed(() =>
+  protected readonly goalGeometry = animatedFigure(() =>
     computeFigureGeometry(
       this.goalWeightKg(),
       this.state.heightCm(),
@@ -100,7 +100,7 @@ export class GoalWeightStep {
     ),
   );
   /** Kroppen i dag – tegnes som stiplet omrids bag figuren. */
-  protected readonly currentGeometry = computed(() =>
+  protected readonly currentGeometry = animatedFigure(() =>
     computeFigureGeometry(this.state.weightKg(), this.state.heightCm()),
   );
   protected readonly bandTone = computed(() => bandToneForGender(this.state.gender()));

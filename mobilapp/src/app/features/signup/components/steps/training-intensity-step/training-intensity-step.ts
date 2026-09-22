@@ -1,3 +1,4 @@
+import { FigureTempo } from '../../../../../shared/components/figure';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { INTENSITIES, RPE_MAX, RPE_MIN } from '../../../../../core/constants/nutrition';
 import { IntensityId } from '../../../../../core/models/profile';
@@ -8,8 +9,7 @@ import {
   FigureBody,
   FigureCheekTone,
   FigureExpression,
-  FigureGeometry,
-  computeFigureGeometry,
+  animatedFigure, computeFigureGeometry,
 } from '../../../../../shared/components/figure';
 import { UiOptionCard } from '../../../../../shared/components/ui-option-card/ui-option-card';
 import { SignupStateService } from '../../../services/signup-state';
@@ -172,7 +172,7 @@ function barClasses(index: number, reached: boolean, selected: boolean, tone: To
  */
 @Component({
   selector: 'app-training-intensity-step',
-  imports: [FigureBody, UiOptionCard],
+  imports: [FigureTempo, FigureBody, UiOptionCard],
   templateUrl: './training-intensity-step.html',
   styleUrl: './training-intensity-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -251,7 +251,7 @@ export class TrainingIntensityStep {
     });
   });
 
-  protected readonly figure = computed<FigureGeometry>(() =>
+  protected readonly figure = animatedFigure(() =>
     computeFigureGeometry(this.state.weightKg(), this.state.heightCm(), this.scene().mood),
   );
 

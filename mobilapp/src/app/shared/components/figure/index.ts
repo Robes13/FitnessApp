@@ -1,4 +1,6 @@
 export { Figure } from './figure';
+export { animatedFigure } from './figure-motion';
+export { FigureTempo } from './figure-tempo';
 export {
   FigureBody,
   defaultFigureExpression,

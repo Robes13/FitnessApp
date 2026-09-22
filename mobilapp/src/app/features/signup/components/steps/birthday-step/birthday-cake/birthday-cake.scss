@@ -14,7 +14,7 @@
   &__arm {
     fill: none;
     stroke: var(--color-figure);
-    transition: all var(--duration-slow) ease;
+    transition: stroke var(--duration-fast) linear;
   }
 
   &__hat,

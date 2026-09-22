@@ -22,3 +22,7 @@ Signup-trinnet `training-intensity` (`app-training-intensity-step`): "Hvor **hå
 - Både søjleskalaen og fliserne sætter `trainingRpe` direkte i `SignupStateService` – 3, 6
   eller 9 fra fliserne, det trykkede tal fra skalaen.
 - Uden et valg er trinnet ikke gyldigt (`canContinue`), og figuren står stille.
+
+Figurens koordinater opdateres samlet gennem `animatedFigure`, så kropsdele og afledte
+rekvisitter deler samme frame ved hurtige inputskift. Se fælles figur-dokumentation for
+afbrydelse, tempo og reduceret bevægelse.

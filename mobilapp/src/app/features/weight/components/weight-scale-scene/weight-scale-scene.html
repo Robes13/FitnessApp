@@ -39,7 +39,7 @@
     [attr.ry]="puddle().ry"
   />
 
-  @for (drop of sweat(); track drop.x + '-' + drop.y) {
+  @for (drop of sweat(); track $index) {
     <g
       class="weight-scale-scene__sweat"
       [style.animation-duration.s]="drop.duration"

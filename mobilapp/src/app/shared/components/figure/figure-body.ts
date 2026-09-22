@@ -98,7 +98,7 @@ export class FigureBody {
   readonly showShadow = input(true, { transform: booleanAttribute });
   /** Dybdeskygge som i træningsscenerne: venstre ben/arm/sko mørkere, højre arm lysere. */
   readonly shaded = input(false, { transform: booleanAttribute });
-  /** Korte overgange, der følger linealen uden forsinkelse, når geometrien ændrer sig. */
+  /** Farve- og opacitetsovergange; scenen styrer geometrien med animatedFigure. */
   readonly animated = input(true, { transform: booleanAttribute });
   readonly expression = input<Partial<FigureExpression>>({});
 

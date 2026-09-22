@@ -34,7 +34,7 @@
           [attr.d]="line.path"
           stroke-width="3"
           stroke-linecap="round"
-          [style.animation-duration.s]="heatDuration"
+          [appFigureTempo]="heatDuration"
           [style.animation-delay.s]="line.delay"
         />
       }
@@ -42,7 +42,7 @@
 
     <g
       class="training-intensity-step__bob"
-      [style.animation-duration.s]="bobDuration()"
+      [appFigureTempo]="bobDuration()"
       [style.animation-play-state]="bobPlayState()"
     >
       <g
@@ -55,10 +55,10 @@
       ></g>
     </g>
 
-    @for (drop of sweat(); track drop.path) {
+    @for (drop of sweat(); track $index) {
       <g
         class="training-intensity-step__sweat"
-        [style.animation-duration.s]="drop.duration"
+        [appFigureTempo]="drop.duration"
         [style.animation-delay.s]="drop.delay"
       >
         <path class="training-intensity-step__sweat-drop" [attr.d]="drop.path" />

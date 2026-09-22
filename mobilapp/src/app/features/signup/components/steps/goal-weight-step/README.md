@@ -29,3 +29,7 @@ manuelt før omridset, så lagrækkefølgen matcher designet; derfor er `showSha
 
 De tre faste mål fra designet (tekstbredder og figurens maksbredde) bindes som CSS-variabler
 fra `GOAL_WEIGHT_LAYOUT` i `.ts` — samme mønster som `BarcodeScanner`.
+
+Figurens koordinater opdateres samlet gennem `animatedFigure`, så kropsdele og afledte
+rekvisitter deler samme frame ved hurtige inputskift. Se fælles figur-dokumentation for
+afbrydelse, tempo og reduceret bevægelse.

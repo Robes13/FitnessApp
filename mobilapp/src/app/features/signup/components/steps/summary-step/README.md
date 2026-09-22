@@ -32,3 +32,7 @@ højre hånd, uanset vægt og højde.
 Rækkebyggeren er en ren funktion med egen spec, fordi sammensætningen af "Mål" og "Træning"
 har flere tilfælde (uden pace, uden målvægt ved "holde vægten", ingen faste træninger).
 `SignupStateService.canContinue` kræver en gyldig e-mail **og** et flueben.
+
+Figurens koordinater opdateres samlet gennem `animatedFigure`, så kropsdele og afledte
+rekvisitter deler samme frame ved hurtige inputskift. Se fælles figur-dokumentation for
+afbrydelse, tempo og reduceret bevægelse.

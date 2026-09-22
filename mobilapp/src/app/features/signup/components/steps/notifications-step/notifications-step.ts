@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { FigureBody, computeFigureGeometry } from '../../../../../shared/components/figure';
+import { FigureBody, animatedFigure, computeFigureGeometry } from '../../../../../shared/components/figure';
 import {
   SegmentOption,
   UiSegmentedControl,
@@ -76,7 +76,7 @@ export class NotificationsStep {
     }
   });
 
-  protected readonly geometry = computed(() =>
+  protected readonly geometry = animatedFigure(() =>
     computeFigureGeometry(this.state.weightKg(), this.state.heightCm()),
   );
   protected readonly bandTone = computed(() => bandToneForGender(this.state.gender()));

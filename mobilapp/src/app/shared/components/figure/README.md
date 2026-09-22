@@ -56,7 +56,7 @@ Tegnerækkefølgen er designets: skygge → ben → sko → arme → krop → b�
 | `showHead`                     | `true`     | Slå hovedet fra (fx når scenen tegner hoved med hat)                                                                   |
 | `showShadow`                   | `true`     | Skyggeellipsen under figuren                                                                                           |
 | `shaded`                       | `false`    | Dybdeskygge som i træningsscenerne: venstre ben/arm/sko mørkere, højre arm lysere                                      |
-| `animated`                     | `true`     | Kort, lineær geometriovergang i samme tempo som linealen, så delene følger hurtige talændringer                        |
+| `animated`                     | `true`     | Farve- og opacitetsovergange; scenens geometri styres samlet af `animatedFigure`                                      |
 | `expression`                   | `{}`       | `Partial<FigureExpression>` – overskriver ansigtet felt for felt                                                       |
 
 `FigureExpression` dækker smil-opacitet, åben mund/tunge, bryn (rotation + opacitet), kinder
@@ -80,7 +80,21 @@ Færdig SVG med `role="img"` og `aria-label` (standard `Figur`, designets tekst)
 `showCeiling` tegner loftlinje, lampesnor og lampe fra højdetrinnet. De er altid i DOM'en, men
 har `opacity = ceilOp`, så de kan fade ind ved 212 cm som i designet.
 
-## Farver
+## Sammenhængende bevægelse
+
+Scener bruger `animatedFigure(() => computeFigureGeometry(...))` i stedet for en separat
+CSS-overgang på hver kropsdel. Én afbrydelig frame-animation interpolerer både koordinater
+og SVG-stier. Nye input overtager fra den aktuelt viste figur; der opbygges ingen kø.
+Loft, skygge, pen, hat og håndvægt afledes af samme viste geometri. Tempoet læses fra
+`--duration-fast`. Første visning er straks korrekt, og reduceret bevægelse springer direkte
+til målet. Pending frames og media-query-listeners ryddes ved navigation.
+
+`FigureTempo` (`[appFigureTempo]="seconds"`) ændrer afspilningshastigheden på gentagne
+SVG-animationer og bevarer deres aktuelle position i forløbet. Gang, curl og stopur skal
+bruge direktivet frem for at ændre `animation-duration`. Partikler spores efter fast indeks,
+så koordinatændringer ikke genstarter dem.
+
+## Farver og tema
 
 Alle farver er tokens via BEM-klasser i `figure-body.scss`: `--color-figure`, `-dark`,
 `-light`, `-belt`, `-face`, `-pupil`, `-mouth`, `-shoe`, `-shoe-dark`, `-cheek`, `-cheek-soft`,

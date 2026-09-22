@@ -25,3 +25,7 @@ Fødselsdagsscenen på signup-trinnet `birthday` (designets `sAlder`). Kun brugt
 - De to brune kagefarver findes kun i palette-laget
   (`--color-cake-tier-dark` / `--color-cake-tier`), og lysene har hver sin token
   (`--color-candle-0` … `--color-candle-4`) med designets fem pastelfarver.
+
+Figurens koordinater opdateres samlet gennem `animatedFigure`, så kropsdele og afledte
+rekvisitter deler samme frame ved hurtige inputskift. Se fælles figur-dokumentation for
+afbrydelse, tempo og reduceret bevægelse.

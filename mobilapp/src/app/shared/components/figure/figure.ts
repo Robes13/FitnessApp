@@ -6,6 +6,7 @@ import {
   input,
 } from '@angular/core';
 import { FigureBandTone, FigureBody, FigureExpression } from './figure-body';
+import { animatedFigure } from './figure-motion';
 import { computeFigureGeometry } from './figure-geometry';
 
 /** Designets standard-aria-label for figuren. */
@@ -42,8 +43,9 @@ export class Figure {
   readonly expression = input<Partial<FigureExpression>>({});
   readonly ariaLabel = input(DEFAULT_ARIA_LABEL);
 
-  readonly geometry = computed(() =>
+  readonly geometry = animatedFigure(() =>
     computeFigureGeometry(this.weightKg(), this.heightCm(), this.mood()),
+    () => this.animated(),
   );
 
   protected readonly lampPath = computed(() => {

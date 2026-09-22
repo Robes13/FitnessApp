@@ -128,13 +128,13 @@
 }
 
 /*
- * Geometrien følger linealen i samme korte, lineære tempo. En langsom easing her bliver
- * afbrudt ved hvert pointer-move og får derfor kropsdelene til at halte efter tallet.
+ * Scenen interpolerer alle koordinater samlet via animatedFigure. CSS må kun animere
+ * farver og opacitet, ellers får enkelte kropsdele endnu en forsinkelse efter hvert frame.
  */
 :host(.figure-body--animated) .figure-body__part {
-  transition: all var(--duration-instant) linear;
+  transition: fill var(--duration-fast) linear, stroke var(--duration-fast) linear, opacity var(--duration-fast) linear;
 }
 
 :host(.figure-body--animated) .figure-body__head {
-  transition: transform var(--duration-instant) linear;
+  transition: none;
 }
