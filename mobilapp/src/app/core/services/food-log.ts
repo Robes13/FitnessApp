@@ -1,0 +1,113 @@
+import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { DEMO_LOGGED_FOODS } from '../constants/demo-data';
+import { MEAL_IDS } from '../constants/meals';
+import { STORAGE_KEY } from '../constants/storage-key';
+import { FoodItem, LoggedFood, Macros } from '../models/food';
+import { MealId } from '../models/meal';
+import { toIsoDate } from '../utils/date-format';
+import { NOW } from '../utils/now';
+import { IdService } from './id';
+import { StorageService } from './storage';
+
+interface StoredFoodLog {
+  /** Lokal dato (`YYYY-MM-DD`) loggen gælder for. En ny dag starter med en tom log. */
+  date: string;
+  entries: readonly LoggedFood[];
+}
+
+const EMPTY_MACROS: Macros = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+
+/**
+ * Dagens madlog og brugerens egne varer.
+ *
+ * Første gang appen åbnes (ingen gemt log) seedes designets to demo-varer, så Hjem og Mad
+ * ikke er tomme. Loggen er bundet til dagens dato: åbnes appen en ny dag, starter den tom.
+ * Egne varer (`customFoods`) gemmes separat og overlever dagsskift.
+ */
+@Injectable({ providedIn: 'root' })
+export class FoodLogService {
+  private readonly storage = inject(StorageService);
+  private readonly ids = inject(IdService);
+  private readonly now = inject(NOW);
+  private readonly entriesState = signal<readonly LoggedFood[]>([]);
+  private readonly customFoodsState = signal<readonly FoodItem[]>(this.restoreCustomFoods());
+
+  readonly entries: Signal<readonly LoggedFood[]> = this.entriesState.asReadonly();
+  readonly customFoods: Signal<readonly FoodItem[]> = this.customFoodsState.asReadonly();
+  readonly totals: Signal<Macros> = computed(() =>
+    this.entriesState().reduce<Macros>(
+      (sum, entry) => ({
+        kcal: sum.kcal + entry.kcal,
+        protein: sum.protein + entry.protein,
+        carbs: sum.carbs + entry.carbs,
+        fat: sum.fat + entry.fat,
+      }),
+      EMPTY_MACROS,
+    ),
+  );
+  readonly byMeal: Signal<ReadonlyMap<MealId, readonly LoggedFood[]>> = computed(() => {
+    const groups = new Map<MealId, LoggedFood[]>(MEAL_IDS.map((meal) => [meal, []]));
+    for (const entry of this.entriesState()) {
+      groups.get(entry.meal)?.push(entry);
+    }
+    return groups;
+  });
+
+  constructor() {
+    this.restoreEntries();
+  }
+
+  add(food: FoodItem, meal: MealId): LoggedFood {
+    const entry: LoggedFood = {
+      ...food,
+      logId: this.ids.next('log'),
+      meal,
+      loggedAt: this.now().toISOString(),
+    };
+    this.setEntries([...this.entriesState(), entry]);
+    return entry;
+  }
+
+  update(logId: string, patch: Partial<Omit<LoggedFood, 'logId'>>): void {
+    this.setEntries(
+      this.entriesState().map((entry) => (entry.logId === logId ? { ...entry, ...patch } : entry)),
+    );
+  }
+
+  remove(logId: string): void {
+    this.setEntries(this.entriesState().filter((entry) => entry.logId !== logId));
+  }
+
+  /** Egne varer lægges forrest, så de også kommer først i søgningen. */
+  addCustomFood(food: Omit<FoodItem, 'id' | 'isCustom'>): FoodItem {
+    const item: FoodItem = { ...food, id: this.ids.next('food'), isCustom: true };
+    this.customFoodsState.set([item, ...this.customFoodsState()]);
+    this.storage.write(STORAGE_KEY.CUSTOM_FOODS, this.customFoodsState());
+    return item;
+  }
+
+  private setEntries(entries: readonly LoggedFood[]): void {
+    this.entriesState.set(entries);
+    const stored: StoredFoodLog = { date: this.today(), entries };
+    this.storage.write(STORAGE_KEY.FOOD_LOG, stored);
+  }
+
+  private restoreEntries(): void {
+    const stored = this.storage.read<StoredFoodLog>(STORAGE_KEY.FOOD_LOG);
+    if (!stored) {
+      for (const { meal, ...food } of DEMO_LOGGED_FOODS) {
+        this.add(food, meal);
+      }
+      return;
+    }
+    this.entriesState.set(stored.date === this.today() ? stored.entries : []);
+  }
+
+  private restoreCustomFoods(): readonly FoodItem[] {
+    return this.storage.read<readonly FoodItem[]>(STORAGE_KEY.CUSTOM_FOODS) ?? [];
+  }
+
+  private today(): string {
+    return toIsoDate(this.now());
+  }
+}
