@@ -1,0 +1,137 @@
+@use 'mixins';
+
+:host {
+  @include mixins.page-screen;
+}
+
+.profile-page {
+  &__scroll {
+    @include mixins.scroll-area;
+    @include mixins.hide-scrollbar;
+
+    padding: 0 var(--layout-page-padding-x) calc(var(--safe-area-bottom) + var(--space-6));
+  }
+
+  &__identity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  &__avatar {
+    position: relative;
+    flex: none;
+  }
+
+  /* Den lille orange blyant i avatarens hjørne. Kanten skærer den fri af billedet. */
+  &__photo-button {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-control-4xs);
+    height: var(--size-control-4xs);
+    padding: 0;
+    border: var(--border-width-thick) solid var(--color-background);
+    border-radius: var(--radius-circle);
+    background: var(--color-accent);
+    color: var(--color-text-on-accent);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-accent-hover);
+    }
+  }
+
+  &__who {
+    min-width: 0;
+  }
+
+  &__name {
+    @include mixins.display-heading;
+    @include mixins.text-truncate;
+
+    margin: 0;
+    font-size: var(--font-size-display-lg);
+  }
+
+  &__email {
+    @include mixins.text-truncate;
+
+    margin: var(--space-1) 0 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-md);
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+    margin-top: var(--space-6);
+  }
+
+  &__stat {
+    padding: var(--space-3-5) var(--space-3);
+    border: var(--border-width-thin) solid var(--color-border-soft);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+  }
+
+  &__stat-label {
+    @include mixins.caption-uppercase;
+
+    margin: 0;
+    font-size: var(--font-size-2xs);
+    letter-spacing: var(--letter-spacing-widest);
+  }
+
+  &__stat-value {
+    @include mixins.display-heading;
+
+    margin: var(--space-1-5) 0 0;
+    font-size: var(--font-size-display-sm);
+
+    &--accent {
+      color: var(--color-accent);
+    }
+  }
+
+  &__stat-unit {
+    margin-left: var(--space-0-5);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+  }
+
+  &__section {
+    margin-top: var(--space-6);
+  }
+
+  &__section-title {
+    @include mixins.caption-uppercase;
+
+    margin: 0;
+    padding-bottom: var(--space-2-5);
+    font-weight: var(--font-weight-regular);
+  }
+
+  /* Samme rytme som rækkerne ovenfor, men med en kontakt i stedet for en chevron. */
+  &__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3-5) 0;
+    border-top: var(--border-width-thin) solid var(--color-border);
+  }
+
+  &__toggle-label {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__logout {
+    margin: var(--space-6) 0 var(--space-4);
+  }
+}

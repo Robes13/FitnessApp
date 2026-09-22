@@ -1,0 +1,100 @@
+<app-ui-page-header title="Profil" backLabel="Tilbage" (back)="goBack()" />
+
+<div class="profile-page__scroll">
+  <section class="profile-page__identity">
+    <div class="profile-page__avatar">
+      <app-profile-avatar size="md" [photo]="photo()" [initial]="initial()" />
+      <button
+        type="button"
+        class="profile-page__photo-button"
+        aria-label="Skift profilbillede"
+        (click)="openPhoto()"
+      >
+        <app-ui-icon name="pencil" size="2xs" [strokeWidth]="3" />
+      </button>
+    </div>
+    <div class="profile-page__who">
+      <h2 class="profile-page__name">{{ displayName() }}</h2>
+      <p class="profile-page__email">{{ email() }}</p>
+    </div>
+  </section>
+
+  <section class="profile-page__stats">
+    <div class="profile-page__stat">
+      <p class="profile-page__stat-label">Vægt</p>
+      <p class="profile-page__stat-value profile-page__stat-value--accent">
+        {{ weightText() }}<span class="profile-page__stat-unit">kg</span>
+      </p>
+    </div>
+    <div class="profile-page__stat">
+      <p class="profile-page__stat-label">Højde</p>
+      <p class="profile-page__stat-value">
+        {{ heightText() }}<span class="profile-page__stat-unit">cm</span>
+      </p>
+    </div>
+    <div class="profile-page__stat">
+      <p class="profile-page__stat-label">BMI</p>
+      <p class="profile-page__stat-value">{{ bmiText() }}</p>
+    </div>
+  </section>
+
+  <section class="profile-page__section">
+    <h2 class="profile-page__section-title">Min plan</h2>
+    @for (row of planRows(); track row.id) {
+      <button
+        app-ui-row-button
+        [label]="row.label"
+        [value]="row.value"
+        (click)="openEdit(row.id)"
+      ></button>
+    }
+  </section>
+
+  <section class="profile-page__section">
+    <h2 class="profile-page__section-title">Konto</h2>
+    @for (row of accountRows(); track row.id) {
+      <button
+        app-ui-row-button
+        [label]="row.label"
+        [value]="row.value"
+        (click)="openEdit(row.id)"
+      ></button>
+    }
+    <div class="profile-page__toggle">
+      <span class="profile-page__toggle-label">Lys tilstand</span>
+      <app-ui-switch
+        ariaLabel="Lys tilstand"
+        [checked]="isLight()"
+        (checkedChange)="setLight($event)"
+      />
+    </div>
+    <div class="profile-page__toggle">
+      <span class="profile-page__toggle-label">Notifikationer</span>
+      <app-ui-switch
+        ariaLabel="Notifikationer"
+        [checked]="notificationsEnabled()"
+        (checkedChange)="setNotifications($event)"
+      />
+    </div>
+  </section>
+
+  <section class="profile-page__section">
+    <h2 class="profile-page__section-title">Præstationer</h2>
+    <app-achievements [achievements]="achievements()" />
+  </section>
+
+  <button
+    app-ui-button
+    type="button"
+    variant="outline-danger"
+    block
+    class="profile-page__logout"
+    (click)="askLogout()"
+  >
+    Log ud
+  </button>
+</div>
+
+<app-profile-edit-sheet [row]="editRow()" (closed)="closeEdit()" />
+<app-profile-photo-sheet [open]="photoOpen()" (closed)="closePhoto()" />
+<app-profile-logout-sheet [open]="logoutOpen()" (closed)="closeLogout()" (confirmed)="logout()" />
