@@ -2,7 +2,6 @@ import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, map, timer } from 'rxjs';
 import { SCANNED_DEMO_ITEM } from '../../../core/constants/demo-data';
-import { SCAN_DEFAULT_DELAY_MS } from '../../../core/constants/timing';
 import { FoodItem, ScanResult } from '../../../core/models/food';
 import { BarcodeScannerService } from '../../../core/services/barcode-scanner';
 import { BarcodeScanner, buildScanVerdict } from './barcode-scanner';
@@ -19,7 +18,7 @@ class FakeBarcodeScannerService {
 
   scan(): Observable<ScanResult> {
     this.scanCalls += 1;
-    return timer(SCAN_DEFAULT_DELAY_MS).pipe(map(() => this.result));
+    return timer(SCAN_MS).pipe(map(() => this.result));
   }
 }
 
@@ -47,6 +46,9 @@ class Host {
   manualCount = 0;
   noBarcodeCount = 0;
 }
+
+/** Scannerens svartid (`SCAN_DELAY_MS`-tokenets standard). */
+const SCAN_MS = 2300;
 
 describe('BarcodeScanner', () => {
   let scanner: FakeBarcodeScannerService;
@@ -135,7 +137,7 @@ describe('BarcodeScanner', () => {
 
   /** Åbner og spoler frem til servicen har svaret. */
   function scanToResult(): void {
-    tick(START_DELAY_MS + SCAN_DEFAULT_DELAY_MS);
+    tick(START_DELAY_MS + SCAN_MS);
   }
 
   beforeEach(() => {
@@ -317,7 +319,7 @@ describe('BarcodeScanner', () => {
     fixture.detectChanges();
     expect(dialogs()).toEqual([]);
 
-    tick(SCAN_DEFAULT_DELAY_MS);
+    tick(SCAN_MS);
     expect(host.found).toEqual([]);
 
     host.open.set(true);

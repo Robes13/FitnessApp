@@ -2,14 +2,16 @@ import { Injectable, InjectionToken, inject } from '@angular/core';
 import { Observable, map, switchMap, throwError, timer } from 'rxjs';
 import { AUTH_ERROR_MESSAGE } from '../constants/auth';
 import { PASSWORD_MIN_LENGTH, RESET_CODE_LENGTH } from '../constants/nutrition';
-import { AUTH_API_DEFAULT_DELAY_MS } from '../constants/timing';
 import { ApiError } from '../models/api-error';
 import { UserProfile } from '../models/profile';
+
+/** Forsinkelse på mock-backendens svar (login, nulstilling af kode m.m.). */
+const DEFAULT_DELAY_MS = 600;
 
 /** Svartid for mock-backenden. Sæt til 0 i tests. */
 export const AUTH_API_DELAY_MS = new InjectionToken<number>('AUTH_API_DELAY_MS', {
   providedIn: 'root',
-  factory: () => AUTH_API_DEFAULT_DELAY_MS,
+  factory: () => DEFAULT_DELAY_MS,
 });
 
 const EMAIL_PATTERN = /\S+@\S+\.\S+/;

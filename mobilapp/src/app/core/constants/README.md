@@ -13,7 +13,6 @@ Alle faste værdier, appen deler. Ingen strengliteraler eller magiske tal andre 
 | `demo-data.ts`        | Designets syntetiske data: `FOOD_DATABASE`, `RECIPES`, `BASE_COLLECTIONS`, `DEMO_LOGGED_FOODS`, `SCANNED_DEMO_ITEM`, `DEMO_PROFILE_DEFAULTS`, `DEMO_WEIGHT_SEED`, `DEFAULT_DISPLAY_NAME`.                  |
 | `weight.ts`           | Vægt-intervaller (`1u`/`4u`/`3m`), deres labels og parametrene til den syntetiske vægtkurve.                                                                                                               |
 | `theme.ts`            | Standardtema (`dark`) og attributnavnet på `<html>`.                                                                                                                                                       |
-| `timing.ts`           | Standardforsinkelser for mock-backend, søgning og scanner.                                                                                                                                                 |
 | `auth.ts`             | Brugerrettede fejltekster fra mock-backenden.                                                                                                                                                              |
 
 ## Beslutninger

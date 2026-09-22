@@ -3,13 +3,15 @@ import { Observable, map, timer } from 'rxjs';
 import { SCANNED_DEMO_ITEM } from '../constants/demo-data';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { ScanResult } from '../models/food';
-import { SCAN_DEFAULT_DELAY_MS } from '../constants/timing';
 import { StorageService } from './storage';
+
+/** Tid før stregkodescanneren melder et resultat (designets `runScan`). */
+const DEFAULT_DELAY_MS = 2300;
 
 /** Tid før scanneren melder resultat. Sæt til 0 i tests. */
 export const SCAN_DELAY_MS = new InjectionToken<number>('SCAN_DELAY_MS', {
   providedIn: 'root',
-  factory: () => SCAN_DEFAULT_DELAY_MS,
+  factory: () => DEFAULT_DELAY_MS,
 });
 
 /**

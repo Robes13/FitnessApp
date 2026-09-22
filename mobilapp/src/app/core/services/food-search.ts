@@ -2,14 +2,16 @@ import { Injectable, InjectionToken, inject } from '@angular/core';
 import { Observable, map, timer } from 'rxjs';
 import { FOOD_DATABASE } from '../constants/demo-data';
 import { FOOD_SEARCH_MAX_RESULTS } from '../constants/nutrition';
-import { FOOD_SEARCH_DEFAULT_DELAY_MS } from '../constants/timing';
 import { FoodItem } from '../models/food';
 import { FoodLogService } from './food-log';
+
+/** Forsinkelse på madsøgning, så UI'et viser en loading-tilstand som i designet. */
+const DEFAULT_DELAY_MS = 250;
 
 /** Svartid for søgningen. Sæt til 0 i tests. */
 export const FOOD_SEARCH_DELAY_MS = new InjectionToken<number>('FOOD_SEARCH_DELAY_MS', {
   providedIn: 'root',
-  factory: () => FOOD_SEARCH_DEFAULT_DELAY_MS,
+  factory: () => DEFAULT_DELAY_MS,
 });
 
 /**
