@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { DEMO_PROFILE_DEFAULTS } from '../constants/demo-data';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { WeighEntry } from '../models/weight';
 import { FakeStorage, createFakeStorage } from '../testing/fake-document';
@@ -8,6 +7,11 @@ import { UserProfileService } from './user-profile';
 import { WeightLogService } from './weight-log';
 
 const MS_PER_DAY = 86_400_000;
+
+/** Same time of day as `TEST_NOW`, `days` days back. */
+function isoDaysAgo(days: number): string {
+  return new Date(TEST_NOW.getTime() - days * MS_PER_DAY).toISOString();
+}
 
 describe('WeightLogService', () => {
   let storage: FakeStorage;
@@ -25,25 +29,13 @@ describe('WeightLogService', () => {
     storage = createFakeStorage();
   });
 
-  it('seeds three demo entries newest first on first run', () => {
+  it('starts empty on first run and writes nothing', () => {
     const service = setup();
 
-    expect(service.entries().map(daysAgo)).toEqual([3, 7, 14]);
-    expect(service.entries().map((entry) => entry.kg)).toEqual([75, 75.6, 76.1]);
-    expect(service.latest()?.kg).toBe(75);
+    expect(service.entries()).toEqual([]);
+    expect(service.latest()).toBeNull();
     expect(service.weighedToday()).toBe(false);
-    expect(JSON.parse(storage.getItem(STORAGE_KEY.WEIGHT_LOG) ?? '[]')).toHaveLength(3);
-  });
-
-  it('seeds lighter history when the goal is to gain', () => {
-    storage.setItem(
-      STORAGE_KEY.PROFILE,
-      JSON.stringify({ ...DEMO_PROFILE_DEFAULTS, weightKg: 60, goal: 'tage' }),
-    );
-
-    const service = setup();
-
-    expect(service.entries().map((entry) => entry.kg)).toEqual([60, 59.6, 59.1]);
+    expect(storage.getItem(STORAGE_KEY.WEIGHT_LOG)).toBeNull();
   });
 
   it('restores stored entries sorted newest first', () => {
@@ -71,57 +63,40 @@ describe('WeightLogService', () => {
     expect(service.latest()).toEqual(entry);
     expect(service.weighedToday()).toBe(true);
     expect(profile.profile().weightKg).toBe(74.2);
-    expect(JSON.parse(storage.getItem(STORAGE_KEY.WEIGHT_LOG) ?? '[]')).toHaveLength(4);
+    expect(JSON.parse(storage.getItem(STORAGE_KEY.WEIGHT_LOG) ?? '[]')).toHaveLength(1);
   });
 
   it('keeps entries ordered when adding a back-dated weighing', () => {
     const service = setup();
 
+    service.add(75);
     service.add(77, new Date(2026, 8, 1));
 
-    expect(service.entries().map(daysAgo)).toEqual([3, 7, 14, 20]);
+    expect(service.entries().map(daysAgo)).toEqual([0, 20]);
   });
 
   describe('seriesFor', () => {
-    it('returns 12 chronological points ending now', () => {
+    it('is empty without weighings', () => {
       const service = setup();
 
-      const series = service.seriesFor('4u', 'tabe', 75);
-
-      expect(series).toHaveLength(12);
-      expect(series.at(-1)?.at).toBe(TEST_NOW.toISOString());
-      expect(new Date(series[0]?.at ?? '').getTime()).toBe(TEST_NOW.getTime() - 28 * MS_PER_DAY);
-      const times = series.map((point) => new Date(point.at).getTime());
-      expect([...times].sort((a, b) => a - b)).toEqual(times);
+      expect(service.seriesFor('4u')).toEqual([]);
     });
 
-    it('drifts down towards the current weight when losing, scaled by the range', () => {
+    it('returns the weighings inside the range, oldest first', () => {
+      storage.setItem(
+        STORAGE_KEY.WEIGHT_LOG,
+        JSON.stringify([
+          { id: 'c', kg: 74, at: isoDaysAgo(2) },
+          { id: 'b', kg: 75, at: isoDaysAgo(10) },
+          { id: 'a', kg: 76, at: isoDaysAgo(40) },
+        ]),
+      );
+
       const service = setup();
 
-      expect(service.seriesFor('4u', 'tabe', 75)[0]?.kg).toBeCloseTo(77.6);
-      expect(service.seriesFor('1u', 'tabe', 75)[0]?.kg).toBeCloseTo(75.65);
-      expect(service.seriesFor('3m', 'tabe', 75)[0]?.kg).toBeCloseTo(75 + 2.6 * (90 / 28));
-    });
-
-    it('drifts up when gaining and stays flat when maintaining', () => {
-      const service = setup();
-
-      expect(service.seriesFor('4u', 'tage', 75)[0]?.kg).toBeCloseTo(72.6);
-      expect(service.seriesFor('4u', 'hold', 75)[0]?.kg).toBeCloseTo(75);
-    });
-
-    it('ends on the current weight plus the design wobble', () => {
-      const service = setup();
-
-      const last = service.seriesFor('4u', 'hold', 75).at(-1);
-
-      expect(last?.kg).toBeCloseTo(75 + Math.sin(11 * 1.7) * 0.35);
-    });
-
-    it('treats a missing goal like losing', () => {
-      const service = setup();
-
-      expect(service.seriesFor('4u', null, 75)).toEqual(service.seriesFor('4u', 'tabe', 75));
+      expect(service.seriesFor('4u').map((point) => point.kg)).toEqual([75, 74]);
+      expect(service.seriesFor('1u').map((point) => point.kg)).toEqual([74]);
+      expect(service.seriesFor('3m').map((point) => point.kg)).toEqual([76, 75, 74]);
     });
   });
 

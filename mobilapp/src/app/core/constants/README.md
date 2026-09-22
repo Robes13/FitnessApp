@@ -10,10 +10,10 @@ Alle faste værdier, appen deler. Ingen strengliteraler eller magiske tal andre 
 | `meals.ts`            | `MEAL_IDS`, `MEALS` (Morgenmad, Frokost, Aftensmad, Snacks) og `MEAL_TONES` (designets `mealTints`, delt af Mad og Samlinger).                                                                             |
 | `nutrition.ts`        | Mål (`GOALS`), tempi (`PACES`), aktivitetsniveauer (`ACTIVITY_LEVELS`), intensiteter (`INTENSITIES`), køn, enheder samt alle grænser og faktorer (vægt/højde/skridt/kcal, BMR-konstanter, makrofordeling). |
 | `collection-icons.ts` | De 30 ikon-navne en samling kan have (`COLLECTION_ICON_NAMES`), deres danske navne til skærmlæsere (`COLLECTION_ICON_LABELS`) og hvor mange der vises som standard.                                        |
-| `demo-data.ts`        | Designets syntetiske data: `FOOD_DATABASE`, `RECIPES`, `BASE_COLLECTIONS`, `DEMO_LOGGED_FOODS`, `SCANNED_DEMO_ITEM`, `DEMO_PROFILE_DEFAULTS`, `DEMO_WEIGHT_SEED`, `DEFAULT_DISPLAY_NAME`.                  |
-| `weight.ts`           | Vægt-intervaller (`1u`/`4u`/`3m`), deres labels og parametrene til den syntetiske vægtkurve.                                                                                                               |
+| `profile-defaults.ts` | `DEFAULT_PROFILE` – profilen før brugeren har udfyldt noget – og linealernes neutrale startværdier (`WEIGHT_START_KG`, `HEIGHT_START_CM`, `GOAL_WEIGHT_START_KG`).                                         |
+| `weight.ts`           | Vægt-intervaller (`1u`/`4u`/`3m`) og deres labels.                                                                                                                                                         |
 | `theme.ts`            | Standardtema (`dark`) og attributnavnet på `<html>`.                                                                                                                                                       |
-| `auth.ts`             | Brugerrettede fejltekster fra mock-backenden.                                                                                                                                                              |
+| `auth.ts`             | Brugerrettede fejltekster fra auth-laget, inkl. `NO_BACKEND`.                                                                                                                                              |
 
 ## Beslutninger
 
@@ -21,5 +21,7 @@ Alle faste værdier, appen deler. Ingen strengliteraler eller magiske tal andre 
 - `ACTIVITY_LEVELS` vælges som _første_ niveau, hvor `skridt < maxSteps` – præcis som designets
   `actLevels.find(a => steps < a.max)`.
 - `INTENSITIES` mappes fra RPE som _første_ niveau, hvor `rpe <= maxRpe`.
-- Demo-data har faste id'er (`food-havregryn`, `demo-skyr-bowl`, `c1`…), så de kan genkendes
-  i tests og historik.
+- **Ingen demo-data.** Appen har hverken varedatabase, retter, faste samlinger eller seedede
+  logs. Alt indhold skal komme fra brugeren eller fra backenden.
+- `DEFAULT_PROFILE` er ikke et gæt på brugeren: felter, der ikke kan udledes, er `null` eller
+  tomme, og tallene er kun det sted, linealerne begynder.

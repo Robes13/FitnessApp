@@ -1,12 +1,19 @@
 import { TestBed } from '@angular/core/testing';
-import { FOOD_DATABASE } from '../constants/demo-data';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { FoodItem, LoggedFood } from '../models/food';
 import { FakeStorage, createFakeStorage } from '../testing/fake-document';
 import { TEST_NOW, provideCoreTestEnvironment } from '../testing/test-providers';
 import { FoodLogService } from './food-log';
 
-const HAVREGRYN = FOOD_DATABASE[0] as FoodItem;
+const HAVREGRYN: FoodItem = {
+  id: 'food-havregryn',
+  name: 'Havregryn',
+  quantity: '60 g',
+  kcal: 222,
+  protein: 8,
+  carbs: 38,
+  fat: 4,
+};
 
 describe('FoodLogService', () => {
   let storage: FakeStorage;
@@ -25,18 +32,12 @@ describe('FoodLogService', () => {
     storage = createFakeStorage();
   });
 
-  it('seeds the two demo foods on first run and persists them for today', () => {
+  it('starts empty on first run and writes nothing', () => {
     const service = setup();
 
-    expect(service.entries().map((entry) => entry.name)).toEqual([
-      'Skyr-bowl med bær',
-      'Kyllingesalat',
-    ]);
-    expect(service.totals()).toEqual({ kcal: 830, protein: 73, carbs: 56, fat: 31 });
-    expect(JSON.parse(storage.getItem(STORAGE_KEY.FOOD_LOG) ?? '')).toMatchObject({
-      date: '2026-09-21',
-    });
-    expect(storedEntries()).toHaveLength(2);
+    expect(service.entries()).toEqual([]);
+    expect(service.totals()).toEqual({ kcal: 0, protein: 0, carbs: 0, fat: 0 });
+    expect(storage.getItem(STORAGE_KEY.FOOD_LOG)).toBeNull();
   });
 
   it('restores a stored log from the same day', () => {
@@ -56,7 +57,7 @@ describe('FoodLogService', () => {
     expect(service.entries()[0]?.name).toBe('Havregryn');
   });
 
-  it('starts a new day empty instead of reseeding', () => {
+  it('starts a new day empty', () => {
     storage.setItem(
       STORAGE_KEY.FOOD_LOG,
       JSON.stringify({
@@ -81,9 +82,9 @@ describe('FoodLogService', () => {
     expect(entry.logId).toMatch(/^log-/);
     expect(entry.meal).toBe('snack');
     expect(entry.loggedAt).toBe(TEST_NOW.toISOString());
-    expect(service.entries()).toHaveLength(3);
-    expect(service.totals().kcal).toBe(830 + 222);
-    expect(storedEntries()).toHaveLength(3);
+    expect(service.entries()).toHaveLength(1);
+    expect(service.totals().kcal).toBe(222);
+    expect(storedEntries()).toHaveLength(1);
   });
 
   it('groups entries by meal with an entry for every meal', () => {
@@ -93,7 +94,7 @@ describe('FoodLogService', () => {
     const byMeal = service.byMeal();
 
     expect([...byMeal.keys()]).toEqual(['morgen', 'frokost', 'aften', 'snack']);
-    expect(byMeal.get('morgen')?.map((entry) => entry.name)).toEqual(['Skyr-bowl med bær']);
+    expect(byMeal.get('morgen')).toEqual([]);
     expect(byMeal.get('aften')).toEqual([]);
     expect(byMeal.get('snack')?.[0]?.name).toBe('Havregryn');
   });
@@ -108,7 +109,7 @@ describe('FoodLogService', () => {
 
     service.remove(entry.logId);
     expect(service.entries().some((candidate) => candidate.logId === entry.logId)).toBe(false);
-    expect(storedEntries()).toHaveLength(2);
+    expect(storedEntries()).toHaveLength(0);
   });
 
   it('adds custom foods first, flagged as custom, and persists them separately', () => {

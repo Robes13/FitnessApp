@@ -6,7 +6,7 @@ export type PaceId = 'rolig' | 'moderat' | 'hurtig';
 export type IntensityId = 'mildt' | 'moderat' | 'haardt';
 export type UnitSystem = 'metrisk' | 'imperial';
 
-/** Beskæring af profilbilledet. `zoom` 1..3, `x`/`y` 0..100 (procent). */
+/** Cropping of the profile photo. `zoom` 1..3, `x`/`y` 0..100 (percent). */
 export interface ProfilePhoto {
   dataUrl: string;
   aspectRatio: number;
@@ -18,23 +18,23 @@ export interface ProfilePhoto {
 export interface UserProfile {
   username: string;
   email: string;
-  /** ISO-dato (`YYYY-MM-DD`) eller `null`, hvis ikke valgt. */
+  /** ISO date (`YYYY-MM-DD`) or `null`, if not chosen. */
   birthday: string | null;
   gender: Gender | null;
   weightKg: number;
   heightCm: number;
   stepsPerDay: number;
-  /** Syv flag, mandag først. */
+  /** Seven flags, Monday first. */
   trainingDays: readonly boolean[];
   trainingMinutes: number;
-  /** Oplevet anstrengelse 1..10 eller `null`, hvis ikke valgt. */
+  /** Perceived exertion 1..10 or `null`, if not chosen. */
   trainingRpe: number | null;
   goal: GoalId | null;
   pace: PaceId | null;
   goalWeightKg: number;
   notificationsEnabled: boolean;
   units: UnitSystem;
-  /** Manuelt kaloriemål, der overstyrer det beregnede. */
+  /** Manual calorie target that overrides the calculated one. */
   kcalOverride: number | null;
   photo: ProfilePhoto | null;
 }
@@ -55,9 +55,9 @@ export interface PaceDefinition {
 }
 
 export interface ActivityLevel {
-  /** Øvre grænse (eksklusiv) for skridt pr. dag på dette niveau. */
+  /** Upper bound (exclusive) for steps per day at this level. */
   maxSteps: number;
-  /** Physical Activity Level – faktor på basalstofskiftet. */
+  /** Physical Activity Level – factor on the basal metabolic rate. */
   pal: number;
   label: string;
 }

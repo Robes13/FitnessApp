@@ -42,7 +42,7 @@ export const PACES: readonly PaceDefinition[] = [
   },
 ];
 
-/** Designets `actLevels`. Niveauet vælges som det første, hvor skridt < `maxSteps`. */
+/** The design's `actLevels`. The level chosen is the first one where steps < `maxSteps`. */
 export const ACTIVITY_LEVELS: readonly ActivityLevel[] = [
   { maxSteps: 2500, pal: 1.25, label: 'Stillesiddende' },
   { maxSteps: 5500, pal: 1.4, label: 'Let aktiv' },
@@ -52,7 +52,7 @@ export const ACTIVITY_LEVELS: readonly ActivityLevel[] = [
   { maxSteps: 99999, pal: 1.95, label: 'Maratonklar' },
 ];
 
-/** Designets `intDef`. Et RPE-tal mappes til det første niveau, hvor rpe <= `maxRpe`. */
+/** The design's `intDef`. An RPE number maps to the first level where rpe <= `maxRpe`. */
 export const INTENSITIES: readonly IntensityDefinition[] = [
   {
     id: 'mildt',
@@ -126,11 +126,11 @@ export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_STRONG_LENGTH = 12;
 export const RESET_CODE_LENGTH = 4;
 
-/** Andel af dagens kalorier pr. makro (designets 30/45/25). */
+/** Share of daily calories per macro (the design's 30/45/25). */
 export const MACRO_SPLIT: Readonly<Omit<Macros, 'kcal'>> = { protein: 0.3, carbs: 0.45, fat: 0.25 };
 export const KCAL_PER_GRAM: Readonly<Omit<Macros, 'kcal'>> = { protein: 4, carbs: 4, fat: 9 };
 
-/** Mifflin-St Jeor: køns-konstant. `andet`/ukendt bruger gennemsnittet af de to. */
+/** Mifflin-St Jeor: gender constant. `andet`/unknown uses the average of the two. */
 export const BMR_GENDER_OFFSET: Readonly<Record<Gender, number>> = {
   mand: 5,
   kvinde: -161,
@@ -139,25 +139,25 @@ export const BMR_GENDER_OFFSET: Readonly<Record<Gender, number>> = {
 export const BMR_WEIGHT_FACTOR = 10;
 export const BMR_HEIGHT_FACTOR = 6.25;
 export const BMR_AGE_FACTOR = 5;
-/** Bruges i BMR, når fødselsdag ikke er angivet. */
+/** Used in BMR when the birthday isn't specified. */
 export const BMR_FALLBACK_AGE = 30;
-/** Kaloriebehov rundes til nærmeste 10. */
+/** Calorie needs are rounded to the nearest 10. */
 export const KCAL_ROUNDING = 10;
 
-/** Målvægtens skala (designets `gMin`/`gMax`). */
+/** Goal weight scale (the design's `gMin`/`gMax`). */
 export const GOAL_WEIGHT_MIN_KG = 35;
 export const GOAL_WEIGHT_MIN_SPAN_KG = 36;
 export const GOAL_WEIGHT_MAX_KG = 200;
-/** BMI-grænser for et realistisk mål ("for lavt" / "meget højt for din højde"). */
+/** BMI bounds for a realistic goal ("too low" / "very high for your height"). */
 export const GOAL_BMI_MIN = 17;
 export const GOAL_BMI_MAX = 35;
 
-/** Omregning af skridt (designets `stepKm` / `stepKcal`). */
+/** Step conversion (the design's `stepKm` / `stepKcal`). */
 export const KM_PER_STEP = 0.00075;
 export const KCAL_PER_STEP_PER_KG = 0.00045;
 
-/** Max antal resultater i madsøgningen. */
+/** Max number of results in food search. */
 export const FOOD_SEARCH_MAX_RESULTS = 6;
 
-/** Standardenhed, når en portionstekst ikke indeholder en enhed. */
+/** Default unit when a quantity string doesn't include one. */
 export const DEFAULT_QUANTITY_UNIT = 'g';

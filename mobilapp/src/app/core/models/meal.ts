@@ -7,5 +7,5 @@ export interface MealDefinition {
   readonly label: string;
 }
 
-/** Farvetonen på et måltids ikonflise – designets `mealTints`. */
+/** The color tone of a meal's icon tile – the design's `mealTints`. */
 export type MealTone = Extract<Tone, 'accent' | 'positive' | 'selected' | 'negative'>;

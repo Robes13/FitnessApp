@@ -11,9 +11,9 @@ import { ThemeService } from './core/services/theme';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    // Component input binding: route- og query-parametre bindes direkte til `input()` på sider.
+    // Component input binding: route and query parameters are bound directly to `input()` on pages.
     provideRouter(routes, withComponentInputBinding()),
-    // Genskaber det gemte tema (`data-theme` på <html>), før den første skærm tegnes.
+    // Restores the saved theme (`data-theme` on <html>) before the first screen renders.
     provideAppInitializer(() => inject(ThemeService).initialize()),
   ],
 };

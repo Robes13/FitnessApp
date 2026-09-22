@@ -1,8 +1,8 @@
 /**
- * Semantisk farvetone, som UI-komponenter oversætter til design tokens.
+ * Semantic color tone, which UI components translate into design tokens.
  *
- * `selected` er designets blå "valgt"-farve (kulhydrat-bjælken), og `secondary` er
- * slate-400 (fedt-bjælken) – de ligger mellem `neutral` (slate-300) og `muted` (slate-500).
+ * `selected` is the design's blue "selected" color (the carb bar), and `secondary` is
+ * slate-400 (the fat bar) – they sit between `neutral` (slate-300) and `muted` (slate-500).
  */
 export type Tone =
   | 'accent'

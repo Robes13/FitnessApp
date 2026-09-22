@@ -11,7 +11,7 @@ export interface Macros {
 export interface FoodItem extends Macros {
   id: string;
   name: string;
-  /** Portionen makroerne gælder for, f.eks. `'250 g'` eller `'1 portion'`. */
+  /** The portion the macros apply to, e.g. `'250 g'` or `'1 portion'`. */
   quantity: string;
   brand?: string;
   isCustom?: boolean;
@@ -20,7 +20,7 @@ export interface FoodItem extends Macros {
 export interface LoggedFood extends FoodItem {
   logId: string;
   meal: MealId;
-  /** ISO-datotid for registreringen. */
+  /** ISO date-time for the log entry. */
   loggedAt: string;
 }
 

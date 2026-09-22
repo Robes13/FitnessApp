@@ -14,37 +14,38 @@ describe('FoodSearchService', () => {
     foodLog = TestBed.inject(FoodLogService);
   });
 
-  it('matches names case-insensitively', async () => {
+  function addCustom(name: string): void {
+    foodLog.addCustomFood({ name, quantity: '1 stk', kcal: 200, protein: 20, carbs: 20, fat: 5 });
+  }
+
+  it('finds nothing until the user has created a food', async () => {
+    await expect(firstValueFrom(search.search('havre'))).resolves.toEqual([]);
+    await expect(firstValueFrom(search.search(''))).resolves.toEqual([]);
+  });
+
+  it('matches the user own foods case-insensitively', async () => {
+    addCustom('Havregryn');
+
     const results = await firstValueFrom(search.search('HAVRE'));
 
     expect(results.map((food) => food.name)).toEqual(['Havregryn']);
+    expect(results[0]?.isCustom).toBe(true);
   });
 
-  it('returns at most six results for an empty query', async () => {
+  it('returns newest first and at most six results for an empty query', async () => {
+    for (let index = 1; index <= 7; index++) {
+      addCustom(`Vare ${index}`);
+    }
+
     const results = await firstValueFrom(search.search(''));
 
     expect(results).toHaveLength(6);
-    expect(results[0]?.name).toBe('Havregryn');
-  });
-
-  it('lists custom foods first and flags them', async () => {
-    foodLog.addCustomFood({
-      name: 'Min bar',
-      quantity: '1 stk',
-      kcal: 200,
-      protein: 20,
-      carbs: 20,
-      fat: 5,
-    });
-
-    const results = await firstValueFrom(search.search('bar'));
-
-    expect(results.map((food) => food.name)).toEqual(['Min bar', 'Proteinbar']);
-    expect(results[0]?.isCustom).toBe(true);
-    expect(results[1]?.isCustom).toBeUndefined();
+    expect(results[0]?.name).toBe('Vare 7');
   });
 
   it('returns an empty list when nothing matches', async () => {
+    addCustom('Min bar');
+
     await expect(firstValueFrom(search.search('pizza'))).resolves.toEqual([]);
   });
 });

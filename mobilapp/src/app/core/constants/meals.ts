@@ -10,8 +10,9 @@ export const MEALS: readonly MealDefinition[] = [
 ];
 
 /**
- * Designets `mealTints`: farven på et måltids ikonflise. Både Mad-skærmens samlingsliste og
- * Samlinger-skærmens kort slår op her, så de to skærme ikke kan komme ud af trit.
+ * The design's `mealTints`: the color of a meal's icon tile. Both the Food screen's
+ * collection list and the Collections screen's cards look this up, so the two screens
+ * can't drift out of sync.
  */
 export const MEAL_TONES: Readonly<Record<MealId, MealTone>> = {
   morgen: 'accent',

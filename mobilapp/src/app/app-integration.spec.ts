@@ -12,10 +12,10 @@ import {
 } from './core/testing/test-providers';
 
 /**
- * Sammenkoblingen mellem features. Hver feature tester sine egne skærme; her testes kun de
- * steder, hvor to features møder hinanden gennem `core` – dybe links, tab barens synlighed,
- * sessionens indflydelse på Hjem og temaskiftet. Testene kører på de rigtige `routes`, så en
- * ændret sti eller et ændret query-parameternavn fanges her.
+ * The connections between features. Each feature tests its own screens; here only the
+ * places where two features meet through `core` are tested – deep links, tab bar visibility,
+ * the session's influence on Home, and theme switching. The tests run against the real
+ * `routes`, so a changed path or a changed query parameter name is caught here.
  */
 interface Harness {
   readonly harness: RouterTestingHarness;
@@ -69,7 +69,7 @@ describe('sammenkobling mellem features', () => {
     const { harness, root } = await navigateTo(APP_PATH.recipe('omelet'));
     expect(root.querySelector('app-ui-tab-bar')).toBeNull();
 
-    // Tilbage til listen: baren kommer igen, så skjulningen følger den dybeste rute.
+    // Back to the list: the bar reappears, so the hiding follows the deepest route.
     await harness.navigateByUrl(APP_PATH.COLLECTIONS);
     await harness.fixture.whenStable();
 

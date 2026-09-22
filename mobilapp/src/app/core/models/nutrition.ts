@@ -11,9 +11,9 @@ export interface ParsedQuantity {
 }
 
 export interface PasswordStrength {
-  /** 0..4 – ét point pr. opfyldt krav. */
+  /** 0..4 – one point per requirement met. */
   score: number;
-  /** 0..100 til styrkemåleren. */
+  /** 0..100 for the strength meter. */
   percent: number;
   label: string;
   tone: Tone;

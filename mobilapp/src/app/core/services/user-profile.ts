@@ -1,5 +1,5 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
-import { DEFAULT_DISPLAY_NAME, DEMO_PROFILE_DEFAULTS } from '../constants/demo-data';
+import { DEFAULT_PROFILE } from '../constants/profile-defaults';
 import { GOALS } from '../constants/nutrition';
 import { STORAGE_KEY } from '../constants/storage-key';
 import {
@@ -14,9 +14,9 @@ import { NutritionCalculator } from './nutrition-calculator';
 import { StorageService } from './storage';
 
 /**
- * Brugerens profil som ét signal plus afledte værdier (alder, BMI, kaloriemål …).
- * Gemmes i storage ved hver ændring. Manglende felter i en gemt profil udfyldes fra
- * `DEMO_PROFILE_DEFAULTS`, så ældre data stadig kan læses.
+ * The user's profile as one signal plus derived values (age, BMI, calorie target …).
+ * Saved to storage on every change. Missing fields in a saved profile are filled in from
+ * `DEFAULT_PROFILE`, so older data can still be read.
  */
 @Injectable({ providedIn: 'root' })
 export class UserProfileService {
@@ -26,7 +26,8 @@ export class UserProfileService {
   private readonly state = signal<UserProfile>(this.restore());
 
   readonly profile: Signal<UserProfile> = this.state.asReadonly();
-  readonly displayName = computed(() => this.state().username.trim() || DEFAULT_DISPLAY_NAME);
+  /** The user's own name. Empty until the user has signed up or logged in. */
+  readonly displayName = computed(() => this.state().username.trim());
   readonly initial = computed(() => this.displayName().charAt(0).toUpperCase());
   readonly age = computed(() => this.calculator.ageFromBirthday(this.state().birthday, this.now()));
   readonly bmi = computed(() => this.calculator.bmi(this.state().weightKg, this.state().heightCm));
@@ -58,11 +59,11 @@ export class UserProfileService {
   }
 
   resetToDefaults(): void {
-    this.replace({ ...DEMO_PROFILE_DEFAULTS });
+    this.replace({ ...DEFAULT_PROFILE });
   }
 
   private restore(): UserProfile {
     const stored = this.storage.read<Partial<UserProfile>>(STORAGE_KEY.PROFILE);
-    return stored ? { ...DEMO_PROFILE_DEFAULTS, ...stored } : { ...DEMO_PROFILE_DEFAULTS };
+    return stored ? { ...DEFAULT_PROFILE, ...stored } : { ...DEFAULT_PROFILE };
   }
 }

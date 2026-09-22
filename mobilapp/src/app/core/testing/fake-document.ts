@@ -1,8 +1,8 @@
 /**
- * Minimal erstatning for `DOCUMENT` til unit tests: et `documentElement` med attributter
- * og et `defaultView.localStorage` i hukommelsen. Bruges som
- * `{ provide: DOCUMENT, useValue: createFakeDocument() }`, så tests hverken rører den rigtige
- * DOM eller browserens storage.
+ * Minimal replacement for `DOCUMENT` in unit tests: a `documentElement` with attributes
+ * and an in-memory `defaultView.localStorage`. Used as
+ * `{ provide: DOCUMENT, useValue: createFakeDocument() }`, so tests touch neither the real
+ * DOM nor the browser's storage.
  */
 export interface FakeStorage {
   readonly data: Map<string, string>;

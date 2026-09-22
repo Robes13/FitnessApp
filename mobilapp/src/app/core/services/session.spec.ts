@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
-import { DEMO_PROFILE_DEFAULTS } from '../constants/demo-data';
+import { DEFAULT_PROFILE } from '../constants/profile-defaults';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { FakeStorage, createFakeStorage } from '../testing/fake-document';
 import { provideCoreTestEnvironment } from '../testing/test-providers';
 import { SessionService } from './session';
 import { UserProfileService } from './user-profile';
+
+const NO_BACKEND = { message: 'Der er ingen forbindelse til en server endnu.' };
 
 describe('SessionService', () => {
   let storage: FakeStorage;
@@ -26,46 +28,45 @@ describe('SessionService', () => {
     expect(session.isEmailVerified()).toBe(false);
   });
 
-  it('logs in, marks the e-mail verified and persists the session', async () => {
-    const session = setup();
-
-    await firstValueFrom(session.login('mads', 'hemmelig1'));
-
-    expect(session.isLoggedIn()).toBe(true);
-    expect(session.isEmailVerified()).toBe(true);
-    expect(JSON.parse(storage.getItem(STORAGE_KEY.SESSION) ?? '{}')).toEqual({
-      isLoggedIn: true,
-      isEmailVerified: true,
-    });
-  });
-
-  it('fills an empty profile username on login but never overwrites an existing one', async () => {
+  it('cannot log in without a backend and leaves the profile untouched', async () => {
     const session = setup();
     const profile = TestBed.inject(UserProfileService);
 
-    await firstValueFrom(session.login('  mads ', 'hemmelig1'));
-    expect(profile.profile().username).toBe('mads');
+    await expect(firstValueFrom(session.login('mads', 'hemmelig1'))).rejects.toEqual(NO_BACKEND);
 
-    await firstValueFrom(session.login('anden', 'hemmelig1'));
-    expect(profile.profile().username).toBe('mads');
+    expect(session.isLoggedIn()).toBe(false);
+    expect(profile.profile().username).toBe('');
+    expect(storage.getItem(STORAGE_KEY.SESSION)).toBeNull();
   });
 
-  it('rejects empty credentials with the design copy and stays logged out', async () => {
+  it('cannot complete a signup or ask about the e-mail without a backend', async () => {
     const session = setup();
 
-    await expect(firstValueFrom(session.login('', 'x'))).rejects.toEqual({
-      message: 'Udfyld brugernavn og adgangskode.',
-    });
+    await expect(firstValueFrom(session.completeSignup())).rejects.toEqual(NO_BACKEND);
+    await expect(firstValueFrom(session.resendVerification())).rejects.toEqual(NO_BACKEND);
+    await expect(firstValueFrom(session.checkVerification())).rejects.toEqual(NO_BACKEND);
     expect(session.isLoggedIn()).toBe(false);
   });
 
-  it('logs out without touching the profile data', async () => {
+  it('can mark the e-mail verified manually', () => {
     storage.setItem(
-      STORAGE_KEY.PROFILE,
-      JSON.stringify({ ...DEMO_PROFILE_DEFAULTS, username: 'mads' }),
+      STORAGE_KEY.SESSION,
+      JSON.stringify({ isLoggedIn: true, isEmailVerified: false }),
     );
     const session = setup();
-    await firstValueFrom(session.login('mads', 'hemmelig1'));
+
+    session.markEmailVerified();
+
+    expect(session.isEmailVerified()).toBe(true);
+  });
+
+  it('logs out without touching the profile data', () => {
+    storage.setItem(STORAGE_KEY.PROFILE, JSON.stringify({ ...DEFAULT_PROFILE, username: 'mads' }));
+    storage.setItem(
+      STORAGE_KEY.SESSION,
+      JSON.stringify({ isLoggedIn: true, isEmailVerified: true }),
+    );
+    const session = setup();
 
     session.logout();
 
@@ -75,33 +76,6 @@ describe('SessionService', () => {
     expect(JSON.parse(storage.getItem(STORAGE_KEY.PROFILE) ?? '{}')).toMatchObject({
       username: 'mads',
     });
-  });
-
-  it('completes signup as logged in but unverified', async () => {
-    const session = setup();
-
-    await firstValueFrom(session.completeSignup());
-
-    expect(session.isLoggedIn()).toBe(true);
-    expect(session.isEmailVerified()).toBe(false);
-  });
-
-  it('can mark the e-mail verified manually', async () => {
-    const session = setup();
-    await firstValueFrom(session.completeSignup());
-
-    session.markEmailVerified();
-
-    expect(session.isEmailVerified()).toBe(true);
-  });
-
-  it('checkVerification asks the backend, which never confirms', async () => {
-    const session = setup();
-    await firstValueFrom(session.completeSignup());
-
-    await expect(firstValueFrom(session.checkVerification())).resolves.toBe(false);
-    await expect(firstValueFrom(session.resendVerification())).resolves.toBeUndefined();
-    expect(session.isEmailVerified()).toBe(false);
   });
 
   it('restores a stored session', () => {

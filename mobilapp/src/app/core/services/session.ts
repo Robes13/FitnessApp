@@ -9,8 +9,8 @@ import { UserProfileService } from './user-profile';
 const LOGGED_OUT: SessionState = { isLoggedIn: false, isEmailVerified: false };
 
 /**
- * Login-tilstand og e-mail-bekræftelse. Kun sessionen ryddes ved log ud – profil, madlog og
- * vejninger bliver liggende (designets "Dine data bliver gemt").
+ * Login state and email verification. Only the session is cleared on log out – profile,
+ * food log and weigh-ins remain (the design's "Your data is kept").
  */
 @Injectable({ providedIn: 'root' })
 export class SessionService {
@@ -22,7 +22,7 @@ export class SessionService {
   readonly isLoggedIn: Signal<boolean> = computed(() => this.state().isLoggedIn);
   readonly isEmailVerified: Signal<boolean> = computed(() => this.state().isEmailVerified);
 
-  /** Ved succes er brugeren logget ind og bekræftet. Et tomt profilnavn sættes til brugernavnet. */
+  /** On success the user is logged in and verified. An empty profile name is set to the username. */
   login(username: string, password: string): Observable<void> {
     return this.authApi.login(username, password).pipe(
       tap(() => {
@@ -39,9 +39,9 @@ export class SessionService {
   }
 
   /**
-   * Afslutter oprettelsen: bekræftelsesmailen "sendes", og brugeren er logget ind men
-   * ubekræftet, så Hjem viser bekræftelses-arket. Selve `AuthApi.register` kaldes af
-   * signup-flowet, der kender adgangskoden.
+   * Completes sign-up: the verification email is "sent", and the user is logged in but
+   * unverified, so Home shows the verification sheet. `AuthApi.register` itself is called
+   * by the signup flow, which knows the password.
    */
   completeSignup(): Observable<void> {
     return this.authApi
@@ -57,7 +57,7 @@ export class SessionService {
     return this.authApi.resendVerification();
   }
 
-  /** Spørger backenden; bliver den en dag `true`, markeres mailen som bekræftet. */
+  /** Asks the backend; if it ever becomes `true`, the email is marked as verified. */
   checkVerification(): Observable<boolean> {
     return this.authApi.checkVerification().pipe(
       tap((verified) => {

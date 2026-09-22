@@ -1,7 +1,7 @@
 /*
- * Host-elementet (`app-root`, host class `.app-root`). Under Angulars emulerede
- * encapsulation rammer kun `:host` selve elementet – en `.app-root`-regel ville blive
- * scoped til komponentens indhold og aldrig matche.
+ * The host element (`app-root`, host class `.app-root`). Under Angular's emulated
+ * encapsulation, only `:host` targets the element itself – an `.app-root` rule would be
+ * scoped to the component's content and would never match.
  */
 :host {
   position: relative;

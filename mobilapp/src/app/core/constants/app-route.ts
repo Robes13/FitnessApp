@@ -13,7 +13,7 @@ export const APP_ROUTE = {
 
 export const ROUTE_PARAM = { RECIPE_ID: 'recipeId' } as const;
 
-/** `/mad?tilfoej=morgen` åbner tilføj-arket med det måltid valgt. */
+/** `/mad?tilfoej=morgen` opens the add sheet with that meal selected. */
 export const QUERY_PARAM = { ADD_MEAL: 'tilfoej' } as const;
 
 export const APP_PATH = {

@@ -1,9 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-import { DEMO_PROFILE_DEFAULTS } from '../constants/demo-data';
+import { DEFAULT_PROFILE } from '../constants/profile-defaults';
 import { PACES } from '../constants/nutrition';
 import { PaceDefinition, UserProfile } from '../models/profile';
 import { TEST_NOW } from '../testing/test-providers';
 import { NutritionCalculator } from './nutrition-calculator';
+
+/** Test profile: the default profile with training on Monday, Wednesday and Friday. */
+const BASE_PROFILE: UserProfile = {
+  ...DEFAULT_PROFILE,
+  trainingDays: [true, false, true, false, true, false, false],
+};
 
 const MODERAT = PACES.find((pace) => pace.id === 'moderat') as PaceDefinition;
 const HURTIG = PACES.find((pace) => pace.id === 'hurtig') as PaceDefinition;
@@ -101,23 +107,23 @@ describe('NutritionCalculator', () => {
 
   describe('kcalTarget', () => {
     it('computes the demo default profile to 2530 kcal', () => {
-      expect(calculator.kcalTarget(DEMO_PROFILE_DEFAULTS, TEST_NOW)).toBe(2530);
+      expect(calculator.kcalTarget(BASE_PROFILE, TEST_NOW)).toBe(2530);
     });
 
     it('applies the goal adjustment', () => {
-      const profile: UserProfile = { ...DEMO_PROFILE_DEFAULTS, goal: 'tabe', pace: 'hurtig' };
+      const profile: UserProfile = { ...BASE_PROFILE, goal: 'tabe', pace: 'hurtig' };
       expect(calculator.kcalTarget(profile, TEST_NOW)).toBe(1530);
     });
 
     it('prefers a manual override', () => {
-      const profile: UserProfile = { ...DEMO_PROFILE_DEFAULTS, kcalOverride: 1800 };
+      const profile: UserProfile = { ...BASE_PROFILE, kcalOverride: 1800 };
       expect(calculator.kcalTarget(profile, TEST_NOW)).toBe(1800);
       expect(calculator.suggestedKcalTarget(profile, TEST_NOW)).toBe(2530);
     });
 
     it('never goes below 1200 kcal', () => {
       const profile: UserProfile = {
-        ...DEMO_PROFILE_DEFAULTS,
+        ...BASE_PROFILE,
         weightKg: 30,
         heightCm: 120,
         gender: 'kvinde',
@@ -136,14 +142,12 @@ describe('NutritionCalculator', () => {
 
   describe('training', () => {
     it('counts training days and multiplies with the duration', () => {
-      expect(calculator.trainingFrequency(DEMO_PROFILE_DEFAULTS)).toBe(3);
-      expect(calculator.weeklyTrainingMinutes(DEMO_PROFILE_DEFAULTS)).toBe(135);
+      expect(calculator.trainingFrequency(BASE_PROFILE)).toBe(3);
+      expect(calculator.weeklyTrainingMinutes(BASE_PROFILE)).toBe(135);
     });
 
     it('clamps the duration to 10..180 minutes', () => {
-      expect(
-        calculator.weeklyTrainingMinutes({ ...DEMO_PROFILE_DEFAULTS, trainingMinutes: 5 }),
-      ).toBe(30);
+      expect(calculator.weeklyTrainingMinutes({ ...BASE_PROFILE, trainingMinutes: 5 })).toBe(30);
     });
 
     it('maps RPE to an intensity', () => {

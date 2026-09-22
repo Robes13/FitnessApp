@@ -23,8 +23,8 @@ describe('App', () => {
 });
 
 describe('routes', () => {
-  // Routerens test-harness kræver det rigtige (jsdom-)dokument, så sessionen seedes direkte i
-  // `localStorage`, som `StorageService` læser via `DOCUMENT.defaultView`.
+  // The router's test harness requires the real (jsdom) document, so the session is seeded
+  // directly into `localStorage`, which `StorageService` reads via `DOCUMENT.defaultView`.
   afterEach(() => localStorage.clear());
 
   async function navigate(loggedIn: boolean, url: string): Promise<string> {

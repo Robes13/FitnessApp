@@ -155,12 +155,12 @@ mobilapp/
         ├── app.routes.ts   Rod-routing; alle features lazy loades
         ├── app.config.ts   App-dækkende providers
         ├── core/           App-dækkende fundament (ingen afhængigheder opad)
-        │   ├── constants/  APP_ROUTE, MEALS, STORAGE_KEY, demo-data …
+        │   ├── constants/  APP_ROUTE, MEALS, STORAGE_KEY, DEFAULT_PROFILE …
         │   ├── models/     Profile, Food, Meal, Session, Tone …
         │   ├── services/   Storage, Theme, AuthApi, Session, FoodLog, WeightLog …
         │   ├── guards/     authGuard, guestGuard
         │   ├── utils/      Dato- og talformatering, NOW-token
-        │   └── testing/    Test-providers og fake DOCUMENT
+        │   └── testing/    Test-providers, fixtures og fake DOCUMENT
         ├── shared/
         │   └── components/ UiButton, UiSheet, UiRuler, Figure, FoodPicker,
         │                   BarcodeScanner, ProfileAvatar …
@@ -210,11 +210,20 @@ prototypen findes, og de er koblet sammen gennem `core/`.
 
 ### Data og tilstand
 
-Appen kører på en **mock-backend** (`AuthApi`) og gemmer alt lokalt gennem
-`StorageService` (browserens `localStorage`). Demo-data i
-`core/constants/demo-data.ts` seeder varer, samlinger og vejninger, så
-skærmene har noget at vise. Historikken før i dag og Hjems ugetal er bevidst
-syntetiske og skal skiftes ud, når der findes en rigtig backend.
+**Appen indeholder ingen data.** Der er hverken varedatabase, retter, faste
+samlinger, seedede logs eller demo-profil, og `AuthApi` har endnu ingen
+backend at kalde – hvert auth-kald fejler med "Der er ingen forbindelse til en
+server endnu." Login og oprettelse virker derfor først, når backenden findes.
+
+Det, brugeren selv registrerer, gemmes lokalt gennem `StorageService`
+(browserens `localStorage`): profil, dagens madlog, egne varer, vejninger,
+egne samlinger, tema og antal scanninger. Madloggen er bundet til dagens dato
+og starter tom hver dag; alt andet bliver liggende.
+
+Appen kender derfor kun dagen i dag. Hjems ugeringe, ugens nøgletal og
+badge-tællerne viser `–` eller 0 for alle dage uden data i stedet for at gætte,
+og historikken rummer kun dagens måltider og brugerens vejninger. Når et API
+kommer til, er det de steder, historikken skal ind.
 
 ### Test og build
 
@@ -234,7 +243,10 @@ omdirigering efter log ud og temaskiftet.
 
 ### Næste skridt
 
-- Rigtig backend i stedet for `AuthApi`-mocken og de syntetiske historik-tal
+- Rigtig backend: HTTP-lag (`provideHttpClient` + interceptor), base-URL i en
+  miljøkonfiguration, token i sessionen og en implementering af `AuthApi`
+- Data fra backenden: varedatabase, retter, faste samlinger og historik – samt
+  loading- og fejltilstande på de skærme, der i dag kun kender tom/udfyldt
 - App-ikoner og splash screens (`@capacitor/assets`)
 - ESLint + Stylelint, så reglerne i `ARCHITECTURE.md` håndhæves automatisk
 - `"format": "prettier --write src"` og `"format:check": "prettier --check src"`

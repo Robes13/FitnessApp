@@ -41,12 +41,12 @@ export const MONTH_NAMES_SHORT = [
 const MS_PER_DAY = 86_400_000;
 const DAYS_PER_WEEK = 7;
 const SUNDAY_OFFSET = 6;
-/** Al tal- og datoformatering i appen er dansk (`LOCALE_ID` er `'da'`). */
+/** All number and date formatting in the app is Danish (`LOCALE_ID` is `'da'`). */
 const LOCALE = 'da-DK';
-/** Designet skriver negative tal med typografisk minus, ikke bindestreg. */
+/** The design writes negative numbers with a typographic minus, not a hyphen. */
 const TYPOGRAPHIC_MINUS = '−';
 
-/** 0 = mandag … 6 = søndag (JavaScript starter ugen søndag). */
+/** 0 = Monday … 6 = Sunday (JavaScript's week starts on Sunday). */
 export function mondayIndex(date: Date): number {
   return (date.getDay() + SUNDAY_OFFSET) % DAYS_PER_WEEK;
 }
@@ -67,12 +67,12 @@ export function isSameDay(a: Date, b: Date): boolean {
   return toIsoDate(a) === toIsoDate(b);
 }
 
-/** Hele kalenderdage fra `from` til `to` (positivt når `to` ligger senere). */
+/** Whole calendar days from `from` to `to` (positive when `to` is later). */
 export function daysBetween(from: Date, to: Date): number {
   return Math.round((startOfDay(to).getTime() - startOfDay(from).getTime()) / MS_PER_DAY);
 }
 
-/** Lokal dato som `YYYY-MM-DD`. */
+/** Local date as `YYYY-MM-DD`. */
 export function toIsoDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -80,7 +80,7 @@ export function toIsoDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-/** `'I dag'` / `'I går'` / `'3 dage siden'`. Fremtidige datoer behandles som i dag. */
+/** `'I dag'` / `'I går'` / `'3 dage siden'`. Future dates are treated as today. */
 export function formatRelativeDay(date: Date, today: Date): string {
   const days = daysBetween(date, today);
   if (days <= 0) {
@@ -102,19 +102,19 @@ export function formatDayLabel(date: Date): string {
   return `${DAY_NAMES_LONG[mondayIndex(date)] ?? ''} ${formatDayMonth(date)}`;
 }
 
-/** `'Tir.'` – ugedagen forkortet med punktum som i historikken. */
+/** `'Tir.'` – the weekday abbreviated with a period, as in the history. */
 export function formatWeekdayAbbreviated(date: Date): string {
   return `${DAY_NAMES_SHORT[mondayIndex(date)] ?? ''}.`;
 }
 
-/** `'07:45'` – 24-timers klokkeslæt. */
+/** `'07:45'` – 24-hour time. */
 export function formatTime(date: Date): string {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   return `${hours}:${minutes}`;
 }
 
-/** Dansk decimaltal med komma: `formatDecimal(74.5, 1)` → `'74,5'`. */
+/** Danish decimal number with a comma: `formatDecimal(74.5, 1)` → `'74,5'`. */
 export function formatDecimal(value: number, digits = 1): string {
   return value.toLocaleString(LOCALE, {
     minimumFractionDigits: digits,
@@ -123,19 +123,20 @@ export function formatDecimal(value: number, digits = 1): string {
 }
 
 /**
- * Vægt som designets `weightText`: højst én decimal med dansk komma, og uden decimalen,
- * når den er nul (`75` / `74,5`). Bruges af opret-flowet, Vægt, Hjem og Profil.
+ * Weight as the design's `weightText`: at most one decimal with a Danish comma, and
+ * without the decimal when it's zero (`75` / `74,5`). Used by the sign-up flow, Weight,
+ * Home and Profile.
  */
 export function formatWeightKg(kg: number): string {
   return kg.toLocaleString(LOCALE, { maximumFractionDigits: 1 });
 }
 
-/** Dansk heltal med tusindtalspunktum: `formatInteger(6000)` → `'6.000'`. */
+/** Danish integer with a thousands separator: `formatInteger(6000)` → `'6.000'`. */
 export function formatInteger(value: number): string {
   return value.toLocaleString(LOCALE, { maximumFractionDigits: 0 });
 }
 
-/** Fortegnet delta: `'+0,6'`, `'−1,2'` (typografisk minus) eller `'0,0'`. */
+/** Signed delta: `'+0,6'`, `'−1,2'` (typographic minus) or `'0,0'`. */
 export function formatSignedDecimal(value: number, digits = 1): string {
   return value
     .toLocaleString(LOCALE, {

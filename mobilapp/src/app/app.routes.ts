@@ -3,9 +3,9 @@ import { APP_ROUTE } from './core/constants/app-route';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
 
 /**
- * Topniveau-routing. Alle features lazy loades. Gæste-skærme (login, glemt kode, opret) er
- * kun for udloggede; Profil og shell'en (tabs) kræver login. Ukendte stier ender på Hjem –
- * er brugeren ikke logget ind, sender `authGuard` videre til login.
+ * Top-level routing. All features are lazy loaded. Guest screens (login, forgot password,
+ * sign up) are for logged-out users only; Profile and the shell (tabs) require login.
+ * Unknown paths end up on Home – if the user isn't logged in, `authGuard` redirects to login.
  */
 export const routes: Routes = [
   {

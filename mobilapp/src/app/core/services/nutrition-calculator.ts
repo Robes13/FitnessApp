@@ -63,12 +63,12 @@ const EMPTY_PASSWORD_STRENGTH: PasswordStrength = {
 };
 
 /**
- * Rene beregninger fra designets `renderVals()`: alder, BMR (Mifflin-St Jeor), kaloriemål,
- * makrofordeling, målvægt, adgangskodestyrke og portionsskalering. Ingen state.
+ * Pure calculations from the design's `renderVals()`: age, BMR (Mifflin-St Jeor), calorie
+ * target, macro split, goal weight, password strength and portion scaling. No state.
  */
 @Injectable({ providedIn: 'root' })
 export class NutritionCalculator {
-  /** Fyldte år på `today`. 0 hvis datoen mangler eller er ugyldig. */
+  /** Completed years as of `today`. 0 if the date is missing or invalid. */
   ageFromBirthday(isoDate: string | null, today: Date): number {
     const birthday = parseIsoDate(isoDate);
     if (!birthday) {
@@ -84,12 +84,12 @@ export class NutritionCalculator {
     return Math.max(0, age);
   }
 
-  /** BMI med én decimal. */
+  /** BMI with one decimal. */
   bmi(kg: number, cm: number): number {
     return roundTo(rawBmi(kg, cm), 1);
   }
 
-  /** Basalstofskifte (Mifflin-St Jeor). Alder 0 → 30 år; `andet`/ukendt køn → gennemsnit. */
+  /** Basal metabolic rate (Mifflin-St Jeor). Age 0 → 30 years; `andet`/unknown gender → average. */
   bmr(kg: number, cm: number, age: number, gender: Gender | null): number {
     const effectiveAge = age > 0 ? age : BMR_FALLBACK_AGE;
     const offset = BMR_GENDER_OFFSET[gender ?? 'andet'];
@@ -102,7 +102,7 @@ export class NutritionCalculator {
     return level ?? ACTIVITY_LEVELS[ACTIVITY_LEVELS.length - 1]!;
   }
 
-  /** Dagligt behov uden mål-justering, rundet til nærmeste 10 kcal. */
+  /** Daily need without goal adjustment, rounded to the nearest 10 kcal. */
   baseKcal(bmr: number, pal: number): number {
     return Math.round((bmr * pal) / KCAL_ROUNDING) * KCAL_ROUNDING;
   }
@@ -121,7 +121,7 @@ export class NutritionCalculator {
     }
   }
 
-  /** Beregnet forslag (uden manuel overstyring), aldrig under 1200 kcal. */
+  /** Calculated suggestion (without manual override), never below 1200 kcal. */
   suggestedKcalTarget(profile: UserProfile, today: Date): number {
     const age = this.ageFromBirthday(profile.birthday, today);
     const bmr = this.bmr(profile.weightKg, profile.heightCm, age, profile.gender);
@@ -130,12 +130,12 @@ export class NutritionCalculator {
     return Math.max(KCAL_MIN, base + adjustment);
   }
 
-  /** Dagligt kaloriemål: manuel overstyring, ellers det beregnede forslag. */
+  /** Daily calorie target: manual override, otherwise the calculated suggestion. */
   kcalTarget(profile: UserProfile, today: Date): number {
     return profile.kcalOverride ?? this.suggestedKcalTarget(profile, today);
   }
 
-  /** Gram pr. makro ud fra 30/45/25-fordelingen. `kcal` er selve målet. */
+  /** Grams per macro based on the 30/45/25 split. `kcal` is the target itself. */
   macroGoals(kcalTarget: number): Macros {
     return {
       kcal: kcalTarget,
@@ -174,7 +174,7 @@ export class NutritionCalculator {
     return Math.round(steps * kg * KCAL_PER_STEP_PER_KG);
   }
 
-  /** Skalaen for målvægt: lige over nuværende vægt (tage) eller under den (tabe/hold). */
+  /** The goal weight scale: just above the current weight (tage) or below it (tabe/hold). */
   goalWeightBounds(goal: GoalId | null, weightKg: number): GoalWeightBounds {
     const current = Math.round(weightKg);
     if (goal === 'tage') {
@@ -183,7 +183,7 @@ export class NutritionCalculator {
     return { min: GOAL_WEIGHT_MIN_KG, max: Math.max(GOAL_WEIGHT_MIN_SPAN_KG, current - 1) };
   }
 
-  /** Tabe: BMI ≥ 17. Tage: BMI ≤ 35. Hold: altid realistisk. */
+  /** Tabe: BMI ≥ 17. Tage: BMI ≤ 35. Hold: always realistic. */
   isGoalWeightRealistic(goal: GoalId | null, goalKg: number, cm: number): boolean {
     const bmi = rawBmi(goalKg, cm);
     switch (goal) {
@@ -196,7 +196,7 @@ export class NutritionCalculator {
     }
   }
 
-  /** Designets `fpScore`: længde ≥ 8, længde ≥ 12, et stort bogstav og et tal giver ét point hver. */
+  /** The design's `fpScore`: length ≥ 8, length ≥ 12, an uppercase letter and a digit each give one point. */
   passwordStrength(password: string): PasswordStrength {
     if (password.length === 0) {
       return EMPTY_PASSWORD_STRENGTH;
@@ -222,7 +222,7 @@ export class NutritionCalculator {
     };
   }
 
-  /** `'250 g'` → 250 g · `'1 portion'` → 1 portion · `'0,5 l'` → 0.5 l. Uden tal → 1, uden enhed → g. */
+  /** `'250 g'` → 250 g · `'1 portion'` → 1 portion · `'0,5 l'` → 0.5 l. No number → 1, no unit → g. */
   parseQuantity(quantity: string): ParsedQuantity {
     const trimmed = quantity.trim();
     const amount = parseFloat(trimmed.replace(',', '.')) || 1;

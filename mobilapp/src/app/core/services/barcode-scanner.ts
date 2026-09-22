@@ -1,23 +1,24 @@
 import { Injectable, InjectionToken, Signal, inject, signal } from '@angular/core';
 import { Observable, map, timer } from 'rxjs';
-import { SCANNED_DEMO_ITEM } from '../constants/demo-data';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { ScanResult } from '../models/food';
 import { StorageService } from './storage';
 
-/** Tid før stregkodescanneren melder et resultat (designets `runScan`). */
+/** Placeholder for the response time of a barcode lookup, so the UI shows its loading state. */
 const DEFAULT_DELAY_MS = 2300;
 
-/** Tid før scanneren melder resultat. Sæt til 0 i tests. */
+/** Time before the scanner reports a result. Set to 0 in tests. */
 export const SCAN_DELAY_MS = new InjectionToken<number>('SCAN_DELAY_MS', {
   providedIn: 'root',
   factory: () => DEFAULT_DELAY_MS,
 });
 
 /**
- * Dummy-scanner som i designet: der er intet kamera. Hver scanning tæller op, og hver anden
- * (lige numre) er en ukendt vare; de ulige finder `SCANNED_DEMO_ITEM`. Tælleren gemmes, så
- * mønsteret fortsætter på tværs af sessioner og "10 scanninger"-badget kan beregnes.
+ * Barcode scanner.
+ *
+ * The app has neither a camera nor a product database yet, so every lookup ends up as
+ * `unknown`, and the user is offered to create the item themselves. The scan counter is
+ * real data and is saved, so the "10 scans" badge can be calculated.
  */
 @Injectable({ providedIn: 'root' })
 export class BarcodeScannerService {
@@ -35,9 +36,7 @@ export class BarcodeScannerService {
         const count = this.scanCountState() + 1;
         this.scanCountState.set(count);
         this.storage.write(STORAGE_KEY.SCAN_COUNT, count);
-        return count % 2 === 0
-          ? { status: 'unknown' }
-          : { status: 'found', item: SCANNED_DEMO_ITEM };
+        return { status: 'unknown' };
       }),
     );
   }

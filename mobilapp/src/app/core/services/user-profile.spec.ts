@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { DEMO_PROFILE_DEFAULTS } from '../constants/demo-data';
+import { DEFAULT_PROFILE } from '../constants/profile-defaults';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { FakeStorage, createFakeStorage } from '../testing/fake-document';
 import { provideCoreTestEnvironment } from '../testing/test-providers';
@@ -17,18 +17,18 @@ describe('UserProfileService', () => {
     storage = createFakeStorage();
   });
 
-  it('starts from the demo defaults with the design fallback name', () => {
+  it('starts from the neutral defaults with no name yet', () => {
     const service = setup();
 
-    expect(service.profile()).toEqual(DEMO_PROFILE_DEFAULTS);
-    expect(service.displayName()).toBe('Mads');
-    expect(service.initial()).toBe('M');
+    expect(service.profile()).toEqual(DEFAULT_PROFILE);
+    expect(service.displayName()).toBe('');
+    expect(service.initial()).toBe('');
     expect(service.age()).toBe(0);
     expect(service.bmi()).toBe(23.7);
     expect(service.kcalTarget()).toBe(2530);
     expect(service.suggestedKcalTarget()).toBe(2530);
     expect(service.activityLevel().label).toBe('Aktiv');
-    expect(service.trainingFrequency()).toBe(3);
+    expect(service.trainingFrequency()).toBe(0);
     expect(service.intensity()).toBeNull();
     expect(service.goalDefinition()).toBeNull();
     expect(service.paceDefinition()).toBeNull();
@@ -64,11 +64,11 @@ describe('UserProfileService', () => {
   it('replaces and resets the whole profile', () => {
     const service = setup();
 
-    service.replace({ ...DEMO_PROFILE_DEFAULTS, username: 'bo', weightKg: 90 });
+    service.replace({ ...DEFAULT_PROFILE, username: 'bo', weightKg: 90 });
     expect(service.profile().weightKg).toBe(90);
 
     service.resetToDefaults();
-    expect(service.profile()).toEqual(DEMO_PROFILE_DEFAULTS);
+    expect(service.profile()).toEqual(DEFAULT_PROFILE);
   });
 
   it('merges a partial stored profile with the defaults', () => {
@@ -76,6 +76,6 @@ describe('UserProfileService', () => {
 
     const service = setup();
 
-    expect(service.profile()).toEqual({ ...DEMO_PROFILE_DEFAULTS, username: 'gemt', weightKg: 82 });
+    expect(service.profile()).toEqual({ ...DEFAULT_PROFILE, username: 'gemt', weightKg: 82 });
   });
 });

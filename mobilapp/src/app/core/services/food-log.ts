@@ -1,6 +1,5 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { newId } from '../utils/id';
-import { DEMO_LOGGED_FOODS } from '../constants/demo-data';
 import { MEAL_IDS } from '../constants/meals';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { FoodItem, LoggedFood, Macros } from '../models/food';
@@ -10,7 +9,7 @@ import { NOW } from '../utils/now';
 import { StorageService } from './storage';
 
 interface StoredFoodLog {
-  /** Lokal dato (`YYYY-MM-DD`) loggen gælder for. En ny dag starter med en tom log. */
+  /** Local date (`YYYY-MM-DD`) the log applies to. A new day starts with an empty log. */
   date: string;
   entries: readonly LoggedFood[];
 }
@@ -18,11 +17,10 @@ interface StoredFoodLog {
 const EMPTY_MACROS: Macros = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
 
 /**
- * Dagens madlog og brugerens egne varer.
+ * Today's food log and the user's own items.
  *
- * Første gang appen åbnes (ingen gemt log) seedes designets to demo-varer, så Hjem og Mad
- * ikke er tomme. Loggen er bundet til dagens dato: åbnes appen en ny dag, starter den tom.
- * Egne varer (`customFoods`) gemmes separat og overlever dagsskift.
+ * The log is tied to today's date: if the app is opened on a new day, it starts empty.
+ * Custom foods (`customFoods`) are stored separately and survive the day changing.
  */
 @Injectable({ providedIn: 'root' })
 export class FoodLogService {
@@ -77,7 +75,7 @@ export class FoodLogService {
     this.setEntries(this.entriesState().filter((entry) => entry.logId !== logId));
   }
 
-  /** Egne varer lægges forrest, så de også kommer først i søgningen. */
+  /** Custom foods are added at the front, so they also come first in search. */
   addCustomFood(food: Omit<FoodItem, 'id' | 'isCustom'>): FoodItem {
     const item: FoodItem = { ...food, id: newId('food'), isCustom: true };
     this.customFoodsState.set([item, ...this.customFoodsState()]);
@@ -93,13 +91,10 @@ export class FoodLogService {
 
   private restoreEntries(): void {
     const stored = this.storage.read<StoredFoodLog>(STORAGE_KEY.FOOD_LOG);
-    if (!stored) {
-      for (const { meal, ...food } of DEMO_LOGGED_FOODS) {
-        this.add(food, meal);
-      }
+    if (stored === null || stored.date !== this.today()) {
       return;
     }
-    this.entriesState.set(stored.date === this.today() ? stored.entries : []);
+    this.entriesState.set(stored.entries);
   }
 
   private restoreCustomFoods(): readonly FoodItem[] {

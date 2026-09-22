@@ -7,9 +7,10 @@ funktioner og providers, så de kan kompileres sammen med appen uden vitest-afh�
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `fake-document.ts`  | `createFakeDocument()` / `createFakeStorage()` – et minimalt `DOCUMENT` med `documentElement`-attributter og en `localStorage` i hukommelsen.        |
 | `test-providers.ts` | `provideCoreTestEnvironment()` (service-specs), `provideComponentTestEnvironment()` + `resetComponentTestStorage()` (komponent-specs) og `TEST_NOW`. |
+| `fixtures.ts`       | Testdata, appen ikke selv leverer: `weighEntry()` / `weighHistory()` til en vejningshistorik og `TEST_FOOD` til en vare, der kan logges.             |
 
 `TEST_NOW` er mandag 21. september 2026 kl. 10:30. Begge miljøer fryser `NOW` og sætter alle
-mock-forsinkelser (`AUTH_API_DELAY_MS`, `FOOD_SEARCH_DELAY_MS`, `SCAN_DELAY_MS`) til 0 ms.
+kunstige forsinkelser (`FOOD_SEARCH_DELAY_MS`, `SCAN_DELAY_MS`) til 0 ms.
 
 ## Service-specs
 
@@ -24,6 +25,10 @@ const service = TestBed.inject(FoodLogService);
 
 Seed storage før `TestBed.inject`, hvis en test skal ramme "genskab fra storage"-stien.
 
+Appen seeder ikke selv noget: alle stores starter tomme. En test, der har brug for en
+vejningshistorik eller et logget måltid, lægger det selv i storage – `fixtures.ts` har
+byggestenene.
+
 ## Komponent-specs
 
 Det falske dokument har ingen `querySelector`, så `TestBed.createComponent()` fejler med det.
@@ -34,7 +39,7 @@ Browserens `localStorage` deles mellem tests, så spec'en nulstiller den selv:
 
 ```ts
 beforeEach(() => {
-  resetComponentTestStorage({ [STORAGE_KEY.PROFILE]: { ...DEMO_PROFILE_DEFAULTS } });
+  resetComponentTestStorage({ [STORAGE_KEY.PROFILE]: { ...DEFAULT_PROFILE } });
 });
 
 TestBed.configureTestingModule({

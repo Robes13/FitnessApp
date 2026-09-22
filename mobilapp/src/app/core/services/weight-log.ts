@@ -1,17 +1,7 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { newId } from '../utils/id';
-import { DEMO_WEIGHT_SEED } from '../constants/demo-data';
 import { STORAGE_KEY } from '../constants/storage-key';
-import {
-  WEIGHT_RANGE_DAYS,
-  WEIGHT_RANGE_LABEL,
-  WEIGHT_SERIES_DRIFT_KG,
-  WEIGHT_SERIES_DRIFT_REFERENCE_DAYS,
-  WEIGHT_SERIES_POINTS,
-  WEIGHT_SERIES_WOBBLE_AMPLITUDE_KG,
-  WEIGHT_SERIES_WOBBLE_FREQUENCY,
-} from '../constants/weight';
-import { GoalId } from '../models/profile';
+import { WEIGHT_RANGE_DAYS, WEIGHT_RANGE_LABEL } from '../constants/weight';
 import { WeighEntry, WeightPoint, WeightRange } from '../models/weight';
 import { addDays, isSameDay } from '../utils/date-format';
 import { roundTo } from '../utils/math';
@@ -20,11 +10,10 @@ import { StorageService } from './storage';
 import { UserProfileService } from './user-profile';
 
 /**
- * Vejninger, nyeste først. `add()` opdaterer også profilens vægt, så Hjem, Mad og
- * kalorieberegningen følger med.
+ * Weigh-ins, newest first. `add()` also updates the profile's weight, so Home, Food and
+ * the calorie calculation stay in sync.
  *
- * Første gang (ingen gemt log) seedes designets tre demo-vejninger for 3, 7 og 14 dage siden ud
- * fra profilens vægt og mål. `seriesFor()` er designets syntetiske graf (`pts`) – ikke rigtige data.
+ * The log starts empty: there are no weigh-ins until the user records one themselves.
  */
 @Injectable({ providedIn: 'root' })
 export class WeightLogService {
@@ -51,20 +40,13 @@ export class WeightLogService {
     return entry;
   }
 
-  /** 12 punkter fra `range` dage siden til nu, med drift efter mål og en let bølge. */
-  seriesFor(range: WeightRange, goal: GoalId | null, currentKg: number): readonly WeightPoint[] {
-    const days = WEIGHT_RANGE_DAYS[range];
-    const drift = WEIGHT_SERIES_DRIFT_KG[goal ?? 'tabe'];
-    const now = this.now();
-    const lastIndex = WEIGHT_SERIES_POINTS - 1;
-    return Array.from({ length: WEIGHT_SERIES_POINTS }, (_, index) => {
-      const progress = index / lastIndex;
-      const kg =
-        currentKg +
-        drift * (1 - progress) * (days / WEIGHT_SERIES_DRIFT_REFERENCE_DAYS) +
-        Math.sin(index * WEIGHT_SERIES_WOBBLE_FREQUENCY) * WEIGHT_SERIES_WOBBLE_AMPLITUDE_KG;
-      return { kg, at: addDays(now, -Math.round(days * (1 - progress))).toISOString() };
-    });
+  /** The weigh-ins within the range, oldest first. Empty until the user has weighed in. */
+  seriesFor(range: WeightRange): readonly WeightPoint[] {
+    const from = addDays(this.now(), -WEIGHT_RANGE_DAYS[range]).getTime();
+    return this.entriesState()
+      .filter((entry) => new Date(entry.at).getTime() >= from)
+      .map((entry) => ({ kg: entry.kg, at: entry.at }))
+      .reverse();
   }
 
   rangeLabel(range: WeightRange): string {
@@ -78,22 +60,7 @@ export class WeightLogService {
 
   private restore(): readonly WeighEntry[] {
     const stored = this.storage.read<readonly WeighEntry[]>(STORAGE_KEY.WEIGHT_LOG);
-    if (stored) {
-      return sortNewestFirst(stored);
-    }
-    const seeded = this.seed();
-    this.storage.write(STORAGE_KEY.WEIGHT_LOG, seeded);
-    return seeded;
-  }
-
-  private seed(): readonly WeighEntry[] {
-    const { weightKg, goal } = this.profile.profile();
-    const now = this.now();
-    return DEMO_WEIGHT_SEED.map((seed) => ({
-      id: newId('weigh'),
-      kg: roundTo(weightKg + (goal === 'tage' ? seed.deltaKgWhenGaining : seed.deltaKg), 1),
-      at: addDays(now, -seed.daysAgo).toISOString(),
-    }));
+    return stored ? sortNewestFirst(stored) : [];
   }
 }
 

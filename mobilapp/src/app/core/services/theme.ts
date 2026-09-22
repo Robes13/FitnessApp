@@ -5,9 +5,9 @@ import { Theme } from '../models/theme';
 import { StorageService } from './storage';
 
 /**
- * Manuelt tema. Mørk er standard; brugeren slår "Lys tilstand" til i Profil. OS-præferencen
- * følges bevidst ikke (designet er dark-first). Temaet sættes som `data-theme` på `<html>`,
- * som `_tokens.scss` reagerer på, og gemmes i storage.
+ * Manual theme. Dark is the default; the user turns on "Light mode" in Profile. The OS
+ * preference is deliberately not followed (the design is dark-first). The theme is set as
+ * `data-theme` on `<html>`, which `_tokens.scss` reacts to, and is saved in storage.
  */
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -22,7 +22,7 @@ export class ThemeService {
     this.initialize();
   }
 
-  /** Genskaber gemt tema og anvender det på dokumentet. Idempotent – kan kaldes fra en app initializer. */
+  /** Restores the saved theme and applies it to the document. Idempotent – can be called from an app initializer. */
   initialize(): void {
     const stored = this.storage.read<unknown>(STORAGE_KEY.THEME);
     this.apply(isTheme(stored) ? stored : DEFAULT_THEME);

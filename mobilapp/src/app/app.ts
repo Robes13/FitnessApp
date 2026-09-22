@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 /**
- * Rodkomponenten: kun en `<router-outlet>`. Den udgør telefonens "skærm" – fuld højde,
- * begrænset til `--layout-max-width` og med app-baggrunden. Alt indhold kommer fra routeren.
+ * The root component: just a `<router-outlet>`. It represents the phone's "screen" – full
+ * height, constrained to `--layout-max-width`, with the app background. All content comes
+ * from the router.
  */
 @Component({
   selector: 'app-root',

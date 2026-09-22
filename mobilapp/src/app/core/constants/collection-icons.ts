@@ -33,13 +33,13 @@ export const COLLECTION_ICON_NAMES = [
 
 export type CollectionIconName = (typeof COLLECTION_ICON_NAMES)[number];
 
-/** Antal ikoner der vises, før brugeren trykker "Vis flere". */
+/** Number of icons shown before the user taps "Show more". */
 export const COLLECTION_ICON_PREVIEW_COUNT = 12;
 
 /**
- * Hvad ikonet forestiller, læst op af skærmlæsere. Designet har kun tegningerne
- * (`colIconDefs`), så navnene er oversat her ved siden af `COLLECTION_ICON_NAMES`,
- * så enhver ikonvælger kan bruge de samme danske navne.
+ * What the icon depicts, read aloud by screen readers. The design only has the
+ * drawings (`colIconDefs`), so the names are translated here alongside
+ * `COLLECTION_ICON_NAMES`, so any icon picker can use the same Danish names.
  */
 export const COLLECTION_ICON_LABELS: Readonly<Record<CollectionIconName, string>> = {
   egg: 'Æg',

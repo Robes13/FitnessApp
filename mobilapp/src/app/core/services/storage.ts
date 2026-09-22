@@ -2,11 +2,11 @@ import { DOCUMENT, Injectable, inject } from '@angular/core';
 import { StorageKey } from '../constants/storage-key';
 
 /**
- * Tynd, fejlsikker indpakning af `localStorage` med JSON-serialisering.
+ * Thin, fail-safe wrapper around `localStorage` with JSON serialization.
  *
- * Kaster aldrig: i private vinduer, ved fuld kvote eller når storage er blokeret, degraderer
- * appen bevidst til ren hukommelses-state i stedet for at gå ned. Fejl logges som advarsel
- * (kun nøglen – aldrig indholdet), så de kan ses under fejlsøgning.
+ * Never throws: in private windows, when the quota is full, or when storage is blocked,
+ * the app deliberately degrades to pure in-memory state instead of crashing. Errors are
+ * logged as a warning (only the key – never the content), so they can be seen while debugging.
  */
 @Injectable({ providedIn: 'root' })
 export class StorageService {
@@ -42,7 +42,7 @@ export class StorageService {
     try {
       return this.document.defaultView?.localStorage ?? null;
     } catch {
-      // Adgang til `localStorage` kan i sig selv kaste (blokeret storage). Behandles som "ikke tilgængelig".
+      // Accessing `localStorage` can itself throw (blocked storage). Treated as "not available".
       return null;
     }
   }

@@ -1,6 +1,5 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { newId } from '../utils/id';
-import { BASE_COLLECTIONS, RECIPES } from '../constants/demo-data';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { FoodCollection, FoodItem, Macros, NewCollectionInput, Recipe } from '../models/food';
 import { StorageService } from './storage';
@@ -8,32 +7,28 @@ import { StorageService } from './storage';
 export type CollectionTotals = Macros & { count: number };
 
 interface StoredCollections {
-  userCollections: readonly FoodCollection[];
-  /** Varer brugeren har lagt i de faste samlinger, pr. samlings-id. */
-  baseItems: Readonly<Record<string, readonly FoodItem[]>>;
+  collections: readonly FoodCollection[];
 }
 
-const EMPTY_STORED: StoredCollections = { userCollections: [], baseItems: {} };
-
 /**
- * Retter og samlinger. De fire faste samlinger kommer fra `BASE_COLLECTIONS` og kan få varer
- * tilføjet; brugerens egne samlinger oprettes med `create()`. Kun brugerens ændringer gemmes,
- * så de faste definitioner kan opdateres i koden uden migrering.
+ * Recipes and collections.
+ *
+ * The app has no recipes and no base collections yet – they need to come from the backend.
+ * Until then, `recipes` is empty, and `collections` only contains the collections the user
+ * has created themselves with `create()`.
  */
 @Injectable({ providedIn: 'root' })
 export class CollectionsService {
   private readonly storage = inject(StorageService);
   private readonly stored = signal<StoredCollections>(this.restore());
 
-  readonly recipes: readonly Recipe[] = RECIPES;
-  readonly collections: Signal<readonly FoodCollection[]> = computed(() => {
-    const { userCollections, baseItems } = this.stored();
-    const base = BASE_COLLECTIONS.map((collection) => ({
-      ...collection,
-      items: baseItems[collection.id] ?? collection.items,
-    }));
-    return [...base, ...userCollections];
-  });
+  /** Recipes from the backend. Empty until there's an API to fetch them from. */
+  readonly recipes: readonly Recipe[] = [];
+
+  readonly collections: Signal<readonly FoodCollection[]> = computed(
+    () => this.stored().collections,
+  );
+  /** Collections defined by the system. Empty until the backend supplies them. */
   readonly baseCollections: Signal<readonly FoodCollection[]> = computed(() =>
     this.collections().filter((collection) => collection.isBase),
   );
@@ -49,12 +44,11 @@ export class CollectionsService {
     return this.collections().find((collection) => collection.id === id);
   }
 
-  /** Den faste samling, retten hører til. Ukendte retter lander i den første samling. */
-  collectionForRecipe(recipeId: string): FoodCollection {
-    const match = this.baseCollections().find((collection) =>
-      collection.recipeIds.includes(recipeId),
+  /** The base collection the recipe belongs to, or `null` if no collection references it. */
+  collectionForRecipe(recipeId: string): FoodCollection | null {
+    return (
+      this.baseCollections().find((collection) => collection.recipeIds.includes(recipeId)) ?? null
     );
-    return match ?? this.defaultCollection();
   }
 
   create(input: NewCollectionInput): FoodCollection {
@@ -67,29 +61,13 @@ export class CollectionsService {
       recipeIds: [],
       items: [...input.items],
     };
-    this.set({
-      ...this.stored(),
-      userCollections: [...this.stored().userCollections, collection],
-    });
+    this.set({ collections: [...this.stored().collections, collection] });
     return collection;
   }
 
   addItem(collectionId: string, item: FoodItem): void {
-    const target = this.collectionById(collectionId);
-    if (!target) {
-      return;
-    }
-    const current = this.stored();
-    if (target.isBase) {
-      this.set({
-        ...current,
-        baseItems: { ...current.baseItems, [collectionId]: [...target.items, item] },
-      });
-      return;
-    }
     this.set({
-      ...current,
-      userCollections: current.userCollections.map((collection) =>
+      collections: this.stored().collections.map((collection) =>
         collection.id === collectionId
           ? { ...collection, items: [...collection.items, item] }
           : collection,
@@ -97,7 +75,7 @@ export class CollectionsService {
     });
   }
 
-  /** Finder en vare på tværs af alle samlingers `items`. */
+  /** Finds an item across all collections' `items`. */
   itemById(id: string): FoodItem | undefined {
     for (const collection of this.collections()) {
       const item = collection.items.find((candidate) => candidate.id === id);
@@ -108,7 +86,7 @@ export class CollectionsService {
     return undefined;
   }
 
-  /** Summen af samlingens retter (som én portion hver) og løse varer. */
+  /** The sum of the collection's recipes (as one portion each) and loose items. */
   collectionTotals(collection: FoodCollection): CollectionTotals {
     const recipes = collection.recipeIds
       .map((id) => this.recipeById(id))
@@ -133,17 +111,6 @@ export class CollectionsService {
 
   private restore(): StoredCollections {
     const stored = this.storage.read<Partial<StoredCollections>>(STORAGE_KEY.COLLECTIONS);
-    return {
-      userCollections: stored?.userCollections ?? EMPTY_STORED.userCollections,
-      baseItems: stored?.baseItems ?? EMPTY_STORED.baseItems,
-    };
-  }
-
-  private defaultCollection(): FoodCollection {
-    const first = this.collections()[0];
-    if (!first) {
-      throw new Error('Der er ingen samlinger defineret.');
-    }
-    return first;
+    return { collections: stored?.collections ?? [] };
   }
 }
