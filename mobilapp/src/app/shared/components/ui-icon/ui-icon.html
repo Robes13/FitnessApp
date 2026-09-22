@@ -1,0 +1,15 @@
+<svg
+  class="ui-icon__svg"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  [attr.stroke-width]="strokeWidth()"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+  focusable="false"
+>
+  @for (d of paths(); track d) {
+    <path [attr.d]="d" />
+  }
+</svg>

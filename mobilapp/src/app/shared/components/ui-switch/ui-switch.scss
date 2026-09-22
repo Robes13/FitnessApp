@@ -1,0 +1,47 @@
+/* Værten bærer `ui-switch` (+ `--on`); kun `:host(…)` rammer den under emuleret encapsulation. */
+:host {
+  /* Knoppens afstand til kanten: (28 − 22) / 2 = 3 px, afledt af tokens. */
+  --switch-thumb-offset: calc((var(--size-switch-h) - var(--size-thumb)) / 2);
+
+  display: inline-flex;
+  flex: none;
+}
+
+:host(.ui-switch--on) .ui-switch__control {
+  background: var(--color-accent);
+}
+
+:host(.ui-switch--on) .ui-switch__thumb {
+  left: calc(var(--size-switch-w) - var(--size-thumb) - var(--switch-thumb-offset));
+}
+
+.ui-switch {
+  &__control {
+    position: relative;
+    width: var(--size-switch-w);
+    height: var(--size-switch-h);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-track);
+    cursor: pointer;
+    transition: background-color var(--duration-quick) var(--easing-standard);
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  &__thumb {
+    position: absolute;
+    top: var(--switch-thumb-offset);
+    left: var(--switch-thumb-offset);
+    width: var(--size-thumb);
+    height: var(--size-thumb);
+    border-radius: var(--radius-circle);
+    background: var(--color-white);
+    box-shadow: var(--shadow-thumb);
+    transition: left var(--duration-quick) ease;
+  }
+}

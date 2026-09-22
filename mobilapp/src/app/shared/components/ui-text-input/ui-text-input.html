@@ -1,0 +1,26 @@
+<input
+  #field
+  class="ui-text-input__field"
+  [type]="nativeType()"
+  [value]="value()"
+  [placeholder]="placeholder()"
+  [disabled]="disabled()"
+  [attr.inputmode]="inputMode()"
+  [attr.maxlength]="maxLength()"
+  [attr.autocomplete]="autocomplete()"
+  [attr.aria-label]="ariaLabel()"
+  [attr.aria-invalid]="invalid() || null"
+  (input)="onInput(field.value)"
+  (blur)="onBlur()"
+/>
+@if (hasRevealToggle()) {
+  <button
+    type="button"
+    class="ui-text-input__reveal"
+    [attr.aria-label]="revealLabel"
+    [attr.aria-pressed]="revealed()"
+    (click)="toggleReveal()"
+  >
+    <app-ui-icon [name]="revealIcon()" size="lg" [strokeWidth]="1.8" />
+  </button>
+}

@@ -1,0 +1,32 @@
+:host {
+  display: inline-block;
+  flex: none;
+  width: var(--size-icon-2xl);
+  height: var(--size-icon-2xl);
+  border: var(--border-width-medium) solid var(--color-track);
+  border-top-color: var(--color-accent);
+  border-radius: var(--radius-circle);
+  animation-name: dcspin;
+
+  /* Designet: .8s – dobbelt op på --duration-slower (400 ms). */
+  animation-duration: calc(var(--duration-slower) * 2);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+:host(.ui-spinner--sm) {
+  width: var(--size-icon-sm);
+  height: var(--size-icon-sm);
+}
+
+:host(.ui-spinner--lg) {
+  width: var(--size-control-sm);
+  height: var(--size-control-sm);
+  border-width: var(--border-width-thick);
+}
+
+/* Følger tekstfarven – i knapper, hvor den orange top ville forsvinde på orange bund. */
+:host(.ui-spinner--current) {
+  border-color: color-mix(in srgb, currentColor 25%, transparent);
+  border-top-color: currentColor;
+}

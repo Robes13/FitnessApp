@@ -1,0 +1,108 @@
+/*
+ * Værten bærer `ui-text-input` og dens modifiers (`--md`, `--invalid`, `--invalid-*`,
+ * `--translucent`,
+ * `--centered`, `--revealable`); kun `:host(…)` rammer den under emuleret encapsulation.
+ */
+:host {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+:host(.ui-text-input--md) .ui-text-input__field {
+  min-height: var(--size-control-md);
+}
+
+/* Mørk 55 % bund på fotoskærme (login, glemt adgangskode). */
+:host(.ui-text-input--translucent) .ui-text-input__field {
+  background: var(--color-surface-translucent);
+}
+
+/* Kodefeltet: 4 cifre centreret med bred spatiering; venstre padding udligner spatieringen. */
+:host(.ui-text-input--centered) .ui-text-input__field {
+  padding: 0 0 0 var(--letter-spacing-code);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-display-sm);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: var(--letter-spacing-code);
+  text-align: center;
+}
+
+:host(.ui-text-input--invalid.ui-text-input--invalid-negative) .ui-text-input__field {
+  border-color: var(--color-negative);
+}
+
+:host(.ui-text-input--invalid.ui-text-input--invalid-accent) .ui-text-input__field {
+  border-color: var(--color-accent);
+}
+
+/* Plads til øje-knappen (designet: padding-right 52px). */
+:host(.ui-text-input--revealable) .ui-text-input__field {
+  padding-right: var(--size-control-lg);
+}
+
+.ui-text-input {
+  &__field {
+    width: 100%;
+    min-height: var(--size-control-lg);
+    padding: 0 var(--space-4);
+    border: var(--border-width-thin) solid var(--color-border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-4);
+    color: var(--color-text);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-medium);
+    outline: none;
+    backdrop-filter: blur(var(--blur-lg));
+    appearance: textfield;
+    transition:
+      border-color var(--duration-quick) var(--easing-standard),
+      box-shadow var(--duration-quick) var(--easing-standard);
+
+    &::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    /* Designet bruger −/+ knapper i stedet for browserens tal-pile. */
+    &::-webkit-inner-spin-button,
+    &::-webkit-outer-spin-button {
+      margin: 0;
+      appearance: none;
+    }
+
+    &:focus-visible {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 var(--border-width-thick) var(--color-accent-ring);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__reveal {
+    position: absolute;
+    top: 50%;
+    right: var(--space-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--size-control-xs);
+    height: var(--size-control-xs);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition: color var(--duration-quick) var(--easing-standard);
+
+    &:hover {
+      color: var(--color-accent);
+    }
+  }
+}

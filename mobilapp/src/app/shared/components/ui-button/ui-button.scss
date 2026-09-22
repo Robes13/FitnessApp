@@ -1,0 +1,153 @@
+/*
+ * Værten er selve `<button>`/`<a>` med klasserne `ui-button ui-button--{variant}
+ * ui-button--{size}`. Under emuleret encapsulation rammer kun `:host(…)` værten – en
+ * `.ui-button { … }`-regel ville blive scoped til indholdet og aldrig matche.
+ */
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2-5);
+  min-height: var(--ui-button-min-height, var(--size-control-xl));
+  padding: 0 var(--space-6);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-quick) var(--easing-standard),
+    color var(--duration-quick) var(--easing-standard),
+    border-color var(--duration-quick) var(--easing-standard),
+    opacity var(--duration-quick) var(--easing-standard);
+}
+
+:host(:disabled),
+:host([aria-disabled='true']) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Størrelser */
+
+:host(.ui-button--xl) {
+  min-height: var(--ui-button-min-height, var(--size-control-xl));
+}
+
+:host(.ui-button--lg) {
+  min-height: var(--ui-button-min-height, var(--size-control-lg));
+}
+
+:host(.ui-button--md) {
+  min-height: var(--ui-button-min-height, var(--size-control-md));
+  padding-inline: var(--space-5);
+  font-size: var(--font-size-md);
+}
+
+:host(.ui-button--sm) {
+  min-height: var(--ui-button-min-height, var(--size-control-sm));
+  padding-inline: var(--space-4);
+  font-size: var(--font-size-md);
+}
+
+/* Facon */
+
+:host(.ui-button--rounded) {
+  border-radius: var(--radius-lg);
+}
+
+:host(.ui-button--block) {
+  display: flex;
+  width: 100%;
+}
+
+/* Varianter */
+
+:host(.ui-button--primary) {
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
+  letter-spacing: var(--letter-spacing-caps-wide);
+  text-transform: uppercase;
+}
+
+:host(.ui-button--primary:hover) {
+  background: var(--color-accent-hover);
+}
+
+:host(.ui-button--primary:active) {
+  background: var(--color-accent-active);
+}
+
+:host(.ui-button--outline) {
+  border: var(--border-width-thin) solid var(--color-border-stronger);
+}
+
+:host(.ui-button--outline:hover) {
+  border-color: var(--color-text-muted);
+}
+
+:host(.ui-button--surface) {
+  border: var(--border-width-thin) solid var(--color-border-stronger);
+  background: var(--color-surface);
+}
+
+:host(.ui-button--surface:hover) {
+  background: var(--color-surface-hover);
+}
+
+:host(.ui-button--outline-danger) {
+  border: var(--border-width-thin) solid var(--color-border-stronger);
+  color: var(--color-negative);
+}
+
+:host(.ui-button--outline-danger:hover) {
+  border-color: var(--color-negative-border);
+}
+
+:host(.ui-button--ghost) {
+  color: var(--color-accent);
+}
+
+:host(.ui-button--ghost:hover) {
+  color: var(--color-accent-hover);
+}
+
+:host(.ui-button--danger) {
+  background: var(--color-negative);
+  color: var(--color-negative-text-inverse);
+}
+
+:host(.ui-button--danger:hover) {
+  background: var(--color-negative-hover);
+}
+
+:host(.ui-button--subtle) {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
+:host(.ui-button--subtle:hover) {
+  color: var(--color-accent);
+}
+
+:host(.ui-button--loading) {
+  pointer-events: none;
+}
+
+/* Elementer */
+
+.ui-button {
+  &__content {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2-5);
+    min-width: 0;
+  }
+}

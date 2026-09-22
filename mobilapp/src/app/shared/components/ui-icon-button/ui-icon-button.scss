@@ -1,0 +1,114 @@
+/* Værten er selve `<button>` (designets `.circ`); kun `:host(…)` rammer den. */
+:host {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-control-xl);
+  height: var(--size-control-xl);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-circle);
+  background: var(--color-control);
+  color: var(--color-text);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-quick) var(--easing-standard),
+    color var(--duration-quick) var(--easing-standard),
+    border-color var(--duration-quick) var(--easing-standard);
+}
+
+:host(:hover) {
+  background: var(--color-control-hover);
+}
+
+:host(:disabled) {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Størrelser */
+
+:host(.ui-icon-button--xl) {
+  width: var(--size-control-xl);
+  height: var(--size-control-xl);
+}
+
+:host(.ui-icon-button--lg) {
+  width: var(--size-control-lg);
+  height: var(--size-control-lg);
+}
+
+:host(.ui-icon-button--md) {
+  width: var(--size-control-md);
+  height: var(--size-control-md);
+}
+
+:host(.ui-icon-button--sm) {
+  width: var(--size-control-sm);
+  height: var(--size-control-sm);
+}
+
+:host(.ui-icon-button--xs) {
+  width: var(--size-control-xs);
+  height: var(--size-control-xs);
+}
+
+:host(.ui-icon-button--2xs) {
+  width: var(--size-control-2xs);
+  height: var(--size-control-2xs);
+}
+
+:host(.ui-icon-button--3xs) {
+  width: var(--size-control-3xs);
+  height: var(--size-control-3xs);
+}
+
+:host(.ui-icon-button--4xs) {
+  width: var(--size-control-4xs);
+  height: var(--size-control-4xs);
+}
+
+/* Toner */
+
+:host(.ui-icon-button--ghost) {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+:host(.ui-icon-button--ghost:hover) {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+:host(.ui-icon-button--accent) {
+  background: var(--color-accent);
+  color: var(--color-text-on-accent);
+}
+
+:host(.ui-icon-button--accent:hover) {
+  background: var(--color-accent-hover);
+}
+
+:host(.ui-icon-button--translucent) {
+  background: color-mix(in srgb, var(--color-text-inverse) 50%, transparent);
+  color: var(--color-white);
+  backdrop-filter: blur(var(--blur-sm));
+}
+
+:host(.ui-icon-button--translucent:hover) {
+  background: color-mix(in srgb, var(--color-text-inverse) 65%, transparent);
+}
+
+:host(.ui-icon-button--outline) {
+  border: var(--border-width-thin) solid var(--color-border-stronger);
+}
+
+:host(.ui-icon-button--danger-soft) {
+  background: var(--color-negative-soft);
+  color: var(--color-negative);
+}
+
+:host(.ui-icon-button--danger-soft:hover) {
+  background: var(--color-negative-soft-strong);
+}
