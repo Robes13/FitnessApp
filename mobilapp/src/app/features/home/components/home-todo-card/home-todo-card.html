@@ -1,0 +1,19 @@
+<a
+  class="home-todo-card__link"
+  [routerLink]="todo().path"
+  [queryParams]="todo().queryParams"
+  [attr.aria-label]="todo().title"
+>
+  <span class="home-todo-card__badge">
+    <app-ui-icon name="check-circle" size="xl" [strokeWidth]="2.4" />
+  </span>
+  <span class="home-todo-card__text">
+    <span class="home-todo-card__caption">Næste skridt</span>
+    <span class="home-todo-card__title">{{ todo().title }}</span>
+    <span class="home-todo-card__subtitle">{{ todo().subtitle }}</span>
+  </span>
+  <span class="home-todo-card__meta">
+    <span class="home-todo-card__count">{{ countLabel() }}</span>
+    <app-ui-icon name="chevron-right" size="md" [strokeWidth]="2.6" />
+  </span>
+</a>

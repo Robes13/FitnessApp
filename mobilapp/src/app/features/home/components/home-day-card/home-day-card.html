@@ -1,0 +1,32 @@
+<app-ui-card>
+  <h2 class="home-day-card__title">{{ summary().title }}</h2>
+  <app-ui-progress-bar
+    class="home-day-card__progress"
+    [value]="summary().progress"
+    [tone]="summary().progressTone"
+  />
+  <div class="home-day-card__stats">
+    <div>
+      <div class="home-day-card__caption">Kalorier</div>
+      <div class="home-day-card__number">
+        {{ summary().kcalEatenText }}
+        <span class="home-day-card__unit">/ {{ summary().kcalTargetText }}</span>
+      </div>
+    </div>
+    <div class="home-day-card__stat--end">
+      <div class="home-day-card__caption">Vægt</div>
+      <div class="home-day-card__number home-day-card__number--accent">
+        {{ summary().weightText }} <span class="home-day-card__unit">kg</span>
+      </div>
+    </div>
+  </div>
+  <div class="home-day-card__macros">
+    @for (macro of summary().macros; track macro.label) {
+      <div class="home-day-card__macro">
+        <div class="home-day-card__macro-label">{{ macro.label }}</div>
+        <app-ui-progress-bar thickness="thin" [value]="macro.value" [tone]="macro.tone" />
+        <div class="home-day-card__macro-text">{{ macro.text }}</div>
+      </div>
+    }
+  </div>
+</app-ui-card>

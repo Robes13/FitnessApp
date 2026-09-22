@@ -1,0 +1,27 @@
+<app-ui-card>
+  <div class="home-week-card__head">
+    <h2 class="home-week-card__caption">Denne uge</h2>
+    <span class="home-week-card__progress">{{ summary().progressLabel }}</span>
+  </div>
+  <div class="home-week-card__grid">
+    <div>
+      <div class="home-week-card__number">{{ summary().hitText }}</div>
+      <div class="home-week-card__label">dage i mål</div>
+    </div>
+    <div>
+      <div class="home-week-card__number">{{ summary().averageKcalText }}</div>
+      <div class="home-week-card__label">kcal i snit</div>
+    </div>
+    <div>
+      <div class="home-week-card__number home-week-card__number--accent">
+        {{ summary().proteinHitText }}
+      </div>
+      <div class="home-week-card__label">protein ramt</div>
+    </div>
+    <div>
+      <div class="home-week-card__number">{{ summary().streakText }}</div>
+      <div class="home-week-card__label">streak</div>
+    </div>
+  </div>
+  <p class="home-week-card__note">{{ summary().note }}</p>
+</app-ui-card>

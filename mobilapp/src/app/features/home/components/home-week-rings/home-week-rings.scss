@@ -1,0 +1,93 @@
+:host {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-1);
+}
+
+.home-week-rings {
+  &__day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1-5);
+    padding: var(--space-1) 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  &__ring {
+    display: block;
+    width: var(--size-control-xs);
+    height: var(--size-control-xs);
+    transform: rotate(-90deg);
+    transform-box: view-box;
+    transform-origin: center;
+
+    &--celebrating {
+      animation: ringClose var(--duration-ring-close) var(--easing-spring) 2 both;
+    }
+  }
+
+  &__halo {
+    opacity: 0;
+    stroke: var(--color-positive);
+    transform-box: fill-box;
+    transform-origin: center;
+
+    &--on {
+      opacity: 1;
+      animation: ringHalo var(--duration-ring-halo) ease-out 2 both;
+    }
+  }
+
+  &__track {
+    stroke: var(--color-border);
+  }
+
+  &__selection {
+    opacity: 0;
+    stroke: var(--color-accent);
+    transition: opacity var(--duration-quick) var(--easing-standard);
+
+    &--on {
+      opacity: 1;
+    }
+  }
+
+  &__progress {
+    stroke: var(--color-accent);
+    transition: stroke-dashoffset var(--duration-slowest) var(--easing-standard);
+
+    &--positive {
+      stroke: var(--color-positive);
+    }
+
+    &--none {
+      stroke: transparent;
+    }
+  }
+
+  &__dot {
+    fill: transparent;
+
+    &--today {
+      fill: var(--color-accent);
+    }
+  }
+
+  &__label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+
+    &--future {
+      color: var(--color-text-inactive);
+    }
+
+    &--selected {
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text);
+    }
+  }
+}

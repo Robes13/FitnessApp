@@ -1,0 +1,20 @@
+<app-ui-card tone="accent" padding="lg">
+  <div class="home-goal-card__row">
+    <div>
+      <div class="home-goal-card__caption">Til mål</div>
+      <div class="home-goal-card__number">{{ summary().toGoalText }}</div>
+    </div>
+    <div class="home-goal-card__end">
+      <div class="home-goal-card__caption">Mål</div>
+      <div class="home-goal-card__number">
+        {{ summary().goalWeightText }}<span class="home-goal-card__unit">kg</span>
+      </div>
+    </div>
+  </div>
+  <app-ui-progress-bar
+    class="home-goal-card__progress"
+    tone="inverse"
+    [value]="summary().progress"
+  />
+  <p class="home-goal-card__coach">{{ summary().coach }}</p>
+</app-ui-card>

@@ -1,0 +1,59 @@
+@use 'mixins';
+
+:host {
+  display: block;
+}
+
+.home-week-card {
+  &__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2-5);
+  }
+
+  &__caption {
+    @include mixins.caption-uppercase;
+
+    margin: 0;
+    font-weight: var(--font-weight-regular);
+  }
+
+  &__progress {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+    margin-top: var(--space-3-5);
+  }
+
+  &__number {
+    @include mixins.display-heading;
+
+    font-size: var(--font-size-display-sm);
+
+    &--accent {
+      color: var(--color-accent);
+    }
+  }
+
+  &__label {
+    margin-top: var(--space-1);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+  }
+
+  &__note {
+    margin: var(--space-3-5) 0 0;
+    padding-top: var(--space-3);
+    border-top: var(--border-width-thin) solid var(--color-border);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-relaxed);
+    color: var(--color-text-soft);
+    text-wrap: pretty;
+  }
+}

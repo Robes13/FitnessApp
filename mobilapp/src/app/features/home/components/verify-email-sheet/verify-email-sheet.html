@@ -1,0 +1,71 @@
+<app-ui-sheet [open]="open()" hideClose title="Tjek din" titleAccent="mail" titleSize="lg">
+  <span sheetLeading class="verify-email-sheet__badge">
+    <app-ui-icon name="mail" size="2xl" />
+  </span>
+
+  <p class="verify-email-sheet__copy">
+    Vi har sendt en bekræftelseskode til
+    <span class="verify-email-sheet__email">{{ emailLabel() }}</span
+    >. Appen låses op, når du har bekræftet.
+  </p>
+
+  @if (editingEmail()) {
+    <form class="verify-email-sheet__form" [formGroup]="form" (ngSubmit)="saveEmail()">
+      <app-ui-text-input
+        class="verify-email-sheet__input"
+        formControlName="email"
+        type="email"
+        inputMode="email"
+        autocomplete="email"
+        ariaLabel="E-mail"
+        size="md"
+        [invalid]="emailInvalid()"
+      />
+      <button app-ui-button type="submit" size="md" [loading]="saving()">Gem</button>
+    </form>
+  }
+
+  <app-ui-form-error tone="negative" [message]="errorMessage()" />
+
+  <div class="verify-email-sheet__actions">
+    <button
+      app-ui-button
+      class="verify-email-sheet__change"
+      type="button"
+      variant="outline"
+      size="md"
+      (click)="toggleEmailEditor()"
+    >
+      Ændre mail
+    </button>
+    <button app-ui-button type="button" size="md" [loading]="resending()" (click)="resend()">
+      {{ resendLabel() }}
+    </button>
+  </div>
+
+  <div class="verify-email-sheet__footer">
+    <span class="verify-email-sheet__hint">{{ resendHint() }}</span>
+    <button type="button" class="verify-email-sheet__check" (click)="check()">
+      <app-ui-icon
+        class="verify-email-sheet__check-icon"
+        name="refresh"
+        size="xs"
+        [strokeWidth]="2.5"
+        [style.--verify-email-sheet-rotation]="rotation()"
+      />
+      {{ checkLabel() }}
+    </button>
+  </div>
+
+  @if (showSkip()) {
+    <button
+      app-ui-button
+      type="button"
+      variant="subtle"
+      size="sm"
+      (click)="continueWithoutVerification()"
+    >
+      Fortsæt uden bekræftelse
+    </button>
+  }
+</app-ui-sheet>

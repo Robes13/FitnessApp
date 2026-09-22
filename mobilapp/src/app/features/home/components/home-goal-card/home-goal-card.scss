@@ -1,0 +1,50 @@
+@use 'mixins';
+
+:host {
+  display: block;
+}
+
+.home-goal-card {
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  &__end {
+    text-align: right;
+  }
+
+  &__caption {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-caps);
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  &__number {
+    @include mixins.display-heading;
+
+    margin-top: var(--space-1);
+    font-size: var(--font-size-display-md);
+  }
+
+  &__unit {
+    margin-left: var(--space-1);
+    font-size: var(--font-size-sm);
+    opacity: 0.8;
+  }
+
+  &__progress {
+    margin-top: var(--space-3-5);
+  }
+
+  &__coach {
+    margin: var(--space-2-5) 0 0;
+    font-size: var(--font-size-md);
+    text-wrap: pretty;
+    opacity: 0.85;
+  }
+}

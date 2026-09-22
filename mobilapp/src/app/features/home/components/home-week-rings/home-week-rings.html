@@ -1,0 +1,67 @@
+@for (ring of rings(); track ring.index) {
+  <button
+    type="button"
+    class="home-week-rings__day"
+    [attr.aria-pressed]="ring.isSelected"
+    (click)="selected.emit(ring.index)"
+  >
+    <svg
+      class="home-week-rings__ring"
+      [class.home-week-rings__ring--celebrating]="celebrating() && ring.isToday"
+      viewBox="0 0 40 40"
+      aria-hidden="true"
+    >
+      <circle
+        class="home-week-rings__halo"
+        [class.home-week-rings__halo--on]="celebrating() && ring.isToday"
+        cx="20"
+        cy="20"
+        r="16"
+        fill="none"
+        stroke-width="4"
+      ></circle>
+      <circle
+        class="home-week-rings__track"
+        cx="20"
+        cy="20"
+        r="16"
+        fill="none"
+        stroke-width="4"
+      ></circle>
+      <circle
+        class="home-week-rings__selection"
+        [class.home-week-rings__selection--on]="ring.isSelected"
+        cx="20"
+        cy="20"
+        r="18.5"
+        fill="none"
+        stroke-width="1.5"
+      ></circle>
+      <circle
+        class="home-week-rings__progress"
+        [class]="'home-week-rings__progress--' + ring.tone"
+        cx="20"
+        cy="20"
+        r="16"
+        fill="none"
+        stroke-width="4"
+        stroke-linecap="round"
+        stroke-dasharray="100.5"
+        [attr.stroke-dashoffset]="ring.dashOffset"
+      ></circle>
+      <circle
+        class="home-week-rings__dot"
+        [class.home-week-rings__dot--today]="ring.isToday"
+        cx="20"
+        cy="20"
+        r="5"
+      ></circle>
+    </svg>
+    <span
+      class="home-week-rings__label"
+      [class.home-week-rings__label--selected]="ring.isSelected"
+      [class.home-week-rings__label--future]="ring.isFuture"
+      >{{ ring.label }}</span
+    >
+  </button>
+}
