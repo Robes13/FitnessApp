@@ -1,0 +1,14 @@
+/*
+ * Host-elementet (`app-root`, host class `.app-root`). Under Angulars emulerede
+ * encapsulation rammer kun `:host` selve elementet – en `.app-root`-regel ville blive
+ * scoped til komponentens indhold og aldrig matche.
+ */
+:host {
+  position: relative;
+  display: block;
+  height: 100dvh;
+  max-width: var(--layout-max-width);
+  margin-inline: auto;
+  overflow: hidden;
+  background: var(--color-background);
+}
