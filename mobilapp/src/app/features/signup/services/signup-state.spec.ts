@@ -447,19 +447,20 @@ describe('SignupStateService', () => {
   });
 
   describe('submit', () => {
-    it('fails without a backend and leaves the profile and session untouched', async () => {
+    it('registers, writes the trimmed draft as the profile and logs in unverified', async () => {
       const state = setup();
       fill(state, 'summary');
       state.username.set('  Mads  ');
       state.email.set('  mads@nutrify.dk  ');
 
-      await expect(firstValueFrom(state.submit())).rejects.toMatchObject({
-        message: 'Der er ingen forbindelse til en server endnu.',
-      });
+      await firstValueFrom(state.submit());
 
-      expect(TestBed.inject(UserProfileService).profile().username).toBe('');
-      expect(TestBed.inject(SessionService).isLoggedIn()).toBe(false);
-      expect(storage.getItem(STORAGE_KEY.PROFILE)).toBeNull();
+      const profile = TestBed.inject(UserProfileService).profile();
+      expect(profile.username).toBe('Mads');
+      expect(profile.email).toBe('mads@nutrify.dk');
+      expect(TestBed.inject(SessionService).isLoggedIn()).toBe(true);
+      expect(TestBed.inject(SessionService).isEmailVerified()).toBe(false);
+      expect(storage.getItem(STORAGE_KEY.PROFILE)).not.toBeNull();
     });
   });
 });

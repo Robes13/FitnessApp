@@ -57,29 +57,27 @@ describe('VerifyEmailSheet', () => {
     );
   });
 
-  it('reports that a new code could not be sent without a backend', async () => {
+  it('confirms that a new code was sent', async () => {
+    const session = TestBed.inject(SessionService);
+
     buttonWithText('Gensend kode')?.click();
     await settle();
 
-    expect(buttonWithText('Kode sendt ✓')).toBeUndefined();
-    expect(normalize(panel()?.querySelector('app-ui-form-error')?.textContent)).toBe(
-      'Noget gik galt. Prøv igen.',
+    // Temporary until the auth API exists: resending unlocks Home directly.
+    expect(session.isEmailVerified()).toBe(true);
+
+    expect(buttonWithText('Kode sendt ✓')).toBeDefined();
+    expect(normalize(panel()?.querySelector('.verify-email-sheet__hint')?.textContent)).toBe(
+      'Ny kode sendt – tjek også spam.',
     );
   });
 
-  it('reports that the check could not be made without a backend', async () => {
+  it('marks the e-mail verified when the check succeeds', async () => {
     const session = TestBed.inject(SessionService);
 
     await checkAgain();
 
-    // A failed call isn't the same as "not verified" – the button stays as is.
-    expect(normalize(panel()?.querySelector('.verify-email-sheet__check')?.textContent)).toBe(
-      'Tjek igen',
-    );
-    expect(normalize(panel()?.querySelector('app-ui-form-error')?.textContent)).toBe(
-      'Noget gik galt. Prøv igen.',
-    );
-    expect(session.isEmailVerified()).toBe(false);
+    expect(session.isEmailVerified()).toBe(true);
   });
 
   it('rejects an invalid e-mail in the inline editor', async () => {

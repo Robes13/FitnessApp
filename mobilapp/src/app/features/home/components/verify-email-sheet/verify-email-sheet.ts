@@ -33,7 +33,7 @@ const ROTATION_PER_CHECK_DEG = 360;
  * dismissed (`hideClose`): neither the scrim, Escape, nor a close button dismiss it.
  *
  * The user can correct their e-mail, request a new code, and press "Tjek igen". All three
- * actions go through `SessionService` and fail until `AuthApi` has a real backend to talk to.
+ * actions go through `SessionService`; until a backend exists, `AuthApi` answers with stubs.
  */
 @Component({
   selector: 'app-verify-email-sheet',
@@ -132,6 +132,9 @@ export class VerifyEmailSheet {
         next: () => {
           this.resending.set(false);
           this.resent.set(true);
+          // TODO: remove once the auth API exists – without a backend no e-mail is sent, so
+          // "Gensend kode" unlocks Home directly. The real flow verifies via `check()`.
+          this.session.markEmailVerified();
         },
         error: () => {
           this.resending.set(false);

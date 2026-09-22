@@ -308,8 +308,8 @@ export class SignupStateService {
   /**
    * Creates the account: registers with the backend, writes the draft as the profile and marks
    * the session as created but unconfirmed, so Home shows the confirmation sheet. The profile is
-   * only written once registration succeeds – and there is no backend yet, so the call fails
-   * until `AuthApi` is implemented.
+   * only written once registration succeeds. Until a backend exists, `AuthApi` answers with a
+   * stubbed success.
    */
   submit(): Observable<void> {
     const profile = this.toProfile();

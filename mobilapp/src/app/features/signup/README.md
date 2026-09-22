@@ -54,6 +54,8 @@ med meget indhold kan scrolle uden at skubbe knapperne ud af skærmen.
 `UserProfileService.replace` og kalder `SessionService.completeSignup()`. Brugeren er derefter
 logget ind, men **ikke** bekræftet, så Hjem viser bekræftelses-arket. Profilen skrives først,
 når registreringen er gået godt, og siden viser fejlen fra backenden i en `UiFormError`.
+Indtil backenden findes, svarer `AuthApi.register` med en stubbet succes, så hele flowet kan
+klikkes igennem.
 Selve navigationen til Hjem sker i `SignupPage`, fordi den også ejer spinner og fejltekst.
 
 ## Bevidste afvigelser fra prototypen

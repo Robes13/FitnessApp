@@ -13,6 +13,10 @@ Arket kan:
 - **Tjek igen** – `SessionService.checkVerification()`; ikonet drejer en omgang, teksten går
   fra "Tjekker…" til "Ikke bekræftet", når backenden svarer, at mailen ikke er bekræftet.
 
+Indtil backenden findes, svarer `AuthApi` med stubs: "Gensend kode" lykkes, og "Tjek igen"
+svarer "bekræftet". **Midlertidigt** markerer "Gensend kode" også mailen som bekræftet, så
+Hjem låses op med det samme (se `TODO` i `resend()`). Det fjernes, når API'et er på.
+
 Fejler et kald, vises "Noget gik galt. Prøv igen." i `app-ui-form-error` (teksten findes ikke
 i designet, som ikke viser fejltilstande her).
 

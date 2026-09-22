@@ -39,13 +39,21 @@ describe('SessionService', () => {
     expect(storage.getItem(STORAGE_KEY.SESSION)).toBeNull();
   });
 
-  it('cannot complete a signup or ask about the e-mail without a backend', async () => {
+  it('completes a signup as logged in but unverified, and verifies on check', async () => {
     const session = setup();
 
-    await expect(firstValueFrom(session.completeSignup())).rejects.toEqual(NO_BACKEND);
-    await expect(firstValueFrom(session.resendVerification())).rejects.toEqual(NO_BACKEND);
-    await expect(firstValueFrom(session.checkVerification())).rejects.toEqual(NO_BACKEND);
-    expect(session.isLoggedIn()).toBe(false);
+    await firstValueFrom(session.completeSignup());
+
+    expect(session.isLoggedIn()).toBe(true);
+    expect(session.isEmailVerified()).toBe(false);
+
+    await expect(firstValueFrom(session.checkVerification())).resolves.toBe(true);
+
+    expect(session.isEmailVerified()).toBe(true);
+    expect(JSON.parse(storage.getItem(STORAGE_KEY.SESSION) ?? 'null')).toEqual({
+      isLoggedIn: true,
+      isEmailVerified: true,
+    });
   });
 
   it('can mark the e-mail verified manually', () => {
