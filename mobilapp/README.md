@@ -141,6 +141,36 @@ npm run sync   # ng build + cap sync – registrerer pluginet i android/ og ios/
 - **Browser:** Der planlægges intet. Indstillingerne gemmes stadig, og arket viser, at
   påmindelser kun virker i appen.
 
+## Stregkodescanner (kamera og Open Food Facts)
+
+Scanneren bruger `@capacitor-mlkit/barcode-scanning` og dets færdige `scan()`-UI (EAN-13,
+EAN-8, UPC-A, UPC-E). Varen slås op i [Open Food Facts](https://world.openfoodfacts.org)
+(API v2, næringsværdier pr. 100 g). Pluginet skal synkroniseres ind i de native projekter:
+
+```bash
+npm run sync   # ng build + cap sync
+```
+
+- **Android:** `scan()` er Googles kodescanner fra Play Services – den kræver **ikke**
+  kameratilladelse, men Googles stregkodemodul. `AndroidManifest.xml` har derfor
+  `com.google.mlkit.vision.DEPENDENCIES = barcode_ui`, så modulet hentes, når appen
+  installeres. Mangler det alligevel, starter appen installationen og beder brugeren prøve
+  igen om et øjeblik. `CAMERA`-tilladelsen står i manifestet som pluginets dokumentation
+  kræver, og `android.hardware.camera` er `required="false"`, så enheder uden kamera stadig
+  kan installere appen og indtaste stregkoden.
+- **iOS:** `Info.plist` har `NSCameraUsageDescription`. Appen spørger om kameraadgang første
+  gang; afviser brugeren, forklarer scanneren det og tilbyder "Åbn indstillinger".
+  **Obs:** ML Kit-pluginet understøtter kun CocoaPods, mens iOS-projektet bruger Swift
+  Package Manager (`ios/App/CapApp-SPM`). `cap sync` tager det derfor ikke med på iOS, og
+  scanneren falder tilbage til at indtaste stregkoden, indtil projektet flyttes til
+  CocoaPods (med `platform :ios, '15.5'` i `Podfile`) eller pluginet skiftes ud.
+- **Browser:** Intet kamera. Scanneren viser et felt til stregkodens tal (8–14 cifre), og
+  opslaget kører som i appen – så hele forløbet kan testes med `npm start`.
+- Fundne varer gemmes lokalt pr. stregkode (`nutrify.product-cache`, højst 100), så en vare,
+  der er scannet før, også virker offline.
+
+---
+
 ## Arbejdsgang
 
 Web-koden bygges til `dist/mobilapp/browser` og kopieres ind i de native

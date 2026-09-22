@@ -48,8 +48,56 @@
         </div>
         <div class="barcode-scanner__line"></div>
       </div>
-      <p class="barcode-scanner__hint" role="status" aria-live="polite">{{ hint() }}</p>
+      @if (isLookingUp()) {
+        <app-ui-spinner size="lg" ariaLabel="Slår varen op" />
+      }
+      <p
+        class="barcode-scanner__hint"
+        [class.barcode-scanner__hint--error]="hasError()"
+        role="status"
+        aria-live="polite"
+      >
+        {{ hint() }}
+      </p>
+      @if (isPermissionDenied()) {
+        <button app-ui-button variant="outline" size="sm" type="button" (click)="openSettings()">
+          Åbn indstillinger
+        </button>
+      }
+      @if (isLookupError()) {
+        <button app-ui-button variant="outline" size="sm" type="button" (click)="retryLookup()">
+          Prøv igen
+        </button>
+      }
     </div>
+
+    @if (!isBusy()) {
+      <form class="barcode-scanner__code" [formGroup]="barcodeForm" (ngSubmit)="submitBarcode()">
+        @if (showScanButton()) {
+          <button app-ui-button size="lg" type="button" block (click)="startScan()">
+            Scan stregkode
+          </button>
+        }
+        <span class="barcode-scanner__label barcode-scanner__label--overlay">
+          {{ barcodeLabel() }}
+        </span>
+        <div class="barcode-scanner__code-row">
+          <app-ui-text-input
+            class="barcode-scanner__code-input"
+            formControlName="barcode"
+            inputMode="numeric"
+            size="md"
+            translucent
+            placeholder="f.eks. 5701234567890"
+            ariaLabel="Stregkode"
+            [maxLength]="barcodeMaxLength"
+            [invalid]="hasBarcodeError()"
+          />
+          <button app-ui-button variant="surface" size="md" type="submit">Slå op</button>
+        </div>
+        <app-ui-form-error [message]="barcodeError()" tone="negative" />
+      </form>
+    }
 
     <div class="barcode-scanner__actions">
       <button app-ui-button variant="subtle" size="sm" type="button" (click)="requestManual()">
@@ -62,24 +110,36 @@
   </div>
 
   <app-ui-sheet [open]="isResultOpen()" [title]="resultTitle()" layer="top" (closed)="rescan()">
-    @if (scaledItem()) {
+    @if (product()) {
       <div class="barcode-scanner__result">
         <p class="barcode-scanner__subtitle">{{ resultSubtitle() }}</p>
         <p class="barcode-scanner__caption">Hvor meget tog du?</p>
         <div class="barcode-scanner__portions">
-          @for (portion of portions(); track portion.multiplier) {
+          @for (portion of portions(); track portion.grams) {
             <button
               type="button"
               class="barcode-scanner__portion"
               [class.barcode-scanner__portion--selected]="portion.selected"
               [attr.aria-pressed]="portion.selected"
-              (click)="pickPortion(portion.multiplier)"
+              (click)="pickPortion(portion.grams)"
             >
               <span class="barcode-scanner__portion-label">{{ portion.label }}</span>
               <span class="barcode-scanner__portion-sub">{{ portion.sub }}</span>
             </button>
           }
         </div>
+        <form class="barcode-scanner__field" [formGroup]="amountForm">
+          <span class="barcode-scanner__label">{{ amountLabel() }}</span>
+          <app-ui-text-input
+            formControlName="grams"
+            type="number"
+            inputMode="numeric"
+            size="md"
+            [ariaLabel]="amountAriaLabel()"
+            [invalid]="hasAmountError()"
+          />
+          <app-ui-form-error [message]="amountError()" tone="negative" />
+        </form>
         <div class="barcode-scanner__stats">
           @for (stat of stats(); track stat.label) {
             <div class="barcode-scanner__stat" [class.barcode-scanner__stat--accent]="stat.accent">
@@ -109,7 +169,13 @@
       >
         Scan igen
       </button>
-      <button app-ui-button type="button" class="barcode-scanner__action" (click)="addScanned()">
+      <button
+        app-ui-button
+        type="button"
+        class="barcode-scanner__action"
+        [disabled]="!canAddScanned()"
+        (click)="addScanned()"
+      >
         Tilføj
       </button>
     </div>
@@ -131,6 +197,9 @@
         Stregkoden findes ikke i databasen. Tag tallene fra pakken, så gemmer vi varen under dine
         egne – næste gang er den klar med ét tryk.
       </p>
+      @if (barcode()) {
+        <p class="barcode-scanner__code-value">Stregkode {{ barcode() }}</p>
+      }
       <div class="barcode-scanner__fields">
         <div class="barcode-scanner__field">
           <span class="barcode-scanner__label">Navn</span>
@@ -138,7 +207,9 @@
             formControlName="name"
             placeholder="f.eks. Proteinbar Karamel"
             ariaLabel="Navn"
+            [invalid]="nameTaken()"
           />
+          <app-ui-form-error [message]="nameError()" tone="negative" />
         </div>
         <div class="barcode-scanner__field">
           <span class="barcode-scanner__label">Portion</span>

@@ -16,20 +16,48 @@ import {
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { newId } from '../../../core/utils/id';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subscription, map } from 'rxjs';
-import { FoodItem, ScanResult } from '../../../core/models/food';
-import { BarcodeScannerService } from '../../../core/services/barcode-scanner';
-import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
+import {
+  BARCODE_MAX_DIGITS,
+  BARCODE_PATTERN,
+  BARCODE_SCANNER_TEXT,
+  PRODUCT_BASE_GRAMS,
+  PRODUCT_BASE_UNIT,
+  SCAN_AMOUNT_MAX_GRAMS,
+  SCAN_AMOUNT_MIN_GRAMS,
+  SCAN_AMOUNT_PRESETS_GRAMS,
+} from '../../../core/constants/barcode';
+import {
+  BarcodeScanOutcome,
+  ProductLookupResult,
+  ScannedProduct,
+} from '../../../core/models/barcode';
+import { FoodItem } from '../../../core/models/food';
+import { BarcodeFlowService, formatAmount } from '../../../core/services/barcode-flow';
 import { UiButton } from '../ui-button/ui-button';
+import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiIcon } from '../ui-icon/ui-icon';
 import { UiIconButton } from '../ui-icon-button/ui-icon-button';
 import { FOCUSABLE_SELECTOR, UiSheet } from '../ui-sheet/ui-sheet';
+import { UiSpinner } from '../ui-spinner/ui-spinner';
 import { UiTextInput } from '../ui-text-input/ui-text-input';
 
 /** What's shown: camera overlay, result sheet or "Unknown item" sheet (the sheets sit above the overlay). */
 type BarcodeScannerScreen = 'scanner' | 'result' | 'unknown';
+
+/**
+ * The overlay's state while `screen` is `scanner`: waiting for the user, the camera is open,
+ * the product is being looked up, or one of the ways a scan/lookup can fail.
+ */
+export type BarcodeScannerStatus =
+  | 'idle'
+  | 'scanning'
+  | 'looking-up'
+  | 'permission-denied'
+  | 'unreadable'
+  | 'module-installing'
+  | 'lookup-error';
 
 export type ScanVerdictTone = 'negative' | 'positive' | 'neutral';
 
@@ -38,12 +66,9 @@ export interface ScanVerdict {
   readonly text: string;
 }
 
-interface ScanPortionOption {
-  readonly multiplier: number;
+interface ScanPortionView {
+  readonly grams: number;
   readonly label: string;
-}
-
-interface ScanPortionView extends ScanPortionOption {
   readonly sub: string;
   readonly selected: boolean;
 }
@@ -54,6 +79,14 @@ interface ScanStatView {
   readonly accent: boolean;
 }
 
+interface BarcodeForm {
+  barcode: FormControl<string>;
+}
+
+interface AmountForm {
+  grams: FormControl<number | null>;
+}
+
 interface UnknownFoodForm {
   name: FormControl<string>;
   quantity: FormControl<string>;
@@ -61,13 +94,11 @@ interface UnknownFoodForm {
   protein: FormControl<number | null>;
 }
 
-/** Design's `openScan`: the line stands still for half a second before `runScan` kicks in. */
-const SCAN_START_DELAY_MS = 500;
 /** Design's `retryUnknown`: a brief pause before scanning restarts after a sheet. */
 const SCAN_RETRY_DELAY_MS = 300;
 /** The line's idle position (design's `scanLine: 50`). */
 const SCAN_LINE_IDLE_PERCENT = 50;
-/** Design's `runScan`: 88% immediately, 14% after 700 ms, 62% after 1500 ms. The service responds at 2300 ms. */
+/** Design's `runScan`: 88% immediately, 14% after 700 ms, 62% after 1500 ms. */
 const SCAN_LINE_SWEEP: readonly { readonly atMs: number; readonly percent: number }[] = [
   { atMs: 0, percent: 88 },
   { atMs: 700, percent: 14 },
@@ -93,20 +124,34 @@ const SCAN_FRAME = {
   lineInsetX: 16,
 } as const;
 
-/** Design's `scanPortions`: "Half" and "1 bar" (the item is a protein bar). */
-const SCAN_PORTIONS: readonly ScanPortionOption[] = [
-  { multiplier: 0.5, label: 'Halv' },
-  { multiplier: 1, label: '1 bar' },
+/** The overlay's status line per state (`idle` depends on whether the camera is available). */
+const STATUS_MESSAGE: Readonly<Record<Exclude<BarcodeScannerStatus, 'idle'>, string>> = {
+  scanning: BARCODE_SCANNER_TEXT.HINT_SCANNING,
+  'looking-up': BARCODE_SCANNER_TEXT.HINT_LOOKING_UP,
+  'permission-denied': BARCODE_SCANNER_TEXT.PERMISSION_DENIED,
+  unreadable: BARCODE_SCANNER_TEXT.UNREADABLE,
+  'module-installing': BARCODE_SCANNER_TEXT.MODULE_INSTALLING,
+  'lookup-error': BARCODE_SCANNER_TEXT.LOOKUP_ERROR,
+};
+const ERROR_STATUSES: readonly BarcodeScannerStatus[] = [
+  'permission-denied',
+  'unreadable',
+  'module-installing',
+  'lookup-error',
 ];
 
-const SCAN_HINT_SCANNING = 'Læser stregkode…';
-const SCAN_HINT_IDLE = 'Hold stregkoden inden for rammen – vi scanner automatisk';
+/** Camera outcomes that end on the overlay with a message (`scanned`/`cancelled` are handled apart). */
+const OUTCOME_STATUS: Readonly<
+  Record<Exclude<BarcodeScanOutcome['status'], 'scanned' | 'cancelled'>, BarcodeScannerStatus>
+> = {
+  'permission-denied': 'permission-denied',
+  unreadable: 'unreadable',
+  'module-installing': 'module-installing',
+  unavailable: 'idle',
+};
 
 /** Design's `verdict`: ≥ 15 g protein counts as a good protein source. */
 const HIGH_PROTEIN_GRAMS = 15;
-/** Design's `saveNewFood`: an empty portion becomes '1 portion'. */
-const DEFAULT_CUSTOM_QUANTITY = '1 portion';
-const CUSTOM_FOOD_ID_PREFIX = 'custom';
 
 /**
  * Design's `verdict` texts (verbatim). `kcalRemaining` is the daily goal minus what's been eaten.
@@ -130,18 +175,28 @@ export function buildScanVerdict(kcalRemaining: number, item: FoodItem): ScanVer
 }
 
 /**
- * The barcode scanner from the design: a full-screen overlay with a viewfinder, a drawn barcode
- * and an orange line that sweeps 88% → 14% → 62% while `BarcodeScannerService` "reads". A find
- * opens the result sheet (portion, macros, verdict), otherwise the "Unknown item" sheet opens
- * with a small form.
+ * The barcode scanner: a full-screen overlay that opens the native camera, looks the barcode
+ * up and shows the product with an adjustable amount. All domain work (camera, lookup, scan
+ * count, scaling, the duplicate-name check) goes through the core facade `BarcodeFlowService`;
+ * the component holds only presentation and form state. An unknown product opens the "Unknown item" sheet with a
+ * small form. In the browser – and after a failed scan – the barcode can be typed instead.
  *
  * The parent owns `open`. Every way out of the scanner ultimately emits `closed` – even after
  * `found`, `customSaved`, `manualRequested` and `noBarcodeRequested` – so the parent only needs
- * one handler that sets `open` to `false`. Scanning restarts every time the sheet opens.
+ * one handler that sets `open` to `false`. Cancelling the camera closes the scanner.
  */
 @Component({
   selector: 'app-barcode-scanner',
-  imports: [ReactiveFormsModule, UiButton, UiIcon, UiIconButton, UiSheet, UiTextInput],
+  imports: [
+    ReactiveFormsModule,
+    UiButton,
+    UiFormError,
+    UiIcon,
+    UiIconButton,
+    UiSheet,
+    UiSpinner,
+    UiTextInput,
+  ],
   templateUrl: './barcode-scanner.html',
   styleUrl: './barcode-scanner.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -158,11 +213,11 @@ export class BarcodeScanner {
   readonly kcalRemaining = input<number | null>(null);
   /** The meal the item is logged under. Not part of the texts (the design just says "Save and add"). */
   readonly mealLabel = input('');
-  /** Start scanning automatically when the overlay opens. Otherwise the parent calls `startScan()`. */
+  /** Open the camera automatically when the overlay opens (native only). Otherwise the user taps "Scan". */
   readonly autoStart = input(true, { transform: booleanAttribute });
 
   readonly closed = output<void>();
-  /** The scanned item, scaled to the selected portion. */
+  /** The scanned item, scaled to the chosen amount (`quantity` e.g. `'150 g'`). */
   readonly found = output<FoodItem>();
   /** Unknown item saved from the form: name, portion (default '1 portion'), kcal, protein; carbs/fat 0. */
   readonly customSaved = output<FoodItem>();
@@ -171,24 +226,52 @@ export class BarcodeScanner {
   /** "The item has no barcode". */
   readonly noBarcodeRequested = output<void>();
 
-  private readonly scanner = inject(BarcodeScannerService);
-  private readonly calculator = inject(NutritionCalculator);
+  private readonly flow = inject(BarcodeFlowService);
   private readonly document = inject(DOCUMENT);
   private readonly overlay = viewChild<ElementRef<HTMLElement>>('overlay');
 
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
-  private scanSubscription: Subscription | null = null;
+  private lookupSubscription: Subscription | null = null;
+  /** Bumped on every start/stop, so a camera result that arrives after closing is ignored. */
+  private scanRun = 0;
   /** The element that had focus when the scanner opened – focus returns there on close. */
   private previouslyFocused: HTMLElement | null = null;
 
   protected readonly frame = SCAN_FRAME;
   protected readonly barWeights = BARCODE_BAR_WEIGHTS;
+  protected readonly canScan = this.flow.canScan;
+  protected readonly barcodeMaxLength = BARCODE_MAX_DIGITS;
 
   protected readonly screen = signal<BarcodeScannerScreen>('scanner');
-  protected readonly scanning = signal(false);
+  protected readonly status = signal<BarcodeScannerStatus>('idle');
   protected readonly scanLinePercent = signal(SCAN_LINE_IDLE_PERCENT);
-  protected readonly scannedItem = signal<FoodItem | null>(null);
-  protected readonly multiplier = signal(1);
+  protected readonly product = signal<ScannedProduct | null>(null);
+  /** The last barcode looked up – retried after a network error and shown on "Unknown item". */
+  protected readonly barcode = signal('');
+
+  protected readonly barcodeForm = new FormGroup<BarcodeForm>({
+    barcode: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.pattern(BARCODE_PATTERN)],
+    }),
+  });
+  private readonly barcodeValue = toSignal(
+    this.barcodeForm.controls.barcode.valueChanges.pipe(map((value) => value.trim())),
+    { initialValue: '' },
+  );
+  /** Set on submit, so the digits error isn't shown while the user is still typing. */
+  protected readonly barcodeSubmitted = signal(false);
+
+  protected readonly amountForm = new FormGroup<AmountForm>({
+    grams: new FormControl<number | null>(PRODUCT_BASE_GRAMS, [
+      Validators.required,
+      Validators.min(SCAN_AMOUNT_MIN_GRAMS),
+      Validators.max(SCAN_AMOUNT_MAX_GRAMS),
+    ]),
+  });
+  private readonly grams = toSignal(this.amountForm.controls.grams.valueChanges, {
+    initialValue: this.amountForm.controls.grams.value,
+  });
 
   protected readonly form = new FormGroup<UnknownFoodForm>({
     name: new FormControl('', { nonNullable: true }),
@@ -201,44 +284,104 @@ export class BarcodeScanner {
     { initialValue: this.form.getRawValue() },
   );
 
-  protected readonly hint = computed(() => (this.scanning() ? SCAN_HINT_SCANNING : SCAN_HINT_IDLE));
+  protected readonly isBusy = computed(
+    () => this.status() === 'scanning' || this.status() === 'looking-up',
+  );
+  protected readonly isLookingUp = computed(() => this.status() === 'looking-up');
+  protected readonly hasError = computed(() => ERROR_STATUSES.includes(this.status()));
+  protected readonly isPermissionDenied = computed(() => this.status() === 'permission-denied');
+  protected readonly isLookupError = computed(() => this.status() === 'lookup-error');
+  protected readonly showScanButton = computed(
+    () => this.canScan && !this.isBusy() && !this.isLookupError(),
+  );
+  protected readonly hint = computed(() => {
+    const status = this.status();
+    if (status !== 'idle') {
+      return STATUS_MESSAGE[status];
+    }
+    return this.canScan
+      ? BARCODE_SCANNER_TEXT.HINT_IDLE_NATIVE
+      : BARCODE_SCANNER_TEXT.HINT_IDLE_WEB;
+  });
+
+  protected readonly barcodeLabel = computed(() =>
+    this.canScan
+      ? BARCODE_SCANNER_TEXT.BARCODE_LABEL_NATIVE
+      : BARCODE_SCANNER_TEXT.BARCODE_LABEL_WEB,
+  );
+
+  protected readonly barcodeError = computed(() =>
+    this.barcodeSubmitted() && !BARCODE_PATTERN.test(this.barcodeValue())
+      ? BARCODE_SCANNER_TEXT.INVALID_BARCODE
+      : null,
+  );
+  protected readonly hasBarcodeError = computed(() => this.barcodeError() !== null);
+
   protected readonly isResultOpen = computed(() => this.screen() === 'result');
   protected readonly isUnknownOpen = computed(() => this.screen() === 'unknown');
 
-  private readonly baseQuantity = computed(() => {
-    const item = this.scannedItem();
-    return item ? this.calculator.parseQuantity(item.quantity) : null;
+  /** The chosen amount in grams, or `null` while the field is invalid. */
+  private readonly validGrams = computed(() => {
+    const grams = this.grams();
+    return grams !== null && grams >= SCAN_AMOUNT_MIN_GRAMS && grams <= SCAN_AMOUNT_MAX_GRAMS
+      ? grams
+      : null;
   });
+  protected readonly amountError = computed(() =>
+    this.validGrams() === null ? BARCODE_SCANNER_TEXT.INVALID_AMOUNT : null,
+  );
+  protected readonly hasAmountError = computed(() => this.amountError() !== null);
+  /** Grams, or millilitres for a liquid. */
+  private readonly amountUnit = computed(() => this.product()?.unit ?? PRODUCT_BASE_UNIT.GRAMS);
+  protected readonly amountLabel = computed(() =>
+    BARCODE_SCANNER_TEXT.AMOUNT_LABEL(this.amountUnit()),
+  );
+  protected readonly amountAriaLabel = computed(() =>
+    BARCODE_SCANNER_TEXT.AMOUNT_ARIA_LABEL(this.amountUnit()),
+  );
 
-  /** The item scaled to the selected portion (design's `scanned`). */
+  /** The product scaled to the chosen amount (design's `scanned`). */
   protected readonly scaledItem = computed<FoodItem | null>(() => {
-    const item = this.scannedItem();
-    const base = this.baseQuantity();
-    if (!item || !base) {
+    const product = this.product();
+    const grams = this.validGrams();
+    if (!product || grams === null) {
       return null;
     }
-    const ratio = this.multiplier();
-    return {
-      ...item,
-      ...this.calculator.scaleMacros(item, ratio),
-      quantity: this.formatQuantity(base.amount * ratio, base.unit),
-    };
+    return this.flow.scale(product, grams);
   });
 
-  protected readonly resultTitle = computed(() => this.scannedItem()?.name ?? '');
+  protected readonly resultTitle = computed(() => this.product()?.item.name ?? '');
   protected readonly resultSubtitle = computed(() => {
-    const item = this.scaledItem();
-    return item ? [item.brand, item.quantity].filter(Boolean).join(' · ') : '';
+    const product = this.product();
+    const grams = this.validGrams();
+    if (!product) {
+      return '';
+    }
+    const amount = grams === null ? '' : formatAmount(product, grams);
+    return [product.item.brand, amount].filter(Boolean).join(' · ');
   });
 
+  /** The package's serving (when known) and the fixed gram presets, each with its kcal. */
   protected readonly portions = computed<readonly ScanPortionView[]>(() => {
-    const base = this.baseQuantity();
-    const selected = this.multiplier();
-    return SCAN_PORTIONS.map((portion) => ({
-      ...portion,
-      sub: base ? this.formatQuantity(base.amount * portion.multiplier, base.unit) : '',
-      selected: portion.multiplier === selected,
-    }));
+    const product = this.product();
+    if (!product) {
+      return [];
+    }
+    const selected = this.grams();
+    const serving = product.servingGrams;
+    const presets = SCAN_AMOUNT_PRESETS_GRAMS.filter((grams) => grams !== serving);
+    const servingOption = serving === null ? [] : [serving];
+    return [...servingOption, ...presets].map((grams) => {
+      const kcal = `${this.flow.scale(product, grams).kcal} kcal`;
+      const isServing = grams === serving;
+      const amount = formatAmount(product, grams);
+      return {
+        grams,
+        label: isServing ? BARCODE_SCANNER_TEXT.SERVING_LABEL : amount,
+        sub: isServing ? `${amount} · ${kcal}` : kcal,
+        selected: grams === selected,
+      };
+    });
   });
 
   protected readonly stats = computed<readonly ScanStatView[]>(() => {
@@ -260,9 +403,18 @@ export class BarcodeScanner {
     return remaining === null || !item ? null : buildScanVerdict(remaining, item);
   });
 
+  protected readonly canAddScanned = computed(() => this.scaledItem() !== null);
+
+  protected readonly nameTaken = computed(() =>
+    this.flow.isCustomFoodNameTaken(this.formValue().name),
+  );
+  protected readonly nameError = computed(() =>
+    this.nameTaken() ? BARCODE_SCANNER_TEXT.DUPLICATE_NAME : null,
+  );
+
   protected readonly canSaveUnknown = computed(() => {
     const value = this.formValue();
-    return value.name.trim() !== '' && (value.kcal ?? 0) > 0;
+    return value.name.trim() !== '' && (value.kcal ?? 0) > 0 && !this.nameTaken();
   });
 
   constructor() {
@@ -286,32 +438,55 @@ export class BarcodeScanner {
     });
   }
 
-  /** Starts (or restarts) a scan immediately. */
-  startScan(): void {
+  /** Opens the camera. In the browser there's no camera; the overlay stays on the barcode field. */
+  async startScan(): Promise<void> {
     this.cancelPending();
     this.screen.set('scanner');
-    this.scanning.set(true);
-    for (const step of SCAN_LINE_SWEEP) {
-      if (step.atMs === 0) {
-        this.scanLinePercent.set(step.percent);
-      } else {
-        this.schedule(() => this.scanLinePercent.set(step.percent), step.atMs);
-      }
+    if (!this.canScan) {
+      this.status.set('idle');
+      return;
     }
-    this.scanSubscription = this.scanner.scan().subscribe((result) => this.onScanResult(result));
+    const run = ++this.scanRun;
+    this.status.set('scanning');
+    this.startSweep();
+    const outcome = await this.flow.scan();
+    if (run === this.scanRun) {
+      this.onScanOutcome(outcome);
+    }
   }
 
-  protected pickPortion(multiplier: number): void {
-    this.multiplier.set(multiplier);
+  /** The typed barcode (browser fallback, or after a failed scan). */
+  protected submitBarcode(): void {
+    this.barcodeSubmitted.set(true);
+    const barcode = this.barcodeForm.controls.barcode.value.trim();
+    if (BARCODE_PATTERN.test(barcode)) {
+      this.lookup(barcode);
+    }
   }
 
-  /** "Scan again" and close on both sheets: back to the viewfinder and a new scan after a short pause. */
+  /** "Try again" after a network error: the same barcode once more. */
+  protected retryLookup(): void {
+    this.lookup(this.barcode());
+  }
+
+  protected openSettings(): void {
+    void this.flow.openSettings();
+  }
+
+  protected pickPortion(grams: number): void {
+    this.amountForm.controls.grams.setValue(grams);
+  }
+
+  /** "Scan again" and close on both sheets: back to the overlay, and the camera again after a pause. */
   protected rescan(): void {
     this.cancelPending();
     this.screen.set('scanner');
-    this.scanning.set(false);
+    this.status.set('idle');
     this.scanLinePercent.set(SCAN_LINE_IDLE_PERCENT);
-    this.schedule(() => this.startScan(), SCAN_RETRY_DELAY_MS);
+    this.product.set(null);
+    if (this.canScan) {
+      this.schedule(() => void this.startScan(), SCAN_RETRY_DELAY_MS);
+    }
   }
 
   protected addScanned(): void {
@@ -327,17 +502,7 @@ export class BarcodeScanner {
     if (!this.canSaveUnknown()) {
       return;
     }
-    const value = this.form.getRawValue();
-    this.customSaved.emit({
-      id: newId(CUSTOM_FOOD_ID_PREFIX),
-      name: value.name.trim(),
-      quantity: value.quantity.trim() || DEFAULT_CUSTOM_QUANTITY,
-      kcal: Math.round(value.kcal ?? 0),
-      protein: Math.round(value.protein ?? 0),
-      carbs: 0,
-      fat: 0,
-      isCustom: true,
-    });
+    this.customSaved.emit(this.flow.toCustomFood(this.form.getRawValue()));
     this.finish();
   }
 
@@ -405,8 +570,8 @@ export class BarcodeScanner {
 
   private begin(): void {
     this.reset();
-    if (this.autoStart()) {
-      this.schedule(() => this.startScan(), SCAN_START_DELAY_MS);
+    if (this.autoStart() && this.canScan) {
+      void this.startScan();
     }
   }
 
@@ -437,23 +602,68 @@ export class BarcodeScanner {
 
   private reset(): void {
     this.screen.set('scanner');
-    this.scanning.set(false);
+    this.status.set('idle');
     this.scanLinePercent.set(SCAN_LINE_IDLE_PERCENT);
-    this.scannedItem.set(null);
-    this.multiplier.set(1);
+    this.product.set(null);
+    this.barcode.set('');
+    this.barcodeForm.reset();
+    this.barcodeSubmitted.set(false);
+    this.amountForm.reset({ grams: PRODUCT_BASE_GRAMS });
     this.form.reset();
   }
 
-  private onScanResult(result: ScanResult): void {
-    this.scanning.set(false);
-    this.scanSubscription = null;
-    if (result.status === 'found') {
-      this.scannedItem.set(result.item);
-      this.multiplier.set(1);
-      this.screen.set('result');
-    } else {
-      this.form.reset();
-      this.screen.set('unknown');
+  private onScanOutcome(outcome: BarcodeScanOutcome): void {
+    this.scanLinePercent.set(SCAN_LINE_IDLE_PERCENT);
+    switch (outcome.status) {
+      case 'scanned':
+        this.lookup(outcome.barcode);
+        return;
+      case 'cancelled':
+        // 8b: the user closed the camera – leave without logging anything.
+        this.finish();
+        return;
+      default:
+        this.status.set(OUTCOME_STATUS[outcome.status]);
+    }
+  }
+
+  private lookup(barcode: string): void {
+    this.cancelPending();
+    this.barcode.set(barcode);
+    this.status.set('looking-up');
+    this.startSweep();
+    this.lookupSubscription = this.flow
+      .lookup(barcode)
+      .subscribe((result) => this.onLookupResult(result));
+  }
+
+  private onLookupResult(result: ProductLookupResult): void {
+    this.lookupSubscription = null;
+    this.scanLinePercent.set(SCAN_LINE_IDLE_PERCENT);
+    switch (result.status) {
+      case 'found':
+        this.product.set(result.product);
+        this.amountForm.reset({ grams: result.product.servingGrams ?? PRODUCT_BASE_GRAMS });
+        this.status.set('idle');
+        this.screen.set('result');
+        return;
+      case 'not-found':
+        this.form.reset();
+        this.status.set('idle');
+        this.screen.set('unknown');
+        return;
+      case 'error':
+        this.status.set('lookup-error');
+    }
+  }
+
+  private startSweep(): void {
+    for (const step of SCAN_LINE_SWEEP) {
+      if (step.atMs === 0) {
+        this.scanLinePercent.set(step.percent);
+      } else {
+        this.schedule(() => this.scanLinePercent.set(step.percent), step.atMs);
+      }
     }
   }
 
@@ -466,15 +676,12 @@ export class BarcodeScanner {
   }
 
   private cancelPending(): void {
+    this.scanRun += 1;
     for (const handle of this.timers) {
       clearTimeout(handle);
     }
     this.timers.clear();
-    this.scanSubscription?.unsubscribe();
-    this.scanSubscription = null;
-  }
-
-  private formatQuantity(amount: number, unit: string): string {
-    return `${Math.round(amount)} ${unit}`;
+    this.lookupSubscription?.unsubscribe();
+    this.lookupSubscription = null;
   }
 }

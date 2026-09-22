@@ -58,8 +58,6 @@ export interface NewCollectionInput {
   items: readonly FoodItem[];
 }
 
-export type ScanResult = { status: 'found'; item: FoodItem } | { status: 'unknown' };
-
 /** One day's summed macros from the food log. `entryCount` is 0 on days without a log. */
 export interface DailyFoodTotals {
   /** Local date `YYYY-MM-DD`. */

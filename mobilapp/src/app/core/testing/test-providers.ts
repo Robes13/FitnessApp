@@ -1,6 +1,5 @@
 import { DOCUMENT, Provider } from '@angular/core';
 import { AUTH_API_DELAY_MS } from '../services/auth-api';
-import { SCAN_DELAY_MS } from '../services/barcode-scanner';
 import { FOOD_SEARCH_DELAY_MS } from '../services/food-search';
 import { NOW } from '../utils/now';
 import { FakeStorage, createFakeDocument, createFakeStorage } from './fake-document';
@@ -22,7 +21,6 @@ function deterministicProviders(now: Date): Provider[] {
   return [
     { provide: NOW, useValue: () => new Date(now) },
     { provide: FOOD_SEARCH_DELAY_MS, useValue: 0 },
-    { provide: SCAN_DELAY_MS, useValue: 0 },
     { provide: AUTH_API_DELAY_MS, useValue: 0 },
   ];
 }

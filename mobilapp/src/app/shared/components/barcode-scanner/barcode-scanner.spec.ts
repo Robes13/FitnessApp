@@ -1,27 +1,75 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, map, timer } from 'rxjs';
-import { FoodItem, ScanResult } from '../../../core/models/food';
+import { Observable, Subject } from 'rxjs';
+import { STORAGE_KEY } from '../../../core/constants/storage-key';
+import {
+  BarcodeScanOutcome,
+  ProductLookupResult,
+  ScannedProduct,
+} from '../../../core/models/barcode';
+import { FoodItem } from '../../../core/models/food';
 import { BarcodeScannerService } from '../../../core/services/barcode-scanner';
+import { ProductLookupService } from '../../../core/services/product-lookup';
 import { TEST_FOOD } from '../../../core/testing/fixtures';
+import {
+  provideComponentTestEnvironment,
+  resetComponentTestStorage,
+} from '../../../core/testing/test-providers';
 import { BarcodeScanner, buildScanVerdict } from './barcode-scanner';
 
-/** Design's timings: start after 500 ms, the line at 700/1500 ms, response at 2300 ms, retry after 300 ms. */
-const START_DELAY_MS = 500;
-const SWEEP_SECOND_STEP_MS = 700;
-const SWEEP_THIRD_STEP_MS = 1500;
+const BARCODE = '5701234567890';
 const RETRY_DELAY_MS = 300;
 
-/** The item the fake scanner "finds" – real lookups need a backend. */
-const SCANNED_ITEM: FoodItem = { ...TEST_FOOD, name: 'Proteinbar Choko', brand: 'Nutrify Select' };
+/** A protein bar per 100 g with a 50 g serving. */
+const PRODUCT: ScannedProduct = {
+  barcode: BARCODE,
+  unit: 'g',
+  item: {
+    id: `off-${BARCODE}`,
+    name: 'Proteinbar Choko',
+    brand: 'Nutrify Select',
+    quantity: '100 g',
+    kcal: 400,
+    protein: 40,
+    carbs: 30,
+    fat: 12,
+  },
+  servingGrams: 50,
+};
 
 class FakeBarcodeScannerService {
-  result: ScanResult = { status: 'found', item: SCANNED_ITEM };
+  canScan = true;
+  outcome: BarcodeScanOutcome = { status: 'scanned', barcode: BARCODE };
   scanCalls = 0;
+  recorded = 0;
+  settingsOpened = 0;
 
-  scan(): Observable<ScanResult> {
+  async scan(): Promise<BarcodeScanOutcome> {
     this.scanCalls += 1;
-    return timer(SCAN_MS).pipe(map(() => this.result));
+    return this.outcome;
+  }
+
+  recordScan(): void {
+    this.recorded += 1;
+  }
+
+  async openSettings(): Promise<void> {
+    this.settingsOpened += 1;
+  }
+}
+
+/** Each lookup gets its own subject, so a spec decides when (and what) the "network" answers. */
+class FakeProductLookupService {
+  readonly requests: { barcode: string; response: Subject<ProductLookupResult> }[] = [];
+
+  lookup(barcode: string): Observable<ProductLookupResult> {
+    const response = new Subject<ProductLookupResult>();
+    this.requests.push({ barcode, response });
+    return response;
+  }
+
+  respond(result: ProductLookupResult): void {
+    this.requests.at(-1)?.response.next(result);
   }
 }
 
@@ -50,39 +98,37 @@ class Host {
   noBarcodeCount = 0;
 }
 
-/** The scanner's response time (`SCAN_DELAY_MS` token's default). */
-const SCAN_MS = 2300;
-
 describe('BarcodeScanner', () => {
   let scanner: FakeBarcodeScannerService;
+  let lookup: FakeProductLookupService;
   let fixture: ComponentFixture<Host>;
   let host: Host;
   let root: HTMLElement;
 
-  function setup(): void {
+  async function setup(): Promise<void> {
     TestBed.configureTestingModule({
       imports: [Host],
-      providers: [{ provide: BarcodeScannerService, useValue: scanner }],
+      providers: [
+        ...provideComponentTestEnvironment(),
+        { provide: BarcodeScannerService, useValue: scanner },
+        { provide: ProductLookupService, useValue: lookup },
+      ],
     });
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     root = fixture.nativeElement as HTMLElement;
     fixture.detectChanges();
+    await settle();
   }
 
-  /** Advances time and lets the component re-render. */
-  function tick(ms: number): void {
-    vi.advanceTimersByTime(ms);
+  /** Lets pending promises (the fake camera) and timers run, then re-renders. */
+  async function settle(ms = 0): Promise<void> {
+    await vi.advanceTimersByTimeAsync(ms);
     fixture.detectChanges();
   }
 
   function hint(): string {
     return root.querySelector('.barcode-scanner__hint')?.textContent?.trim() ?? '';
-  }
-
-  function scanLine(): string {
-    const frame = root.querySelector<HTMLElement>('.barcode-scanner__frame');
-    return frame?.style.getPropertyValue('--scan-line-y') ?? '';
   }
 
   function dialogs(): string[] {
@@ -91,10 +137,14 @@ describe('BarcodeScanner', () => {
     );
   }
 
-  function buttonByText(text: string): HTMLButtonElement {
-    const button = Array.from(root.querySelectorAll<HTMLButtonElement>('button')).find(
+  function findButton(text: string): HTMLButtonElement | undefined {
+    return Array.from(root.querySelectorAll<HTMLButtonElement>('button')).find(
       (candidate) => candidate.textContent?.replace(/\s+/g, ' ').trim() === text,
     );
+  }
+
+  function buttonByText(text: string): HTMLButtonElement {
+    const button = findButton(text);
     if (!button) {
       throw new Error(`Ingen knap med teksten "${text}"`);
     }
@@ -114,14 +164,16 @@ describe('BarcodeScanner', () => {
     return tile;
   }
 
-  function portionSub(tile: HTMLElement): string {
-    return tile.querySelector('.barcode-scanner__portion-sub')?.textContent?.trim() ?? '';
-  }
-
   function statValues(): string[] {
     return Array.from(root.querySelectorAll('.barcode-scanner__stat-value')).map(
       (stat) => stat.textContent?.trim() ?? '',
     );
+  }
+
+  function formErrors(): string[] {
+    return Array.from(root.querySelectorAll('app-ui-form-error'))
+      .map((error) => error.textContent?.trim() ?? '')
+      .filter(Boolean);
   }
 
   function verdict(): HTMLElement | null {
@@ -138,14 +190,24 @@ describe('BarcodeScanner', () => {
     fixture.detectChanges();
   }
 
-  /** Opens and advances until the service has responded. */
-  function scanToResult(): void {
-    tick(START_DELAY_MS + SCAN_MS);
+  function submitBarcode(code: string): void {
+    typeInto('Stregkode', code);
+    buttonByText('Slå op').click();
+    fixture.detectChanges();
+  }
+
+  /** Native: the camera read `BARCODE` on open; the lookup answers with `result`. */
+  async function scanAndRespond(result: ProductLookupResult): Promise<void> {
+    await setup();
+    lookup.respond(result);
+    fixture.detectChanges();
   }
 
   beforeEach(() => {
     vi.useFakeTimers();
+    resetComponentTestStorage();
     scanner = new FakeBarcodeScannerService();
+    lookup = new FakeProductLookupService();
   });
 
   afterEach(() => {
@@ -154,111 +216,115 @@ describe('BarcodeScanner', () => {
     vi.useRealTimers();
   });
 
-  it('shows the idle scanner and starts the sweep after half a second', () => {
-    setup();
+  describe('in the browser (no camera)', () => {
+    beforeEach(() => {
+      scanner.canScan = false;
+    });
 
-    expect(dialogs()).toEqual(['Scan stregkode']);
-    expect(hint()).toBe('Hold stregkoden inden for rammen – vi scanner automatisk');
-    expect(scanLine()).toBe('50%');
-    expect(root.querySelectorAll('.barcode-scanner__bar')).toHaveLength(30);
-    expect(scanner.scanCalls).toBe(0);
+    it('offers typing the barcode instead of scanning', async () => {
+      await setup();
 
-    tick(START_DELAY_MS);
+      expect(dialogs()).toEqual(['Scan stregkode']);
+      expect(hint()).toBe(
+        'Kameraet er kun tilgængeligt i appen. Indtast stregkodens tal i stedet.',
+      );
+      expect(findButton('Scan stregkode')).toBeUndefined();
+      expect(scanner.scanCalls).toBe(0);
+    });
+
+    it('validates 8–14 digits before looking up', async () => {
+      await setup();
+
+      submitBarcode('12345');
+      expect(formErrors()).toEqual(['Stregkoden skal være 8–14 cifre.']);
+      expect(lookup.requests).toHaveLength(0);
+
+      submitBarcode('12345678a');
+      expect(lookup.requests).toHaveLength(0);
+
+      submitBarcode(` ${BARCODE} `);
+      expect(lookup.requests.map((request) => request.barcode)).toEqual([BARCODE]);
+      expect(scanner.recorded).toBe(1);
+    });
+
+    it('shows the loading state and then the result of a typed barcode', async () => {
+      await setup();
+      submitBarcode(BARCODE);
+
+      expect(hint()).toBe('Slår varen op…');
+      expect(root.querySelector('app-ui-spinner')).not.toBeNull();
+      expect(root.querySelector('input[aria-label="Stregkode"]')).toBeNull();
+
+      lookup.respond({ status: 'found', product: PRODUCT });
+      fixture.detectChanges();
+      expect(dialogs()).toEqual(['Scan stregkode', 'Proteinbar Choko']);
+    });
+  });
+
+  it('opens the camera on open and shows the found product at its serving size', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
+
     expect(scanner.scanCalls).toBe(1);
-    expect(hint()).toBe('Læser stregkode…');
-    expect(scanLine()).toBe('88%');
-
-    tick(SWEEP_SECOND_STEP_MS);
-    expect(scanLine()).toBe('14%');
-
-    tick(SWEEP_THIRD_STEP_MS - SWEEP_SECOND_STEP_MS);
-    expect(scanLine()).toBe('62%');
-    expect(dialogs()).toEqual(['Scan stregkode']);
-  });
-
-  it('opens the result sheet with the found item when the service answers', () => {
-    setup();
-    scanToResult();
-
+    expect(lookup.requests.map((request) => request.barcode)).toEqual([BARCODE]);
+    expect(scanner.recorded).toBe(1);
     expect(dialogs()).toEqual(['Scan stregkode', 'Proteinbar Choko']);
-    expect(hint()).toBe('Hold stregkoden inden for rammen – vi scanner automatisk');
     expect(root.querySelector('.barcode-scanner__subtitle')?.textContent?.trim()).toBe(
-      'Nutrify Select · 55 g',
+      'Nutrify Select · 50 g',
     );
-    expect(statValues()).toEqual(['210', '20', '22', '7']);
-    const whole = portionByLabel('1 bar');
-    const half = portionByLabel('Halv');
-    expect(whole.getAttribute('aria-pressed')).toBe('true');
-    expect(portionSub(whole)).toBe('55 g');
-    expect(half.getAttribute('aria-pressed')).toBe('false');
-    expect(portionSub(half)).toBe('28 g');
+    expect(portionByLabel('Portion').getAttribute('aria-pressed')).toBe('true');
+    expect(
+      portionByLabel('Portion').querySelector('.barcode-scanner__portion-sub')?.textContent?.trim(),
+    ).toBe('50 g · 200 kcal');
+    // The 50 g preset is the serving already, so it isn't repeated.
+    expect(() => portionByLabel('50 g')).toThrow();
+    expect(statValues()).toEqual(['200', '20', '15', '6']);
     expect(verdict()?.textContent?.trim()).toBe(
-      'God proteinkilde – 20 g protein. Du har 290 kcal tilbage bagefter.',
+      'God proteinkilde – 20 g protein. Du har 300 kcal tilbage bagefter.',
     );
-    expect(verdict()?.classList.contains('barcode-scanner__verdict--positive')).toBe(true);
   });
 
-  it('scales macros, quantity and verdict to the chosen portion and emits the scaled item', () => {
-    setup();
-    scanToResult();
+  it('recalculates when the amount changes and logs the scaled item', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
 
-    portionByLabel('Halv').click();
+    portionByLabel('200 g').click();
     fixture.detectChanges();
+    expect(statValues()).toEqual(['800', '80', '60', '24']);
+    expect(verdict()?.classList.contains('barcode-scanner__verdict--negative')).toBe(true);
 
-    expect(portionByLabel('Halv').getAttribute('aria-pressed')).toBe('true');
-    expect(root.querySelector('.barcode-scanner__subtitle')?.textContent?.trim()).toBe(
-      'Nutrify Select · 28 g',
-    );
-    expect(statValues()).toEqual(['105', '10', '11', '4']);
-    expect(verdict()?.textContent?.trim()).toBe('Passer fint ind. 395 kcal tilbage bagefter.');
-    expect(verdict()?.classList.contains('barcode-scanner__verdict--positive')).toBe(false);
+    typeInto('Mængde i gram', '25');
+    expect(statValues()).toEqual(['100', '10', '8', '3']);
+    expect(portionByLabel('Portion').getAttribute('aria-pressed')).toBe('false');
 
     buttonByText('Tilføj').click();
     fixture.detectChanges();
 
     expect(host.found).toEqual([
-      {
-        ...SCANNED_ITEM,
-        quantity: '28 g',
-        kcal: 105,
-        protein: 10,
-        carbs: 11,
-        fat: 4,
-      },
+      { ...PRODUCT.item, quantity: '25 g', kcal: 100, protein: 10, carbs: 8, fat: 3 },
     ]);
     expect(host.closedCount).toBe(1);
   });
 
-  it('warns when the item pushes the day over target and hides the verdict without a budget', () => {
-    setup();
-    host.kcalRemaining.set(100);
-    scanToResult();
+  it('blocks logging an invalid amount', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
 
-    expect(verdict()?.textContent?.trim()).toBe(
-      'Den skubber dig 110 kcal over dagens mål. Overvej en halv, eller gem den til efter træning.',
-    );
-    expect(verdict()?.classList.contains('barcode-scanner__verdict--negative')).toBe(true);
+    typeInto('Mængde i gram', '0');
 
-    host.kcalRemaining.set(null);
-    fixture.detectChanges();
-    expect(verdict()).toBeNull();
+    expect(formErrors()).toEqual(['Angiv en mængde mellem 1 og 5000 g.']);
+    expect(statValues()).toEqual([]);
+    expect(buttonByText('Tilføj').disabled).toBe(true);
   });
 
-  it('opens the unknown sheet and saves a custom item from the form', () => {
-    scanner.result = { status: 'unknown' };
-    setup();
-    scanToResult();
+  it('opens "Unknown item" with the barcode and saves a custom food', async () => {
+    await scanAndRespond({ status: 'not-found', barcode: BARCODE });
 
     expect(root.querySelector('.barcode-scanner__badge')?.textContent?.trim()).toBe('Ukendt vare');
-    expect(
-      root.querySelector('.barcode-scanner__heading')?.textContent?.replace(/\s+/g, ' ').trim(),
-    ).toBe('Den kender vi ikke');
+    expect(root.querySelector('.barcode-scanner__code-value')?.textContent?.trim()).toBe(
+      `Stregkode ${BARCODE}`,
+    );
     const save = buttonByText('Gem og tilføj');
     expect(save.disabled).toBe(true);
 
     typeInto('Navn', '  Proteinbar Karamel ');
-    expect(save.disabled).toBe(true);
-
     typeInto('Kalorier', '180');
     expect(save.disabled).toBe(false);
 
@@ -275,27 +341,109 @@ describe('BarcodeScanner', () => {
       fat: 0,
       isCustom: true,
     });
-    expect(host.saved[0]?.id).toMatch(/^custom-/);
+    expect(host.saved[0]?.id).toMatch(/^food-/);
     expect(host.closedCount).toBe(1);
   });
 
-  it('restarts scanning after "Scan igen" on the result sheet', () => {
-    setup();
-    scanToResult();
-    expect(scanner.scanCalls).toBe(1);
+  it('refuses a name the user already has a custom food with', async () => {
+    resetComponentTestStorage({
+      [STORAGE_KEY.CUSTOM_FOODS]: [{ ...TEST_FOOD, name: 'Proteinbar Karamel', isCustom: true }],
+    });
+    await scanAndRespond({ status: 'not-found', barcode: BARCODE });
+
+    typeInto('Navn', 'proteinbar karamel ');
+    typeInto('Kalorier', '180');
+
+    expect(formErrors()).toEqual(['Du har allerede en egen vare med det navn.']);
+    expect(buttonByText('Gem og tilføj').disabled).toBe(true);
+
+    typeInto('Navn', 'Proteinbar Vanilje');
+    expect(formErrors()).toEqual([]);
+    expect(buttonByText('Gem og tilføj').disabled).toBe(false);
+  });
+
+  it('shows a network error and retries the same barcode', async () => {
+    await scanAndRespond({ status: 'error', barcode: BARCODE });
+
+    expect(hint()).toBe('Vi kunne ikke slå varen op. Tjek din internetforbindelse, og prøv igen.');
+    buttonByText('Prøv igen').click();
+    fixture.detectChanges();
+
+    expect(lookup.requests.map((request) => request.barcode)).toEqual([BARCODE, BARCODE]);
+    lookup.respond({ status: 'found', product: PRODUCT });
+    fixture.detectChanges();
+    expect(dialogs()).toEqual(['Scan stregkode', 'Proteinbar Choko']);
+  });
+
+  it('explains a denied camera permission and opens the settings', async () => {
+    scanner.outcome = { status: 'permission-denied' };
+    await setup();
+
+    expect(hint()).toContain('Appen har ikke adgang til kameraet.');
+    buttonByText('Åbn indstillinger').click();
+    expect(scanner.settingsOpened).toBe(1);
+    // The barcode can still be typed.
+    expect(root.querySelector('input[aria-label="Stregkode"]')).not.toBeNull();
+  });
+
+  it('lets the user scan again when the barcode could not be read', async () => {
+    scanner.outcome = { status: 'unreadable' };
+    await setup();
+
+    expect(hint()).toBe(
+      'Vi kunne ikke læse stregkoden. Prøv igen med bedre lys, eller indtast tallene herunder.',
+    );
+    scanner.outcome = { status: 'scanned', barcode: BARCODE };
+    buttonByText('Scan stregkode').click();
+    await settle();
+
+    expect(scanner.scanCalls).toBe(2);
+    expect(lookup.requests).toHaveLength(1);
+  });
+
+  it('tells the user when the Android scanner module is being installed', async () => {
+    scanner.outcome = { status: 'module-installing' };
+    await setup();
+
+    expect(hint()).toBe('Stregkodescanneren hentes fra Google Play. Prøv igen om et øjeblik.');
+  });
+
+  it('closes without logging when the camera is cancelled', async () => {
+    scanner.outcome = { status: 'cancelled' };
+    await setup();
+
+    expect(host.closedCount).toBe(1);
+    expect(host.found).toEqual([]);
+    expect(lookup.requests).toHaveLength(0);
+  });
+
+  it('ignores a lookup that answers after the scanner was closed', async () => {
+    await setup();
+
+    host.open.set(false);
+    fixture.detectChanges();
+    lookup.respond({ status: 'found', product: PRODUCT });
+    fixture.detectChanges();
+
+    expect(dialogs()).toEqual([]);
+    expect(host.found).toEqual([]);
+  });
+
+  it('opens the camera again after "Scan igen" on the result sheet', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
 
     buttonByText('Scan igen').click();
     fixture.detectChanges();
     expect(dialogs()).toEqual(['Scan stregkode']);
-    expect(scanLine()).toBe('50%');
+    expect(scanner.scanCalls).toBe(1);
 
-    tick(RETRY_DELAY_MS);
+    await settle(RETRY_DELAY_MS);
     expect(scanner.scanCalls).toBe(2);
-    expect(hint()).toBe('Læser stregkode…');
   });
 
-  it('emits manualRequested and noBarcodeRequested and closes', () => {
-    setup();
+  it('emits manualRequested and noBarcodeRequested and closes', async () => {
+    scanner.canScan = false;
+    await setup();
 
     buttonByText('Indtast manuelt i stedet').click();
     fixture.detectChanges();
@@ -313,35 +461,13 @@ describe('BarcodeScanner', () => {
     expect(host.closedCount).toBe(2);
   });
 
-  it('cancels a running scan when closed and starts over when reopened', () => {
-    setup();
-    tick(START_DELAY_MS + SWEEP_SECOND_STEP_MS);
-    expect(scanLine()).toBe('14%');
-
-    host.open.set(false);
-    fixture.detectChanges();
-    expect(dialogs()).toEqual([]);
-
-    tick(SCAN_MS);
-    expect(host.found).toEqual([]);
-
-    host.open.set(true);
-    fixture.detectChanges();
-    expect(dialogs()).toEqual(['Scan stregkode']);
-    expect(scanLine()).toBe('50%');
-    expect(hint()).toBe('Hold stregkoden inden for rammen – vi scanner automatisk');
-
-    tick(START_DELAY_MS);
-    expect(scanner.scanCalls).toBe(2);
-    expect(scanLine()).toBe('88%');
-  });
-
-  it('gives focus back to the element that opened the scanner', () => {
+  it('gives focus back to the element that opened the scanner', async () => {
+    scanner.canScan = false;
     const trigger = document.createElement('button');
     document.body.appendChild(trigger);
     trigger.focus();
 
-    setup();
+    await setup();
     expect(document.activeElement).toBe(root.querySelector('.barcode-scanner__overlay'));
 
     host.open.set(false);
@@ -351,9 +477,8 @@ describe('BarcodeScanner', () => {
     trigger.remove();
   });
 
-  it('closes from the overlay close button and via Escape only while the scanner is on top', () => {
-    setup();
-
+  it('closes via Escape only while the overlay is on top, and from the close button', async () => {
+    await setup();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(host.closedCount).toBe(1);
 
@@ -361,7 +486,9 @@ describe('BarcodeScanner', () => {
     fixture.detectChanges();
     host.open.set(true);
     fixture.detectChanges();
-    scanToResult();
+    await settle();
+    lookup.respond({ status: 'found', product: PRODUCT });
+    fixture.detectChanges();
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     fixture.detectChanges();
@@ -372,11 +499,12 @@ describe('BarcodeScanner', () => {
     expect(host.closedCount).toBe(2);
   });
 
-  it('holder Tab inde i overlayet, så længe scanneren ligger øverst', () => {
+  it('keeps Tab inside the overlay while it is on top', async () => {
+    scanner.canScan = false;
     const outside = document.createElement('button');
     document.body.appendChild(outside);
 
-    setup();
+    await setup();
     const overlay = root.querySelector<HTMLElement>('.barcode-scanner__overlay');
     const focusable = Array.from(
       overlay?.querySelectorAll<HTMLElement>(
@@ -388,18 +516,15 @@ describe('BarcodeScanner', () => {
     expect(first).toBeDefined();
     expect(last).toBeDefined();
 
-    // Tab from the last element wraps around to the first instead of out of the overlay.
     last?.focus();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
     expect(document.activeElement).toBe(first);
 
-    // Shift+Tab from the first wraps backward to the last.
     document.dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }),
     );
     expect(document.activeElement).toBe(last);
 
-    // Focus outside the overlay is pulled back in.
     outside.focus();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
     expect(document.activeElement).toBe(first);
@@ -407,33 +532,31 @@ describe('BarcodeScanner', () => {
     outside.remove();
   });
 
-  it('overlader Tab til arket, når et ark ligger ovenpå scanneren', () => {
-    setup();
-    scanToResult();
+  it('leaves Tab to the sheet when a sheet lies on top of the scanner', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
 
-    const sheetButton = root.querySelector<HTMLElement>('.ui-sheet__panel button');
-    sheetButton?.focus();
-
+    root.querySelector<HTMLElement>('.ui-sheet__panel button')?.focus();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
     fixture.detectChanges();
 
-    // The scanner has not yanked focus back to the camera overlay.
     const overlay = root.querySelector<HTMLElement>('.barcode-scanner__overlay');
     expect(overlay?.contains(document.activeElement)).toBe(false);
   });
 });
 
 describe('buildScanVerdict', () => {
+  const item: FoodItem = { ...TEST_FOOD };
+
   it('matches the design copy for the three cases', () => {
-    expect(buildScanVerdict(150, SCANNED_ITEM)).toEqual({
+    expect(buildScanVerdict(150, item)).toEqual({
       tone: 'negative',
       text: 'Den skubber dig 60 kcal over dagens mål. Overvej en halv, eller gem den til efter træning.',
     });
-    expect(buildScanVerdict(500, SCANNED_ITEM)).toEqual({
+    expect(buildScanVerdict(500, item)).toEqual({
       tone: 'positive',
       text: 'God proteinkilde – 20 g protein. Du har 290 kcal tilbage bagefter.',
     });
-    expect(buildScanVerdict(500, { ...SCANNED_ITEM, protein: 10 })).toEqual({
+    expect(buildScanVerdict(500, { ...item, protein: 10 })).toEqual({
       tone: 'neutral',
       text: 'Passer fint ind. 290 kcal tilbage bagefter.',
     });

@@ -7,6 +7,7 @@ export const STORAGE_KEY = {
   COLLECTIONS: 'nutrify.collections',
   THEME: 'nutrify.theme',
   SCAN_COUNT: 'nutrify.scan-count',
+  PRODUCT_CACHE: 'nutrify.product-cache',
   REMINDERS: 'nutrify.reminders',
 } as const;
 

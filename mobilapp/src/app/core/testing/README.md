@@ -10,7 +10,7 @@ funktioner og providers, så de kan kompileres sammen med appen uden vitest-afh�
 | `fixtures.ts`       | Testdata, appen ikke selv leverer: `weighEntry()` / `weighHistory()` til en vejningshistorik og `TEST_FOOD` til en vare, der kan logges.             |
 
 `TEST_NOW` er mandag 21. september 2026 kl. 10:30. Begge miljøer fryser `NOW` og sætter alle
-kunstige forsinkelser (`FOOD_SEARCH_DELAY_MS`, `SCAN_DELAY_MS`, `AUTH_API_DELAY_MS`) til 0 ms.
+kunstige forsinkelser (`FOOD_SEARCH_DELAY_MS`, `AUTH_API_DELAY_MS`) til 0 ms.
 
 ## Service-specs
 
