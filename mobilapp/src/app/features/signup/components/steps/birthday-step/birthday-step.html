@@ -1,0 +1,99 @@
+<h1 class="birthday-step__title">
+  Hvornår har du <span class="birthday-step__title-accent">fødselsdag?</span>
+</h1>
+<p class="birthday-step__subtitle">Din alder indgår i beregningen af dit kaloriebehov.</p>
+
+<div class="birthday-step__controls">
+  <div class="birthday-step__control">
+    <button
+      type="button"
+      class="birthday-step__nav"
+      aria-label="Et år tilbage"
+      (click)="shift(-1, 0)"
+    >
+      −
+    </button>
+    <span class="birthday-step__field">
+      <span class="birthday-step__field-label">År</span>
+      <input
+        class="birthday-step__year"
+        type="text"
+        inputmode="numeric"
+        maxlength="4"
+        aria-label="Årstal"
+        [formControl]="yearControl"
+        (blur)="onYearBlur()"
+      />
+    </span>
+    <button type="button" class="birthday-step__nav" aria-label="Et år frem" (click)="shift(1, 0)">
+      +
+    </button>
+  </div>
+
+  <div class="birthday-step__control">
+    <button
+      type="button"
+      class="birthday-step__nav"
+      aria-label="Forrige måned"
+      (click)="shift(0, -1)"
+    >
+      ‹
+    </button>
+    <span class="birthday-step__field">
+      <span class="birthday-step__field-label">Måned</span>
+      <span class="birthday-step__month">{{ monthName() }}</span>
+    </span>
+    <button type="button" class="birthday-step__nav" aria-label="Næste måned" (click)="shift(0, 1)">
+      ›
+    </button>
+  </div>
+</div>
+
+<div class="birthday-step__calendar">
+  <div class="birthday-step__weekdays">
+    @for (weekday of weekdays; track weekday) {
+      <span class="birthday-step__weekday">{{ weekday }}</span>
+    }
+  </div>
+  <div class="birthday-step__grid">
+    @for (cell of cells(); track cell.iso) {
+      <button
+        type="button"
+        class="birthday-step__day"
+        [class.birthday-step__day--ghost]="cell.ghost"
+        [class.birthday-step__day--selected]="cell.selected"
+        [class.birthday-step__day--future]="cell.future"
+        [disabled]="cell.future"
+        (click)="pick(cell)"
+      >
+        {{ cell.label }}
+      </button>
+    }
+  </div>
+</div>
+
+<p class="birthday-step__selection" [class.birthday-step__selection--chosen]="hasBirthday()">
+  {{ birthdayLabel() }}
+</p>
+
+<div class="birthday-step__stage">
+  <div class="birthday-step__readout">
+    <span class="birthday-step__age-caption">Alder</span>
+    <span class="birthday-step__age">
+      <span class="birthday-step__age-number">{{ ageText() }}</span>
+      <span class="birthday-step__age-unit">år</span>
+    </span>
+    @if (ageHint(); as hint) {
+      <p class="birthday-step__age-hint">{{ hint }}</p>
+    }
+  </div>
+
+  <app-birthday-cake
+    class="birthday-step__cake"
+    [age]="age()"
+    [ageText]="ageText()"
+    [weightKg]="state.weightKg()"
+    [heightCm]="state.heightCm()"
+    [bandTone]="bandTone()"
+  />
+</div>

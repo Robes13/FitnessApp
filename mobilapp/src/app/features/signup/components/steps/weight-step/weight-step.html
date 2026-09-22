@@ -1,0 +1,48 @@
+<h1 class="weight-step__title">Hvad er din <span class="weight-step__title-accent">vægt?</span></h1>
+<p class="weight-step__subtitle">Din vægt i dag – du kan altid rette den senere.</p>
+
+<div class="weight-step__stage">
+  <div class="weight-step__readout">
+    <p class="weight-step__value">
+      <span class="weight-step__number">{{ weightText() }}</span>
+      <span class="weight-step__unit">kg</span>
+    </p>
+    <div class="weight-step__steppers">
+      <button
+        type="button"
+        class="weight-step__stepper"
+        aria-label="Et kilo mindre"
+        (click)="adjust(-1)"
+      >
+        −
+      </button>
+      <button
+        type="button"
+        class="weight-step__stepper"
+        aria-label="Et kilo mere"
+        (click)="adjust(1)"
+      >
+        +
+      </button>
+    </div>
+    <p class="weight-step__hint">Træk i skalaen nedenfor, eller brug − og +.</p>
+  </div>
+
+  <app-figure
+    class="weight-step__figure"
+    [weightKg]="state.weightKg()"
+    [heightCm]="state.heightCm()"
+    [bandTone]="bandTone()"
+    [ariaLabel]="figureLabel"
+    showDumbbell
+  />
+</div>
+
+<app-ui-ruler
+  class="weight-step__ruler"
+  [min]="minKg"
+  [max]="maxKg"
+  [(value)]="state.weightKg"
+  [glowStrength]="rulerGlowStrength"
+  ariaLabel="Vægt i kilo"
+/>

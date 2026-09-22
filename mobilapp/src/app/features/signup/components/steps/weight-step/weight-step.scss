@@ -1,0 +1,126 @@
+@use 'mixins';
+
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.weight-step {
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-3xl);
+    color: var(--color-text);
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  &__subtitle {
+    margin: var(--space-2-5) 0 0;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+  }
+
+  /* Tallet til venstre, figuren til højre – begge bundjusteret som i designet. */
+  &__stage {
+    display: flex;
+    flex: 1;
+    gap: var(--space-3);
+    align-items: flex-end;
+    justify-content: space-between;
+    min-height: 0;
+    margin-top: var(--space-1);
+  }
+
+  &__readout {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: var(--space-4-5);
+    align-items: flex-start;
+    padding-bottom: var(--space-1);
+  }
+
+  &__value {
+    display: flex;
+    gap: var(--space-2);
+    align-items: baseline;
+    margin: 0;
+  }
+
+  &__number {
+    @include mixins.display-heading;
+    @include mixins.tabular-nums;
+
+    font-size: var(--font-size-display-11xl);
+    line-height: var(--line-height-none);
+    letter-spacing: var(--letter-spacing-tighter);
+    color: var(--color-accent);
+  }
+
+  &__unit {
+    @include mixins.display-heading;
+
+    font-size: var(--font-size-display-xs);
+    color: var(--color-accent);
+  }
+
+  &__steppers {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  &__stepper {
+    width: var(--size-control-lg);
+    height: var(--size-control-sm);
+    border: var(--border-width-thin) solid var(--color-border-stronger);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition:
+      background var(--duration-quick) var(--easing-standard),
+      border-color var(--duration-quick) var(--easing-standard),
+      color var(--duration-quick) var(--easing-standard);
+
+    &:hover {
+      border-color: var(--color-accent);
+      background: var(--color-accent-soft);
+      color: var(--color-accent);
+    }
+  }
+
+  /* Designets max-width:150px ved 12 px tekst = 12,5em. */
+  &__hint {
+    max-width: 12.5em;
+    margin: 0;
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-relaxed);
+    color: var(--color-text-muted);
+    text-wrap: pretty;
+  }
+
+  /* Designets max-width:215px af sidens indholdsbredde. */
+  &__figure {
+    flex: 1;
+    align-self: stretch;
+    min-width: 0;
+    max-width: 66%;
+    height: 100%;
+  }
+
+  /* Linealen går ud til begge kanter, uden om sidens vandrette padding. */
+  &__ruler {
+    flex: none;
+    margin-top: var(--space-3);
+    margin-inline: calc(-1 * var(--layout-page-padding-x));
+  }
+}

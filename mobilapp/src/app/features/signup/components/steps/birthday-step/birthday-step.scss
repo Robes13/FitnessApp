@@ -1,0 +1,251 @@
+@use 'mixins';
+
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.birthday-step {
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-3xl);
+    color: var(--color-text);
+    text-wrap: balance;
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  &__subtitle {
+    margin: var(--space-2-5) 0 0;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+  }
+
+  /* År og måned side om side, hver i sin pille med −/+ og ‹/›. */
+  &__controls {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: var(--space-4-5);
+  }
+
+  &__control {
+    display: flex;
+    flex: 1 1 0;
+    gap: var(--space-0-5);
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    padding: var(--space-1);
+    border: var(--border-width-thin) solid var(--color-border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+  }
+
+  &__nav {
+    flex: none;
+    width: var(--size-control-2xs);
+    height: var(--size-control-2xs);
+    border: 0;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-3xl);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition:
+      background var(--duration-quick) var(--easing-standard),
+      color var(--duration-quick) var(--easing-standard);
+
+    &:hover {
+      background: var(--color-accent-tint-4);
+      color: var(--color-accent);
+    }
+  }
+
+  &__field {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+  }
+
+  &__field-label {
+    display: block;
+    font-size: var(--font-size-3xs);
+    letter-spacing: var(--letter-spacing-caps);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
+
+  &__year {
+    @include mixins.tabular-nums;
+
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    text-align: center;
+    outline: none;
+  }
+
+  &__month {
+    display: block;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+
+  &__calendar {
+    margin-top: var(--space-2);
+    padding: var(--space-2-5) var(--space-2-5) var(--space-3);
+    border: var(--border-width-thin) solid var(--color-border-soft);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+  }
+
+  &__weekdays,
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--space-0-5);
+  }
+
+  &__grid {
+    margin-top: var(--space-1);
+  }
+
+  &__weekday {
+    font-size: var(--font-size-2xs);
+    letter-spacing: var(--letter-spacing-wider);
+    color: var(--color-text-muted);
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  &__day {
+    @include mixins.tabular-nums;
+
+    height: var(--size-calendar-cell);
+    padding: 0;
+    border: var(--border-width-thin) solid transparent;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+
+    /* Dage fra nabomånederne og fremtidige datoer er nedtonet som i designet. */
+    &--ghost {
+      color: var(--color-text-muted);
+      opacity: 0.42;
+    }
+
+    &--future {
+      opacity: 0.25;
+      cursor: default;
+    }
+
+    &--ghost.birthday-step__day--future {
+      opacity: 0.18;
+    }
+
+    &--selected {
+      border-color: var(--color-accent);
+      background: var(--color-accent-tint-3);
+      color: var(--color-accent);
+      font-weight: var(--font-weight-bold);
+    }
+  }
+
+  &__selection {
+    margin: var(--space-2) 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+
+    &--chosen {
+      color: var(--color-accent);
+    }
+  }
+
+  /* Alderen til venstre, kagen til højre – begge bundjusteret. */
+  &__stage {
+    display: flex;
+    flex: 1;
+    gap: var(--space-3);
+    align-items: flex-end;
+    justify-content: space-between;
+    min-height: 0;
+    margin-top: var(--space-2);
+  }
+
+  &__readout {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: var(--space-1-5);
+    align-items: flex-start;
+    padding-bottom: var(--space-1-5);
+  }
+
+  &__age-caption {
+    @include mixins.caption-uppercase;
+
+    color: var(--color-text-muted);
+  }
+
+  &__age {
+    display: flex;
+    gap: var(--space-1-5);
+    align-items: baseline;
+  }
+
+  &__age-number {
+    @include mixins.display-heading;
+    @include mixins.tabular-nums;
+
+    font-size: var(--font-size-display-7xl);
+    line-height: var(--line-height-none);
+    letter-spacing: var(--letter-spacing-tighter);
+    color: var(--color-accent);
+  }
+
+  &__age-unit {
+    @include mixins.display-heading;
+
+    font-size: var(--font-size-4xl);
+    color: var(--color-accent);
+  }
+
+  /* Designets max-width:150px ved 12 px tekst = 12,5em. */
+  &__age-hint {
+    max-width: 12.5em;
+    margin: var(--space-2) 0 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    text-wrap: pretty;
+  }
+
+  /* Designets max-width:200px af sidens indholdsbredde; højden styres af rækken. */
+  &__cake {
+    flex: 1;
+    align-self: stretch;
+    min-width: 0;
+    max-width: 61%;
+    height: 100%;
+  }
+}

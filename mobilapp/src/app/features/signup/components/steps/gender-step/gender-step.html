@@ -1,0 +1,18 @@
+<h1 class="gender-step__title">Hvad er dit <span class="gender-step__title-accent">køn?</span></h1>
+<p class="gender-step__subtitle">Vi bruger det til at beregne dit kaloriebehov.</p>
+
+<div class="gender-step__options">
+  @for (gender of genders; track gender.id) {
+    <button
+      app-ui-option-card
+      class="gender-step__option"
+      [label]="gender.label"
+      [description]="gender.description"
+      [selected]="state.gender() === gender.id"
+      selectionStyle="accent-radio"
+      (click)="select(gender.id)"
+    ></button>
+  }
+</div>
+
+<div class="gender-step__spacer"></div>

@@ -1,0 +1,134 @@
+/* Fødselsdagsscenen: kagens lag og lysenes pastelfarver kommer fra `--color-cake-*`/`--color-candle-*`. */
+:host {
+  display: block;
+}
+
+.birthday-cake {
+  &__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  &__arm {
+    fill: none;
+    stroke: var(--color-figure);
+    transition: all var(--duration-slow) ease;
+  }
+
+  &__hat,
+  &__cake {
+    transition: opacity var(--duration-medium) ease;
+  }
+
+  &__hat-cone {
+    fill: var(--color-positive);
+  }
+
+  &__hat-stripe {
+    fill: none;
+    stroke: var(--color-accent);
+  }
+
+  &__hat-tip {
+    fill: var(--color-accent);
+  }
+
+  &__tear-drop {
+    fill: var(--color-figure-sweat);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: drip 1.6s linear infinite;
+  }
+
+  &__plate-shadow {
+    fill: var(--color-text-secondary);
+  }
+
+  &__plate {
+    fill: var(--color-neutral-strong);
+  }
+
+  &__tier,
+  &__icing,
+  &__surface,
+  &__surface-inner {
+    transition: all var(--duration-slow) ease;
+  }
+
+  &__tier--dark {
+    fill: var(--color-cake-tier-dark);
+  }
+
+  &__tier--brown {
+    fill: var(--color-cake-tier);
+  }
+
+  &__icing--accent {
+    fill: var(--color-accent);
+  }
+
+  &__icing--accent-light {
+    fill: var(--color-accent-hover);
+  }
+
+  &__surface {
+    fill: var(--color-accent-hover);
+  }
+
+  &__surface-inner {
+    fill: var(--color-accent);
+  }
+
+  /* Designets fem lysfarver: hvid, lyseblå, rosa, mint og lys gul. */
+  &__candle--0 {
+    fill: var(--color-candle-0);
+  }
+
+  &__candle--1 {
+    fill: var(--color-candle-1);
+  }
+
+  &__candle--2 {
+    fill: var(--color-candle-2);
+  }
+
+  &__candle--3 {
+    fill: var(--color-candle-3);
+  }
+
+  &__candle--4 {
+    fill: var(--color-candle-4);
+  }
+
+  &__candle-stripe {
+    fill: color-mix(in srgb, var(--color-figure-pupil) 35%, transparent);
+  }
+
+  &__flame-glow {
+    fill: color-mix(in srgb, var(--color-warning) 18%, transparent);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: glow 0.9s ease-in-out infinite;
+  }
+
+  &__flame {
+    fill: var(--color-warning);
+    transform-box: fill-box;
+    transform-origin: bottom;
+    animation: flicker 0.55s ease-in-out infinite;
+  }
+
+  &__flame-core {
+    fill: var(--color-figure-face);
+    opacity: 0.85;
+  }
+
+  &__number {
+    fill: var(--color-figure-face);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-extrabold);
+  }
+}

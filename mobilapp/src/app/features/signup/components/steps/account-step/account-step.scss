@@ -1,0 +1,44 @@
+@use 'mixins';
+
+/*
+ * Trinnet er barn af sidens flex-kolonne og skal selv fylde resten af højden,
+ * ellers kan indholdet ikke scrolle.
+ */
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.account-step {
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-3xl);
+    color: var(--color-text);
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  &__subtitle {
+    margin: var(--space-3) 0 0;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-8);
+  }
+
+  /* Designets hint-linje ligger 4 px inde, så den flugter med feltets tekst. */
+  &__hint {
+    padding-left: var(--space-1);
+  }
+}

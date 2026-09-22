@@ -1,0 +1,42 @@
+@use 'mixins';
+
+:host {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.gender-step {
+  &__title {
+    @include mixins.display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-3xl);
+    color: var(--color-text);
+    text-wrap: balance;
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  &__subtitle {
+    margin: var(--space-2-5) 0 0;
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2-5);
+    margin-top: var(--space-6);
+  }
+
+  /* Designets tomme flex-felt under kortene, så trinnet fylder resten af højden. */
+  &__spacer {
+    flex: 1;
+    min-height: 0;
+  }
+}

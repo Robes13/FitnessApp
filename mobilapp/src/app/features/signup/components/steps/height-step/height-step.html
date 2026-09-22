@@ -1,0 +1,56 @@
+<h1 class="height-step__title">Hvor <span class="height-step__title-accent">høj</span> er du?</h1>
+<p class="height-step__subtitle">{{ subtitle() }}</p>
+
+<div class="height-step__stage">
+  <div class="height-step__readout">
+    <p class="height-step__value">
+      <span class="height-step__number">{{ state.heightCm() }}</span>
+      <span class="height-step__unit">cm</span>
+    </p>
+    <div class="height-step__steppers">
+      <button
+        type="button"
+        class="height-step__stepper"
+        aria-label="En centimeter mindre"
+        (click)="adjust(-1)"
+      >
+        −
+      </button>
+      <button
+        type="button"
+        class="height-step__stepper"
+        aria-label="En centimeter mere"
+        (click)="adjust(1)"
+      >
+        +
+      </button>
+    </div>
+    <div class="height-step__bmi">
+      <span class="height-step__bmi-caption">Højde og vægt giver</span>
+      <span class="height-step__bmi-value">
+        <span class="height-step__bmi-number">{{ bmiText() }}</span>
+        <span class="height-step__bmi-unit">i BMI</span>
+      </span>
+      <span class="height-step__bmi-note">Bruges til dit kaloriebehov</span>
+    </div>
+  </div>
+
+  <app-figure
+    class="height-step__figure"
+    [weightKg]="state.weightKg()"
+    [heightCm]="state.heightCm()"
+    [bandTone]="bandTone()"
+    [ariaLabel]="figureLabel"
+    showDumbbell
+    showCeiling
+  />
+</div>
+
+<app-ui-ruler
+  class="height-step__ruler"
+  [min]="minCm"
+  [max]="maxCm"
+  [(value)]="state.heightCm"
+  [glowStrength]="rulerGlowStrength"
+  ariaLabel="Højde i centimeter"
+/>

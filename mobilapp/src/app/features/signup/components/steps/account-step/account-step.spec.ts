@@ -1,0 +1,67 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { SignupStateService } from '../../../services/signup-state';
+import { AccountStep } from './account-step';
+import { provideComponentTestEnvironment } from '../../../../../core/testing/test-providers';
+
+describe('AccountStep', () => {
+  let fixture: ComponentFixture<AccountStep>;
+  let state: SignupStateService;
+
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [SignupStateService, provideRouter([]), ...provideComponentTestEnvironment()],
+    });
+    fixture = TestBed.createComponent(AccountStep);
+    state = TestBed.inject(SignupStateService);
+    fixture.detectChanges();
+  });
+
+  function root(): HTMLElement {
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  function inputs(): HTMLInputElement[] {
+    return Array.from(root().querySelectorAll('input'));
+  }
+
+  function type(index: number, value: string): void {
+    const field = inputs()[index];
+    if (!field) {
+      throw new Error(`Feltet ${index} mangler`);
+    }
+    field.value = value;
+    field.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  }
+
+  it('shows the heading, the subtitle and three fields', () => {
+    const text: string = root().textContent ?? '';
+
+    expect(text).toContain('Opret din');
+    expect(text).toContain('konto');
+    expect(text).toContain('Vælg et brugernavn og en adgangskode.');
+    expect(inputs()).toHaveLength(3);
+  });
+
+  it('writes the fields into the signup draft', () => {
+    type(0, 'mads');
+    type(1, 'hemmelig1');
+    type(2, 'hemmelig1');
+
+    expect(state.username()).toBe('mads');
+    expect(state.password()).toBe('hemmelig1');
+    expect(state.passwordRepeat()).toBe('hemmelig1');
+    expect(state.canContinue()).toBe(true);
+  });
+
+  it('hints that the password is too short and that the two differ', () => {
+    type(1, 'kort');
+    expect(root().textContent).toContain('Mindst 8 tegn.');
+
+    type(1, 'hemmelig1');
+    type(2, 'hemmelig2');
+    expect(root().textContent).toContain('Adgangskoderne er ikke ens.');
+  });
+});

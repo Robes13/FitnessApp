@@ -1,0 +1,28 @@
+<h1 class="account-step__title">Opret din <span class="account-step__title-accent">konto</span></h1>
+<p class="account-step__subtitle">Vælg et brugernavn og en adgangskode.</p>
+
+<form class="account-step__fields" [formGroup]="form" (submit)="$event.preventDefault()">
+  <app-ui-text-input
+    formControlName="username"
+    placeholder="Brugernavn"
+    ariaLabel="Brugernavn"
+    autocomplete="username"
+  />
+  <app-ui-text-input
+    formControlName="password"
+    type="password"
+    placeholder="Adgangskode (mindst 8 tegn)"
+    ariaLabel="Adgangskode"
+    autocomplete="new-password"
+  />
+  <app-ui-text-input
+    formControlName="passwordRepeat"
+    type="password"
+    placeholder="Gentag adgangskode"
+    ariaLabel="Gentag adgangskode"
+    autocomplete="new-password"
+    [invalid]="mismatch()"
+    invalidTone="accent"
+  />
+  <app-ui-form-error class="account-step__hint" [message]="hint()" tone="accent" />
+</form>

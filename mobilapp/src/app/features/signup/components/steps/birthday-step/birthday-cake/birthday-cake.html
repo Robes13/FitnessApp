@@ -1,0 +1,113 @@
+<svg
+  class="birthday-cake__svg"
+  viewBox="0 0 260 300"
+  preserveAspectRatio="xMidYMax meet"
+  role="img"
+  aria-label="Figur med fødselsdagskage"
+  focusable="false"
+>
+  <g
+    app-figure-body
+    [geometry]="geometry()"
+    [bandTone]="bandTone()"
+    [expression]="expression"
+    [showRightArm]="false"
+  />
+
+  <path
+    class="birthday-cake__arm"
+    [attr.d]="cakeArmPath()"
+    stroke-width="16"
+    stroke-linecap="round"
+  />
+
+  <g class="birthday-cake__hat" [style.opacity]="hatOpacity()">
+    <path class="birthday-cake__hat-cone" [attr.d]="hatPath()" />
+    <path
+      class="birthday-cake__hat-stripe"
+      [attr.d]="hatStripePath()"
+      stroke-width="3"
+      stroke-linecap="round"
+    />
+    <circle class="birthday-cake__hat-tip" cx="100" [attr.cy]="hatTipY()" r="4" />
+  </g>
+
+  <g class="birthday-cake__tear" [style.opacity]="tearOpacity()">
+    <ellipse class="birthday-cake__tear-drop" cx="90" [attr.cy]="tearY()" rx="3" ry="4.4" />
+  </g>
+
+  <g class="birthday-cake__cake" [style.opacity]="cakeOpacity()">
+    <ellipse class="birthday-cake__plate-shadow" cx="204" cy="288" rx="58" ry="7" />
+    <ellipse class="birthday-cake__plate" cx="204" cy="285" rx="58" ry="7" />
+
+    @for (layer of cake().layers; track layer.y) {
+      <rect
+        class="birthday-cake__tier"
+        [class]="layer.tierClass"
+        [attr.x]="layer.x"
+        [attr.y]="layer.y"
+        [attr.width]="layer.width"
+        [attr.height]="layer.height"
+        rx="8"
+      />
+      <path class="birthday-cake__icing" [class]="layer.icingClass" [attr.d]="layer.drip" />
+    }
+
+    <ellipse
+      class="birthday-cake__surface"
+      cx="204"
+      [attr.cy]="cake().top"
+      [attr.rx]="cake().surfaceRx"
+      ry="7"
+    />
+    <ellipse
+      class="birthday-cake__surface-inner"
+      cx="204"
+      [attr.cy]="cake().top"
+      [attr.rx]="cake().surfaceRxInner"
+      ry="4.6"
+    />
+
+    @for (candle of cake().candles; track $index) {
+      <rect
+        class="birthday-cake__candle"
+        [class]="candle.colourClass"
+        [attr.x]="candle.x"
+        [attr.y]="candle.y"
+        [attr.width]="candle.width"
+        [attr.height]="candle.height"
+        [attr.rx]="candle.radius"
+      />
+      <rect
+        class="birthday-cake__candle-stripe"
+        [attr.x]="candle.x"
+        [attr.y]="candle.stripeY"
+        [attr.width]="candle.width"
+        height="3"
+      />
+      <circle
+        class="birthday-cake__flame-glow"
+        [attr.cx]="candle.centreX"
+        [attr.cy]="candle.glowY"
+        r="6"
+        [style.animation-delay.s]="candle.delay"
+      />
+      <path
+        class="birthday-cake__flame"
+        [attr.d]="candle.flamePath"
+        [style.animation-delay.s]="candle.delay"
+      />
+      <path class="birthday-cake__flame-core" [attr.d]="candle.corePath" />
+    }
+
+    <text
+      class="birthday-cake__number"
+      x="204"
+      [attr.y]="cake().numberY"
+      text-anchor="middle"
+      [style.opacity]="numberOpacity()"
+    >
+      {{ ageText() }}
+    </text>
+  </g>
+</svg>
