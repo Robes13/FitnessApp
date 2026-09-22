@@ -1,0 +1,82 @@
+<app-signup-progress
+  [stepNumber]="state.stepNumber()"
+  [stepTotal]="state.stepTotal()"
+  [value]="state.progressValue()"
+  [chapters]="state.chapters()"
+  [editing]="state.isEditing()"
+/>
+
+<div class="signup-page__step">
+  @switch (state.step()) {
+    @case ('account') {
+      <app-account-step />
+    }
+    @case ('birthday') {
+      <app-birthday-step />
+    }
+    @case ('gender') {
+      <app-gender-step />
+    }
+    @case ('weight') {
+      <app-weight-step />
+    }
+    @case ('height') {
+      <app-height-step />
+    }
+    @case ('activity') {
+      <app-activity-step />
+    }
+    @case ('training-frequency') {
+      <app-training-frequency-step />
+    }
+    @case ('training-duration') {
+      <app-training-duration-step />
+    }
+    @case ('training-intensity') {
+      <app-training-intensity-step />
+    }
+    @case ('goal') {
+      <app-goal-step />
+    }
+    @case ('goal-weight') {
+      <app-goal-weight-step />
+    }
+    @case ('pace') {
+      <app-pace-step />
+    }
+    @case ('notifications') {
+      <app-notifications-step />
+    }
+    @case ('summary') {
+      <app-summary-step />
+    }
+  }
+</div>
+
+<app-ui-form-error class="signup-page__error" [message]="error()" tone="negative" />
+
+<div class="signup-page__footer">
+  <button
+    app-ui-icon-button
+    type="button"
+    size="xl"
+    tone="neutral"
+    [attr.aria-label]="backLabel"
+    (click)="state.back()"
+  >
+    <app-ui-icon name="chevron-left" size="xl" />
+  </button>
+
+  <button
+    app-ui-button
+    type="button"
+    variant="primary"
+    size="xl"
+    block
+    [disabled]="!state.canContinue()"
+    [loading]="submitting()"
+    (click)="onNext()"
+  >
+    {{ state.nextLabel() }}
+  </button>
+</div>

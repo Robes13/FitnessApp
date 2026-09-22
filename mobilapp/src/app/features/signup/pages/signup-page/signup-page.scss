@@ -1,0 +1,34 @@
+@use 'mixins';
+
+:host {
+  @include mixins.page-screen;
+
+  padding-inline: var(--layout-page-padding-x);
+  padding-bottom: var(--layout-page-padding-bottom);
+}
+
+.signup-page {
+  /*
+   * Det aktive trin fylder resten af højden. `min-height: 0` lader trinnets egen
+   * scroll-container krympe i stedet for at presse fodnoten ud af skærmen.
+   */
+  &__step {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    margin-top: var(--space-7);
+  }
+
+  &__error {
+    flex: none;
+    margin-top: var(--space-3);
+  }
+
+  &__footer {
+    display: flex;
+    flex: none;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+  }
+}

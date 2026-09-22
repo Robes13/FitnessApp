@@ -1,0 +1,94 @@
+@use 'mixins';
+
+:host {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3-5);
+}
+
+.signup-progress {
+  &__number {
+    @include mixins.tabular-nums;
+
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text);
+  }
+
+  &__meta {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  &__heading {
+    @include mixins.caption-uppercase;
+
+    display: flex;
+    gap: var(--space-2);
+    align-items: baseline;
+    justify-content: space-between;
+    color: var(--color-text-muted);
+  }
+
+  &__chapter {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-accent);
+  }
+
+  &__caption {
+    @include mixins.tabular-nums;
+
+    white-space: nowrap;
+  }
+
+  &__bars,
+  &__labels {
+    display: flex;
+    gap: var(--space-1-25);
+  }
+
+  &__bar {
+    position: relative;
+    flex: 0 1 0;
+    height: var(--size-progress-thin);
+    overflow: hidden;
+    background: var(--color-border-strong);
+    border-radius: var(--radius-pill);
+  }
+
+  &__fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    background: var(--color-accent);
+    border-radius: var(--radius-pill);
+    transition: width var(--duration-slowest) var(--easing-standard);
+  }
+
+  &__labels {
+    font-size: var(--font-size-3xs);
+    letter-spacing: var(--letter-spacing-wider);
+    text-transform: uppercase;
+  }
+
+  &__label {
+    @include mixins.text-truncate;
+
+    flex: 0 1 0;
+    min-width: 0;
+    color: var(--color-text-muted);
+
+    &--done {
+      color: var(--color-text-secondary);
+    }
+
+    &--active {
+      color: var(--color-text);
+    }
+  }
+}
