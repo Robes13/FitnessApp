@@ -1,0 +1,40 @@
+@use 'mixins';
+
+:host {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--layout-page-padding-x) var(--space-3);
+}
+
+.ui-page-header {
+  /* Venstre og højre plads er lige brede (44 px), så titlen står centreret. */
+  &__lead,
+  &__action {
+    display: flex;
+    flex: none;
+    align-items: center;
+    min-width: var(--size-control-sm);
+    min-height: var(--size-control-sm);
+  }
+
+  &__action {
+    justify-content: flex-end;
+  }
+
+  &__title {
+    @include mixins.text-truncate;
+
+    flex: 1;
+    min-width: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-widest);
+    line-height: var(--line-height-tight);
+    text-align: center;
+    text-transform: uppercase;
+  }
+}

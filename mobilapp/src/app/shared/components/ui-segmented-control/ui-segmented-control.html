@@ -1,0 +1,19 @@
+<span
+  class="ui-segmented-control__knob"
+  [class.ui-segmented-control__knob--visible]="hasSelection()"
+  aria-hidden="true"
+></span>
+@for (option of options(); track option.value; let i = $index) {
+  <button
+    #segment
+    type="button"
+    role="radio"
+    class="ui-segmented-control__option"
+    [class.ui-segmented-control__option--selected]="isSelected(i)"
+    [attr.aria-checked]="isSelected(i)"
+    [tabindex]="tabIndexFor(i)"
+    (click)="select(option)"
+  >
+    {{ option.label }}
+  </button>
+}

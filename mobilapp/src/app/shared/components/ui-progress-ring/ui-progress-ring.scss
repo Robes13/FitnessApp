@@ -1,0 +1,74 @@
+:host {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  width: var(--ring-size);
+  height: var(--ring-size);
+}
+
+.ui-progress-ring {
+  &__svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transform: rotate(-90deg);
+  }
+
+  &__track {
+    stroke: var(--color-border);
+
+    &--neutral {
+      stroke: var(--color-neutral-dim-2);
+    }
+  }
+
+  &__value {
+    stroke: var(--color-accent);
+
+    &--animated {
+      transition: stroke-dashoffset var(--duration-slowest) var(--easing-standard);
+    }
+
+    &--positive {
+      stroke: var(--color-positive);
+    }
+
+    &--negative {
+      stroke: var(--color-negative);
+    }
+
+    &--info {
+      stroke: var(--color-info);
+    }
+
+    &--selected {
+      stroke: var(--color-selected);
+    }
+
+    &--neutral {
+      stroke: var(--color-neutral-strong);
+    }
+
+    &--secondary {
+      stroke: var(--color-text-secondary);
+    }
+
+    &--muted {
+      stroke: var(--color-text-muted);
+    }
+
+    &--warning {
+      stroke: var(--color-warning);
+    }
+  }
+
+  &__content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

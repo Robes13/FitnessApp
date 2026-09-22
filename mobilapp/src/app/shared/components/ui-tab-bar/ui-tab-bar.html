@@ -1,0 +1,17 @@
+<span
+  class="ui-tab-bar__pill"
+  [class.ui-tab-bar__pill--hidden]="!hasActive()"
+  aria-hidden="true"
+></span>
+@for (item of items(); track item.path) {
+  <a
+    class="ui-tab-bar__item"
+    [routerLink]="item.path"
+    routerLinkActive="ui-tab-bar__item--active"
+    [routerLinkActiveOptions]="linkActiveOptions"
+    ariaCurrentWhenActive="page"
+  >
+    <app-ui-icon [name]="item.icon" size="lg" [strokeWidth]="1.9" />
+    <span class="ui-tab-bar__label">{{ item.label }}</span>
+  </a>
+}

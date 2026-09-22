@@ -1,0 +1,28 @@
+<svg class="ui-progress-ring__svg" [attr.viewBox]="viewBox()" aria-hidden="true">
+  @if (hasTrack()) {
+    <circle
+      class="ui-progress-ring__track"
+      [class]="trackClass()"
+      [attr.cx]="center()"
+      [attr.cy]="center()"
+      [attr.r]="radius()"
+      fill="none"
+      [attr.stroke-width]="strokeWidth()"
+    />
+  }
+  <circle
+    class="ui-progress-ring__value"
+    [class]="valueClass()"
+    [attr.cx]="center()"
+    [attr.cy]="center()"
+    [attr.r]="radius()"
+    fill="none"
+    stroke-linecap="round"
+    [attr.stroke-width]="strokeWidth()"
+    [attr.stroke-dasharray]="circumference()"
+    [attr.stroke-dashoffset]="dashOffset()"
+  />
+</svg>
+<div class="ui-progress-ring__content">
+  <ng-content />
+</div>

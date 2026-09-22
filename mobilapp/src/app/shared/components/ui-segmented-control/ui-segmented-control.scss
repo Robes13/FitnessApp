@@ -1,0 +1,87 @@
+/*
+ * Værten bærer `ui-segmented-control ui-segmented-control--{variant}`; kun `:host(…)`
+ * rammer den under emuleret encapsulation. `--segment-padding` arves af knop og segmenter.
+ */
+:host {
+  /* Indre luft; knoppens bredde og position afledes af den og af --segment-count/-index. */
+  --segment-padding: var(--space-1-5);
+
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--segment-count), minmax(0, 1fr));
+  padding: var(--segment-padding);
+  border: var(--border-width-thin) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+}
+
+/* Kompakte faner: ingen glidende knop, den aktive fane er fyldt. */
+:host(.ui-segmented-control--compact) {
+  --segment-padding: var(--space-1);
+
+  gap: var(--space-1-5);
+  border-color: var(--color-border-soft);
+}
+
+:host(.ui-segmented-control--compact) .ui-segmented-control__knob {
+  display: none;
+}
+
+:host(.ui-segmented-control--compact) .ui-segmented-control__option {
+  min-height: var(--size-control-2xs);
+  font-size: var(--font-size-sm);
+  letter-spacing: var(--letter-spacing-normal);
+  text-transform: none;
+}
+
+:host(.ui-segmented-control--compact) .ui-segmented-control__option--selected {
+  background: var(--color-accent);
+}
+
+.ui-segmented-control {
+  &__knob {
+    position: absolute;
+    top: var(--segment-padding);
+    bottom: var(--segment-padding);
+    left: calc(
+      var(--segment-padding) + var(--segment-index) * (100% - 2 * var(--segment-padding)) /
+        var(--segment-count)
+    );
+    width: calc((100% - 2 * var(--segment-padding)) / var(--segment-count));
+    border-radius: var(--radius-pill);
+    background: var(--color-accent);
+    opacity: 0;
+    transition:
+      left var(--duration-medium) var(--easing-standard),
+      opacity var(--duration-quick) var(--easing-standard);
+
+    &--visible {
+      opacity: 1;
+    }
+  }
+
+  &__option {
+    position: relative;
+    z-index: var(--z-index-base);
+    min-height: var(--size-control-lg);
+    padding: 0 var(--space-2);
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    letter-spacing: var(--letter-spacing-wider);
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-quick) var(--easing-standard),
+      color var(--duration-quick) var(--easing-standard);
+
+    &--selected {
+      color: var(--color-text-on-accent);
+    }
+  }
+}

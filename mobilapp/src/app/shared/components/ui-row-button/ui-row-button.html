@@ -1,0 +1,7 @@
+<span class="ui-row-button__label">{{ label() }}</span>
+<span class="ui-row-button__end">
+  <span class="ui-row-button__value" [class]="valueClass()">{{ value() }}</span>
+  @if (chevron()) {
+    <app-ui-icon class="ui-row-button__chevron" name="chevron-right" size="sm" />
+  }
+</span>

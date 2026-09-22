@@ -1,0 +1,19 @@
+:host {
+  display: block;
+  padding: var(--space-4);
+  border: var(--border-width-thin) dashed var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-relaxed);
+  text-wrap: pretty;
+}
+
+:host(.ui-empty-state--subtle) {
+  border-color: var(--color-border-dashed-soft);
+  color: var(--color-text-muted);
+}
+
+:host(.ui-empty-state--sm) {
+  font-size: var(--font-size-sm);
+}

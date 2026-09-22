@@ -1,0 +1,15 @@
+<div class="ui-page-header__lead">
+  @if (!hideBack()) {
+    <button
+      app-ui-icon-button
+      size="sm"
+      type="button"
+      [attr.aria-label]="backLabel()"
+      (click)="onBack()"
+    >
+      <app-ui-icon [name]="backIcon()" size="lg" />
+    </button>
+  }
+</div>
+<h1 class="ui-page-header__title">{{ title() }}</h1>
+<div class="ui-page-header__action"><ng-content select="[headerAction]" /></div>
