@@ -10,6 +10,7 @@ import { NutritionCalculator } from '../../../core/services/nutrition-calculator
 import { SessionService } from '../../../core/services/session';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { NOW } from '../../../core/utils/now';
+import { clamp } from '../../../core/utils/math';
 
 /** Designets `order`: `s1, sAlder, sKon, s2, s3, sAkt, sFreq, sDur, sInt, s4, sMaal, s5, sNotif, s6`. */
 export type SignupStepId =
@@ -145,7 +146,7 @@ export class SignupStateService {
   /** Målvægten klemt ind i skalaens grænser – designets `goalW`. */
   private readonly boundedGoalWeightKg = computed(() => {
     const bounds = this.calculator.goalWeightBounds(this.goal(), this.weightKg());
-    return Math.min(bounds.max, Math.max(bounds.min, this.goalWeightKg()));
+    return clamp(this.goalWeightKg(), bounds.min, bounds.max);
   });
 
   /** Designets `visOrder`: rækkefølgen uden de trin, brugerens svar gør overflødige. */

@@ -17,6 +17,7 @@ import {
   computeRulerGeometry,
   formatRulerLabel,
 } from './ruler-geometry';
+import { clamp } from '../../../core/utils/math';
 
 /** 84 / 96 px høj – `--size-ruler-h` / `--size-ruler-h-lg`. */
 export type UiRulerSize = 'md' | 'lg';
@@ -187,6 +188,6 @@ export class UiRuler {
     const step = this.step();
     const quantised = Math.round(raw / step) * step;
     const precise = Math.round(quantised * COMMIT_PRECISION) / COMMIT_PRECISION;
-    this.value.set(Math.min(this.max(), Math.max(this.min(), precise)));
+    this.value.set(clamp(precise, this.min(), this.max()));
   }
 }

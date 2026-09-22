@@ -4,6 +4,7 @@ import { formatWeightKg } from '../../../../../core/utils/date-format';
 import { Figure, bandToneForGender } from '../../../../../shared/components/figure';
 import { RULER_BLEED_IDLE_STRONG } from '../../../../../shared/components/ui-ruler/ruler-geometry';
 import { UiRuler } from '../../../../../shared/components/ui-ruler/ui-ruler';
+import { clamp } from '../../../../../core/utils/math';
 
 import { SignupStateService } from '../../../services/signup-state';
 
@@ -36,8 +37,6 @@ export class WeightStep {
   protected readonly bandTone = computed(() => bandToneForGender(this.state.gender()));
 
   protected adjust(delta: number): void {
-    this.state.weightKg.update((kg) =>
-      Math.min(this.maxKg, Math.max(this.minKg, kg + delta * STEP_KG)),
-    );
+    this.state.weightKg.update((kg) => clamp(kg + delta * STEP_KG, this.minKg, this.maxKg));
   }
 }

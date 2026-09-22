@@ -1,4 +1,5 @@
 import { ProfilePhoto } from '../../../core/models/profile';
+import { clamp } from '../../../core/utils/math';
 
 export const PHOTO_ZOOM_MIN = 1;
 export const PHOTO_ZOOM_MAX = 3;
@@ -69,7 +70,7 @@ export function movePhotoCrop(
 }
 
 export function clampPhotoZoom(zoom: number): number {
-  return Math.min(PHOTO_ZOOM_MAX, Math.max(PHOTO_ZOOM_MIN, zoom));
+  return clamp(zoom, PHOTO_ZOOM_MIN, PHOTO_ZOOM_MAX);
 }
 
 function clampPercent(value: number): number {

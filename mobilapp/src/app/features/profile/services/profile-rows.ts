@@ -3,6 +3,7 @@ import { GENDERS, UNIT_SYSTEMS } from '../../../core/constants/nutrition';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
 import { UserProfileService } from '../../../core/services/user-profile';
 import { formatDecimal, formatInteger, formatWeightKg } from '../../../core/utils/date-format';
+import { clamp } from '../../../core/utils/math';
 
 import { ProfileEditRowId } from './profile-edit';
 
@@ -100,6 +101,6 @@ export class ProfileRowsService {
   private readonly goalWeightKg = computed(() => {
     const profile = this.profiles.profile();
     const bounds = this.calculator.goalWeightBounds(profile.goal, profile.weightKg);
-    return Math.round(Math.min(bounds.max, Math.max(bounds.min, profile.goalWeightKg)));
+    return Math.round(clamp(profile.goalWeightKg, bounds.min, bounds.max));
   });
 }

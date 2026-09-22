@@ -24,6 +24,7 @@ import {
   buildCalendarCells,
   shiftCalendar,
 } from './calendar-grid';
+import { clamp } from '../../../../../core/utils/math';
 
 const YEAR_LENGTH = 4;
 const ISO_YEAR_END = 4;
@@ -169,7 +170,7 @@ export class BirthdayStep {
       return;
     }
     const today = this.today();
-    const year = Math.min(today.getFullYear(), Math.max(CALENDAR_MIN_YEAR, Number(digits)));
+    const year = clamp(Number(digits), CALENDAR_MIN_YEAR, today.getFullYear());
     this.yearDraft.set(null);
     this.yearOverride.set(year);
     if (new Date(year, this.month(), 1) > today) {

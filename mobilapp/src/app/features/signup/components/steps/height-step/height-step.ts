@@ -5,6 +5,7 @@ import { formatDecimal, formatWeightKg } from '../../../../../core/utils/date-fo
 import { Figure, bandToneForGender } from '../../../../../shared/components/figure';
 import { RULER_BLEED_IDLE_STRONG } from '../../../../../shared/components/ui-ruler/ruler-geometry';
 import { UiRuler } from '../../../../../shared/components/ui-ruler/ui-ruler';
+import { clamp } from '../../../../../core/utils/math';
 
 import { SignupStateService } from '../../../services/signup-state';
 
@@ -45,8 +46,6 @@ export class HeightStep {
   );
 
   protected adjust(delta: number): void {
-    this.state.heightCm.update((cm) =>
-      Math.min(this.maxCm, Math.max(this.minCm, cm + delta * STEP_CM)),
-    );
+    this.state.heightCm.update((cm) => clamp(cm + delta * STEP_CM, this.minCm, this.maxCm));
   }
 }

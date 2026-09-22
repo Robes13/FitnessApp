@@ -36,6 +36,7 @@ import {
   ProfileEditService,
   TextEditDefinition,
 } from '../../services/profile-edit';
+import { clamp } from '../../../../core/utils/math';
 
 interface NumberForm {
   value: FormControl<number | null>;
@@ -206,9 +207,7 @@ export class ProfileEditSheet {
     }
     const current = this.numberForm.controls.value.value ?? 0;
     const next = current + direction * definition.step;
-    this.numberForm.controls.value.setValue(
-      Math.min(definition.max, Math.max(definition.min, next)),
-    );
+    this.numberForm.controls.value.setValue(clamp(next, definition.min, definition.max));
   }
 
   protected saveNumber(): void {

@@ -9,6 +9,7 @@ import {
 } from '../../../../../shared/components/figure';
 import { UiRuler } from '../../../../../shared/components/ui-ruler/ui-ruler';
 import { SignupStateService } from '../../../services/signup-state';
+import { clamp } from '../../../../../core/utils/math';
 
 /**
  * Designets faste mål fra skærmen (HTML-linje 782–800). De er ikke spacing-tokens, men
@@ -57,7 +58,7 @@ export class GoalWeightStep {
   /** Designets `goalW`: kladdens værdi klemt ind i skalaens grænser. */
   protected readonly goalWeightKg = computed(() => {
     const { min, max } = this.bounds();
-    return Math.min(max, Math.max(min, this.state.goalWeightKg()));
+    return clamp(this.state.goalWeightKg(), min, max);
   });
 
   protected readonly goalWeightText = computed(() => String(Math.round(this.goalWeightKg())));

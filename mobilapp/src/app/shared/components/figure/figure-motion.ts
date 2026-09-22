@@ -10,6 +10,7 @@ import {
   untracked,
 } from '@angular/core';
 import { FigureGeometry } from './figure-geometry';
+import { clamp } from '../../../core/utils/math';
 
 const NUMBER = /-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi;
 const MOTION_TOKEN = '--duration-fast';
@@ -80,7 +81,7 @@ export function animatedFigure(
     }
     const start = view.performance.now();
     const tick = (now: number): void => {
-      const progress = Math.min(1, Math.max(0, (now - start) / duration));
+      const progress = clamp((now - start) / duration, 0, 1);
       const eased = 1 - (1 - progress) ** 3;
       visible.set(interpolateFigure(previous, next, eased));
       frame = progress < 1 ? view.requestAnimationFrame(tick) : null;

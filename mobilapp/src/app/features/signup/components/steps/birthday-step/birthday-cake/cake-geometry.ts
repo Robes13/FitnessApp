@@ -1,4 +1,4 @@
-import { roundTo } from '../../../../../../core/utils/math';
+import { clamp, roundTo } from '../../../../../../core/utils/math';
 
 /**
  * Kagens geometri i figur-SVG'ets koordinatsystem (`viewBox 0 0 260 300`).
@@ -113,7 +113,7 @@ function buildLayers(tiers: number): readonly CakeTier[] {
 
 /** Lysene fordelt på 1–3 ringe; det yderste lag tegnes bagest (sorteret på y). */
 function buildCandles(age: number, top: number, surfaceRx: number): readonly CakeCandle[] {
-  const total = Math.min(MAX_CANDLES, Math.max(0, age));
+  const total = clamp(age, 0, MAX_CANDLES);
   if (total === 0) {
     return [];
   }

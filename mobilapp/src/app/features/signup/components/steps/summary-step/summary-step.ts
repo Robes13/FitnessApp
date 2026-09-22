@@ -16,6 +16,7 @@ import { UiTextInput } from '../../../../../shared/components/ui-text-input/ui-t
 import { SignupStateService, SignupStepId } from '../../../services/signup-state';
 import { bandToneForGender } from '../../../../../shared/components/figure';
 import { buildSummaryRows } from './summary-rows';
+import { clamp } from '../../../../../core/utils/math';
 
 const CAPTION_NO_EMAIL =
   'Skriv din e-mail – den bruger vi til at bekræfte kontoen. Tryk på en linje for at rette.';
@@ -111,7 +112,7 @@ export class SummaryStep {
     if (rpe === null) {
       return null;
     }
-    const clamped = Math.min(RPE_MAX, Math.max(RPE_MIN, rpe));
+    const clamped = clamp(rpe, RPE_MIN, RPE_MAX);
     return (
       INTENSITIES.find((candidate) => clamped <= candidate.maxRpe) ??
       INTENSITIES[INTENSITIES.length - 1] ??
@@ -122,7 +123,7 @@ export class SummaryStep {
   /** Målvægten klemt ind i skalaens grænser, så linjen viser det samme som mål-trinnet. */
   private readonly boundedGoalWeightKg = computed(() => {
     const { min, max } = this.calculator.goalWeightBounds(this.state.goal(), this.state.weightKg());
-    return Math.min(max, Math.max(min, this.state.goalWeightKg()));
+    return clamp(this.state.goalWeightKg(), min, max);
   });
 
   protected readonly rows = computed(() =>

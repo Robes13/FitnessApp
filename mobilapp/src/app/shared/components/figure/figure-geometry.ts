@@ -1,4 +1,4 @@
-import { roundTo } from '../../../core/utils/math';
+import { clamp, roundTo } from '../../../core/utils/math';
 
 /**
  * Figurens (maskottens) geometri – en nøjagtig port af designets `figure(w, h, mood)`.
@@ -71,10 +71,6 @@ const HEAD_RADIUS = 26;
 /** Loftets y-position (loftet vises fra 212 cm). */
 const CEILING_Y = 92;
 
-function clamp01(value: number): number {
-  return Math.max(0, Math.min(1, value));
-}
-
 /**
  * Beregner figurens geometri ud fra vægt (kg), højde (cm) og humør (−1..1).
  * Eksakt port af designets `figure(w, h, mood)`; se `figure-geometry.spec.ts` for låste værdier.
@@ -101,9 +97,9 @@ export function computeFigureGeometry(
   /** Alle udledte mål rundes til én decimal, som designet gør. */
   const r = (value: number): number => roundTo(value, 1);
   const lift = Math.max(0, m) * (torsoH * 0.9);
-  const open = clamp01((weightKg - 180) / 60);
-  const duck = clamp01((heightCm - 230) / 20);
-  const ceilNear = clamp01((heightCm - 212) / 15);
+  const open = clamp((weightKg - 180) / 60, 0, 1);
+  const duck = clamp((heightCm - 230) / 20, 0, 1);
+  const ceilNear = clamp((heightCm - 212) / 15, 0, 1);
 
   const smile =
     m < 0

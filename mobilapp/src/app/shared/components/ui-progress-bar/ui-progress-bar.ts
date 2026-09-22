@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { Tone } from '../../../core/models/tone';
+import { clamp } from '../../../core/utils/math';
 
 export type ProgressBarTone = Tone | 'inverse';
 export type ProgressBarThickness = 'thin' | 'regular';
@@ -11,7 +12,7 @@ export function clampFraction(value: number): number {
   if (!Number.isFinite(value)) {
     return 0;
   }
-  return Math.min(1, Math.max(0, value));
+  return clamp(value, 0, 1);
 }
 
 /**
