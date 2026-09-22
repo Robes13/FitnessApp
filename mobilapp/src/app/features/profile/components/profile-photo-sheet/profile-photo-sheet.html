@@ -17,7 +17,7 @@
       <div
         class="profile-photo-sheet__crop"
         tabindex="0"
-        aria-label="Træk i billedet for at flytte det"
+        aria-label="Træk i billedet for at flytte det. Piletasterne flytter det også."
         (pointerdown)="onPointerDown($event)"
         (pointermove)="onPointerMove($event)"
         (pointerup)="onPointerUp()"
@@ -28,9 +28,7 @@
         <app-profile-avatar size="xl" [photo]="picked" [initial]="initial()" />
       </div>
     </div>
-    <p class="profile-photo-sheet__hint">
-      Træk i billedet for at flytte det. Piletasterne flytter det også.
-    </p>
+    <p class="profile-photo-sheet__hint">Træk i billedet for at flytte det.</p>
     <div class="profile-photo-sheet__zoom">
       <span class="profile-photo-sheet__zoom-label">Zoom</span>
       <input

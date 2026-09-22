@@ -31,7 +31,9 @@ arket sig med det samme, og "Brug billedet" lukker bare arket. "Fjern foto" sæt
 Trækfladen kan også betjenes med tastaturet: den har `tabindex="0"`, og piletasterne flytter
 udsnittet 8 px ad gangen (24 px med Shift). Hvert tastetryk regnes ud fra den nuværende
 beskæring, fordi `movePhotoCrop()` forventer et samlet træk fra sit udgangspunkt – ikke en
-akkumuleret sum. Hjælpeteksten nævner begge veje.
+akkumuleret sum. Den synlige hjælpetekst er designets ordret ("Træk i billedet for at flytte
+det."), så tastaturvejen står i trækfladens `aria-label` i stedet – den er kun for
+skærmlæsere og ændrer ikke designets tekst.
 
 ## Filvalg
 
