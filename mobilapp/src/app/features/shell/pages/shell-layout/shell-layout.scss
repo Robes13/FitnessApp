@@ -9,3 +9,17 @@
   height: 100%;
   overflow: hidden;
 }
+
+/*
+ * A fade under the status bar (notch / Dynamic Island), so scrolled content doesn't run
+ * underneath the clock. Zero height where there's no top safe area (Android draws its own bar).
+ */
+:host::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: var(--z-index-tab-bar);
+  height: var(--safe-area-top);
+  background: linear-gradient(var(--color-background) 60%, transparent);
+  pointer-events: none;
+}
