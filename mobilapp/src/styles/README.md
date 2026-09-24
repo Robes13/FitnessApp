@@ -274,6 +274,10 @@ folden. Trin, hvor det stadig ikke er nok, skjuler en gentagende eller dekorativ
 på høje tablets i portræt), så telefonlayoutet fylder skærmen i stedet for at stå som en smal
 kolonne. Telefoner er låst til portræt (Info.plist og AndroidManifest); tablets drejer frit.
 
+Display-overskrifter (`display-heading`) bryder et langt ord i stedet for at løbe ud over
+kanten, når systemets skriftstørrelse er stor. Lange ord i overskrifter kan få en blød
+bindestreg (`adgangs&shy;kode`), så bruddet sker ved en stavelse.
+
 `body` har baggrunden `--color-background-deep`, og `app-root` fylder
 viewporten (`100dvh`) og begrænses til `--layout-max-width` af
 shell-komponenten. På en telefon er de to baggrunde derfor kun synlige som

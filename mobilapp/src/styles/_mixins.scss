@@ -31,6 +31,8 @@
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-tight);
   line-height: var(--line-height-display);
+  /* A long word ("ADGANGSKODE?") at a large system font size breaks instead of being clipped. */
+  overflow-wrap: break-word;
 }
 
 /// Small uppercase caption label (section labels, meta lines).

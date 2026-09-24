@@ -8,14 +8,18 @@
 .food-add-sheet {
   &__meals {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-1-5);
   }
 
-  /* Four chips on one row: equal width and no side padding, as in the design. */
+  /*
+   * Four chips on one row with equal width, as in the design. They never shrink below their
+   * label, so with a large system font they wrap to a second row instead of overlapping.
+   */
   &__meal {
-    flex: 1;
-    min-width: 0;
-    padding-inline: 0;
+    flex: 1 1 0;
+    min-width: max-content;
+    padding-inline: var(--space-1);
   }
 
   &__tabs {

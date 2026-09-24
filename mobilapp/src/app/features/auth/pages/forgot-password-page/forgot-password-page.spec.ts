@@ -68,7 +68,8 @@ describe('ForgotPasswordPage', () => {
     const { root } = await setup();
 
     expect(text(root, '.forgot-password-page__eyebrow')).toBe('Trin 1 af 3');
-    expect(text(root, '.forgot-password-page__heading')).toBe('Glemt din adgangskode?');
+    // The soft hyphen lets the word break at a syllable with a large system font.
+    expect(text(root, '.forgot-password-page__heading')).toBe('Glemt din adgangs\u00adkode?');
     expect(text(root, '.forgot-password-page__body')).toBe(
       'Skriv den e-mail, din konto er oprettet med. Vi sender en 4-cifret kode.',
     );
