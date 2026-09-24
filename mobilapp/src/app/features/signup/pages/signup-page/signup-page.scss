@@ -11,8 +11,8 @@
   /*
    * The active step fills the rest of the height and scrolls when it doesn't fit – e.g. above
    * the on-screen keyboard – so its content never runs into the footer. `min-height: 0` lets
-   * it shrink. The inline padding (offset by a negative margin) keeps the fields' focus glow
-   * inside the scroll area instead of clipping it.
+   * it shrink. The scroll area spans the full screen width (a negative margin offset by the
+   * same padding), so neither the fields' focus glow nor the full-bleed rulers are clipped.
    */
   &__step {
     display: flex;
@@ -20,8 +20,8 @@
     flex-direction: column;
     min-height: 0;
     margin-top: var(--space-7);
-    margin-inline: calc(-1 * var(--space-2));
-    padding-inline: var(--space-2);
+    margin-inline: calc(-1 * var(--layout-page-padding-x));
+    padding-inline: var(--layout-page-padding-x);
     overflow-y: auto;
 
     /* Above the on-screen keyboard the fields get the room instead of the top margin. */

@@ -191,7 +191,6 @@
     gap: var(--space-3);
     align-items: flex-end;
     justify-content: space-between;
-    min-height: 0;
     margin-top: var(--space-2);
   }
 
@@ -249,5 +248,7 @@
     min-width: 0;
     max-width: 61%;
     height: 100%;
+    /* Fills the row without sizing it, so the readout sets its minimum height. */
+    contain: size;
   }
 }

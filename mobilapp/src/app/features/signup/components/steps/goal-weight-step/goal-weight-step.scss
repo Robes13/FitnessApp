@@ -40,7 +40,6 @@
     gap: var(--space-3);
     align-items: flex-end;
     justify-content: space-between;
-    min-height: 0;
     margin-top: var(--space-1);
   }
 
@@ -127,6 +126,8 @@
     min-width: 0;
     max-width: var(--goal-weight-figure-width);
     height: 100%;
+    /* Fills the row without sizing it, so the readout sets its minimum height. */
+    contain: size;
     overflow: visible;
   }
 
