@@ -45,15 +45,27 @@
     white-space: nowrap;
   }
 
-  &__bars,
-  &__labels {
+  &__segments {
     display: flex;
     gap: var(--space-1-25);
   }
 
+  /*
+   * One chapter: its bar with the name underneath. Bar and name share a column, so they stay
+   * aligned, and the column is never narrower than its name – a chapter with a single step
+   * ("Aktivitet" without training days) takes the room from the longer chapters instead of
+   * truncating its name.
+   */
+  &__segment {
+    display: flex;
+    flex: 0 1 0;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: max-content;
+  }
+
   &__bar {
     position: relative;
-    flex: 0 1 0;
     height: var(--size-progress-thin);
     overflow: hidden;
     background: var(--color-border-strong);
@@ -70,18 +82,12 @@
     transition: width var(--duration-slowest) var(--easing-standard);
   }
 
-  &__labels {
+  &__label {
+    color: var(--color-text-muted);
     font-size: var(--font-size-3xs);
     letter-spacing: var(--letter-spacing-wider);
     text-transform: uppercase;
-  }
-
-  &__label {
-    @include mixins.text-truncate;
-
-    flex: 0 1 0;
-    min-width: 0;
-    color: var(--color-text-muted);
+    white-space: nowrap;
 
     &--done {
       color: var(--color-text-secondary);

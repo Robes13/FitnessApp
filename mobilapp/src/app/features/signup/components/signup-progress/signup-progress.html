@@ -15,26 +15,22 @@
     <span class="signup-progress__caption">{{ caption() }}</span>
   </div>
 
-  <div class="signup-progress__bars">
+  <div class="signup-progress__segments">
     @for (chapter of chapters(); track chapter.label) {
-      <div class="signup-progress__bar" [style.flex-grow]="chapter.flex">
-        <div class="signup-progress__fill" [style.width.%]="chapter.pct"></div>
+      <div class="signup-progress__segment" [style.flex-grow]="chapter.flex">
+        <div class="signup-progress__bar">
+          <div class="signup-progress__fill" [style.width.%]="chapter.pct"></div>
+        </div>
+        @if (!compact()) {
+          <div
+            class="signup-progress__label"
+            [class.signup-progress__label--active]="chapter.active"
+            [class.signup-progress__label--done]="chapter.done"
+          >
+            {{ chapter.label }}
+          </div>
+        }
       </div>
     }
   </div>
-
-  @if (!compact()) {
-    <div class="signup-progress__labels">
-      @for (chapter of chapters(); track chapter.label) {
-        <div
-          class="signup-progress__label"
-          [style.flex-grow]="chapter.flex"
-          [class.signup-progress__label--active]="chapter.active"
-          [class.signup-progress__label--done]="chapter.done"
-        >
-          {{ chapter.label }}
-        </div>
-      }
-    </div>
-  }
 </div>

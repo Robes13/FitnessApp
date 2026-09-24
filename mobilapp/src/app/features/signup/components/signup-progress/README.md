@@ -16,7 +16,9 @@ Retter brugeren et svar, skifter overskriften til "Retter" og undertekten til
 "Tilbage til opsummering" (designets `chapterLabel`/`stepOfText`).
 
 Bjælkernes bredde følger antallet af synlige trin i kapitlet (`flex-grow`), så de skrumper,
-når et trin springes over. Selve ringen er `UiProgressRing` med `trackTone="neutral"`, så
+når et trin springes over. Bjælke og navn ligger i samme kolonne, og kolonnen er aldrig
+smallere end sit navn: har kapitlet kun ét trin (Aktivitet uden træningsdage), tager det pladsen
+fra de længere kapitler i stedet for at afkorte navnet. Selve ringen er `UiProgressRing` med `trackTone="neutral"`, så
 sporet får designets `rgba(148,163,184,.3)`.
 
 `compact` (sat af signup-siden, mens skærmtastaturet er åbent) skjuler ringen og
