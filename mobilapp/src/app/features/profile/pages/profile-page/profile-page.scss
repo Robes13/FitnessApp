@@ -53,9 +53,12 @@
 
   &__name {
     @include mixins.display-heading;
-    @include mixins.text-truncate;
 
+    display: -webkit-box;
+    overflow: hidden;
     margin: 0;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     font-size: var(--font-size-display-lg);
   }
 
