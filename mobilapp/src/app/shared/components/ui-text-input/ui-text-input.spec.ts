@@ -116,4 +116,17 @@ describe('UiTextInput', () => {
     typeInto(field, '');
     expect(host.control.value).toBeNull();
   });
+
+  it('keeps password text verbatim but lets plain text be auto-capitalized', async () => {
+    const { fixture, host, field } = await setup('password');
+
+    expect(field.getAttribute('autocapitalize')).toBe('none');
+    expect(field.getAttribute('autocorrect')).toBe('off');
+    expect(field.getAttribute('spellcheck')).toBe('false');
+
+    host.type.set('text');
+    await fixture.whenStable();
+
+    expect(field.hasAttribute('autocapitalize')).toBe(false);
+  });
 });

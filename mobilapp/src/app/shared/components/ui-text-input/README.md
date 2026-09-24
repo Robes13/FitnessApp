@@ -15,20 +15,20 @@ Implementerer `ControlValueAccessor`, så feltet bruges med typed reactive forms
 <app-ui-form-error [message]="error()" />
 ```
 
-| Input          | Standard     | Betydning                                                                      |
-| -------------- | ------------ | ------------------------------------------------------------------------------ |
-| `type`         | `'text'`     | `text` · `password` · `email` · `number` · `time` (værdien er `'HH:MM'`)       |
-| `placeholder`  | `''`         |                                                                                |
-| `inputMode`    | `null`       | `numeric`, `decimal`, `email` … til det native tastatur                        |
-| `maxLength`    | `null`       | Fx `4` til bekræftelseskoden                                                   |
-| `autocomplete` | `null`       | Native `autocomplete`-værdi                                                    |
-| `ariaLabel`    | `null`       | Tilgængeligt navn, når der ikke er en synlig label                             |
-| `invalid`      | `false`      | Farvet kant + `aria-invalid`                                                   |
-| `invalidTone`  | `'negative'` | `negative` rød kant · `accent` orange kant (uens adgangskoder)                 |
-| `translucent`  | `false`      | Mørk 55 % bund til felter oven på fotos (glemt adgangskode)                    |
-| `centered`     | `false`      | Kodefeltet: centreret, display-skrift 26 px, bred spatiering                   |
-| `revealable`   | `true`       | Øje-knap på `type="password"` (`aria-label="Vis adgangskode"`, `aria-pressed`) |
-| `size`         | `'lg'`       | `lg` 52 px · `md` 48 px                                                        |
+| Input          | Standard     | Betydning                                                                                                                                                                       |
+| -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`         | `'text'`     | `text` · `password` · `email` · `number` · `time` (værdien er `'HH:MM'`)                                                                                                        |
+| `placeholder`  | `''`         |                                                                                                                                                                                 |
+| `inputMode`    | `null`       | `numeric`, `decimal`, `email` … til det native tastatur                                                                                                                         |
+| `maxLength`    | `null`       | Fx `4` til bekræftelseskoden                                                                                                                                                    |
+| `autocomplete` | `null`       | Native `autocomplete`-værdi. `username`, `email`, adgangskoder og koder (samt `type="email"`/`"password"`) får intet stort begyndelsesbogstav, autokorrektur eller stavekontrol |
+| `ariaLabel`    | `null`       | Tilgængeligt navn, når der ikke er en synlig label                                                                                                                              |
+| `invalid`      | `false`      | Farvet kant + `aria-invalid`                                                                                                                                                    |
+| `invalidTone`  | `'negative'` | `negative` rød kant · `accent` orange kant (uens adgangskoder)                                                                                                                  |
+| `translucent`  | `false`      | Mørk 55 % bund til felter oven på fotos (glemt adgangskode)                                                                                                                     |
+| `centered`     | `false`      | Kodefeltet: centreret, display-skrift 26 px, bred spatiering                                                                                                                    |
+| `revealable`   | `true`       | Øje-knap på `type="password"` (`aria-label="Vis adgangskode"`, `aria-pressed`)                                                                                                  |
+| `size`         | `'lg'`       | `lg` 52 px · `md` 48 px                                                                                                                                                         |
 
 | Output    | Betydning                                |
 | --------- | ---------------------------------------- |

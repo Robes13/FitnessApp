@@ -35,6 +35,19 @@ const REVEAL_ICON: Readonly<Record<'hidden' | 'shown', IconName>> = {
 };
 
 /**
+ * Fields whose text must be kept exactly as typed. iOS would otherwise capitalize the first
+ * letter ("testbruger" → "Testbruger") and autocorrect names and addresses.
+ */
+const VERBATIM_AUTOCOMPLETE: ReadonlySet<string> = new Set([
+  'username',
+  'email',
+  'current-password',
+  'new-password',
+  'one-time-code',
+]);
+const VERBATIM_TYPES: ReadonlySet<TextInputType> = new Set(['email', 'password']);
+
+/**
  * The design's `.glass-input`: glass fill, hairline, 14 px radius and an orange focus ring.
  * Implements `ControlValueAccessor`, so it's used with `formControl`/`formControlName`.
  *
@@ -90,6 +103,10 @@ export class UiTextInput implements ControlValueAccessor {
   );
   protected readonly nativeType = computed(() =>
     this.hasRevealToggle() && this.revealed() ? 'text' : this.type(),
+  );
+  /** Usernames, e-mails, passwords and codes: no auto-capitalization, autocorrect or spellcheck. */
+  protected readonly verbatim = computed(
+    () => VERBATIM_TYPES.has(this.type()) || VERBATIM_AUTOCOMPLETE.has(this.autocomplete() ?? ''),
   );
   protected readonly revealIcon = computed(() =>
     this.revealed() ? REVEAL_ICON.shown : REVEAL_ICON.hidden,
