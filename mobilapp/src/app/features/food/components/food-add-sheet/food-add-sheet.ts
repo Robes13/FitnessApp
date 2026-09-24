@@ -15,6 +15,7 @@ import { FoodCollection, FoodItem, LoggedFood } from '../../../../core/models/fo
 import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
+import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import {
   FoodPicker,
   FoodPickerCtaVerb,
@@ -109,6 +110,7 @@ export class FoodAddSheet {
 
   private readonly collections = inject(CollectionsService);
   private readonly foodLog = inject(FoodLogService);
+  private readonly keyboardOpen = inject(KeyboardService).isOpen;
 
   protected readonly mealOptions = MEALS;
   protected readonly tabOptions = TAB_OPTIONS;
@@ -147,13 +149,16 @@ export class FoodAddSheet {
 
   /**
    * The design's `showMealPicks`: the chips stay put on the portion step, so the meal can be
-   * changed right before the food is logged. They only disappear in "New custom food" and while editing.
+   * changed right before the food is logged. They only disappear in "New custom food" and while editing
+   * – and while the on-screen keyboard is open, so a short phone keeps room for the search field.
    */
   protected readonly showMealPicks = computed(
-    () => !this.isEditing() && this.pickerStep() !== 'new-food',
+    () => !this.isEditing() && this.pickerStep() !== 'new-food' && !this.keyboardOpen(),
   );
-  /** The design's `addTabsVisible`: the tabs only belong to the search step. */
-  protected readonly showTabs = computed(() => !this.isEditing() && this.pickerStep() === 'search');
+  /** The design's `addTabsVisible`: the tabs only belong to the search step (and hide above the keyboard). */
+  protected readonly showTabs = computed(
+    () => !this.isEditing() && this.pickerStep() === 'search' && !this.keyboardOpen(),
+  );
   /** Editing always goes through the picker, regardless of which tab was last selected. */
   protected readonly showPicker = computed(() => this.isEditing() || this.tab() === 'varer');
 
