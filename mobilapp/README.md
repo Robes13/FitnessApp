@@ -121,6 +121,14 @@ for filerne på GitHub er offentlige og kræver ikke login.
 
 ---
 
+## Tilbageknappen (Android)
+
+`@capacitor/app` håndterer Androids tilbageknap og -gestus i `BackButtonService`: et åbent ark
+eller stregkodescanneren lukkes først, ellers går appen tilbage i historikken, og kun når der
+ikke er mere historik, minimeres appen. Uden servicen lukker Capacitor appen ved hvert tryk.
+
+---
+
 ## Tastaturet
 
 Skærmtastaturet må aldrig skubbe WebView'et. I `capacitor.config.ts` er `ios.scrollEnabled`
