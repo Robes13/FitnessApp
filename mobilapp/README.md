@@ -127,6 +127,14 @@ for filerne på GitHub er offentlige og kræver ikke login.
 
 ---
 
+## Skærmretning
+
+Appen er låst til portræt på telefoner (`UISupportedInterfaceOrientations` i `Info.plist` og
+`android:screenOrientation="portrait"` i `AndroidManifest.xml`); iPad og store Android-skærme
+(≥ 600 dp, Android 16+) er ikke låst.
+
+---
+
 ## Tilbageknappen (Android)
 
 `@capacitor/app` håndterer Androids tilbageknap og -gestus i `BackButtonService`: et åbent ark
