@@ -381,7 +381,8 @@
   --font-size-avatar-initial: 3.5rem; /* 56px */
 
   --line-height-none: 0.9;
-  --line-height-display: 0.95;
+  /* The design's .95 is too tight for Danish: the ring on Å reached the line above. */
+  --line-height-display: 1.03;
   --line-height-tight: 1.2;
   --line-height-snug: 1.3;
   --line-height-relaxed: 1.45;

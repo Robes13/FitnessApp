@@ -154,8 +154,10 @@ content="dark light">` (mørk først) og `theme-color` = `--color-background`.
 
 Al tekst er **Archivo Variable**. Display-overskrifter (`.disp` i designet)
 er kondenserede: `font-stretch: 75%`, vægt 800, uppercase, spatiering
-−.01em, linjehøjde .95. Brug mixinen `display-heading` i stedet for at
-gentage det. Ét ord i en overskrift er typisk orange (`--color-accent`).
+−.01em, linjehøjde 1,03. Designet bruger .95, men så rører ringen på Å
+linjen over i en overskrift på to linjer ("HVAD ER DIN / MÅLVÆGT?"). Brug
+mixinen `display-heading` i stedet for at gentage det. Ét ord i en
+overskrift er typisk orange (`--color-accent`).
 
 `body` har `font-size: var(--font-size-xl)` (16px), fordi designet ikke
 sætter en body-størrelse — tekst uden eksplicit størrelse er 16px.
