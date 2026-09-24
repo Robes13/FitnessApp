@@ -9,7 +9,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MAX_AGE, MIN_AGE } from '../../../../../core/constants/nutrition';
-import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator';
+import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { MONTH_NAMES_LONG, startOfDay } from '../../../../../core/utils/date-format';
 import { NOW } from '../../../../../core/utils/now';
 import { bandToneForGender } from '../../../../../shared/components/figure';

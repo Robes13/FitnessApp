@@ -2,7 +2,7 @@ import { Provider } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DEFAULT_PROFILE } from '../../../../core/constants/profile-defaults';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
-import { UserProfileService } from '../../../../core/services/user-profile';
+import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { ProfileEditRowId } from '../../services/profile-edit';
 import { ProfileEditSheet } from './profile-edit-sheet';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';

@@ -16,10 +16,10 @@ import {
   WEIGHT_MIN_KG,
 } from '../../../core/constants/nutrition';
 import { GoalId } from '../../../core/models/profile';
-import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
-import { AuthApi } from '../../../core/services/auth-api';
-import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
-import { UserProfileService } from '../../../core/services/user-profile';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
+import { AuthApi } from '../../../core/services/auth-api/auth-api';
+import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
+import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import {
   formatInteger,
   formatSignedDecimal,

@@ -4,8 +4,8 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from './app.routes';
 import { APP_PATH, QUERY_PARAM } from './core/constants/app-route';
 import { STORAGE_KEY } from './core/constants/storage-key';
-import { SessionService } from './core/services/session';
-import { ThemeService } from './core/services/theme';
+import { SessionService } from './core/services/session/session';
+import { ThemeService } from './core/services/theme/theme';
 import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,

@@ -5,10 +5,10 @@ import { APP_PATH } from '../../../core/constants/app-route';
 import { DEFAULT_PROFILE } from '../../../core/constants/profile-defaults';
 import { MAX_AGE, MIN_AGE, PASSWORD_MIN_LENGTH } from '../../../core/constants/nutrition';
 import { Gender, GoalId, PaceId, UserProfile } from '../../../core/models/profile';
-import { AuthApi } from '../../../core/services/auth-api';
-import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
-import { SessionService } from '../../../core/services/session';
-import { UserProfileService } from '../../../core/services/user-profile';
+import { AuthApi } from '../../../core/services/auth-api/auth-api';
+import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
+import { SessionService } from '../../../core/services/session/session';
+import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { NOW } from '../../../core/utils/now';
 import { clamp } from '../../../core/utils/math';
 

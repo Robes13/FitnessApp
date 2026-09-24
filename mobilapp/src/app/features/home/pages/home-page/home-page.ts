@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
-import { SessionService } from '../../../../core/services/session';
+import { SessionService } from '../../../../core/services/session/session';
 import { ProfileAvatar } from '../../../../shared/components/profile-avatar/profile-avatar';
 import { HomeCelebrationToast } from '../../components/home-celebration-toast/home-celebration-toast';
 import { HomeDayCard } from '../../components/home-day-card/home-day-card';

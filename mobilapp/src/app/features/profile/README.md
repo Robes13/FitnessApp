@@ -58,7 +58,7 @@ Rækken "Påmindelser" viser "Fra" (hovedkontakten er slået fra), "Ingen" eller
 aktive påmindelser, og åbner `profile-reminders-sheet`. Arket vælger, hvilke påmindelser
 brugeren vil have (morgenmad, frokost, aftensmad, vejning og "Husk at logge dagens mad"),
 og deres tidspunkt. Selve planlægningen af lokale notifikationer ligger i
-`core/services/reminders.ts`; se [`core/services/README.md`](../../core/services/README.md).
+`core/services/reminders/reminders.ts`; se [`core/services/README.md`](../../core/services/README.md).
 
 ## Log ud
 

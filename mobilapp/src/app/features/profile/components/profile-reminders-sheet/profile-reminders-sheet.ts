@@ -22,7 +22,7 @@ import {
   ReminderSettings,
   WeekdayIndex,
 } from '../../../../core/models/reminder';
-import { ReminderService } from '../../../../core/services/reminders';
+import { ReminderService } from '../../../../core/services/reminders/reminders';
 import { formatClockTime, parseClockTime } from '../../../../core/utils/clock-time';
 import { DAY_NAMES_LONG, DAY_NAMES_SHORT } from '../../../../core/utils/date-format';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';

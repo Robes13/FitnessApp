@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
-import { UserProfileService } from '../../../../core/services/user-profile';
+import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,

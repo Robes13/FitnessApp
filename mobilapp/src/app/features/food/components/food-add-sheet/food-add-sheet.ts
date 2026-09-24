@@ -13,8 +13,8 @@ import { CollectionIconName } from '../../../../core/constants/collection-icons'
 import { MEALS, MEAL_TONES } from '../../../../core/constants/meals';
 import { FoodCollection, FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
-import { CollectionsService } from '../../../../core/services/collections';
-import { FoodLogService } from '../../../../core/services/food-log';
+import { CollectionsService } from '../../../../core/services/collections/collections';
+import { FoodLogService } from '../../../../core/services/food-log/food-log';
 import {
   FoodPicker,
   FoodPickerCtaVerb,

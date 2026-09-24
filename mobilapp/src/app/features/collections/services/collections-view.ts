@@ -3,7 +3,7 @@ import { CollectionIconName } from '../../../core/constants/collection-icons';
 import { FoodCollection, FoodItem, Ingredient, Macros, Recipe } from '../../../core/models/food';
 import { MEAL_TONES } from '../../../core/constants/meals';
 import { MealId, MealTone } from '../../../core/models/meal';
-import { CollectionsService } from '../../../core/services/collections';
+import { CollectionsService } from '../../../core/services/collections/collections';
 
 /** The prefix in front of a collection's id when the whole collection opens as one "bundle". */
 export const BUNDLE_ID_PREFIX = 'col:';

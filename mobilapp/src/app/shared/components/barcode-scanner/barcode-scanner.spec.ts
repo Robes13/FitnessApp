@@ -8,8 +8,8 @@ import {
   ScannedProduct,
 } from '../../../core/models/barcode';
 import { FoodItem } from '../../../core/models/food';
-import { BarcodeScannerService } from '../../../core/services/barcode-scanner';
-import { ProductLookupService } from '../../../core/services/product-lookup';
+import { BarcodeScannerService } from '../../../core/services/barcode-scanner/barcode-scanner';
+import { ProductLookupService } from '../../../core/services/product-lookup/product-lookup';
 import { TEST_FOOD } from '../../../core/testing/fixtures';
 import {
   provideComponentTestEnvironment,
@@ -225,9 +225,7 @@ describe('BarcodeScanner', () => {
       await setup();
 
       expect(dialogs()).toEqual(['Scan stregkode']);
-      expect(hint()).toBe(
-        'Kameraet kan ikke bruges her. Indtast stregkodens tal i stedet.',
-      );
+      expect(hint()).toBe('Kameraet kan ikke bruges her. Indtast stregkodens tal i stedet.');
       expect(findButton('Scan stregkode')).toBeUndefined();
       expect(scanner.scanCalls).toBe(0);
     });

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { FoodItem } from '../../../core/models/food';
-import { FoodLogService } from '../../../core/services/food-log';
-import { UserProfileService } from '../../../core/services/user-profile';
+import { FoodLogService } from '../../../core/services/food-log/food-log';
+import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { FoodViewService } from './food-view';

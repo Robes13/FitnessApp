@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { NewCollectionInput } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
-import { CollectionsService } from '../../../../core/services/collections';
+import { CollectionsService } from '../../../../core/services/collections/collections';
 import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';

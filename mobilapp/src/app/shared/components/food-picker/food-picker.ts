@@ -24,9 +24,9 @@ import {
 import { concat, map, of, switchMap } from 'rxjs';
 import { DEFAULT_QUANTITY_UNIT } from '../../../core/constants/nutrition';
 import { FoodItem, Macros } from '../../../core/models/food';
-import { CUSTOM_FOOD_ID_PREFIX, FoodLogService } from '../../../core/services/food-log';
-import { FoodSearchService } from '../../../core/services/food-search';
-import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
+import { CUSTOM_FOOD_ID_PREFIX, FoodLogService } from '../../../core/services/food-log/food-log';
+import { FoodSearchService } from '../../../core/services/food-search/food-search';
+import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
 import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiButton } from '../ui-button/ui-button';
 import { UiChip } from '../ui-chip/ui-chip';

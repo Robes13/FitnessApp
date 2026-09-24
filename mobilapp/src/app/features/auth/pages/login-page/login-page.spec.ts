@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
-import { SessionService } from '../../../../core/services/session';
+import { SessionService } from '../../../../core/services/session/session';
 import { LoginPage } from './login-page';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 

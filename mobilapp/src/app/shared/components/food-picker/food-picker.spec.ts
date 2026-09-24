@@ -1,7 +1,7 @@
 import { Component, Provider, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FoodItem } from '../../../core/models/food';
-import { FoodLogService } from '../../../core/services/food-log';
+import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { FoodPicker, FoodPickerCtaVerb, FoodPickerSelection, FoodPickerStep } from './food-picker';
 import { provideComponentTestEnvironment } from '../../../core/testing/test-providers';
 

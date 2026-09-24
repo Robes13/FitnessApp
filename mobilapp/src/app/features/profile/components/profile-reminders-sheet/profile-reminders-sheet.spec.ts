@@ -7,8 +7,8 @@ import {
   ReminderPermission,
   ScheduledReminder,
 } from '../../../../core/models/reminder';
-import { REMINDER_NOTIFIER } from '../../../../core/services/reminder-notifier';
-import { ReminderService } from '../../../../core/services/reminders';
+import { REMINDER_NOTIFIER } from '../../../../core/services/reminders/reminder-notifier';
+import { ReminderService } from '../../../../core/services/reminders/reminders';
 import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,

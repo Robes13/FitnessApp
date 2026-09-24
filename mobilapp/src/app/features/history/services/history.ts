@@ -2,8 +2,8 @@ import { DestroyRef, Injectable, Signal, computed, inject, signal } from '@angul
 import { MEALS } from '../../../core/constants/meals';
 import { Macros } from '../../../core/models/food';
 import { MealId } from '../../../core/models/meal';
-import { FoodLogService } from '../../../core/services/food-log';
-import { WeightLogService } from '../../../core/services/weight-log';
+import { FoodLogService } from '../../../core/services/food-log/food-log';
+import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import {
   daysBetween,
   formatDayMonth,

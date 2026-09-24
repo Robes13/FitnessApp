@@ -9,7 +9,7 @@ import {
 } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { ROUTE_DATA } from '../../../../core/constants/route-data';
-import { KeyboardService } from '../../../../core/services/keyboard';
+import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { UiTabBar } from '../../../../shared/components/ui-tab-bar/ui-tab-bar';
 import { TAB_BAR_ITEMS } from '../../shell-navigation';
 

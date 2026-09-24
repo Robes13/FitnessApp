@@ -4,11 +4,11 @@ import { MEALS } from '../../../core/constants/meals';
 import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../core/constants/nutrition';
 import { Macros } from '../../../core/models/food';
 import { ProfilePhoto } from '../../../core/models/profile';
-import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
-import { FoodLogService } from '../../../core/services/food-log';
-import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
-import { UserProfileService } from '../../../core/services/user-profile';
-import { WeightLogService } from '../../../core/services/weight-log';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
+import { FoodLogService } from '../../../core/services/food-log/food-log';
+import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
+import { UserProfileService } from '../../../core/services/user-profile/user-profile';
+import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import {
   DAY_NAMES_LONG,
   DAY_NAMES_SHORT,

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
-import { SessionService } from '../../../../core/services/session';
+import { SessionService } from '../../../../core/services/session/session';
 import { FORGOT_PASSWORD_DONE_DELAY_MS, ForgotPasswordPage } from './forgot-password-page';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 

@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { APP_PATH } from '../constants/app-route';
-import { SessionService } from '../services/session';
+import { SessionService } from '../services/session/session';
 
 /** Requires login. Not logged in → `/login`. */
 export const authGuard: CanActivateFn = () => {

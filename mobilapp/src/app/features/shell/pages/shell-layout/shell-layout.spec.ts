@@ -4,7 +4,7 @@ import { Routes, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { APP_PATH, APP_ROUTE, ROUTE_PARAM } from '../../../../core/constants/app-route';
 import { ROUTE_DATA } from '../../../../core/constants/route-data';
-import { KeyboardService } from '../../../../core/services/keyboard';
+import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { ShellLayout } from './shell-layout';
 
 @Component({ template: '' })

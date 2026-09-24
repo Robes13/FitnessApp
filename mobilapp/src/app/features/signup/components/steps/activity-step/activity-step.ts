@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { STEPS_MAX, STEPS_MIN } from '../../../../../core/constants/nutrition';
 import { Gender } from '../../../../../core/models/profile';
-import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator';
+import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { formatDecimal, formatInteger } from '../../../../../core/utils/date-format';
 import { clamp, roundTo } from '../../../../../core/utils/math';
 import { animatedFigure, computeFigureGeometry } from '../../../../../shared/components/figure';

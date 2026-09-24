@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { ProfilePhoto } from '../../../../core/models/profile';
-import { UserProfileService } from '../../../../core/services/user-profile';
+import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { formatDecimal } from '../../../../core/utils/date-format';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';

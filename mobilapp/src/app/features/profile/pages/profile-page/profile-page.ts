@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
-import { ReminderService } from '../../../../core/services/reminders';
-import { SessionService } from '../../../../core/services/session';
-import { ThemeService } from '../../../../core/services/theme';
-import { UserProfileService } from '../../../../core/services/user-profile';
+import { ReminderService } from '../../../../core/services/reminders/reminders';
+import { SessionService } from '../../../../core/services/session/session';
+import { ThemeService } from '../../../../core/services/theme/theme';
+import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiPageHeader } from '../../../../shared/components/ui-page-header/ui-page-header';

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator';
+import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { formatDecimal, formatWeightKg } from '../../../../../core/utils/date-format';
 import {
   FigureBody,

@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { ApiError } from '../../../../core/models/api-error';
-import { KeyboardService } from '../../../../core/services/keyboard';
+import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-icon-button';

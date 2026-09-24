@@ -23,7 +23,7 @@ import { map } from 'rxjs';
 import { PASSWORD_MIN_LENGTH } from '../../../../core/constants/nutrition';
 import { ApiError } from '../../../../core/models/api-error';
 import { GoalId } from '../../../../core/models/profile';
-import { NutritionCalculator } from '../../../../core/services/nutrition-calculator';
+import { NutritionCalculator } from '../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';

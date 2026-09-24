@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { INTENSITIES, RPE_MAX, RPE_MIN } from '../../../../../core/constants/nutrition';
 import { IntensityId } from '../../../../../core/models/profile';
 import { Tone } from '../../../../../core/models/tone';
-import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator';
+import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { clamp } from '../../../../../core/utils/math';
 import {
   FigureBandTone,

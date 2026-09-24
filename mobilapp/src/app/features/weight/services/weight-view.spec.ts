@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { DEFAULT_PROFILE } from '../../../core/constants/profile-defaults';
 import { STORAGE_KEY } from '../../../core/constants/storage-key';
-import { UserProfileService } from '../../../core/services/user-profile';
-import { WeightLogService } from '../../../core/services/weight-log';
+import { UserProfileService } from '../../../core/services/user-profile/user-profile';
+import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
 import { weighHistory } from '../../../core/testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';

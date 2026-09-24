@@ -1,6 +1,6 @@
 import { Provider } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SessionService } from '../../../../core/services/session';
+import { SessionService } from '../../../../core/services/session/session';
 import { VerifyEmailSheet } from './verify-email-sheet';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 

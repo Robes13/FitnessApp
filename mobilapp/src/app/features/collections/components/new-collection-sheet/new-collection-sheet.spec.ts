@@ -5,8 +5,8 @@ import { FoodCollection, NewCollectionInput } from '../../../../core/models/food
 import { MealId } from '../../../../core/models/meal';
 import { NewCollectionSheet } from './new-collection-sheet';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
-import { FoodLogService } from '../../../../core/services/food-log';
-import { CollectionsService } from '../../../../core/services/collections';
+import { FoodLogService } from '../../../../core/services/food-log/food-log';
+import { CollectionsService } from '../../../../core/services/collections/collections';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import { FoodPicker } from '../../../../shared/components/food-picker/food-picker';
 

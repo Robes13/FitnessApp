@@ -13,7 +13,10 @@ import { QUERY_PARAM } from '../../../../core/constants/app-route';
 import { MEAL_IDS } from '../../../../core/constants/meals';
 import { CustomFoodInput, FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
-import { DuplicateCustomFoodNameError, FoodLogService } from '../../../../core/services/food-log';
+import {
+  DuplicateCustomFoodNameError,
+  FoodLogService,
+} from '../../../../core/services/food-log/food-log';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import { FoodPickerStartStep } from '../../../../shared/components/food-picker/food-picker';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';

@@ -33,6 +33,6 @@ rene hjælpefunktioner. `core` må **ikke** importere fra `shared/` eller `featu
 
 ## Navngivning
 
-Filer er kebab-case uden `.service`-suffiks: `services/food-log.ts` eksporterer
-`FoodLogService`, `services/nutrition-calculator.ts` eksporterer `NutritionCalculator`. Guards
+Filer er kebab-case uden `.service`-suffiks: `services/food-log/food-log.ts` eksporterer
+`FoodLogService`, `services/nutrition-calculator/nutrition-calculator.ts` eksporterer `NutritionCalculator`. Guards
 hedder `<navn>.guard.ts`.

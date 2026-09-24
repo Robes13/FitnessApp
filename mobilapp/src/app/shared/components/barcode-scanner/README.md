@@ -120,7 +120,7 @@ vare med det navn._ vises med `UiFormError` under feltet, mens knappen er slået
 - **Fokus gives tilbage** til elementet, der åbnede scanneren, når den lukker eller
   destrueres. Tog overlayet aldrig fokus, rører komponenten ikke fokus.
 - **Domænelogikken ligger i core.** Komponenten injicerer kun facaden `BarcodeFlowService`
-  (`core/services/barcode-flow.ts`), der samler kamera, opslag, scanningstælleren, skalering,
+  (`core/services/barcode-flow/barcode-flow.ts`), der samler kamera, opslag, scanningstælleren, skalering,
   navnetjekket og opbygningen af den egne vare. Komponenten holder selv kun præsentation og
   formular-state (skærm, status, scan-linjen, timere, annullering af et sent svar). Det er den
   mindste ændring, der overholder "shared har ingen forretningslogik": at sende alt ind som

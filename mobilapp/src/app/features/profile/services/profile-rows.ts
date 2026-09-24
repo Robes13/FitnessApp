@@ -1,8 +1,8 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
 import { GENDERS, UNIT_SYSTEMS } from '../../../core/constants/nutrition';
-import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
-import { NutritionCalculator } from '../../../core/services/nutrition-calculator';
-import { UserProfileService } from '../../../core/services/user-profile';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
+import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
+import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import {
   formatDecimal,
   formatInteger,

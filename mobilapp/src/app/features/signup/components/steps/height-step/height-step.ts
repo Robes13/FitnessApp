@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { HEIGHT_MAX_CM, HEIGHT_MIN_CM } from '../../../../../core/constants/nutrition';
-import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator';
+import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { formatDecimal, formatWeightKg } from '../../../../../core/utils/date-format';
 import { Figure, bandToneForGender } from '../../../../../shared/components/figure';
 import { RULER_BLEED_IDLE_STRONG } from '../../../../../shared/components/ui-ruler/ruler-geometry';

@@ -4,8 +4,8 @@ import { WEIGHT_LOG_HISTORY_RANGE } from '../../../core/constants/weight';
 import { GoalId } from '../../../core/models/profile';
 import { Tone } from '../../../core/models/tone';
 import { WeighEntry, WeightRange } from '../../../core/models/weight';
-import { UserProfileService } from '../../../core/services/user-profile';
-import { WeightLogService } from '../../../core/services/weight-log';
+import { UserProfileService } from '../../../core/services/user-profile/user-profile';
+import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import {
   formatDecimal,
   formatRelativeDay,

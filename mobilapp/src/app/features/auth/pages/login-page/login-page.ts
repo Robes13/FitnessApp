@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
-import { SessionService } from '../../../../core/services/session';
+import { SessionService } from '../../../../core/services/session/session';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiTextInput } from '../../../../shared/components/ui-text-input/ui-text-input';

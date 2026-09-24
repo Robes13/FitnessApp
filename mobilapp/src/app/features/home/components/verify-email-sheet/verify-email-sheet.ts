@@ -9,9 +9,9 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { NutritionCalculator } from '../../../../core/services/nutrition-calculator';
-import { SessionService } from '../../../../core/services/session';
-import { UserProfileService } from '../../../../core/services/user-profile';
+import { NutritionCalculator } from '../../../../core/services/nutrition-calculator/nutrition-calculator';
+import { SessionService } from '../../../../core/services/session/session';
+import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';

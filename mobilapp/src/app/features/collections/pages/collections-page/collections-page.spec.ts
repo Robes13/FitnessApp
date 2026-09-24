@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, Routes, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
-import { CollectionsService } from '../../../../core/services/collections';
+import { CollectionsService } from '../../../../core/services/collections/collections';
 import { COLLECTIONS_ROUTES } from '../../collections.routes';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 

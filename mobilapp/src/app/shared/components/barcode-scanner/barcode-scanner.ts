@@ -34,8 +34,8 @@ import {
   ScannedProduct,
 } from '../../../core/models/barcode';
 import { FoodItem } from '../../../core/models/food';
-import { BarcodeFlowService, formatAmount } from '../../../core/services/barcode-flow';
-import { KeyboardService } from '../../../core/services/keyboard';
+import { BarcodeFlowService, formatAmount } from '../../../core/services/barcode-flow/barcode-flow';
+import { KeyboardService } from '../../../core/services/keyboard/keyboard';
 import { UiButton } from '../ui-button/ui-button';
 import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiIcon } from '../ui-icon/ui-icon';

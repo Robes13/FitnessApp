@@ -1,11 +1,11 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
 import { MACRO_SPLIT, KCAL_PER_GRAM } from '../../../core/constants/nutrition';
-import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
-import { BarcodeScannerService } from '../../../core/services/barcode-scanner';
-import { CollectionsService } from '../../../core/services/collections';
-import { FoodLogService } from '../../../core/services/food-log';
-import { UserProfileService } from '../../../core/services/user-profile';
-import { WeightLogService } from '../../../core/services/weight-log';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
+import { BarcodeScannerService } from '../../../core/services/barcode-scanner/barcode-scanner';
+import { CollectionsService } from '../../../core/services/collections/collections';
+import { FoodLogService } from '../../../core/services/food-log/food-log';
+import { UserProfileService } from '../../../core/services/user-profile/user-profile';
+import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { formatDecimal, formatInteger } from '../../../core/utils/date-format';
 
 /** The color family behind a badge. Used for the ring, border, fill, and text alike. */

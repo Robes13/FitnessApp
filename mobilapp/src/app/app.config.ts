@@ -7,9 +7,9 @@ import {
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
-import { KeyboardService } from './core/services/keyboard';
-import { ReminderService } from './core/services/reminders';
-import { ThemeService } from './core/services/theme';
+import { KeyboardService } from './core/services/keyboard/keyboard';
+import { ReminderService } from './core/services/reminders/reminders';
+import { ThemeService } from './core/services/theme/theme';
 
 export const appConfig: ApplicationConfig = {
   providers: [

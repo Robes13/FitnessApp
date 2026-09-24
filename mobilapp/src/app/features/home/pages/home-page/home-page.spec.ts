@@ -3,8 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
-import { SessionService } from '../../../../core/services/session';
-import { UserProfileService } from '../../../../core/services/user-profile';
+import { SessionService } from '../../../../core/services/session/session';
+import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { HomePage } from './home-page';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 

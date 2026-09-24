@@ -4,7 +4,7 @@ import { LoggedFood } from '../../../core/models/food';
 import { createFakeStorage } from '../../../core/testing/fake-document';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { addDays, toIsoDate } from '../../../core/utils/date-format';
-import { UserProfileService } from '../../../core/services/user-profile';
+import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { ProfileRow, ProfileRowsService } from './profile-rows';
 
 function labels(rows: readonly ProfileRow[]): readonly string[] {

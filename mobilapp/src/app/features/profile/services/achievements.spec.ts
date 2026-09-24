@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { addDays } from '../../../core/utils/date-format';
-import { AdaptiveGoalService } from '../../../core/services/adaptive-goal';
-import { FoodLogService } from '../../../core/services/food-log';
-import { WeightLogService } from '../../../core/services/weight-log';
+import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
+import { FoodLogService } from '../../../core/services/food-log/food-log';
+import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { Achievement, AchievementsService } from './achievements';
 

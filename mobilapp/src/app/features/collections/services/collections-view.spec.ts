@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { FoodItem } from '../../../core/models/food';
-import { CollectionsService } from '../../../core/services/collections';
+import { CollectionsService } from '../../../core/services/collections/collections';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { BUNDLE_ID_PREFIX, CollectionsViewService } from './collections-view';
 

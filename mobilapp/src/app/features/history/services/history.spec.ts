@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { STORAGE_KEY } from '../../../core/constants/storage-key';
-import { FoodLogService } from '../../../core/services/food-log';
-import { WeightLogService } from '../../../core/services/weight-log';
+import { FoodLogService } from '../../../core/services/food-log/food-log';
+import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
 import { TEST_FOOD, weighEntry } from '../../../core/testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';

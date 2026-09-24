@@ -1,6 +1,6 @@
 import { DOCUMENT, Provider } from '@angular/core';
-import { AUTH_API_DELAY_MS } from '../services/auth-api';
-import { FOOD_SEARCH_DELAY_MS } from '../services/food-search';
+import { AUTH_API_DELAY_MS } from '../services/auth-api/auth-api';
+import { FOOD_SEARCH_DELAY_MS } from '../services/food-search/food-search';
 import { NOW } from '../utils/now';
 import { FakeStorage, createFakeDocument, createFakeStorage } from './fake-document';
 

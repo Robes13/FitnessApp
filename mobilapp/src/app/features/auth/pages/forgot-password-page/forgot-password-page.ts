@@ -16,10 +16,10 @@ import { APP_PATH } from '../../../../core/constants/app-route';
 import { AUTH_ERROR_MESSAGE } from '../../../../core/constants/auth';
 import { PASSWORD_MIN_LENGTH, RESET_CODE_LENGTH } from '../../../../core/constants/nutrition';
 import { PasswordStrength } from '../../../../core/models/nutrition';
-import { AuthApi } from '../../../../core/services/auth-api';
-import { NutritionCalculator } from '../../../../core/services/nutrition-calculator';
-import { SessionService } from '../../../../core/services/session';
-import { UserProfileService } from '../../../../core/services/user-profile';
+import { AuthApi } from '../../../../core/services/auth-api/auth-api';
+import { NutritionCalculator } from '../../../../core/services/nutrition-calculator/nutrition-calculator';
+import { SessionService } from '../../../../core/services/session/session';
+import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import {
   FormErrorTone,

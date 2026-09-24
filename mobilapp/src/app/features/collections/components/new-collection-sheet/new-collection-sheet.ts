@@ -23,8 +23,11 @@ import {
 } from '../../../../core/constants/collection-icons';
 import { FoodCollection, FoodItem, NewCollectionInput } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
-import { CollectionsService } from '../../../../core/services/collections';
-import { DuplicateCustomFoodNameError, FoodLogService } from '../../../../core/services/food-log';
+import { CollectionsService } from '../../../../core/services/collections/collections';
+import {
+  DuplicateCustomFoodNameError,
+  FoodLogService,
+} from '../../../../core/services/food-log/food-log';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import {
   FoodPicker,

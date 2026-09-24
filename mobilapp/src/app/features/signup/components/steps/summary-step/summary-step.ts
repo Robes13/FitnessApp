@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { INTENSITIES, RPE_MAX, RPE_MIN } from '../../../../../core/constants/nutrition';
 import { IntensityDefinition } from '../../../../../core/models/profile';
-import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator';
+import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { NOW } from '../../../../../core/utils/now';
 import {
   FigureBody,
