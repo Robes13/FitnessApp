@@ -154,6 +154,12 @@
     }
   }
 
+  /* Same width as the re-log button, on rows without one. */
+  &__relog-space {
+    flex: none;
+    width: var(--size-control-4xs);
+  }
+
   &__tab-bar-spacer {
     flex: none;
     height: var(--layout-tab-bar-clearance);

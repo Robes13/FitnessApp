@@ -63,6 +63,8 @@
               >
                 <app-ui-icon name="redo" size="xs" [strokeWidth]="relogIconStrokeWidth" />
               </button>
+            } @else if (reservesRelogSpace()) {
+              <span class="history-page__relog-space" aria-hidden="true"></span>
             }
           </div>
         }

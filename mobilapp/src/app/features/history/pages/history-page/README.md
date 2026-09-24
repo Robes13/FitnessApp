@@ -34,4 +34,6 @@ chipsene kan scrolle helt ud til skærmkanten som i designet.
 - **Gen-log-knappen** vises kun på måltidsposter. Det er `UiIconButton` med `size="4xs"`
   (26 px som i designet) og `tone="ghost"`; siden farver kun ikonet. Teksten `Logget i dag`
   står i `aria-label` og `title`; visuelt skifter ikonet til grønt.
+- **Værdierne flugter:** har en synlig række en gen-log-knap, får rækkerne uden knap en tom
+  plads af samme bredde (`.history-page__relog-space`), så alle værdier slutter i samme kolonne.
 - Rækkens lodrette padding er `--space-2-25` (designets 9 px).

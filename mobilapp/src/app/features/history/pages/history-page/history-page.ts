@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
@@ -30,6 +30,13 @@ export class HistoryPage {
   protected readonly filter = this.history.filter;
   protected readonly groups = this.history.groups;
   protected readonly isEmpty = this.history.isEmpty;
+  /**
+   * When any visible row has a re-log button, the rows without one keep its space free, so all
+   * values end in the same column.
+   */
+  protected readonly reservesRelogSpace = computed(() =>
+    this.groups().some((group) => group.entries.some((entry) => entry.food)),
+  );
 
   protected selectFilter(filter: HistoryFilterId): void {
     this.history.setFilter(filter);
