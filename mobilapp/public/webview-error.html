@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8" />
+    <title>Opdatering påkrævet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <!--
+      Shown by Capacitor (server.errorPath) when Android System WebView is older
+      than android.minWebViewVersion. Must stay plain HTML/CSS with no modern
+      JavaScript, because it is rendered by the very WebView that is too old.
+      Colors mirror the palette in src/styles/_tokens.scss (a static page
+      cannot load the app's tokens).
+    -->
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        box-sizing: border-box;
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        text-align: center;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      main {
+        max-width: 420px;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 12px;
+      }
+      p {
+        font-size: 16px;
+        line-height: 1.5;
+        margin: 0 0 24px;
+        color: #64748b;
+      }
+      a {
+        display: inline-block;
+        padding: 14px 24px;
+        border-radius: 999px;
+        background: #2563eb;
+        color: #f8fafc;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #0f172a;
+          color: #f8fafc;
+        }
+        p {
+          color: #94a3b8;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Appen skal bruge en nyere WebView</h1>
+      <p>
+        Din telefons <strong>Android System WebView</strong> er for gammel til at vise appen
+        sikkert. Opdatér den i Google Play, og åbn appen igen.
+      </p>
+      <a href="https://play.google.com/store/apps/details?id=com.google.android.webview">
+        Opdatér i Google Play
+      </a>
+    </main>
+  </body>
+</html>

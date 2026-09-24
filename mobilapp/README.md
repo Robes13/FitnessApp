@@ -85,6 +85,12 @@ adb shell am start -n dk.meploy.fitnessapp/.MainActivity
 
 Åbn projektet i Android Studio med `npm run android:open`.
 
+**Minimum WebView:** `capacitor.config.ts` kræver **Android System WebView 119+**
+(`android.minWebViewVersion`), som er Angular 22's Chrome-minimum. På ældre WebViews viser
+Capacitor den statiske side `public/webview-error.html`, der beder brugeren opdatere via
+Google Play, i stedet for en tom skærm. Emulatorer med fabriks-WebView skal derfor
+opdateres via Play Store, før appen kan testes.
+
 ---
 
 ## Kør på iOS
