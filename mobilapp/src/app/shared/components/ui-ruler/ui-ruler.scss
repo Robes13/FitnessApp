@@ -7,6 +7,14 @@
   display: block;
   height: var(--size-ruler-h);
   overflow: hidden;
+  /* Soft edges, so ticks and labels fade out at the sides instead of being cut through. */
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    var(--color-white) var(--space-8-5),
+    var(--color-white) calc(100% - var(--space-8-5)),
+    transparent 100%
+  );
 }
 
 :host(.ui-ruler--lg) {
