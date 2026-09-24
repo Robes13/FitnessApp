@@ -17,7 +17,9 @@
 y-skalaen spænder fra den laveste til den højeste værdi – **inklusive mållinjen** – med 0,5 kg
 luft i hver ende. De nederste 10 enheder er luft, så endeprikken ikke skæres af.
 
-Under to punkter giver en tom geometri, og komponenten viser en tom tilstand i stedet for SVG'en.
+Under to punkter giver en tom geometri, og komponenten viser en tom tilstand i stedet for SVG'en:
+"Ingen vægtdata endnu." uden vejninger, og "Din kurve vises, når du har vejet dig igen." efter den
+første. Ændringen i hovedet er grå (`muted`), indtil intervallet har to vejninger at sammenligne.
 
 ## Beslutninger
 

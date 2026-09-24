@@ -60,5 +60,5 @@
     <span>I dag</span>
   </div>
 } @else {
-  <app-ui-empty-state message="Ingen vægtdata endnu." />
+  <app-ui-empty-state [message]="emptyMessage()" />
 }

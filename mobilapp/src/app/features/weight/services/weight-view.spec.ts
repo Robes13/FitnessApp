@@ -108,6 +108,7 @@ describe('WeightViewService', () => {
     expect(view.rangeLabel()).toBe('Sidste uge');
     expect(view.rangeStartLabel()).toBe('-uge');
     expect(view.seriesKg()).toEqual([75]);
+    expect(view.rangeDeltaTone()).toBe('muted');
   });
 
   it('viser vejningerne med forskel til den forrige og "Start" på den ældste', () => {

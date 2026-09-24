@@ -7,6 +7,12 @@ import {
   computeWeightChartGeometry,
 } from './weight-chart-geometry';
 
+/** A curve needs two weigh-ins; with one, the user is told the curve is on its way. */
+const EMPTY_MESSAGE = {
+  none: 'Ingen vægtdata endnu.',
+  single: 'Din kurve vises, når du har vejet dig igen.',
+} as const;
+
 /**
  * The chart card on the weight screen: the current weight, the range's name and change, the
  * curve with a gradient fill, the dashed goal line and a footer with range, goal weight and "Today".
@@ -45,6 +51,9 @@ export class WeightChart {
     computeWeightChartGeometry(this.seriesKg(), this.goalWeightKg()),
   );
   protected readonly hasSeries = computed(() => this.geometry().linePath !== '');
+  protected readonly emptyMessage = computed(() =>
+    this.seriesKg().length === 0 ? EMPTY_MESSAGE.none : EMPTY_MESSAGE.single,
+  );
   protected readonly chartLabel = computed(
     () => `Vægtudvikling, ${this.rangeLabel().toLowerCase()}: ${this.deltaText()}`,
   );

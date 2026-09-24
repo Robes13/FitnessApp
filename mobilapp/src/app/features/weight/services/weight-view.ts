@@ -188,7 +188,10 @@ export class WeightViewService {
     return last - first;
   });
   readonly rangeDeltaText = computed(() => `${formatSignedDecimal(this.rangeDeltaKg())} kg`);
-  readonly rangeDeltaTone = computed(() => rangeTone(this.rangeDeltaKg(), this.goal()));
+  /** Neutral until the range holds two weigh-ins – a lone point has no change to judge. */
+  readonly rangeDeltaTone = computed<WeightChangeTone>(() =>
+    this.seriesKg().length < 2 ? 'muted' : rangeTone(this.rangeDeltaKg(), this.goal()),
+  );
 
   /** The profile's weight without a redundant `,0` – design's `weightText`. */
   readonly profileWeightText = computed(() => trimZeroDecimal(this.profileWeightKg()));
