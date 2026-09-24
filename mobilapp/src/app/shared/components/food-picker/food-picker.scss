@@ -267,9 +267,11 @@
       color var(--duration-quick) var(--easing-standard),
       border-color var(--duration-quick) var(--easing-standard);
 
-    &:hover {
-      border-color: var(--color-accent);
-      color: var(--color-accent);
+    @include mixins.hover {
+      &:hover {
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+      }
     }
   }
 

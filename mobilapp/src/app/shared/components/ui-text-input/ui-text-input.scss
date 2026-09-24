@@ -3,6 +3,9 @@
  * `--translucent`,
  * `--centered`, `--revealable`); only `:host(…)` targets it under emulated encapsulation.
  */
+
+@use 'mixins';
+
 :host {
   position: relative;
   display: flex;
@@ -120,8 +123,10 @@
     transform: translateY(-50%);
     transition: color var(--duration-quick) var(--easing-standard);
 
-    &:hover {
-      color: var(--color-accent);
+    @include mixins.hover {
+      &:hover {
+        color: var(--color-accent);
+      }
     }
   }
 }

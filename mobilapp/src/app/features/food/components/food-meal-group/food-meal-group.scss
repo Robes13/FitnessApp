@@ -56,8 +56,10 @@
     cursor: pointer;
     transition: color var(--duration-quick) var(--easing-standard);
 
-    &:hover {
-      color: var(--color-accent);
+    @include mixins.hover {
+      &:hover {
+        color: var(--color-accent);
+      }
     }
   }
 
@@ -105,9 +107,11 @@
       background-color var(--duration-quick) var(--easing-standard),
       color var(--duration-quick) var(--easing-standard);
 
-    &:hover {
-      background: var(--color-negative-soft-strong);
-      color: var(--color-negative);
+    @include mixins.hover {
+      &:hover {
+        background: var(--color-negative-soft-strong);
+        color: var(--color-negative);
+      }
     }
   }
 

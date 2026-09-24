@@ -142,8 +142,10 @@
   &__relog {
     color: var(--color-text-muted);
 
-    &:hover {
-      color: var(--color-accent);
+    @include mixins.hover {
+      &:hover {
+        color: var(--color-accent);
+      }
     }
 
     &--done,

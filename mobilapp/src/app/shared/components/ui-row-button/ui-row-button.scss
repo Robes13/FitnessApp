@@ -29,8 +29,10 @@
   font-weight: var(--font-weight-regular);
 }
 
-:host(.ui-row-button--compact:hover) {
-  background: var(--color-surface-hover);
+@include mixins.hover {
+  :host(.ui-row-button--compact:hover) {
+    background: var(--color-surface-hover);
+  }
 }
 
 :host(.ui-row-button--compact.ui-row-button--divider) {

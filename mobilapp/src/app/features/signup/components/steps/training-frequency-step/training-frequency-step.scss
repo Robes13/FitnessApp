@@ -170,8 +170,10 @@
       background-color var(--duration-quick) var(--easing-standard),
       color var(--duration-quick) var(--easing-standard);
 
-    &:hover {
-      border-color: var(--color-accent);
+    @include mixins.hover {
+      &:hover {
+        border-color: var(--color-accent);
+      }
     }
 
     &--selected {

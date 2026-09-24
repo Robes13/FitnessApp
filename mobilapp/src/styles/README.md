@@ -192,10 +192,15 @@ komponent importerer mixins uden relative stier:
 | `tabular-nums`      | Tal med fast bredde, så skiftende tal ikke hopper                                      |
 | `page-screen`       | Route-komponentens rod: flex-kolonne, fuld højde, notch-padding                        |
 | `scroll-area`       | Scroll-container i en side: `flex: 1; min-height: 0; overflow-y: auto; display: block` |
+| `hover`             | Hover-stil kun med en rigtig pegeenhed, så den ikke klæber efter et tryk på touch      |
 
 `scroll-area` indkapsler designerens hårdt lærte regel: en
 scroll-container **skal** have `min-height: 0` og `display: block`, ellers
 klemmer flex-forælderen børnene flade.
+
+**Hover:** alle `:hover`-regler pakkes i `@include mixins.hover { … }`, som kun gælder på en
+enhed med en rigtig pegeenhed (`@media (hover: hover)`). På en touchskærm bliver `:hover`
+ellers hængende på det sidst trykkede element – på iOS indtil næste tryk.
 
 ## Animationer
 

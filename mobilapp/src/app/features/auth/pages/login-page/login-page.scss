@@ -82,8 +82,10 @@
       color: var(--color-text-secondary);
       font-weight: var(--font-weight-regular);
 
-      &:hover {
-        color: var(--color-accent);
+      @include mixins.hover {
+        &:hover {
+          color: var(--color-accent);
+        }
       }
     }
   }

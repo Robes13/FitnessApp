@@ -2,6 +2,9 @@
  * The host is the bar itself (`ui-tab-bar`), absolutely positioned at the bottom of the
  * nearest positioned ancestor (the shell). Only `:host` targets it under emulated encapsulation.
  */
+
+@use 'mixins';
+
 :host {
   position: absolute;
   right: var(--layout-tab-bar-inset);
@@ -51,8 +54,10 @@
     text-decoration: none;
     transition: color var(--duration-base) ease;
 
-    &:hover {
-      color: var(--color-text-secondary);
+    @include mixins.hover {
+      &:hover {
+        color: var(--color-text-secondary);
+      }
     }
 
     &--active,

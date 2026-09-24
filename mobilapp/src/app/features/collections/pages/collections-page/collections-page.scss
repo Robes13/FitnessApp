@@ -87,8 +87,10 @@
     cursor: pointer;
     transition: background-color var(--duration-quick) var(--easing-standard);
 
-    &:hover {
-      background: var(--color-surface-hover);
+    @include mixins.hover {
+      &:hover {
+        background: var(--color-surface-hover);
+      }
     }
 
     &--accent {

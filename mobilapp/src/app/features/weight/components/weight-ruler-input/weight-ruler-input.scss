@@ -1,4 +1,7 @@
 /* The ruler in a card with the −/+ buttons sitting on top at either end. */
+
+@use 'mixins';
+
 :host {
   position: relative;
   display: block;
@@ -29,8 +32,10 @@
     transform: translateY(-50%);
     transition: color var(--duration-quick) var(--easing-standard);
 
-    &:hover {
-      color: var(--color-accent);
+    @include mixins.hover {
+      &:hover {
+        color: var(--color-accent);
+      }
     }
 
     &--minus {

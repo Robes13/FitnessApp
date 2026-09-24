@@ -14,6 +14,14 @@
   white-space: nowrap;
 }
 
+/// Hover styles only for a real pointer. On touch screens `:hover` sticks to the last tapped
+/// element (iOS keeps it until the next tap), so wrap every `:hover` rule in this.
+@mixin hover {
+  @media (hover: hover) {
+    @content;
+  }
+}
+
 /// Display heading — the design's `.disp`: condensed Archivo, extrabold,
 /// uppercase. Used for screen titles and the big orange numbers.
 @mixin display-heading {

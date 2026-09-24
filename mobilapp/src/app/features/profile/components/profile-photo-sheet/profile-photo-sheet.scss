@@ -107,8 +107,10 @@
     letter-spacing: var(--letter-spacing-caps);
     text-transform: uppercase;
 
-    &:hover {
-      background: var(--color-accent-hover);
+    @include mixins.hover {
+      &:hover {
+        background: var(--color-accent-hover);
+      }
     }
   }
 

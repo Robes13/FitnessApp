@@ -5,6 +5,8 @@
  * Everything else lives in the component that owns it.
  */
 
+@use 'mixins';
+
 *,
 *::before,
 *::after {
@@ -93,8 +95,10 @@ a {
   color: var(--color-accent);
   text-decoration: none;
 
-  &:hover {
-    color: var(--color-accent-hover);
+  @include mixins.hover {
+    &:hover {
+      color: var(--color-accent-hover);
+    }
   }
 }
 

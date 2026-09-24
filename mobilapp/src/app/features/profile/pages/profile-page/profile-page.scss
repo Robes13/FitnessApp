@@ -40,8 +40,10 @@
     color: var(--color-text-on-accent);
     cursor: pointer;
 
-    &:hover {
-      background: var(--color-accent-hover);
+    @include mixins.hover {
+      &:hover {
+        background: var(--color-accent-hover);
+      }
     }
   }
 

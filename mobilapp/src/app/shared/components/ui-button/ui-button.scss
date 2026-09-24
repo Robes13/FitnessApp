@@ -3,6 +3,9 @@
  * ui-button--{size}`. Under emulated encapsulation, only `:host(…)` hits the host – a
  * `.ui-button { … }` rule would be scoped to the content and never match.
  */
+
+@use 'mixins';
+
 :host {
   display: inline-flex;
   align-items: center;
@@ -77,8 +80,10 @@
   text-transform: uppercase;
 }
 
-:host(.ui-button--primary:hover) {
-  background: var(--color-accent-hover);
+@include mixins.hover {
+  :host(.ui-button--primary:hover) {
+    background: var(--color-accent-hover);
+  }
 }
 
 :host(.ui-button--primary:active) {
@@ -89,8 +94,10 @@
   border: var(--border-width-thin) solid var(--color-border-stronger);
 }
 
-:host(.ui-button--outline:hover) {
-  border-color: var(--color-text-muted);
+@include mixins.hover {
+  :host(.ui-button--outline:hover) {
+    border-color: var(--color-text-muted);
+  }
 }
 
 :host(.ui-button--surface) {
@@ -98,8 +105,10 @@
   background: var(--color-surface);
 }
 
-:host(.ui-button--surface:hover) {
-  background: var(--color-surface-hover);
+@include mixins.hover {
+  :host(.ui-button--surface:hover) {
+    background: var(--color-surface-hover);
+  }
 }
 
 :host(.ui-button--outline-danger) {
@@ -107,16 +116,20 @@
   color: var(--color-negative);
 }
 
-:host(.ui-button--outline-danger:hover) {
-  border-color: var(--color-negative-border);
+@include mixins.hover {
+  :host(.ui-button--outline-danger:hover) {
+    border-color: var(--color-negative-border);
+  }
 }
 
 :host(.ui-button--ghost) {
   color: var(--color-accent);
 }
 
-:host(.ui-button--ghost:hover) {
-  color: var(--color-accent-hover);
+@include mixins.hover {
+  :host(.ui-button--ghost:hover) {
+    color: var(--color-accent-hover);
+  }
 }
 
 :host(.ui-button--danger) {
@@ -124,8 +137,10 @@
   color: var(--color-negative-text-inverse);
 }
 
-:host(.ui-button--danger:hover) {
-  background: var(--color-negative-hover);
+@include mixins.hover {
+  :host(.ui-button--danger:hover) {
+    background: var(--color-negative-hover);
+  }
 }
 
 :host(.ui-button--subtle) {
@@ -133,8 +148,10 @@
   font-weight: var(--font-weight-semibold);
 }
 
-:host(.ui-button--subtle:hover) {
-  color: var(--color-accent);
+@include mixins.hover {
+  :host(.ui-button--subtle:hover) {
+    color: var(--color-accent);
+  }
 }
 
 :host(.ui-button--loading) {

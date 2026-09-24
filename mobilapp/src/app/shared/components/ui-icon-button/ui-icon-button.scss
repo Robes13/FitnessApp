@@ -1,4 +1,7 @@
 /* The host is the `<button>` itself (the design's `.circ`); only `:host(…)` targets it. */
+
+@use 'mixins';
+
 :host {
   display: inline-flex;
   flex: none;
@@ -18,8 +21,10 @@
     border-color var(--duration-quick) var(--easing-standard);
 }
 
-:host(:hover) {
-  background: var(--color-control-hover);
+@include mixins.hover {
+  :host(:hover) {
+    background: var(--color-control-hover);
+  }
 }
 
 :host(:disabled) {
@@ -76,9 +81,11 @@
   color: var(--color-text-secondary);
 }
 
-:host(.ui-icon-button--ghost:hover) {
-  background: var(--color-surface-hover);
-  color: var(--color-text);
+@include mixins.hover {
+  :host(.ui-icon-button--ghost:hover) {
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+  }
 }
 
 :host(.ui-icon-button--accent) {
@@ -86,8 +93,10 @@
   color: var(--color-text-on-accent);
 }
 
-:host(.ui-icon-button--accent:hover) {
-  background: var(--color-accent-hover);
+@include mixins.hover {
+  :host(.ui-icon-button--accent:hover) {
+    background: var(--color-accent-hover);
+  }
 }
 
 :host(.ui-icon-button--translucent) {
@@ -96,8 +105,10 @@
   backdrop-filter: blur(var(--blur-sm));
 }
 
-:host(.ui-icon-button--translucent:hover) {
-  background: color-mix(in srgb, var(--color-text-inverse) 65%, transparent);
+@include mixins.hover {
+  :host(.ui-icon-button--translucent:hover) {
+    background: color-mix(in srgb, var(--color-text-inverse) 65%, transparent);
+  }
 }
 
 :host(.ui-icon-button--outline) {
@@ -109,6 +120,8 @@
   color: var(--color-negative);
 }
 
-:host(.ui-icon-button--danger-soft:hover) {
-  background: var(--color-negative-soft-strong);
+@include mixins.hover {
+  :host(.ui-icon-button--danger-soft:hover) {
+    background: var(--color-negative-soft-strong);
+  }
 }
