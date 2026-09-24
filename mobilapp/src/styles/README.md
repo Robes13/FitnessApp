@@ -114,8 +114,9 @@ eller en font-størrelse direkte. Mangler der en værdi, tilføjes en token i
 3. Er værdien ny: læg den i den rigtige gruppe i `_tokens.scss` med et
    navn, der beskriver **rollen**, ikke værdien (`--color-accent-border`,
    ikke `--orange-45`).
-4. Er det en farve, der skifter med temaet, tilføjes overriden i
-   `:root[data-theme='light']` nederst i filen.
+4. Er det en farve, der skifter med temaet, lægges den mørke værdi i
+   mixinen `theme-dark-colors` og overriden i `:root[data-theme='light']`
+   nederst i filen.
 5. Opdatér tabellen ovenfor, hvis du tilføjer en ny gruppe.
 
 ## Tema
@@ -133,8 +134,15 @@ negativ og figurens farver er ens i begge temaer.
 Brugeren slår "Lys tilstand" til og fra under Profil, og valget gemmes.
 `ThemeService` (i `core/services`) sætter og fjerner `data-theme` på
 `document.documentElement` og genskaber valget ved opstart. Derfor er der
-ingen `@media (prefers-color-scheme)` i tokens-filen, og `data-theme="dark"`
-behøver ingen egne regler (det er bare standardtilstanden).
+ingen `@media (prefers-color-scheme)` i tokens-filen.
+
+**Et under-træ kan blive mørkt i lyst tema** med `data-theme="dark"` på sit
+element. De mørke værdier for alt, det lyse tema ændrer, ligger i mixinen
+`theme-dark-colors` i `_tokens.scss`, som både `:root` og
+`:root[data-theme='light'] [data-theme='dark']` bruger. Fotoskærmene (login
+og glemt adgangskode) gør det, fordi fotoet er mørkt i begge temaer – ellers
+ville mørk tekst ligge på det mørke foto. De holder også systembarernes
+ikoner lyse (`ThemeService.holdDarkSystemBars`).
 
 `_reset.scss` sætter `color-scheme: dark` på `html` og `light` under
 `:root[data-theme='light']`, så native formularkontroller og scrollbars

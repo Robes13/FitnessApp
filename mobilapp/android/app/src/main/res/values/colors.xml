@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app's default (dark) background, palette-background-deep in _tokens.scss.
+         Shows behind the status and navigation bars when the WebView is inset from them. -->
+    <color name="app_background">#0B1120</color>
+</resources>

@@ -138,6 +138,16 @@ og egne scroll-områder), ikke på `100vh`, `position: fixed` eller dokumentets 
 tager de ikke højde for tastaturet. På Android ændrer systemet selv WebView'ets størrelse, så
 dér bliver `--keyboard-inset` 0.
 
+## Status- og navigationsbar
+
+Barerne følger appens eget tema, ikke telefonens: `ThemeService` styler dem via Capacitors
+indbyggede `SystemBars` (lyse ikoner i mørkt tema, mørke i lyst), og fotoskærmene holder dem
+mørke, fordi fotoet er mørkt i begge temaer. På Android farver det lille app-plugin
+`AppWindowPlugin.java` desuden vinduet bag WebView'et, for på WebView-versioner uden
+edge-to-edge-understøttelse ligger barerne på vinduet og ikke på siden. Vinduets
+startfarve (`app_background` i `res/values/colors.xml`) er den mørke baggrund, så der ikke
+blinker hvidt ved opstart.
+
 ## Påmindelser (lokale notifikationer)
 
 Påmindelserne bruger `@capacitor/local-notifications`. Pluginet skal synkroniseres ind i

@@ -3,14 +3,22 @@
 De to skærme, en udlogget bruger kan se: **Login** og **Glemt adgangskode**. Begge ligger bag
 `guestGuard`, så en logget ind bruger sendes videre til Hjem.
 
-| Fil / mappe                           | Indhold                                                         |
-| ------------------------------------- | --------------------------------------------------------------- |
-| `auth.routes.ts`                      | `AUTH_ROUTES` – `/login` → `LoginPage`.                         |
-| `forgot-password.routes.ts`           | `FORGOT_PASSWORD_ROUTES` – `/glemt-adgangskode`.                |
-| `auth-assets.ts`                      | `AUTH_ASSET` – stierne til fotoet og logoet i `public/images/`. |
-| `auth-error.ts`                       | `authErrorMessage()` – `ApiError` → dansk tekst til brugeren.   |
-| [`components/`](components/README.md) | Feature-komponenter (fotobaggrunden).                           |
-| [`pages/`](pages/README.md)           | Route-komponenterne.                                            |
+| Fil / mappe                           | Indhold                                                            |
+| ------------------------------------- | ------------------------------------------------------------------ |
+| `auth.routes.ts`                      | `AUTH_ROUTES` – `/login` → `LoginPage`.                            |
+| `forgot-password.routes.ts`           | `FORGOT_PASSWORD_ROUTES` – `/glemt-adgangskode`.                   |
+| `auth-assets.ts`                      | `AUTH_ASSET` – stierne til fotoet og logoet i `public/images/`.    |
+| `auth-error.ts`                       | `authErrorMessage()` – `ApiError` → dansk tekst til brugeren.      |
+| `photo-screen.ts`                     | `holdDarkSystemBarsWhileOpen()` – lyse bar-ikoner på fotoskærmene. |
+| [`components/`](components/README.md) | Feature-komponenter (fotobaggrunden).                              |
+| [`pages/`](pages/README.md)           | Route-komponenterne.                                               |
+
+## Altid mørke
+
+Begge skærme ligger på et mørkt foto og er derfor mørke i begge temaer: værten binder
+`data-theme` til `PHOTO_SCREEN_THEME` (`'dark'`), så tokens under den får de mørke værdier også
+i lyst tema, og konstruktøren kalder `holdDarkSystemBarsWhileOpen()`, så statusbarens ikoner
+er lyse, mens skærmen er åben. Se "Tema" i [`src/styles/README.md`](../../../styles/README.md).
 
 ## Flow
 

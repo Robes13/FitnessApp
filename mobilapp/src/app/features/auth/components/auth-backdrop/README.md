@@ -17,4 +17,5 @@ lægge sit indhold ovenpå i et almindeligt flow.
 - **Forløbet er et input, ikke en kopi.** Login lægger teksten på fotoets i forvejen mørke del
   og har intet forløb; glemt adgangskode har fire tekstafsnit i bunden og har brug for det.
 - **Forløbet er ens i begge temaer.** Det kommer fra `--gradient-photo-overlay`, som er
-  defineret én gang i `_tokens.scss` og ikke har en lys-override – fotoskærmene er altid mørke.
+  defineret én gang i `_tokens.scss` og ikke har en lys-override – fotoskærmene er altid mørke
+  (siderne sætter `data-theme="dark"` på sig selv, se feature-README'en).

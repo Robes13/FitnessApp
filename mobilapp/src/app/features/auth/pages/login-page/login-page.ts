@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
+import { PHOTO_SCREEN_THEME } from '../../../../core/constants/theme';
 import { SessionService } from '../../../../core/services/session/session';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
@@ -10,6 +11,7 @@ import { UiTextInput } from '../../../../shared/components/ui-text-input/ui-text
 import { AUTH_ASSET } from '../../auth-assets';
 import { authErrorMessage } from '../../auth-error';
 import { AuthBackdrop } from '../../components/auth-backdrop/auth-backdrop';
+import { holdDarkSystemBarsWhileOpen } from '../../photo-screen';
 
 interface LoginForm {
   username: FormControl<string>;
@@ -29,13 +31,15 @@ interface LoginForm {
   templateUrl: './login-page.html',
   styleUrl: './login-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'login-page' },
+  host: { class: 'login-page', '[attr.data-theme]': 'photoTheme' },
 })
 export class LoginPage {
   private readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
+  /** Dark in both themes – the photo behind is dark. */
+  protected readonly photoTheme = PHOTO_SCREEN_THEME;
   protected readonly logoSrc = AUTH_ASSET.LOGO;
   protected readonly signupPath = APP_PATH.SIGNUP;
   protected readonly forgotPasswordPath = APP_PATH.FORGOT_PASSWORD;
@@ -47,6 +51,10 @@ export class LoginPage {
     username: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
+
+  constructor() {
+    holdDarkSystemBarsWhileOpen();
+  }
 
   protected submit(): void {
     if (this.loading()) {

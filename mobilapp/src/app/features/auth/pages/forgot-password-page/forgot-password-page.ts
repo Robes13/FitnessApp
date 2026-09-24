@@ -13,6 +13,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { Observable, switchMap, timer } from 'rxjs';
 import { APP_PATH } from '../../../../core/constants/app-route';
+import { PHOTO_SCREEN_THEME } from '../../../../core/constants/theme';
 import { AUTH_ERROR_MESSAGE } from '../../../../core/constants/auth';
 import { PASSWORD_MIN_LENGTH, RESET_CODE_LENGTH } from '../../../../core/constants/nutrition';
 import { PasswordStrength } from '../../../../core/models/nutrition';
@@ -33,6 +34,7 @@ import { UiTextInput } from '../../../../shared/components/ui-text-input/ui-text
 import { AUTH_ASSET } from '../../auth-assets';
 import { authErrorMessage } from '../../auth-error';
 import { AuthBackdrop } from '../../components/auth-backdrop/auth-backdrop';
+import { holdDarkSystemBarsWhileOpen } from '../../photo-screen';
 
 /** The design's `fp1 → fp2 → fp3 → fpDone`. */
 export type ForgotPasswordStep = 'email' | 'code' | 'new-password' | 'done';
@@ -99,7 +101,7 @@ const EMPTY_MESSAGE: StepMessage = { text: '', tone: 'accent' };
   templateUrl: './forgot-password-page.html',
   styleUrl: './forgot-password-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'forgot-password-page' },
+  host: { class: 'forgot-password-page', '[attr.data-theme]': 'photoTheme' },
 })
 export class ForgotPasswordPage {
   private readonly authApi = inject(AuthApi);
@@ -110,6 +112,8 @@ export class ForgotPasswordPage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly doneDelayMs = inject(FORGOT_PASSWORD_DONE_DELAY_MS);
 
+  /** Dark in both themes – the photo behind is dark. */
+  protected readonly photoTheme = PHOTO_SCREEN_THEME;
   protected readonly logoSrc = AUTH_ASSET.LOGO;
   protected readonly loginPath = APP_PATH.LOGIN;
   protected readonly codeLength = RESET_CODE_LENGTH;
@@ -212,6 +216,8 @@ export class ForgotPasswordPage {
   });
 
   constructor() {
+    holdDarkSystemBarsWhileOpen();
+
     // The design's `setFpCode`: digits only, at most four. The set re-emits so the signal keeps up.
     this.codeForm.controls.code.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))

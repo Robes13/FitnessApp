@@ -16,6 +16,47 @@
  *   on <html>.
  */
 
+/*
+ * The dark values of every token the light theme re-maps. Included in `:root` (dark is the
+ * default) and again for subtrees that must stay dark in the light theme (see the end of the file).
+ */
+@mixin theme-dark-colors {
+  /* Backgrounds and surfaces. */
+  --color-background: var(--palette-background-dark);
+  --color-background-deep: var(--palette-background-deep);
+  --color-surface: rgb(255 255 255 / 5%);
+  --color-surface-2: rgb(255 255 255 / 6%);
+  --color-surface-3: rgb(255 255 255 / 4%);
+  --color-surface-4: rgb(255 255 255 / 7%);
+  --color-surface-hover: rgb(255 255 255 / 10%);
+  --color-control: rgb(255 255 255 / 8%);
+  --color-control-hover: rgb(255 255 255 / 14%);
+  --color-track: rgb(255 255 255 / 15%);
+  --color-sheet: var(--palette-slate-800);
+  --color-scrim: rgb(2 6 23 / 70%);
+
+  /* Borders. */
+  --color-border: rgb(255 255 255 / 10%);
+  --color-border-soft: rgb(255 255 255 / 8%);
+  --color-border-strong: rgb(255 255 255 / 12%);
+  --color-border-stronger: rgb(255 255 255 / 14%);
+
+  /* Dashed borders (18 / 20%) and the checkmark's light border (25%). */
+  --color-border-dashed-soft: rgb(255 255 255 / 18%);
+  --color-border-dashed: rgb(255 255 255 / 20%);
+  --color-border-light: rgb(255 255 255 / 25%);
+
+  /* Text. */
+  --color-text: var(--palette-background-light);
+  --color-text-secondary: var(--palette-slate-400);
+  --color-text-muted: var(--palette-slate-500);
+  --color-text-soft: var(--palette-slate-300);
+  --color-text-soft-strong: var(--palette-slate-200);
+
+  /* Not yet occurred (the week rings' upcoming days) — weaker than `muted`. */
+  --color-text-inactive: var(--palette-slate-600);
+}
+
 :root {
   /* ---------------------------------------------------------------------
    * Palette — raw brand colours. Not used directly by components.
@@ -80,48 +121,17 @@
    * Semantic colours — what components actually consume. Dark defaults.
    * ------------------------------------------------------------------ */
 
-  /* Backgrounds and surfaces. */
-  --color-background: var(--palette-background-dark);
-  --color-background-deep: var(--palette-background-deep);
+  /* Backgrounds, surfaces, borders and text – the part the light theme re-maps. */
+  @include theme-dark-colors;
 
   /* The scanner's camera overlay is dark in both themes. */
   --color-background-scanner: var(--palette-background-abyss);
-  --color-surface: rgb(255 255 255 / 5%);
-  --color-surface-2: rgb(255 255 255 / 6%);
-  --color-surface-3: rgb(255 255 255 / 4%);
-  --color-surface-4: rgb(255 255 255 / 7%);
-  --color-surface-hover: rgb(255 255 255 / 10%);
-  --color-control: rgb(255 255 255 / 8%);
-  --color-control-hover: rgb(255 255 255 / 14%);
 
   /* Dark 55% background for fields on top of photos – the photo is dark in both themes. */
   --color-surface-translucent: rgb(15 23 42 / 55%);
-  --color-track: rgb(255 255 255 / 15%);
-  --color-sheet: var(--palette-slate-800);
-  --color-scrim: rgb(2 6 23 / 70%);
 
-  /* Borders. */
-  --color-border: rgb(255 255 255 / 10%);
-  --color-border-soft: rgb(255 255 255 / 8%);
-  --color-border-strong: rgb(255 255 255 / 12%);
-  --color-border-stronger: rgb(255 255 255 / 14%);
-
-  /* Dashed borders (18 / 20%) and the checkmark's light border (25%). */
-  --color-border-dashed-soft: rgb(255 255 255 / 18%);
-  --color-border-dashed: rgb(255 255 255 / 20%);
-  --color-border-light: rgb(255 255 255 / 25%);
-
-  /* Text. */
-  --color-text: var(--palette-background-light);
-  --color-text-secondary: var(--palette-slate-400);
-  --color-text-muted: var(--palette-slate-500);
-  --color-text-soft: var(--palette-slate-300);
-  --color-text-soft-strong: var(--palette-slate-200);
   --color-text-inverse: var(--palette-background-dark);
   --color-text-on-accent: var(--palette-background-dark);
-
-  /* Not yet occurred (the week rings' upcoming days) — weaker than `muted`. */
-  --color-text-inactive: var(--palette-slate-600);
 
   /* Accent (orange) — action and emphasis. */
   --color-accent: var(--palette-secondary);
@@ -540,6 +550,14 @@
   --color-text-soft: var(--palette-light-ink-soft);
   --color-text-soft-strong: var(--palette-light-ink);
   --color-text-inactive: var(--palette-slate-400);
+}
+
+/*
+ * A subtree marked `data-theme="dark"` keeps the dark colours in the light theme: the photo
+ * screens (login, forgot password), whose photo is dark in both themes.
+ */
+:root[data-theme='light'] [data-theme='dark'] {
+  @include theme-dark-colors;
 }
 
 /*

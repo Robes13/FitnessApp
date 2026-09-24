@@ -24,6 +24,15 @@ html {
   color-scheme: light;
 }
 
+/*
+ * A subtree that stays dark in the light theme (the photo screens), see `_tokens.scss`. It sets
+ * the text colour again, because the colour inherited from `body` is already the light one.
+ */
+:root[data-theme='light'] [data-theme='dark'] {
+  color-scheme: dark;
+  color: var(--color-text);
+}
+
 html,
 body {
   height: 100%;
