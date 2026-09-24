@@ -5,7 +5,7 @@ import { MealId } from '../../../core/models/meal';
 import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
-import { formatDayLabel } from '../../../core/utils/date-format';
+import { formatDayLabel, formatGrams } from '../../../core/utils/date-format';
 import { NOW } from '../../../core/utils/now';
 import { ProgressBarTone } from '../../../shared/components/ui-progress-bar/ui-progress-bar';
 
@@ -90,7 +90,7 @@ export class FoodViewService {
         tone,
         progress,
         percentLabel: `${Math.round(progress * PERCENT)}%`,
-        text: `${value} / ${goal} g`,
+        text: `${formatGrams(value)} / ${goal} g`,
       };
     });
   });

@@ -9,6 +9,7 @@ import {
   formatDayLabel,
   formatDayMonth,
   formatDecimal,
+  formatGrams,
   formatInteger,
   formatRelativeDay,
   formatSignedDecimal,
@@ -75,5 +76,7 @@ describe('date-format', () => {
     expect(formatSignedDecimal(0.6)).toBe('+0,6');
     expect(formatSignedDecimal(-1.25, 2)).toBe('−1,25');
     expect(formatSignedDecimal(0)).toBe('0,0');
+    expect(formatGrams(110.7 + 78.00000000000002)).toBe('188,7');
+    expect(formatGrams(65)).toBe('65');
   });
 });

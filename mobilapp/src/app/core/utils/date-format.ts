@@ -137,6 +137,14 @@ export function formatWeightKg(kg: number): string {
   return kg.toLocaleString(LOCALE, { maximumFractionDigits: 1 });
 }
 
+/**
+ * Grams (or another summed amount) with at most one decimal and a Danish comma, so float
+ * noise from summing never reaches the screen: `188.70000000000002` → `'188,7'`, `65` → `'65'`.
+ */
+export function formatGrams(value: number): string {
+  return value.toLocaleString(LOCALE, { maximumFractionDigits: 1 });
+}
+
 /** Danish integer with a thousands separator: `formatInteger(6000)` → `'6.000'`. */
 export function formatInteger(value: number): string {
   return value.toLocaleString(LOCALE, { maximumFractionDigits: 0 });

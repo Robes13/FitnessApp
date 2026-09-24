@@ -15,6 +15,7 @@ import {
   addDays,
   formatDayLabel,
   formatDecimal,
+  formatGrams,
   formatInteger,
   formatWeightKg,
   isSameDay,
@@ -341,7 +342,7 @@ export class HomeSummaryService {
         label: macro.label,
         value: goal > 0 ? Math.min(1, value / goal) : 0,
         tone: macro.tone,
-        text: `${hasData ? value : NO_VALUE} / ${goal} g`,
+        text: `${hasData ? formatGrams(value) : NO_VALUE} / ${goal} g`,
       };
     });
   }

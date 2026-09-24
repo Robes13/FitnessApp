@@ -55,8 +55,7 @@ describe('CollectionsViewService', () => {
       meta: '2 varer',
       tone: 'positive',
       icon: 'bag',
-      kcal: 420,
-      protein: 34,
+      macrosText: '420 kcal · 34 g protein',
     });
     expect(entries.at(0)?.id.startsWith(BUNDLE_ID_PREFIX)).toBe(true);
   });
@@ -67,7 +66,7 @@ describe('CollectionsViewService', () => {
     expect(view.entriesFor(null)[0]).toMatchObject({
       subtitle: 'Ingen varer endnu',
       meta: '0 varer',
-      kcal: 0,
+      macrosText: '0 kcal · 0 g protein',
     });
   });
 

@@ -10,6 +10,7 @@ import {
 import { Router } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { NewCollectionInput } from '../../../../core/models/food';
+import { formatGrams } from '../../../../core/utils/date-format';
 import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
@@ -89,10 +90,10 @@ export class RecipePage {
       return [];
     }
     return [
-      { label: 'Kalorier', value: `${macros.kcal}`, accent: true },
-      { label: 'Protein', value: `${macros.protein} g`, accent: false },
-      { label: 'Kulhydrat', value: `${macros.carbs} g`, accent: false },
-      { label: 'Fedt', value: `${macros.fat} g`, accent: false },
+      { label: 'Kalorier', value: `${Math.round(macros.kcal)}`, accent: true },
+      { label: 'Protein', value: `${formatGrams(macros.protein)} g`, accent: false },
+      { label: 'Kulhydrat', value: `${formatGrams(macros.carbs)} g`, accent: false },
+      { label: 'Fedt', value: `${formatGrams(macros.fat)} g`, accent: false },
     ];
   });
 

@@ -4,6 +4,7 @@ import { FoodCollection, FoodItem, Ingredient, Macros, Recipe } from '../../../c
 import { MEAL_TONES } from '../../../core/constants/meals';
 import { MealId, MealTone } from '../../../core/models/meal';
 import { CollectionsService } from '../../../core/services/collections/collections';
+import { formatGrams } from '../../../core/utils/date-format';
 
 /** The prefix in front of a collection's id when the whole collection opens as one "bundle". */
 export const BUNDLE_ID_PREFIX = 'col:';
@@ -21,8 +22,8 @@ export interface CollectionEntry {
   readonly subtitle: string;
   /** The small uppercase line above the title, e.g. `Morgenmad · 5 min`. */
   readonly meta: string;
-  readonly kcal: number;
-  readonly protein: number;
+  /** `'420 kcal · 31,5 g protein'` */
+  readonly macrosText: string;
   readonly icon: CollectionIconName;
   readonly tone: MealTone;
 }
@@ -52,6 +53,10 @@ function countLabel(count: number): string {
 
 function itemNames(items: readonly FoodItem[]): string {
   return items.length > 0 ? items.map((item) => item.name).join(', ') : EMPTY_SUBTITLE;
+}
+
+function macrosText({ kcal, protein }: Macros): string {
+  return `${Math.round(kcal)} kcal · ${formatGrams(protein)} g protein`;
 }
 
 function sumMacros(parts: readonly Macros[]): Macros {
@@ -155,8 +160,7 @@ export class CollectionsViewService {
       title: collection.name,
       subtitle: itemNames(collection.items),
       meta: baseName ? `${baseName} · ${count}` : count,
-      kcal: macros.kcal,
-      protein: macros.protein,
+      macrosText: macrosText(macros),
       icon: collection.icon,
       tone: MEAL_TONES[collection.meal],
     };
@@ -168,8 +172,7 @@ export class CollectionsViewService {
       title: item.name,
       subtitle: item.brand ?? item.quantity,
       meta: `${collection.name} · ${item.quantity}`,
-      kcal: item.kcal,
-      protein: item.protein,
+      macrosText: macrosText(item),
       icon: collection.icon,
       tone: MEAL_TONES[collection.meal],
     };
@@ -182,8 +185,7 @@ export class CollectionsViewService {
       title: recipe.title,
       subtitle: recipe.subtitle,
       meta: `${collection?.name ?? recipe.category} · ${recipe.timeMinutes} min`,
-      kcal: recipe.kcal,
-      protein: recipe.protein,
+      macrosText: macrosText(recipe),
       icon: collection?.icon ?? RECIPE_FALLBACK_ICON,
       tone: MEAL_TONES[recipe.meal],
     };
