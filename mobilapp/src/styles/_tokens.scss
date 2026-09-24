@@ -133,6 +133,9 @@
   --color-text-inverse: var(--palette-background-dark);
   --color-text-on-accent: var(--palette-background-dark);
 
+  /* Primary (blue) — the initial-letter avatar's circle. */
+  --color-primary: var(--palette-primary);
+
   /* Accent (orange) — action and emphasis. */
   --color-accent: var(--palette-secondary);
   --color-accent-hover: var(--palette-secondary-light);
