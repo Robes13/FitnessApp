@@ -200,6 +200,16 @@ describe('FoodPicker', () => {
       expect(root.querySelector('.food-picker__create')).not.toBeNull();
     });
 
+    it('explains the empty list before anything is searched', async () => {
+      const { settle, text } = await setup();
+
+      await settle();
+
+      expect(text('app-ui-empty-state')).toBe(
+        'Du har ingen varer endnu. Søg, scan en stregkode eller opret en selv.',
+      );
+    });
+
     it('prefills the query from initialQuery and marks the user own foods', async () => {
       const { root, texts } = await setup({
         prepare: seedOwnFoods,

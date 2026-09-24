@@ -30,10 +30,7 @@
         @if (isSearching()) {
           <div class="food-picker__loading"><app-ui-spinner /></div>
         } @else if (hasNoMatches()) {
-          <app-ui-empty-state
-            class="food-picker__empty"
-            message="Ingen varer matcher din søgning."
-          />
+          <app-ui-empty-state class="food-picker__empty" [message]="emptyMessage()" />
         } @else {
           @for (item of results(); track item.id) {
             <button type="button" class="food-picker__result" (click)="pick(item)">

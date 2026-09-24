@@ -121,6 +121,11 @@ const CREATE_LABEL = {
   blank: 'Opret en vare selv',
   named: (query: string) => `Opret "${query}" som ny vare`,
 } as const;
+/** Before a search the list is the user's own foods, so "nothing matches" would be wrong. */
+const EMPTY_MESSAGE = {
+  blank: 'Du har ingen varer endnu. Søg, scan en stregkode eller opret en selv.',
+  noMatches: 'Ingen varer matcher din søgning.',
+} as const;
 const DUPLICATE_NAME_ERROR = 'Du har allerede en egen vare med det navn.';
 const MACRO_ERROR = 'Protein, kulhydrat og fedt skal være 0 eller større.';
 const KCAL_ERROR = 'Kalorier skal være mindst 1.';
@@ -254,6 +259,9 @@ export class FoodPicker {
   });
   protected readonly hasNoMatches = computed(
     () => !this.isSearching() && this.results().length === 0,
+  );
+  protected readonly emptyMessage = computed(() =>
+    this.query().trim() === '' ? EMPTY_MESSAGE.blank : EMPTY_MESSAGE.noMatches,
   );
   protected readonly createLabel = computed(() => {
     const query = this.query().trim();
