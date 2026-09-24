@@ -80,3 +80,20 @@
   min-height: 0;
   overflow-y: auto;
 }
+
+/// Short phones (e.g. 360 × 640, iPhone SE): the viewport is too low for the design's
+/// full-size display numbers and scenes. Media queries can't read CSS variables, so the
+/// breakpoint lives here. `rem` in a media query is the browser default (16px), not `html`'s.
+@mixin short-screen {
+  @media (max-height: 43.75rem) {
+    @content;
+  }
+}
+
+/// Tablets: both sides at least this long. The phone layout is scaled up rather than
+/// redesigned (see `_tokens.scss`).
+@mixin tablet {
+  @media (min-width: 45rem) and (min-height: 45rem) {
+    @content;
+  }
+}

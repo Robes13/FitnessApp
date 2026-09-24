@@ -41,6 +41,11 @@
     justify-content: space-between;
     gap: var(--space-2-5);
     margin-top: var(--space-1);
+
+    /* Short phones: the segments and tiles show the choice; the readout and figure make room. */
+    @include mixins.short-screen {
+      display: none;
+    }
   }
 
   &__readout {

@@ -43,6 +43,13 @@
     margin-top: var(--space-1);
   }
 
+  /* Short phones: the "Nu: …" line gives the ruler room. */
+  &__now {
+    @include mixins.short-screen {
+      display: none;
+    }
+  }
+
   &__readout {
     display: flex;
     flex-direction: column;

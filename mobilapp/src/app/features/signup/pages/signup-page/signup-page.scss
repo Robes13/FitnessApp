@@ -28,6 +28,10 @@
     &--compact {
       margin-top: var(--space-4);
     }
+
+    @include mixins.short-screen {
+      margin-top: var(--space-4);
+    }
   }
 
   &__error {

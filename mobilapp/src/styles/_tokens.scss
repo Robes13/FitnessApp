@@ -16,6 +16,8 @@
  *   on <html>.
  */
 
+@use 'mixins';
+
 /*
  * The dark values of every token the light theme re-maps. Included in `:root` (dark is the
  * default) and again for subtrees that must stay dark in the light theme (see the end of the file).
@@ -572,4 +574,28 @@
   --safe-area-bottom: 0px;
   /* The room under a screen's last button goes to the content instead; the keyboard is the edge. */
   --layout-page-padding-bottom: var(--space-3);
+}
+
+/*
+ * Short phones: the display numbers and headings step down one size, so a sign-up step's
+ * control (ruler, weekdays …) stays above the fold instead of needing an unseen scroll.
+ */
+:root {
+  @include mixins.short-screen {
+    --font-size-display-11xl: var(--font-size-display-8xl);
+    --font-size-display-10xl: var(--font-size-display-7xl);
+    --font-size-display-3xl: var(--font-size-display-xl);
+  }
+
+  /*
+   * Tablets get the phone layout scaled up – every size is in `rem` – so it fills more of the
+   * screen instead of sitting as a small column. Taller tablets (portrait) scale further.
+   */
+  @include mixins.tablet {
+    font-size: 125%;
+
+    @media (min-height: 60rem) {
+      font-size: 150%;
+    }
+  }
 }

@@ -195,6 +195,8 @@ komponent importerer mixins uden relative stier:
 | `page-screen`       | Route-komponentens rod: flex-kolonne, fuld højde, notch-padding                        |
 | `scroll-area`       | Scroll-container i en side: `flex: 1; min-height: 0; overflow-y: auto; display: block` |
 | `hover`             | Hover-stil kun med en rigtig pegeenhed, så den ikke klæber efter et tryk på touch      |
+| `short-screen`      | Lave telefoner (viewport ≤ 700px høj, fx 360 × 640 og iPhone SE)                       |
+| `tablet`            | Begge sider mindst 720px – bruges til at skalere telefonlayoutet op                    |
 
 `scroll-area` indkapsler designerens hårdt lærte regel: en
 scroll-container **skal** have `min-height: 0` og `display: block`, ellers
@@ -263,6 +265,14 @@ Sidernes lodrette padding er allerede pakket ind i
 slutter med en spacer på `--layout-tab-bar-clearance`
 (`safe-area-bottom + 84px` = barens offset plus dens højde), så indholdet kan
 scrolles fri af baren — også på telefoner med home indicator.
+
+**Lave skærme og tablets.** Alle mål er i `rem`, så skalering sker ét sted i
+`_tokens.scss`: på `short-screen` går de største display-størrelser (`--font-size-display-3xl`,
+`-10xl`, `-11xl`) et trin ned, så signup-trinnenes kontrol (lineal, ugedage, kalender) står over
+folden. Trin, hvor det stadig ikke er nok, skjuler en gentagende eller dekorativ del dér
+(fødselsdagens alders-visning, intensitetens tal og figur, målvægtens "Nu: …"-linje). På `tablet` får `html` 125 % (150 %
+på høje tablets i portræt), så telefonlayoutet fylder skærmen i stedet for at stå som en smal
+kolonne. Telefoner er låst til portræt (Info.plist og AndroidManifest); tablets drejer frit.
 
 `body` har baggrunden `--color-background-deep`, og `app-root` fylder
 viewporten (`100dvh`) og begrænses til `--layout-max-width` af

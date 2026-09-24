@@ -192,6 +192,11 @@
     align-items: flex-end;
     justify-content: space-between;
     margin-top: var(--space-2);
+
+    /* The age readout repeats the selection line above; on short phones the calendar gets the room. */
+    @include mixins.short-screen {
+      display: none;
+    }
   }
 
   &__readout {
