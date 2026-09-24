@@ -5,7 +5,13 @@
     [class.achievements__item--locked]="!item.complete"
   >
     <div class="achievements__medal">
-      <span class="achievements__disc" aria-hidden="true">{{ item.glyph }}</span>
+      <span class="achievements__disc" aria-hidden="true">
+        @if (item.icon; as icon) {
+          <app-ui-icon [name]="icon" size="md" />
+        } @else {
+          {{ item.glyph }}
+        }
+      </span>
       @if (!item.complete) {
         <app-ui-progress-ring
           class="achievements__ring"

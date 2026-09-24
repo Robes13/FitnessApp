@@ -7,14 +7,20 @@ import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { formatDecimal, formatInteger } from '../../../core/utils/date-format';
+import { IconName } from '../../../shared/components/ui-icon/icon-registry';
 
 /** The color family behind a badge. Used for the ring, border, fill, and text alike. */
 export type AchievementTone = 'accent' | 'positive' | 'info' | 'negative' | 'neutral';
 
 export interface Achievement {
   readonly id: string;
-  /** The glyph in the middle of the circle – the design's `icon` (text, not a registry icon). */
+  /** The text in the middle of the circle ("7", "kg" …) – empty when the badge has an `icon`. */
   readonly glyph: string;
+  /**
+   * A registry icon instead of the text. The design's symbol glyphs (✎ ⚡ ☾ ★) are drawn as
+   * icons, because iOS and Android render those characters as different, coloured emoji.
+   */
+  readonly icon: IconName | null;
   readonly label: string;
   readonly tone: AchievementTone;
   /** Share 0..1 of the goal. */
@@ -41,7 +47,8 @@ const TONE_BY_TARGET = {
 
 interface AchievementSeed {
   readonly id: string;
-  readonly glyph: string;
+  readonly glyph?: string;
+  readonly icon?: IconName;
   readonly label: string;
   readonly value: number;
   readonly target: number;
@@ -154,7 +161,7 @@ export class AchievementsService {
       },
       {
         id: 'own-collection',
-        glyph: '✎',
+        icon: 'pencil',
         label: 'Egen samling',
         value: this.collections.userCollections().length > 0 ? 1 : 0,
         target: 1,
@@ -190,7 +197,7 @@ export class AchievementsService {
       },
       {
         id: 'scans-10',
-        glyph: '⚡',
+        icon: 'bolt',
         label: '10 scanninger',
         value: this.scanner.scanCount(),
         target: 10,
@@ -199,7 +206,7 @@ export class AchievementsService {
       },
       {
         id: 'no-late-snack',
-        glyph: '☾',
+        icon: 'moon',
         label: 'Ingen sen snack',
         value: week.hitDays,
         target: 7,
@@ -208,7 +215,7 @@ export class AchievementsService {
       },
       {
         id: 'perfect-week',
-        glyph: '★',
+        icon: 'star',
         label: 'Perfekt uge',
         value: week.hitDays,
         target: 7,
@@ -224,7 +231,8 @@ function toAchievement(seed: AchievementSeed): Achievement {
   const complete = seed.value >= seed.target;
   return {
     id: seed.id,
-    glyph: seed.glyph,
+    glyph: seed.glyph ?? '',
+    icon: seed.icon ?? null,
     label: seed.label,
     tone: seed.tone,
     progress,

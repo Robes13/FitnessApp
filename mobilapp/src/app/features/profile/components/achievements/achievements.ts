@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiProgressRing } from '../../../../shared/components/ui-progress-ring/ui-progress-ring';
 import { Achievement } from '../../services/achievements';
 
@@ -21,7 +22,7 @@ interface AchievementView extends Achievement {
  */
 @Component({
   selector: 'app-achievements',
-  imports: [UiProgressRing],
+  imports: [UiIcon, UiProgressRing],
   templateUrl: './achievements.html',
   styleUrl: './achievements.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
