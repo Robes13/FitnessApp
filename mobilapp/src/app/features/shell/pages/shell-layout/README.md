@@ -3,17 +3,16 @@
 `app-shell-layout` – rammen om tab-skærmene: en `<router-outlet>` til den aktive side og
 `<app-ui-tab-bar [items]="TAB_BAR_ITEMS">` nederst.
 
-| Fil                    | Indhold                                                                      |
-| ---------------------- | ---------------------------------------------------------------------------- |
-| `shell-layout.ts`      | Komponenten. Beregner `showTabBar` som signal ud fra routerens snapshot-træ. |
-| `shell-layout.html`    | Outlet + tab bar i `@if (showTabBar())`.                                     |
-| `shell-layout.scss`    | `:host { position: relative; height: 100%; overflow: hidden }`.              |
-| `shell-layout.spec.ts` | Tester at baren skjules på ruter med `hideTabBar` og mens tastaturet er åbent, og vises igen bagefter.    |
+| Fil                    | Indhold                                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------ |
+| `shell-layout.ts`      | Komponenten. Beregner `showTabBar` som signal ud fra routerens snapshot-træ.                           |
+| `shell-layout.html`    | Outlet + tab bar i `@if (showTabBar())`.                                                               |
+| `shell-layout.scss`    | `:host { position: relative; height: 100%; overflow: hidden }`.                                        |
+| `shell-layout.spec.ts` | Tester at baren skjules på ruter med `hideTabBar` og mens tastaturet er åbent, og vises igen bagefter. |
 
 ## Sådan skjules tab baren
 
 Baren skjules også, mens skærmtastaturet er åbent (`KeyboardService.isOpen`), som i native iOS-apps: tastaturet tager dens plads, og skærmen over beholder hele højden til det fokuserede felt.
-
 
 Efter hver `NavigationEnd` følges `ActivatedRouteSnapshot.firstChild` til den dybeste rute, og
 dennes `data[ROUTE_DATA.HIDE_TAB_BAR]` afgør, om baren tegnes. Snapshot-træet bruges frem for
