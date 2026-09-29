@@ -4,6 +4,8 @@
 # Build output
 bin/
 obj/
+DataProtection-Keys/
+.dev-outbox/
 
 # User-specific files
 *.user
