@@ -20,6 +20,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             BusinessValidationException => (StatusCodes.Status400BadRequest, "Validation failed"),
             UnauthorizedException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
             UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Forbidden"),
+            TooManyRequestsException => (StatusCodes.Status429TooManyRequests, "Too many requests"),
             ExternalServiceConfigurationException => (StatusCodes.Status503ServiceUnavailable, "Service unavailable"),
             _ => (StatusCodes.Status500InternalServerError, "Unexpected server error")
         };

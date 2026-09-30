@@ -14,6 +14,7 @@ public class FoodLog
     public decimal CarbohydratesConsumed { get; set; }
     public decimal FatConsumed { get; set; }
     public DateTime ConsumedAt { get; set; }
+    public MealType MealType { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
 

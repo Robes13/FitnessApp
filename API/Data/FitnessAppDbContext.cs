@@ -157,6 +157,7 @@ public class FitnessAppDbContext(DbContextOptions<FitnessAppDbContext> options) 
         entity.Property(x => x.ExpiresAt).HasColumnType("timestamp with time zone");
         entity.Property(x => x.CreatedAt).HasColumnType("timestamp with time zone");
         entity.Property(x => x.UsedAt).HasColumnType("timestamp with time zone");
+        entity.Property(x => x.NewEmail).HasColumnType("varchar(320)");
         entity.HasIndex(x => x.TokenHash).IsUnique();
         entity.HasIndex(x => x.UserId);
         entity.HasOne(x => x.User).WithMany(x => x.EmailVerificationTokens)
@@ -246,6 +247,7 @@ public class FitnessAppDbContext(DbContextOptions<FitnessAppDbContext> options) 
         entity.HasKey(x => x.FoodLogId);
         entity.Property(x => x.Quantity).HasPrecision(9, 2);
         entity.Property(x => x.Unit).HasConversion<int>();
+        entity.Property(x => x.MealType).HasConversion<int>();
         entity.Property(x => x.CaloriesConsumed).HasPrecision(7, 2);
         entity.Property(x => x.ProteinConsumed).HasPrecision(7, 2);
         entity.Property(x => x.CarbohydratesConsumed).HasPrecision(7, 2);

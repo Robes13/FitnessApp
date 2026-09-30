@@ -1,10 +1,12 @@
 using FitnessApp.Api.Data;
-using FitnessApp.Api.Domain.Enums;
+using FitnessApp.Api.Domain.Entities;
 using FitnessApp.Api.DTOs.Auth;
 using FitnessApp.Api.Exceptions;
+using FitnessApp.Api.Options;
 using FitnessApp.Api.Utilities;
 using FitnessApp.Api.Services.Profiles;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace FitnessApp.Api.Services.Auth;
 
@@ -13,12 +15,14 @@ public sealed class UserAccountService(
     TimeProvider timeProvider,
     IAccountMessageSender messageSender,
     IProfileImageStorage imageStorage,
+    IOptions<AppOptions> appOptions,
     ILogger<UserAccountService> logger) : IUserAccountService
 {
     private readonly FitnessAppDbContext _context = context;
     private readonly TimeProvider _timeProvider = timeProvider;
     private readonly IAccountMessageSender _messageSender = messageSender;
     private readonly IProfileImageStorage _imageStorage = imageStorage;
+    private readonly string _publicBaseUrl = appOptions.Value.PublicBaseUrl;
     private readonly ILogger<UserAccountService> _logger = logger;
 
     public async Task<UserDto> GetAsync(int userId, CancellationToken cancellationToken)
@@ -52,35 +56,34 @@ public sealed class UserAccountService(
         }
 
         string? verificationToken = null;
+        var email = request.Email?.Trim().ToLowerInvariant();
         if (emailChanged)
         {
-            var email = request.Email!.Trim().ToLowerInvariant();
             if (await _context.Users.AnyAsync(candidate => candidate.Email == email
                 && candidate.UserId != userId, cancellationToken))
                 throw new ConflictException("An account with that email already exists.");
-            user.Email = email;
-            user.EmailVerifiedAt = null;
-            user.IsActive = false;
+            // The address only changes when the link sent to it is used (VerifyEmailAsync); the session stays valid.
             verificationToken = SecretToken.Create();
             var now = _timeProvider.GetUtcNow().UtcDateTime;
             await _context.EmailVerificationTokens.Where(token => token.UserId == userId && token.UsedAt == null)
                 .ExecuteUpdateAsync(setters => setters.SetProperty(token => token.UsedAt, now), cancellationToken);
-            _context.EmailVerificationTokens.Add(new Domain.Entities.EmailVerificationToken
+            _context.EmailVerificationTokens.Add(new EmailVerificationToken
             {
                 UserId = userId,
                 TokenHash = SecretToken.Hash(verificationToken),
+                NewEmail = email,
                 CreatedAt = now,
                 ExpiresAt = now.AddHours(24)
             });
-            await _context.RefreshTokens.Where(token => token.UserId == userId && token.State == TokenState.Active)
-                .ExecuteUpdateAsync(setters => setters.SetProperty(token => token.State, TokenState.Revoked), cancellationToken);
         }
 
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         if (verificationToken is not null)
-            await _messageSender.SendAsync(user.Email, "Verify your FitnessApp email",
-                $"Your verification token is: {verificationToken}", cancellationToken);
+        {
+            var (subject, body) = AccountEmails.Verification(_publicBaseUrl, verificationToken);
+            await _messageSender.SendAsync(email!, subject, body, cancellationToken);
+        }
         return new UserDto(user.UserId, user.Email, user.Username, user.IsActive,
             user.EmailVerifiedAt, user.CreatedAt);
     }

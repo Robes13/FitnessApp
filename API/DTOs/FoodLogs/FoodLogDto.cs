@@ -12,4 +12,5 @@ public sealed record FoodLogDto(
     decimal ProteinConsumed,
     decimal CarbohydratesConsumed,
     decimal FatConsumed,
-    DateTime ConsumedAt);
+    DateTime ConsumedAt,
+    MealType MealType);

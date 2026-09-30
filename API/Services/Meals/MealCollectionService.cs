@@ -244,7 +244,8 @@ public sealed class MealCollectionService(
                 item.FoodId,
                 item.Quantity * request.Multiplier,
                 item.Unit,
-                request.ConsumedAt))
+                request.ConsumedAt,
+                request.MealType))
             .ToList();
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);

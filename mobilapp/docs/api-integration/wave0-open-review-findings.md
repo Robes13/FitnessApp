@@ -1,5 +1,10 @@
 # Åbne review-fund fra bølge 0
 
+> **Status:** alle 24 fund er rettet i `f1e2d55` (se `plan-v2.md` §6). Med de nye flows bliver koden
+> bag fire af dem forældet og slettes af `auth` i bølge 2: login efter reset på glemt-siden
+> (`forgot-password-page.ts:320` ×2), `checkVerification` efter genstart
+> (`VERIFICATION_UNCHECKABLE`) og `verified`-flaget i `session.ts`. Teksten nedenfor er historik.
+
 Tre uafhængige reviews af bølge 0 (HTTP-kerne + auth/session) gav 24 fund. **Ingen af dem er rettet endnu**: rettelsesrunden blev stoppet, før den startede. Reviewerne kan tage fejl, så verificér hvert fund mod koden, før det rettes.
 
 ## Arkitektur, i18n og ponytail

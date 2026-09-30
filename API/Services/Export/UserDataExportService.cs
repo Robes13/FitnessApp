@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Security.Cryptography;
 using FitnessApp.Api.Data;
 using FitnessApp.Api.DTOs.Auth;
 using FitnessApp.Api.DTOs.Consent;
@@ -5,7 +7,6 @@ using FitnessApp.Api.DTOs.Export;
 using FitnessApp.Api.DTOs.Profile;
 using FitnessApp.Api.DTOs.Reminders;
 using FitnessApp.Api.DTOs.Settings;
-using FitnessApp.Api.DTOs.Weights;
 using FitnessApp.Api.Exceptions;
 using FitnessApp.Api.Services.Achievements;
 using FitnessApp.Api.Services.FoodLogs;
@@ -13,6 +14,8 @@ using FitnessApp.Api.Services.Foods;
 using FitnessApp.Api.Services.Goals;
 using FitnessApp.Api.Services.Meals;
 using FitnessApp.Api.Services.Profiles;
+using FitnessApp.Api.Services.Weights;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 
 namespace FitnessApp.Api.Services.Export;
@@ -20,11 +23,36 @@ namespace FitnessApp.Api.Services.Export;
 public sealed class UserDataExportService(
     FitnessAppDbContext context,
     IAchievementService achievementService,
-    IProfileImageStorage imageStorage) : IUserDataExportService
+    IProfileImageStorage imageStorage,
+    IDataProtectionProvider dataProtectionProvider) : IUserDataExportService
 {
+    private const string InvalidLink = "Export link is invalid or expired.";
+    private static readonly TimeSpan DownloadTokenLifetime = TimeSpan.FromMinutes(5);
     private readonly FitnessAppDbContext _context = context;
     private readonly IAchievementService _achievementService = achievementService;
     private readonly IProfileImageStorage _imageStorage = imageStorage;
+    private readonly ITimeLimitedDataProtector _protector = dataProtectionProvider
+        .CreateProtector("FitnessApp.DataExport.v1").ToTimeLimitedDataProtector();
+
+    // ponytail: stateless 5-minute token, reusable within its lifetime; add a single-use table only if needed
+    public string CreateDownloadToken(int userId)
+        => _protector.Protect(userId.ToString(CultureInfo.InvariantCulture), DownloadTokenLifetime);
+
+    public async Task<UserDataExportDto> GetByDownloadTokenAsync(string? token, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(token)) throw new NotFoundException(InvalidLink);
+        int userId;
+        try
+        {
+            userId = int.Parse(_protector.Unprotect(token), CultureInfo.InvariantCulture);
+        }
+        catch (Exception exception) when (exception is CryptographicException or FormatException)
+        {
+            throw new NotFoundException(InvalidLink);
+        }
+
+        return await GetAsync(userId, cancellationToken);
+    }
 
     public async Task<UserDataExportDto> GetAsync(int userId, CancellationToken cancellationToken)
     {
@@ -72,8 +100,7 @@ public sealed class UserDataExportService(
             goals.Select(UserGoalService.ToDto).ToList(),
             foods.Select(FoodService.ToDto).ToList(),
             foodLogs.Select(FoodLogService.ToDto).ToList(),
-            weightLogs.Select(log => new WeightLogDto(log.WeightLogId, log.Weight,
-                log.RecordedAt, log.RecordedDate)).ToList(),
+            weightLogs.Select(WeightLogService.ToDto).ToList(),
             collections.Select(MealCollectionService.ToDto).ToList(),
             reminders, settings,
             await _achievementService.GetAllAsync(userId, cancellationToken),
