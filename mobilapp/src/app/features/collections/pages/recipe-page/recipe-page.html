@@ -104,9 +104,14 @@
     (closed)="editOpen.set(false)"
     (updated)="onUpdated($event)"
   />
-  <app-delete-collection-sheet
+  <app-ui-confirm-sheet
     [open]="deleteOpen()"
-    [name]="editable.name"
+    titleKey="collections.deleteSheet.title"
+    accentKey="collections.deleteSheet.titleAccent"
+    bodyKey="collections.deleteSheet.body"
+    [bodyParams]="{ name: editable.name }"
+    confirmKey="collections.deleteSheet.confirm"
+    cancelKey="collections.deleteSheet.cancel"
     (closed)="deleteOpen.set(false)"
     (confirmed)="delete()"
   />

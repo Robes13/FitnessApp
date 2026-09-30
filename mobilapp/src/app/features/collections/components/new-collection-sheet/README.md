@@ -36,11 +36,12 @@ samlingens navn, måltid, ikon og varer, knappen hedder "Gem ændringer", og ark
 - **To veje til en vare:** "Søg vare" åbner `app-food-picker` i et ark oven på dette
   (`layer="sheet-high"`), og "Scan" åbner `app-barcode-scanner`. Begge lægger varen i
   kladden. Et tryk på en kladde-række åbner vælgeren i portionstrinnet og erstatter varen.
-- **Egne varer** gemmes samtidig under "Mine varer" (`FoodLogService.addCustomFood` med
-  vælgerens/scannerens id), så de kan søges frem igen — vælgerens egen tekst lover det
-  ("Gemmes under Mine varer"). Er navnet allerede taget (`DuplicateCustomFoodNameError` —
-  scannerens formular tjekker det ikke), lægges varen stadig i kladden, og arket viser
-  "Du har allerede en egen vare med navnet …" under knapperne.
+- **Egne varer** gemmes samtidig under "Mine varer" i API'et (`FoodLogService.addCustomFood`,
+  både fra "Gem uden at logge" og fra "Gem og føj til samlingen", der kun udsender `picked`), så
+  de kan søges frem igen — vælgerens egen tekst lover det ("Gemmes under Mine varer"). Fejler
+  det (fx `DuplicateCustomFoodNameError`, når navnet er taget på en anden enhed), ligger varen
+  stadig i kladden, og arket viser beskeden under knapperne. Gemningen afbrydes ikke, når arket
+  lukkes.
 - Vare-vælgerens primærknap hedder her **"Gem og føj til samlingen"**. Designet genbruger
   "Gem og log under <måltid>" fra Mad-skærmen, men varen havner i samlingen, ikke i dagens
   log, så teksten ville være forkert.

@@ -24,8 +24,10 @@ import {
 } from '../../../../core/constants/collection-icons';
 import { FoodCollection, FoodItem, NewCollectionInput } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
+import { toApiError } from '../../../../core/utils/api';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import {
+  CUSTOM_FOOD_ID_PREFIX,
   DuplicateCustomFoodNameError,
   FoodLogService,
 } from '../../../../core/services/food-log/food-log';
@@ -153,12 +155,15 @@ export class NewCollectionSheet {
   protected readonly meal = signal<MealId>(DEFAULT_MEAL);
   protected readonly icon = signal<CollectionIconName>(DEFAULT_ICON);
   protected readonly draft = signal<readonly FoodItem[]>([]);
-  /** The custom food whose name was already taken under "My foods"; cleared on reset. */
-  private readonly duplicateCustomFoodName = signal<string | null>(null);
+  /** Why a custom food couldn't be saved under "My foods" (key + params); cleared on reset. */
+  private readonly customFoodFailure = signal<{
+    readonly key: string;
+    readonly params?: Readonly<Record<string, string>>;
+  } | null>(null);
   /** Feedback when a custom food couldn't be saved under "My foods". */
   protected readonly customFoodError = computed(() => {
-    const foodName = this.duplicateCustomFoodName();
-    return foodName === null ? null : this.t(DUPLICATE_CUSTOM_FOOD_MESSAGE_KEY, { foodName });
+    const failure = this.customFoodFailure();
+    return failure === null ? null : this.t(failure.key, failure.params);
   });
 
   private readonly showAllIcons = signal(false);
@@ -275,6 +280,10 @@ export class NewCollectionSheet {
   }
 
   protected onPicked(selection: FoodPickerSelection): void {
+    // "Save and add" only emits `picked`, so a new custom food is saved under "My foods" here.
+    if (selection.item.id.startsWith(`${CUSTOM_FOOD_ID_PREFIX}-`)) {
+      this.saveCustomFood(selection.item);
+    }
     this.putInDraft(selection.item);
     this.closePicker();
   }
@@ -285,11 +294,6 @@ export class NewCollectionSheet {
   }
 
   protected onScanned(item: FoodItem): void {
-    this.putInDraft(item);
-  }
-
-  protected onScannerCustomSaved(item: FoodItem): void {
-    this.saveCustomFood(item);
     this.putInDraft(item);
   }
 
@@ -323,19 +327,19 @@ export class NewCollectionSheet {
   }
 
   /**
-   * Saves under "My foods" with the item's own id. A taken name (the scanner's form doesn't
-   * check it) shows a message instead of failing; the draft is unaffected either way.
+   * Saves under "My foods" in the API. A failure (e.g. a name taken on another device) shows a
+   * message; the draft is unaffected either way. Not cancelled on close, so the save isn't lost.
    */
   private saveCustomFood(item: FoodItem): void {
-    this.duplicateCustomFoodName.set(null);
-    try {
-      this.foodLog.addCustomFood(item, item.id);
-    } catch (error) {
-      if (!(error instanceof DuplicateCustomFoodNameError)) {
-        throw error;
-      }
-      this.duplicateCustomFoodName.set(item.name);
-    }
+    this.customFoodFailure.set(null);
+    this.foodLog.addCustomFood(item).subscribe({
+      error: (error: unknown) =>
+        this.customFoodFailure.set(
+          error instanceof DuplicateCustomFoodNameError
+            ? { key: DUPLICATE_CUSTOM_FOOD_MESSAGE_KEY, params: { foodName: item.name } }
+            : { key: toApiError(error).messageKey },
+        ),
+    });
   }
 
   /** Adds the food or replaces the one being edited. Draft foods get their own id. */
@@ -360,7 +364,7 @@ export class NewCollectionSheet {
     this.meal.set(collection?.meal ?? this.defaultMeal());
     this.icon.set(icon);
     this.draft.set(collection?.items ?? []);
-    this.duplicateCustomFoodName.set(null);
+    this.customFoodFailure.set(null);
     // An edited collection's icon may sit among the folded-away ones – show them all then.
     this.showAllIcons.set(COLLECTION_ICON_NAMES.indexOf(icon) >= COLLECTION_ICON_PREVIEW_COUNT);
     this.pickerOpen.set(false);

@@ -75,8 +75,7 @@ mellemrum mellem elementer); `titleAccentJoined` udelader det. `aria-label` på 
 samme sammensætning.
 
 Er både `title` og `titleAccent` tomme, tegnes der ingen `<h2>`; i stedet vises
-`[sheetTitle]`-slotten i titlens plads, så fx scannerens røde "Ukendt vare"-badge kan stå til
-venstre for luk-knappen.
+`[sheetTitle]`-slotten i titlens plads, så fx en badge kan stå til venstre for luk-knappen.
 
 ## Slots
 

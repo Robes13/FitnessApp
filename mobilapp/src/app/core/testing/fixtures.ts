@@ -1,11 +1,18 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { MEAL_TYPE_BY_MEAL } from '../constants/meals';
+import { CursorPage } from '../models/api';
 import { AuthResponse } from '../models/auth';
 import { FoodItem } from '../models/food';
+import { FoodDto, FoodLogDto } from '../models/food-api';
+import { MealId } from '../models/meal';
 import { UserGoalDto } from '../models/profile-api';
 import { SessionState } from '../models/session';
 import { WeighEntry } from '../models/weight';
+import { FoodLogService } from '../services/food-log/food-log';
+import { toApiUnit } from '../services/food-log/food-log-mapping';
 import { UserProfileService } from '../services/user-profile/user-profile';
+import { TEST_NOW } from './test-providers';
 
 const MS_PER_DAY = 86_400_000;
 
@@ -37,6 +44,67 @@ export const TEST_FOOD: FoodItem = {
   carbs: 22,
   fat: 7,
 };
+
+/** A food in the user's catalogue as the API returns it: per 100 g, no servings unless given. */
+export function testFood(food: Pick<FoodDto, 'foodId' | 'name'> & Partial<FoodDto>): FoodDto {
+  return {
+    barcode: null,
+    caloriesPer100: 0,
+    proteinPer100: 0,
+    carbohydratesPer100: 0,
+    fatPer100: 0,
+    createdByUserId: 1,
+    createdAt: '2026-09-01T08:00:00Z',
+    servings: [],
+    ...food,
+  };
+}
+
+let nextFoodLogId = 1;
+
+/**
+ * `food` logged under `meal` as the API returns it: `quantity` and the macros as consumed.
+ * Put it into the store with `FoodLogService.addLogs()`. Every row gets its own `foodLogId`.
+ */
+export function testFoodLog(
+  food: FoodItem,
+  meal: MealId,
+  consumedAt: Date = TEST_NOW,
+  foodId = 1,
+): FoodLogDto {
+  const [amount = '1', token = 'g'] = food.quantity.split(' ');
+  return {
+    foodLogId: nextFoodLogId++,
+    foodId,
+    foodName: food.name,
+    quantity: Number(amount),
+    unit: toApiUnit(token),
+    caloriesConsumed: food.kcal,
+    proteinConsumed: food.protein,
+    carbohydratesConsumed: food.carbs,
+    fatConsumed: food.fat,
+    consumedAt: consumedAt.toISOString(),
+    mealType: MEAL_TYPE_BY_MEAL[meal],
+  };
+}
+
+/** Loads `FoodLogService` as the API answers it: `foods` as the catalogue and `logs` as the log. */
+export function flushTestFoodLog(
+  foods: readonly FoodDto[] = [],
+  logs: readonly FoodLogDto[] = [],
+): void {
+  const page = <T>(items: readonly T[]): CursorPage<T> => ({
+    items: [...items],
+    nextCursor: null,
+    hasMore: false,
+  });
+  TestBed.inject(FoodLogService).load().subscribe();
+  const http = TestBed.inject(HttpTestingController);
+  http.expectOne({ method: 'GET', url: '/api/v1/foods?limit=100' }).flush(page(foods));
+  http
+    .expectOne((request) => request.method === 'GET' && request.url === '/api/v1/me/food-logs')
+    .flush(page(logs));
+}
 
 /** The account of the auth fixtures below. */
 export const TEST_EMAIL = 'mads@nutrify.dk';

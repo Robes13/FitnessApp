@@ -1,22 +1,25 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
+import { FoodDto } from '../../models/food-api';
+import { flushTestFoodLog, testFood } from '../../testing/fixtures';
 import { provideCoreTestEnvironment } from '../../testing/test-providers';
-import { FoodLogService } from '../food-log/food-log';
 import { FoodSearchService } from './food-search';
 
 describe('FoodSearchService', () => {
   let search: FoodSearchService;
-  let foodLog: FoodLogService;
+
+  /** The catalogue comes newest first from the API. */
+  function catalogue(...names: string[]): FoodDto[] {
+    return names.map((name, index) => testFood({ foodId: names.length - index, name }));
+  }
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: provideCoreTestEnvironment() });
     search = TestBed.inject(FoodSearchService);
-    foodLog = TestBed.inject(FoodLogService);
   });
 
-  function addCustom(name: string): void {
-    foodLog.addCustomFood({ name, quantity: '1 stk', kcal: 200, protein: 20, carbs: 20, fat: 5 });
-  }
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
 
   it('finds nothing until the user has created a food', async () => {
     await expect(firstValueFrom(search.search('havre'))).resolves.toEqual([]);
@@ -24,7 +27,7 @@ describe('FoodSearchService', () => {
   });
 
   it('matches the user own foods case-insensitively', async () => {
-    addCustom('Havregryn');
+    flushTestFoodLog(catalogue('Havregryn', 'Skyr'));
 
     const results = await firstValueFrom(search.search('HAVRE'));
 
@@ -33,9 +36,9 @@ describe('FoodSearchService', () => {
   });
 
   it('returns newest first and at most six results for an empty query', async () => {
-    for (let index = 1; index <= 7; index++) {
-      addCustom(`Vare ${index}`);
-    }
+    flushTestFoodLog(
+      catalogue('Vare 7', 'Vare 6', 'Vare 5', 'Vare 4', 'Vare 3', 'Vare 2', 'Vare 1'),
+    );
 
     const results = await firstValueFrom(search.search(''));
 
@@ -44,7 +47,7 @@ describe('FoodSearchService', () => {
   });
 
   it('returns an empty list when nothing matches', async () => {
-    addCustom('Min bar');
+    flushTestFoodLog(catalogue('Min bar'));
 
     await expect(firstValueFrom(search.search('pizza'))).resolves.toEqual([]);
   });

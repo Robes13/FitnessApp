@@ -1,10 +1,17 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { STORAGE_KEY } from '../../../core/constants/storage-key';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { injectTranslate } from '../../../core/services/language/translate';
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
-import { TEST_FOOD, weighEntry } from '../../../core/testing/fixtures';
+import {
+  TEST_FOOD,
+  flushTestFoodLog,
+  testFood,
+  testFoodLog,
+  weighEntry,
+} from '../../../core/testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { HistoryEntry } from '../models/history';
 import {
@@ -78,7 +85,7 @@ describe('HistoryService', () => {
   it('viser dagens måltider med måltidets navn og kalorier', () => {
     const { history, foodLog } = setup();
 
-    foodLog.add(TEST_FOOD, 'aften');
+    foodLog.addLogs([testFoodLog(TEST_FOOD, 'aften')]);
 
     const entry = findEntry(history, 'Proteinbar');
     expect(entry.kind).toBe('mad');
@@ -90,7 +97,7 @@ describe('HistoryService', () => {
   it('grupperer posterne pr. dag med etiketterne fra designet', () => {
     storeWeighings();
     const { history, foodLog } = setup();
-    foodLog.add(TEST_FOOD, 'morgen');
+    foodLog.addLogs([testFoodLog(TEST_FOOD, 'morgen')]);
 
     expect(history.groups().map((group) => group.label)).toEqual([
       'I dag · 21. sep',
@@ -102,7 +109,7 @@ describe('HistoryService', () => {
   it('filtrerer på posttype og melder tom, når filteret ikke rammer noget', () => {
     storeWeighings();
     const { history, foodLog } = setup();
-    foodLog.add(TEST_FOOD, 'morgen');
+    foodLog.addLogs([testFoodLog(TEST_FOOD, 'morgen')]);
 
     history.setFilter('vejning');
     expect(history.visibleEntries().every((entry) => entry.kind === 'vejning')).toBe(true);
@@ -121,29 +128,12 @@ describe('HistoryService', () => {
   });
 
   it('viser måltider fra tidligere dage med dagens samlede kalorier og makroer', () => {
-    storage.setItem(
-      STORAGE_KEY.FOOD_LOG,
-      JSON.stringify({
-        days: {
-          '2026-09-19': [
-            {
-              ...TEST_FOOD,
-              logId: 'log-1',
-              meal: 'frokost',
-              loggedAt: new Date(2026, 8, 19, 12).toISOString(),
-            },
-            {
-              ...TEST_FOOD,
-              logId: 'log-2',
-              meal: 'aften',
-              loggedAt: new Date(2026, 8, 19, 18).toISOString(),
-            },
-          ],
-        },
-      }),
-    );
     const { history, foodLog } = setup();
-    foodLog.add(TEST_FOOD, 'morgen');
+    foodLog.addLogs([
+      testFoodLog(TEST_FOOD, 'frokost', new Date(2026, 8, 19, 12)),
+      testFoodLog(TEST_FOOD, 'aften', new Date(2026, 8, 19, 18)),
+      testFoodLog(TEST_FOOD, 'morgen'),
+    ]);
 
     const groups = history.groups();
     expect(groups.map((group) => group.label)).toEqual(['I dag · 21. sep', 'Lør. · 19. sep']);
@@ -165,7 +155,7 @@ describe('HistoryService', () => {
   it('kun måltidsposter kan logges igen', () => {
     storeWeighings();
     const { history, foodLog } = setup();
-    foodLog.add(TEST_FOOD, 'morgen');
+    foodLog.addLogs([testFoodLog(TEST_FOOD, 'morgen')]);
 
     expect(findEntry(history, 'Proteinbar').food?.kcal).toBe(210);
     expect(findEntry(history, 'Vejning').food).toBeUndefined();
@@ -176,10 +166,14 @@ describe('HistoryService', () => {
     try {
       const { history, foodLog } = setup();
       const t = TestBed.runInInjectionContext(() => injectTranslate());
-      foodLog.add(TEST_FOOD, 'aften');
+      const logged = testFoodLog(TEST_FOOD, 'aften');
+      flushTestFoodLog([testFood({ foodId: logged.foodId, name: TEST_FOOD.name })], [logged]);
       const entry = findEntry(history, 'Proteinbar');
 
       history.relog(entry);
+      TestBed.inject(HttpTestingController)
+        .expectOne({ method: 'POST', url: '/api/v1/me/food-logs' })
+        .flush({ ...logged, foodLogId: logged.foodLogId + 1000 });
 
       expect(foodLog.entries()).toHaveLength(2);
       expect(foodLog.entries().at(-1)?.meal).toBe('aften');
@@ -199,7 +193,7 @@ describe('HistoryService', () => {
     vi.useFakeTimers();
     try {
       const { history, foodLog } = setup();
-      foodLog.add(TEST_FOOD, 'morgen');
+      foodLog.addLogs([testFoodLog(TEST_FOOD, 'morgen')]);
       history.relog(findEntry(history, 'Proteinbar'));
 
       TestBed.resetTestingModule();

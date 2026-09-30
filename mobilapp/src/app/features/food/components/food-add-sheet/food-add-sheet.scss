@@ -22,7 +22,8 @@
     padding-inline: var(--space-1);
   }
 
-  &__tabs {
+  &__tabs,
+  &__error {
     flex: none;
   }
 

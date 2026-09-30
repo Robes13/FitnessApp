@@ -10,9 +10,10 @@ loggen — "Tilføj mad"-arket og stregkodescanneren.
 | [`components/`](components/README.md) | `FoodMealGroup` (én måltidsgruppe) og `FoodAddSheet` ("Tilføj mad"-arket).   |
 | [`services/`](services/README.md)     | `FoodViewService` — de afledte tal (kaloriering, makrokort, måltidsgrupper). |
 
-Featuren ejer **ingen** data. Loggen bor i `FoodLogService`, kaloriemålet i
-`UserProfileService`, samlingerne i `CollectionsService`, og søgning, portionsvalg og scanning
-ligger i de delte komponenter `app-food-picker` og `app-barcode-scanner`.
+Featuren ejer **ingen** data. Loggen og brugerens katalog bor i `FoodLogService` (API'et),
+kaloriemålet i `UserProfileService`, samlingerne i `CollectionsService`, og søgning,
+portionsvalg og scanning ligger i de delte komponenter `app-food-picker` og
+`app-barcode-scanner`.
 
 ## Flow
 
@@ -22,14 +23,24 @@ FoodPage
 ├── "Tilføj mad" ─────────────────────► FoodAddSheet
 ├── scan-knappen ─────────────────────► app-barcode-scanner
 └── 4 × FoodMealGroup
-     ├── tryk på en vare ─────────────► FoodAddSheet (redigér portionen)
-     ├── ✕ ───────────────────────────► FoodLogService.remove
+     ├── tryk på en vare ─────────────► FoodAddSheet (redigér kun mængden)
+     ├── ✕ ─► UiConfirmSheet ─► "Ja" ─► FoodLogService.remove
      └── "+ Tilføj til <måltid>" ─────► FoodAddSheet (på det måltid)
 ```
 
 `FoodAddSheet` sender én færdig vare tilbage via `selected`. Siden afgør, om den skal
-**opdatere** den vare, der redigeres, eller **lægges** i loggen under det valgte måltid — det er
-det eneste sted, loggen ændres fra denne feature.
+**opdatere** den vare, der redigeres (`update` – kun mængden, spec 3.3), eller **lægges** i
+loggen under det valgte måltid (`add`, `mealType`) — det er det eneste sted, loggen ændres fra
+denne feature. Alle kald er pessimistiske: arket lukker først, når API'et har svaret, `pending`
+viser spinner på knappen og blokerer et nyt kald, og en fejl vises i arket (og under knapperne).
+
+## Tilstande
+
+- **Første indlæsning:** `UiSpinner`, mens madloggen (eller profilen med kaloriemålet)
+  indlæses.
+- **Fejl:** fejler madloggen eller profilen, vises _Vi kunne ikke hente din mad og dit
+  kaloriemål._ og "Prøv igen", der genindlæser den eller de stores, der fejlede.
+- **Tom:** de fire måltidsgrupper viser kun deres tilføj-link.
 
 ## Beslutninger
 
@@ -50,7 +61,12 @@ det eneste sted, loggen ændres fra denne feature.
   `ADD_MEAL_PARAM` er typet mod `QUERY_PARAM.ADD_MEAL` og fejler i build, hvis de to skilles ad.
 - **Scanneren er en søskende til arket, ikke en del af det.** `app-barcode-scanner` udsender
   altid `closed` til sidst, så siden lukker overlayet ét sted og håndterer resultatet
-  (`found`, `customSaved`, `manualRequested`, `noBarcodeRequested`) for sig.
+  (`found`, `manualRequested`, `noBarcodeRequested`) for sig. En scannet vare bliver brugerens
+  egen vare, når den logges (`FoodLogService.add` → `ensureFood`). "Ikke fundet" →
+  "Varen har ingen stregkode" åbner vælgerens fulde "Ny egen vare" (3.1-6a → 3.0).
+- **Fjern kræver bekræftelse** (3.4) i det fælles `shared/components/ui-confirm-sheet`, der ikke
+  kan lukkes med et tryk på baggrunden. Er varen allerede væk (404), fjernes den alligevel, og
+  siden skriver _Varen findes ikke længere._
 - **Ikonflisen på en samling farves efter måltidet** (morgen orange, frokost grøn, aften blå,
   snack rød) som designets `mealTints`. Reglen bor i `core/constants/meals.ts` (`MEAL_TONES`),
   fordi Samlinger-skærmen bruger den samme tabel.

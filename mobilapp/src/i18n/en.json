@@ -183,7 +183,6 @@
       "lookupError": "We couldn't look up the item. Check your internet connection and try again.",
       "invalidBarcode": "The barcode must be {{minDigits}}–{{maxDigits}} digits.",
       "invalidAmount": "Enter an amount between {{minGrams}} and {{maxGrams}} g.",
-      "duplicateName": "You already have a custom item with that name.",
       "servingLabel": "Serving",
       "amountLabel": "Amount ({{unit}})",
       "amountAriaLabelMillilitres": "Amount in millilitres",
@@ -413,7 +412,19 @@
       "eatenOfGoal": "{{eaten}} eaten · goal {{goal}}",
       "addFood": "Add food",
       "scan": "Scan barcode",
-      "duplicateCustomFood": "You already have a custom item named \"{{foodName}}\", so it wasn't saved again."
+      "duplicateCustomFood": "You already have a custom item named \"{{foodName}}\", so it wasn't saved again.",
+      "loadError": "We couldn't load your food and calorie goal. Try again in a moment.",
+      "saveError": "The item wasn't saved. Try again.",
+      "removeError": "The item wasn't removed. Try again.",
+      "notFound": "The item no longer exists.",
+      "retry": "Try again"
+    },
+    "removeSheet": {
+      "title": "Remove",
+      "titleAccent": "item?",
+      "body": "“{{foodName}}” will be removed from today's log.",
+      "confirm": "Yes, remove item",
+      "cancel": "Cancel"
     }
   },
   "history": {
@@ -770,6 +781,8 @@
       "duplicateName": "You already have a custom item with that name.",
       "macroError": "Protein, carbs and fat must be 0 or more.",
       "kcalError": "Calories must be at least 1.",
+      "valueTooLarge": "The value is too large.",
+      "amountTooLarge": "That's too much for one entry – split it up.",
       "stat": {
         "protein": "protein",
         "carbs": "carbs",
@@ -777,7 +790,6 @@
       },
       "ctaAdd": "Add {{amount}} {{unit}}",
       "ctaSave": "Save {{amount}} {{unit}}",
-      "macroBase": "Nutrition per {{quantity}}",
       "baseLabel": "{{quantity}} · {{kcal}} kcal",
       "searchPlaceholder": "Search food, e.g. oats",
       "scanBarcode": "Scan barcode",
@@ -815,18 +827,6 @@
       "amountQuestion": "How much did you have?",
       "rescan": "Scan again",
       "add": "Add",
-      "unknownBadge": "Unknown item",
-      "unknownTitleStart": "That's one we",
-      "unknownTitleAccent": "don't know",
-      "unknownLead": "This barcode isn't in the database. Take the numbers from the package and we'll save it to your own items – next time it's ready in one tap.",
-      "barcodeValue": "Barcode {{barcode}}",
-      "nameLabel": "Name",
-      "namePlaceholder": "e.g. Caramel protein bar",
-      "portionLabel": "Serving",
-      "portionPlaceholder": "e.g. 55 g",
-      "kcalLabel": "Calories",
-      "proteinLabel": "Protein (g)",
-      "saveAndAdd": "Save and add",
       "verdictOver": "This puts you {{kcalOver}} kcal over today's goal. Consider half, or save it for after training.",
       "verdictProtein": "Good protein source – {{protein}} g protein. You'll have {{kcalLeft}} kcal left afterwards.",
       "verdictFits": "Fits in nicely. {{kcalLeft}} kcal left afterwards.",
@@ -835,7 +835,8 @@
         "protein": "protein",
         "carbs": "carbs",
         "fat": "fat"
-      }
+      },
+      "notFound": "The product wasn't found."
     }
   },
   "signup": {

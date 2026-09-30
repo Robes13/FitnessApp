@@ -6,15 +6,14 @@ detaljeskærm, hvor indholdet kan logges som spist.
 Appen har ingen retter og ingen faste samlinger endnu; de skal komme fra backenden. Indtil da
 er listen kun brugerens egne samlinger, og filter-chipsene er bare "Alle".
 
-| Fil / mappe                           | Indhold                                                                                            |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `collections.routes.ts`               | `COLLECTIONS_ROUTES`: listen på `''` og opskriften på `:recipeId` (uden tab bar).                  |
-| `services/collections-view.ts`        | `CollectionsViewService` – oversætter `CollectionsService` til listens rækker og opskriftens data. |
-| `components/meal-picker/`             | De fire måltider som 2×2-gitter. Bruges af både "Ny samling" og opskriften.                        |
-| `components/new-collection-sheet/`    | Arket "Ny samling" / "Rediger samling" med kladde, vare-søgning og stregkodescanner.               |
-| `components/delete-collection-sheet/` | Bekræftelsen før en samling slettes.                                                               |
-| `pages/collections-page/`             | Listeskærmen: titel, filter-chips, kort og knappen, der åbner arket.                               |
-| `pages/recipe-page/`                  | Opskriftsskærmen: ikon-hero, makroer, indhold, "Log X kcal" — og redigér/slet for egne samlinger.  |
+| Fil / mappe                        | Indhold                                                                                            |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `collections.routes.ts`            | `COLLECTIONS_ROUTES`: listen på `''` og opskriften på `:recipeId` (uden tab bar).                  |
+| `services/collections-view.ts`     | `CollectionsViewService` – oversætter `CollectionsService` til listens rækker og opskriftens data. |
+| `components/meal-picker/`          | De fire måltider som 2×2-gitter. Bruges af både "Ny samling" og opskriften.                        |
+| `components/new-collection-sheet/` | Arket "Ny samling" / "Rediger samling" med kladde, vare-søgning og stregkodescanner.               |
+| `pages/collections-page/`          | Listeskærmen: titel, filter-chips, kort og knappen, der åbner arket.                               |
+| `pages/recipe-page/`               | Opskriftsskærmen: ikon-hero, makroer, indhold, "Log X kcal" — og redigér/slet for egne samlinger.  |
 
 ## Rutens id'er
 
@@ -48,8 +47,8 @@ shell'en fjerner tab baren (designets `navVisible`).
   måltid, samlingen hører under (designets `createCol`, der også sætter `colId`).
 - **Redigér og slet sker fra opskriftsskærmen.** Kun brugerens egne samlinger kan ændres;
   faste samlinger (`isBase`) er skrivebeskyttede i `CollectionsService`. Redigering genbruger
-  "Ny samling"-arket, og sletning kræver en bekræftelse (mønstret er kopieret fra profilens
-  log ud-ark, fordi features ikke må importere fra hinanden). Samlingsnavne er unikke uden
+  "Ny samling"-arket, og sletning kræver en bekræftelse i det fælles
+  `shared/components/ui-confirm-sheet` (som Mad også bruger til at fjerne en vare). Samlingsnavne er unikke uden
   hensyn til store/små bogstaver og mellemrum.
 - **Ingen egne opskriftsdata.** Retter, samlinger og varer kommer fra `CollectionsService`;
   featuren tilføjer kun visningslogik.

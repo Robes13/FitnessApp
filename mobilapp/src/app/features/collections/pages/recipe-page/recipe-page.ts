@@ -17,11 +17,11 @@ import { CollectionsService } from '../../../../core/services/collections/collec
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+import { UiConfirmSheet } from '../../../../shared/components/ui-confirm-sheet/ui-confirm-sheet';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-icon-button';
 import { UiPageHeader } from '../../../../shared/components/ui-page-header/ui-page-header';
-import { DeleteCollectionSheet } from '../../components/delete-collection-sheet/delete-collection-sheet';
 import { MealPicker } from '../../components/meal-picker/meal-picker';
 import { NewCollectionSheet } from '../../components/new-collection-sheet/new-collection-sheet';
 import { CollectionsViewService } from '../../services/collections-view';
@@ -49,11 +49,11 @@ interface RecipeStat {
 @Component({
   selector: 'app-recipe-page',
   imports: [
-    DeleteCollectionSheet,
     MealPicker,
     NewCollectionSheet,
     TranslatePipe,
     UiButton,
+    UiConfirmSheet,
     UiEmptyState,
     UiIcon,
     UiIconButton,
@@ -142,10 +142,12 @@ export class RecipePage {
     if (!detail) {
       return;
     }
-    this.foodLog.add(
-      { id: detail.id, name: detail.title, quantity: LOG_QUANTITY, ...detail.macros },
-      this.meal(),
-    );
-    void this.router.navigateByUrl(APP_PATH.FOOD);
+    // ponytail: logs the collection as one food until collections are on the API (wave 3).
+    this.foodLog
+      .add(
+        { id: detail.id, name: detail.title, quantity: LOG_QUANTITY, ...detail.macros },
+        this.meal(),
+      )
+      .subscribe(() => void this.router.navigateByUrl(APP_PATH.FOOD));
   }
 }

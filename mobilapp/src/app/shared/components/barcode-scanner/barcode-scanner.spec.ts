@@ -1,7 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, Subject } from 'rxjs';
-import { STORAGE_KEY } from '../../../core/constants/storage-key';
 import {
   BarcodeScanOutcome,
   ProductLookupResult,
@@ -83,7 +82,6 @@ class FakeProductLookupService {
       mealLabel="Morgenmad"
       (closed)="closedCount = closedCount + 1"
       (found)="found.push($event)"
-      (customSaved)="saved.push($event)"
       (manualRequested)="manualCount = manualCount + 1"
       (noBarcodeRequested)="noBarcodeCount = noBarcodeCount + 1"
     />
@@ -93,7 +91,6 @@ class Host {
   readonly open = signal(true);
   readonly kcalRemaining = signal<number | null>(500);
   readonly found: FoodItem[] = [];
-  readonly saved: FoodItem[] = [];
   closedCount = 0;
   manualCount = 0;
   noBarcodeCount = 0;
@@ -313,52 +310,20 @@ describe('BarcodeScanner', () => {
     expect(buttonByText('Tilføj').disabled).toBe(true);
   });
 
-  it('opens "Unknown item" with the barcode and saves a custom food', async () => {
+  it('says an unknown product was not found and offers the manual form', async () => {
     await scanAndRespond({ status: 'not-found', barcode: BARCODE });
 
-    expect(root.querySelector('.barcode-scanner__badge')?.textContent?.trim()).toBe('Ukendt vare');
-    expect(root.querySelector('.barcode-scanner__code-value')?.textContent?.trim()).toBe(
-      `Stregkode ${BARCODE}`,
-    );
-    const save = buttonByText('Gem og tilføj');
-    expect(save.disabled).toBe(true);
+    expect(hint()).toBe('Varen blev ikke fundet.');
+    expect(root.querySelector('.barcode-scanner__hint--error')).not.toBeNull();
+    expect(dialogs()).toEqual(['Scan stregkode']);
+    expect(findButton('Indtast manuelt i stedet')).toBeDefined();
 
-    typeInto('Navn', '  Proteinbar Karamel ');
-    typeInto('Kalorier', '180');
-    expect(save.disabled).toBe(false);
-
-    save.click();
+    buttonByText('Varen har ingen stregkode').click();
     fixture.detectChanges();
 
-    expect(host.saved).toHaveLength(1);
-    expect(host.saved[0]).toMatchObject({
-      name: 'Proteinbar Karamel',
-      quantity: '1 portion',
-      kcal: 180,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      isCustom: true,
-    });
-    expect(host.saved[0]?.id).toMatch(/^food-/);
+    expect(host.noBarcodeCount).toBe(1);
     expect(host.closedCount).toBe(1);
-  });
-
-  it('refuses a name the user already has a custom food with', async () => {
-    resetComponentTestStorage({
-      [STORAGE_KEY.CUSTOM_FOODS]: [{ ...TEST_FOOD, name: 'Proteinbar Karamel', isCustom: true }],
-    });
-    await scanAndRespond({ status: 'not-found', barcode: BARCODE });
-
-    typeInto('Navn', 'proteinbar karamel ');
-    typeInto('Kalorier', '180');
-
-    expect(formErrors()).toEqual(['Du har allerede en egen vare med det navn.']);
-    expect(buttonByText('Gem og tilføj').disabled).toBe(true);
-
-    typeInto('Navn', 'Proteinbar Vanilje');
-    expect(formErrors()).toEqual([]);
-    expect(buttonByText('Gem og tilføj').disabled).toBe(false);
+    expect(host.found).toEqual([]);
   });
 
   it('shows a network error and retries the same barcode', async () => {

@@ -4,7 +4,7 @@ import { addDays } from '../../../core/utils/date-format';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
-import { flushTestGoal } from '../../../core/testing/fixtures';
+import { flushTestGoal, testFoodLog } from '../../../core/testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { Achievement, AchievementsService } from './achievements';
 
@@ -77,10 +77,12 @@ describe('AchievementsService', () => {
 
     expect(badge(achievements.achievements(), 'meals-10').progressLabel).toBe('0/10 måltider');
 
-    foodLog.add(
-      { id: 'x', name: 'Æble', quantity: '1 stk', kcal: 95, protein: 0, carbs: 25, fat: 0 },
-      'snack',
-    );
+    foodLog.addLogs([
+      testFoodLog(
+        { id: 'x', name: 'Æble', quantity: '1 stk', kcal: 95, protein: 0, carbs: 25, fat: 0 },
+        'snack',
+      ),
+    ]);
 
     expect(badge(achievements.achievements(), 'meals-10').progressLabel).toBe('1/10 måltider');
   });
@@ -105,18 +107,20 @@ describe('AchievementsService', () => {
     expect(badge(achievements.achievements(), 'perfect-week').progressLabel).toBe('0/7 dage');
 
     // Only today has data, so one full daily goal is all the week can count.
-    foodLog.add(
-      {
-        id: 'y',
-        name: 'Stor dag',
-        quantity: '1 portion',
-        kcal: profiles.targets().kcal,
-        protein: 300,
-        carbs: 0,
-        fat: 0,
-      },
-      'aften',
-    );
+    foodLog.addLogs([
+      testFoodLog(
+        {
+          id: 'y',
+          name: 'Stor dag',
+          quantity: '1 portion',
+          kcal: profiles.targets().kcal,
+          protein: 300,
+          carbs: 0,
+          fat: 0,
+        },
+        'aften',
+      ),
+    ]);
 
     expect(badge(achievements.achievements(), 'perfect-week').progressLabel).toBe('1/7 dage');
     expect(badge(achievements.achievements(), 'protein-5').progressLabel).toBe('1/5 dage');

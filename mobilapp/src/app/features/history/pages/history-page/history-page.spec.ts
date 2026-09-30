@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
-import { TEST_FOOD, weighEntry } from '../../../../core/testing/fixtures';
+import { FoodLogService } from '../../../../core/services/food-log/food-log';
+import { TEST_FOOD, testFoodLog, weighEntry } from '../../../../core/testing/fixtures';
 import {
   TEST_NOW,
   provideComponentTestEnvironment,
@@ -10,8 +11,8 @@ import { HistoryPage } from './history-page';
 
 /**
  * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`,
- * a frozen `NOW` and 0ms artificial delays. The app doesn't seed anything itself, so storage
- * is filled here with the weigh-ins and the meal the tests need.
+ * a frozen `NOW`. The app doesn't seed anything itself, so storage is filled here with the
+ * weigh-ins, and the meal is put into the food log.
  */
 
 function rootOf(fixture: ComponentFixture<HistoryPage>): HTMLElement {
@@ -32,12 +33,6 @@ describe('HistoryPage', () => {
         weighEntry('w-2', 75.6, 1, TEST_NOW),
         weighEntry('w-3', 76.1, 3, TEST_NOW),
       ],
-      [STORAGE_KEY.FOOD_LOG]: {
-        date: '2026-09-21',
-        entries: [
-          { ...TEST_FOOD, logId: 'log-1', meal: 'aften', loggedAt: TEST_NOW.toISOString() },
-        ],
-      },
     });
   });
 
@@ -45,6 +40,7 @@ describe('HistoryPage', () => {
     TestBed.configureTestingModule({
       providers: provideComponentTestEnvironment(),
     });
+    TestBed.inject(FoodLogService).addLogs([testFoodLog(TEST_FOOD, 'aften')]);
     const fixture = TestBed.createComponent(HistoryPage);
     fixture.detectChanges();
     return fixture;

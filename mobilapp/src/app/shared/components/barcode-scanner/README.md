@@ -4,7 +4,8 @@ Stregkodescanneren (use casen "logge en madvare med stregkode"). På telefonen �
 kameraet; i browseren – og efter en mislykket scanning – kan stregkodens tal indtastes.
 Stregkoden slås op i Open Food Facts, og
 varen vises med kcal og makroer og en mængde, der kan justeres, før den logges. Kendes varen
-ikke, tilbydes brugeren at oprette den selv.
+ikke, siger overlayet det, og "Varen har ingen stregkode" fører til den fulde formular for en
+egen vare (3.1-6a → 3.0).
 
 ```html
 <app-barcode-scanner
@@ -13,7 +14,6 @@ ikke, tilbydes brugeren at oprette den selv.
   [mealLabel]="mealLabel()"
   (closed)="scannerOpen.set(false)"
   (found)="log($event)"
-  (customSaved)="saveCustom($event)"
   (manualRequested)="openSearch()"
   (noBarcodeRequested)="openNewFood()"
 />
@@ -28,17 +28,16 @@ ikke, tilbydes brugeren at oprette den selv.
 | `mealLabel`     | `''`     | Måltidet varen lægges under. Indgår ikke i teksterne (designet siger blot "Gem og tilføj") |
 | `autoStart`     | `true`   | Åbn kameraet med det samme (kun native). Ellers trykker brugeren "Scan stregkode"          |
 
-| Output               | Betydning                                                                                                                                                     |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `closed`             | Scanneren skal lukkes. **Udsendes til sidst på alle veje ud** – også efter de fire outputs herunder og når kameraet annulleres                                |
-| `found`              | Den fundne vare skaleret til den valgte mængde, `quantity` fx `'150 g'`, id `off-<stregkode>`                                                                 |
-| `customSaved`        | Ukendt vare gemt fra formularen: id med `CUSTOM_FOOD_ID_PREFIX`, navn, portion (standard `'1 portion'`), kcal, protein; kulhydrat og fedt 0; `isCustom: true` |
-| `manualRequested`    | "Indtast manuelt i stedet" (søg i varerne)                                                                                                                    |
-| `noBarcodeRequested` | "Varen har ingen stregkode"                                                                                                                                   |
+| Output               | Betydning                                                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `closed`             | Scanneren skal lukkes. **Udsendes til sidst på alle veje ud** – også efter de tre outputs herunder og når kameraet annulleres |
+| `found`              | Den fundne vare skaleret til den valgte mængde, `quantity` fx `'150 g'`, id `off-<stregkode>`                                 |
+| `manualRequested`    | "Indtast manuelt i stedet" (søg i varerne)                                                                                    |
+| `noBarcodeRequested` | "Varen har ingen stregkode" – forælderen åbner vælgerens "Ny egen vare"                                                       |
 
 Fordi `closed` altid kommer sidst, behøver forælderen kun én handler, der sætter `open` til
-`false`. `found`/`customSaved` skal ikke selv lukke noget. Forælderen gemmer `customSaved` som
-egen vare med det id, den har fået (`addCustomFood(input, item.id)`).
+`false`. `found` skal ikke selv lukke noget. Forælderen logger varen med
+`FoodLogService.add()`, der opretter den som brugerens egen vare (`ensureFood`).
 
 ## Forløb
 
@@ -58,10 +57,11 @@ egen vare med det id, den har fået (`addCustomFood(input, item.id)`).
    tæller én scanning (`recordScan()`) til "10 scans"-badget.
 4. **Resultat** (`ProductLookupResult`):
    - `found` → resultat-arket.
-   - `not-found` → "Ukendt vare"-arket (6a).
+   - `not-found` → _Varen blev ikke fundet._ (rød) over "Indtast manuelt i stedet" og "Varen har
+     ingen stregkode" (6a); stregkodefeltet og "Scan stregkode" står der stadig.
    - `error` → _Vi kunne ikke slå varen op …_ + "Prøv igen", der slår samme stregkode op igen.
-5. "Scan igen" – og luk på begge ark – går tilbage til overlayet; native åbnes kameraet igen
-   efter 300 ms.
+5. "Scan igen" – og luk på resultat-arket – går tilbage til overlayet; native åbnes kameraet
+   igen efter 300 ms.
 
 Alle timere, opslaget og et igangværende kamera-svar annulleres, når `open` bliver `false`,
 når komponenten destrueres og ved hver genstart (`scanRun` gør et sent kamerasvar ugyldigt).
@@ -88,13 +88,6 @@ verdict-boksen.
 `buildScanVerdict(t, kcalRemaining, item)` er eksporteret og testet for sig; teksterne ligger
 under `shared.barcodeScanner.verdict*` i oversættelsesfilerne.
 
-## "Ukendt vare"-arket
-
-Designets formular (`name`, `quantity`, `kcal`, `protein`) med stregkoden vist under
-teksten. "Gem og tilføj" kræver et navn og kcal > 0, og navnet må ikke være en egen vare i
-forvejen: `BarcodeFlowService.isCustomFoodNameTaken()` tjekkes løbende, og _Du har allerede en egen
-vare med det navn._ vises med `UiFormError` under feltet, mens knappen er slået fra.
-
 ## Beslutninger
 
 - **Pluginets færdige `scan()`-UI** frem for et eget kameralag (`startScan()`): det kræver
@@ -113,7 +106,8 @@ vare med det navn._ vises med `UiFormError` under feltet, mens knappen er slået
   `--duration-scan-sweep`, og dens orange skær `--shadow-accent-line-glow`. Linjen fejer,
   mens kameraet er åbent og under opslaget.
 - **Mængdefliserne er egne knapper**, ikke `UiChip`: de har to linjer (etiket + kcal).
-- **"Ukendt vare"-badgen** ligger i `UiSheet`s `[sheetTitle]`-slot.
+- **Ingen "Ukendt vare"-formular** (plan-v2 P12): dens fire felter var en ringere udgave af
+  vælgerens "Ny egen vare" (3.0), som "Varen har ingen stregkode" allerede åbner.
 - Escape lukker overlayet, når det ligger øverst; ligger et ark ovenpå, håndterer `UiSheet`
   Escape.
 - **Tab holdes inde i overlayet** (`role="dialog" aria-modal="true"`) med `FOCUSABLE_SELECTOR`
@@ -121,8 +115,8 @@ vare med det navn._ vises med `UiFormError` under feltet, mens knappen er slået
 - **Fokus gives tilbage** til elementet, der åbnede scanneren, når den lukker eller
   destrueres. Tog overlayet aldrig fokus, rører komponenten ikke fokus.
 - **Domænelogikken ligger i core.** Komponenten injicerer kun facaden `BarcodeFlowService`
-  (`core/services/barcode-flow/barcode-flow.ts`), der samler kamera, opslag, scanningstælleren, skalering,
-  navnetjekket og opbygningen af den egne vare. Komponenten holder selv kun præsentation og
+  (`core/services/barcode-flow/barcode-flow.ts`), der samler kamera, opslag, scanningstælleren og
+  skalering. Komponenten holder selv kun præsentation og
   formular-state (skærm, status, scan-linjen, timere, annullering af et sent svar). Det er den
   mindste ændring, der overholder "shared har ingen forretningslogik": at sende alt ind som
   inputs ville flytte hele scan → opslag → resultat-flowet ud i begge forældre (Mad og

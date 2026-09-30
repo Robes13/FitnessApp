@@ -1,3 +1,4 @@
+import { ApiMealType } from '../models/food-api';
 import { MealDefinition, MealId, MealTone } from '../models/meal';
 
 export const MEAL_IDS: readonly MealId[] = ['morgen', 'frokost', 'aften', 'snack'];
@@ -19,4 +20,20 @@ export const MEAL_TONES: Readonly<Record<MealId, MealTone>> = {
   frokost: 'positive',
   aften: 'selected',
   snack: 'negative',
+};
+
+/** The API's `mealType` per meal (plan-v2 A6). Lunch keeps the label "Frokost". */
+export const MEAL_TYPE_BY_MEAL: Readonly<Record<MealId, ApiMealType>> = {
+  morgen: 'Breakfast',
+  frokost: 'Lunch',
+  aften: 'Dinner',
+  snack: 'Snack',
+};
+
+/** The reverse of `MEAL_TYPE_BY_MEAL` – a logged row's meal. */
+export const MEAL_BY_MEAL_TYPE: Readonly<Record<ApiMealType, MealId>> = {
+  Breakfast: 'morgen',
+  Lunch: 'frokost',
+  Dinner: 'aften',
+  Snack: 'snack',
 };

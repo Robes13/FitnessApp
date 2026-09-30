@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  booleanAttribute,
   computed,
   inject,
   input,
@@ -15,7 +16,6 @@ import { MEALS, MEAL_TONES } from '../../../../core/constants/meals';
 import { FoodCollection, FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections/collections';
-import { FoodLogService } from '../../../../core/services/food-log/food-log';
 import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import {
@@ -27,6 +27,7 @@ import {
 } from '../../../../shared/components/food-picker/food-picker';
 import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
+import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import {
   SegmentOption,
@@ -82,11 +83,21 @@ interface CollectionRowView {
  *
  * The content sits behind `@if (open())`, so the picker starts over every time the sheet opens.
  * The sheet owns no data: everything is passed on to the page via `selected`, `customFoodCreated`
- * and `scanRequested`.
+ * and `scanRequested`. While the page saves (`busy`) the picker's button shows a spinner, and a
+ * failure (`error`) is shown above the content – the sheet stays open, so nothing typed is lost.
  */
 @Component({
   selector: 'app-food-add-sheet',
-  imports: [FoodPicker, TranslatePipe, UiChip, UiEmptyState, UiIcon, UiSegmentedControl, UiSheet],
+  imports: [
+    FoodPicker,
+    TranslatePipe,
+    UiChip,
+    UiEmptyState,
+    UiFormError,
+    UiIcon,
+    UiSegmentedControl,
+    UiSheet,
+  ],
   templateUrl: './food-add-sheet.html',
   styleUrl: './food-add-sheet.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -100,17 +111,18 @@ export class FoodAddSheet {
   readonly editEntry = input<LoggedFood | null>(null);
   /** The picker's starting step – the scanner can send the user straight to "New custom food". */
   readonly startStep = input<FoodPickerStartStep>('search');
+  /** The page is saving the selection. */
+  readonly busy = input(false, { transform: booleanAttribute });
+  /** Why the last save failed (translated), or `null`. */
+  readonly error = input<string | null>(null);
 
   readonly closed = output<void>();
   /** A finished food, ready for the log (from the picker or from a whole collection). */
   readonly selected = output<FoodItem>();
   readonly customFoodCreated = output<FoodItem>();
-  /** A logged custom food's kcal/macros were edited – the page saves the custom food itself. */
-  readonly customFoodEdited = output<FoodItem>();
   readonly scanRequested = output<void>();
 
   private readonly collections = inject(CollectionsService);
-  private readonly foodLog = inject(FoodLogService);
   private readonly t = injectTranslate();
   private readonly keyboardOpen = inject(KeyboardService).isOpen;
 
@@ -132,14 +144,6 @@ export class FoodAddSheet {
   );
 
   protected readonly isEditing = computed(() => this.editEntry() !== null);
-  /** The user's own food the edited entry was logged from; `null` for system foods. */
-  protected readonly editBaseItem = computed<FoodItem | null>(() => {
-    const entry = this.editEntry();
-    if (!entry?.isCustom) {
-      return null;
-    }
-    return this.foodLog.customFoods().find((food) => food.id === entry.id) ?? null;
-  });
   protected readonly title = computed(() =>
     this.t(this.isEditing() ? TITLE_KEY.edit : TITLE_KEY.add),
   );

@@ -1,28 +1,34 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { Router, Routes, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { APP_PATH, APP_ROUTE, QUERY_PARAM } from '../../../../core/constants/app-route';
+import { FoodItem } from '../../../../core/models/food';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
-import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
-import { FOOD_ROUTES } from '../../food.routes';
-import { STORAGE_KEY } from '../../../../core/constants/storage-key';
-import { TEST_GOAL, flushTestGoal } from '../../../../core/testing/fixtures';
+import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import {
-  TEST_NOW,
+  TEST_GOAL,
+  flushTestFoodLog,
+  flushTestGoal,
+  testFood,
+  testFoodLog,
+} from '../../../../core/testing/fixtures';
+import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,
 } from '../../../../core/testing/test-providers';
+import { FOOD_ROUTES } from '../../food.routes';
 
 /**
  * The page renders in the real (jsdom) DOM, because the sheet and scanner read `document.activeElement`.
- * Only timers and "now" are overridden; storage is cleared per test, so `FoodLogService` seeds the demo log.
+ * Only "now" is overridden; the food log and the goal come from `HttpTestingController`.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
 const ROUTES: Routes = [{ path: APP_ROUTE.FOOD, children: FOOD_ROUTES }];
+
+const FOOD_LOGS_URL = '/api/v1/me/food-logs';
 
 /** Fixed daily target from the API, so the macro percentages are the same on every run. */
 const GOAL = {
@@ -33,53 +39,55 @@ const GOAL = {
   targetFat: 56,
 };
 
+const SKYR_BOWL: FoodItem = {
+  id: '1',
+  name: 'Skyr-bowl med bær',
+  quantity: '250 g',
+  kcal: 380,
+  protein: 32,
+  carbs: 38,
+  fat: 9,
+};
+const SALAT: FoodItem = {
+  id: '2',
+  name: 'Kyllingesalat',
+  quantity: '1 portion',
+  kcal: 450,
+  protein: 41,
+  carbs: 18,
+  fat: 22,
+};
+const HAVREGRYN = testFood({
+  foodId: 3,
+  name: 'Havregryn',
+  caloriesPer100: 370,
+  proteinPer100: 13,
+});
+
 function normalize(value: string | null | undefined): string {
   return (value ?? '').replace(/\s+/g, ' ').trim();
 }
 
 describe('FoodPage', () => {
-  afterEach(() => TestBed.inject(HttpTestingController).verify());
+  /** The day's two meals as the API returns them. */
+  const breakfast = testFoodLog(SKYR_BOWL, 'morgen', undefined, 1);
+  const lunch = testFoodLog(SALAT, 'frokost', undefined, 2);
+  let http: HttpTestingController;
 
-  /** The app doesn't seed a food log itself – the tests put in the day's two meals. */
-  beforeEach(() => {
-    resetComponentTestStorage({
-      [STORAGE_KEY.FOOD_LOG]: {
-        date: '2026-09-21',
-        entries: [
-          {
-            id: 'f-skyr',
-            name: 'Skyr-bowl med bær',
-            quantity: '250 g',
-            kcal: 380,
-            protein: 32,
-            carbs: 38,
-            fat: 9,
-            logId: 'log-1',
-            meal: 'morgen',
-            loggedAt: TEST_NOW.toISOString(),
-          },
-          {
-            id: 'f-salat',
-            name: 'Kyllingesalat',
-            quantity: '1 portion',
-            kcal: 450,
-            protein: 41,
-            carbs: 18,
-            fat: 22,
-            logId: 'log-2',
-            meal: 'frokost',
-            loggedAt: TEST_NOW.toISOString(),
-          },
-        ],
-      },
-    });
-  });
+  beforeEach(() => resetComponentTestStorage());
 
-  async function setup(url: string = APP_PATH.FOOD) {
+  afterEach(() => http.verify());
+
+  /** `load: false` leaves the food log's first load to the test. */
+  async function setup(url: string = APP_PATH.FOOD, load = true) {
     TestBed.configureTestingModule({
       providers: [...TEST_PROVIDERS, provideRouter(ROUTES, withComponentInputBinding())],
     });
+    http = TestBed.inject(HttpTestingController);
     flushTestGoal(GOAL);
+    if (load) {
+      flushTestFoodLog([HAVREGRYN], [breakfast, lunch]);
+    }
     const harness = await RouterTestingHarness.create(url);
     const page = harness.routeNativeElement as HTMLElement;
 
@@ -88,12 +96,22 @@ describe('FoodPage', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
       await harness.fixture.whenStable();
     };
+    const click = async (element: Element | null | undefined): Promise<void> => {
+      (element as HTMLElement | null | undefined)?.click();
+      await settle();
+    };
+    const buttonByText = (label: string): HTMLButtonElement | undefined =>
+      Array.from(page.querySelectorAll<HTMLButtonElement>('button')).find(
+        (button) => normalize(button.textContent) === label,
+      );
 
     await settle();
     return {
       harness,
       page,
       settle,
+      click,
+      buttonByText,
       text: (selector: string) => normalize(page.querySelector(selector)?.textContent),
       texts: (selector: string) =>
         Array.from(page.querySelectorAll(selector)).map((node) => normalize(node.textContent)),
@@ -126,119 +144,167 @@ describe('FoodPage', () => {
     expect(page.querySelector('.food-page__clearance')).not.toBeNull();
   });
 
-  it('removes a logged item from its meal group', async () => {
-    const { page, settle, texts } = await setup();
+  it('shows a spinner during the first load', async () => {
+    const { page, settle } = await setup(APP_PATH.FOOD, false);
 
-    page.querySelector<HTMLButtonElement>('.food-meal-group__remove')?.click();
+    TestBed.inject(FoodLogService).load().subscribe();
+    await settle();
+    expect(page.querySelector('.food-page__status app-ui-spinner')).not.toBeNull();
+    expect(page.querySelector('.food-page__summary')).toBeNull();
+
+    http
+      .expectOne('/api/v1/foods?limit=100')
+      .flush({ items: [], nextCursor: null, hasMore: false });
+    http
+      .expectOne((request) => request.url === FOOD_LOGS_URL)
+      .flush({ items: [breakfast], nextCursor: null, hasMore: false });
+    await settle();
+
+    expect(page.querySelector('app-ui-spinner')).toBeNull();
+    expect(page.querySelector('.food-page__summary')).not.toBeNull();
+  });
+
+  it('shows the load error and retries only the failed food log', async () => {
+    const { page, settle, click, buttonByText, texts } = await setup(APP_PATH.FOOD, false);
+
+    TestBed.inject(FoodLogService).load().subscribe();
+    http.expectOne('/api/v1/foods?limit=100').flush(null, { status: 500, statusText: 'Error' });
+    http.expectOne((request) => request.url === FOOD_LOGS_URL);
+    await settle();
+
+    expect(normalize(page.querySelector('.food-page__status')?.textContent)).toContain(
+      'Vi kunne ikke hente din mad og dit kaloriemål.',
+    );
+    await click(buttonByText('Prøv igen'));
+    http
+      .expectOne('/api/v1/foods?limit=100')
+      .flush({ items: [], nextCursor: null, hasMore: false });
+    http
+      .expectOne((request) => request.url === FOOD_LOGS_URL)
+      .flush({ items: [lunch], nextCursor: null, hasMore: false });
     await settle();
 
     expect(texts('.food-meal-group__name-text')).toEqual(['Kyllingesalat']);
-    expect(TestBed.inject(FoodLogService).entries()).toHaveLength(1);
   });
 
-  it('edits the macros of a logged custom food and updates both the food and the entry', async () => {
-    const { page, settle } = await setup();
-    const foodLog = TestBed.inject(FoodLogService);
-    const bar = foodLog.addCustomFood({
-      name: 'Egen bar',
-      quantity: '50 g',
-      kcal: 200,
-      protein: 10,
-      carbs: 20,
-      fat: 8,
+  it('also shows the error state when the profile (the kcal goal) failed to load', async () => {
+    const { page, settle, click, buttonByText } = await setup();
+
+    TestBed.inject(UserProfileService).load().subscribe();
+    const [first] = http.match((request) => request.url.startsWith('/api/v1/me'));
+    first?.flush(null, { status: 500, statusText: 'Error' });
+    await settle();
+
+    expect(page.querySelector('.food-page__status app-ui-empty-state')).not.toBeNull();
+    expect(page.querySelector('.food-page__meals')).toBeNull();
+
+    await click(buttonByText('Prøv igen'));
+    const retried = http.match(() => true);
+    expect(retried.map((request) => request.request.url)).toContain('/api/v1/me/profile');
+    expect(retried.some((request) => request.request.url.startsWith('/api/v1/foods'))).toBe(false);
+  });
+
+  it('removes a logged item only after the confirmation and the API', async () => {
+    const { page, click, buttonByText, text, texts, settle } = await setup();
+
+    await click(page.querySelector('.food-meal-group__remove'));
+    expect(text('app-ui-confirm-sheet .ui-sheet__title')).toBe('Fjern vare?');
+    expect(text('.ui-confirm-sheet__body')).toBe(
+      '«Skyr-bowl med bær» bliver fjernet fra dagens log.',
+    );
+    await click(buttonByText('Annuller'));
+    expect(texts('.food-meal-group__name-text')).toHaveLength(2);
+
+    await click(page.querySelector('.food-meal-group__remove'));
+    await click(buttonByText('Ja, fjern varen'));
+    const request = http.expectOne({ method: 'DELETE', url: `${FOOD_LOGS_URL}/1` });
+    expect(buttonByText('Ja, fjern varen')?.getAttribute('aria-busy')).toBe('true');
+    request.flush(null, { status: 204, statusText: 'No Content' });
+    await settle();
+
+    expect(texts('.food-meal-group__name-text')).toEqual(['Kyllingesalat']);
+    expect(page.querySelector('.ui-confirm-sheet__body')).toBeNull();
+  });
+
+  it('says an item that is already gone no longer exists', async () => {
+    const { page, click, buttonByText, text, texts, settle } = await setup();
+
+    await click(page.querySelector('.food-meal-group__remove'));
+    await click(buttonByText('Ja, fjern varen'));
+    http
+      .expectOne({ method: 'DELETE', url: `${FOOD_LOGS_URL}/1` })
+      .flush(null, { status: 404, statusText: 'Not Found' });
+    await settle();
+
+    expect(text('.food-page__notice')).toBe('Varen findes ikke længere.');
+    expect(texts('.food-meal-group__name-text')).toEqual(['Kyllingesalat']);
+  });
+
+  it('logs a picked food once and closes the sheet when the API has answered', async () => {
+    const { page, click, text, texts, settle } = await setup();
+
+    await click(page.querySelector('.food-page__add'));
+    await click(page.querySelector('.food-picker__result'));
+    await click(page.querySelector('.food-picker__confirm'));
+    const request = http.expectOne({ method: 'POST', url: FOOD_LOGS_URL });
+    expect(request.request.body).toMatchObject({ foodId: 3, quantity: 100, unit: 'Gram' });
+    expect(page.querySelector('.food-picker__confirm')?.getAttribute('aria-busy')).toBe('true');
+    await click(page.querySelector('.food-picker__confirm'));
+
+    request.flush({
+      ...testFoodLog({ ...SKYR_BOWL, name: 'Havregryn', kcal: 370 }, 'morgen'),
+      foodId: 3,
     });
-    foodLog.add({ ...bar, quantity: '100 g', kcal: 400, protein: 20, carbs: 40, fat: 16 }, 'snack');
     await settle();
 
-    page.querySelector<HTMLButtonElement>('[aria-label="Rediger Egen bar"]')?.click();
-    await settle();
-    const fields = Array.from(
-      document.querySelectorAll<HTMLInputElement>('.food-picker__edit-macros input'),
-    );
-    expect(fields.map((field) => field.value)).toEqual(['200', '10', '20', '8']);
-    fields[0]!.value = '250';
-    fields[0]!.dispatchEvent(new Event('input'));
-    await settle();
-    document.querySelector<HTMLButtonElement>('.food-picker__confirm')?.click();
-    await settle();
-
-    expect(foodLog.customFoods()[0]).toMatchObject({ id: bar.id, quantity: '50 g', kcal: 250 });
-    const entry = foodLog.entries().find((candidate) => candidate.id === bar.id);
-    expect(entry).toMatchObject({ quantity: '100 g', kcal: 500, protein: 20 });
+    expect(page.querySelector('.food-picker__confirm')).toBeNull();
+    expect(texts('.food-meal-group__name-text')).toContain('Havregryn');
+    expect(text('.food-page__summary-value')).toBe('800kcal');
   });
 
-  it('lets a custom food created with "Gem og log" be edited afterwards', async () => {
-    const { page, settle } = await setup();
-    const foodLog = TestBed.inject(FoodLogService);
-    const typeInto = async (field: HTMLInputElement | undefined, value: string): Promise<void> => {
-      field!.value = value;
-      field!.dispatchEvent(new Event('input'));
-      await settle();
-    };
+  it('keeps the sheet open and says why when saving fails', async () => {
+    const { page, click, text, settle } = await setup();
 
-    page.querySelector<HTMLButtonElement>('.food-page__add')?.click();
-    await settle();
-    document.querySelector<HTMLButtonElement>('.food-picker__create')?.click();
-    await settle();
-    const newFoodFields = (): HTMLInputElement[] =>
-      Array.from(document.querySelectorAll<HTMLInputElement>('.food-picker__fields input'));
-    await typeInto(newFoodFields()[0], 'Egen bar');
-    await typeInto(newFoodFields()[1], '50');
-    await typeInto(newFoodFields()[2], '200');
-    await typeInto(newFoodFields()[3], '10');
-    document
-      .querySelector<HTMLButtonElement>('.food-picker__actions button[type="submit"]')
-      ?.click();
+    await click(page.querySelector('.food-page__add'));
+    await click(page.querySelector('.food-picker__result'));
+    await click(page.querySelector('.food-picker__confirm'));
+    http
+      .expectOne({ method: 'POST', url: FOOD_LOGS_URL })
+      .flush(
+        { title: 'Validation failed', status: 400 },
+        { status: 400, statusText: 'Bad Request' },
+      );
     await settle();
 
-    const custom = foodLog.customFoods()[0];
-    expect(custom).toMatchObject({ name: 'Egen bar', kcal: 200 });
-    expect(foodLog.entries().find((entry) => entry.name === 'Egen bar')?.id).toBe(custom?.id);
+    expect(text('.food-add-sheet__error')).toBe('Varen blev ikke gemt. Prøv igen.');
+    expect(page.querySelector('.food-picker__confirm')).not.toBeNull();
 
-    page.querySelector<HTMLButtonElement>('[aria-label="Rediger Egen bar"]')?.click();
-    await settle();
-    const macroFields = Array.from(
-      document.querySelectorAll<HTMLInputElement>('.food-picker__edit-macros input'),
-    );
-    expect(macroFields.map((field) => field.value)).toEqual(['200', '10', '0', '0']);
-    await typeInto(macroFields[0], '250');
-    document.querySelector<HTMLButtonElement>('.food-picker__confirm')?.click();
+    await click(page.querySelector('.food-picker__confirm'));
+    http
+      .expectOne({ method: 'POST', url: FOOD_LOGS_URL })
+      .flush(null, { status: 503, statusText: 'Unavailable' });
     await settle();
 
-    expect(foodLog.customFoods()).toHaveLength(1);
-    expect(foodLog.customFoods()[0]).toMatchObject({ id: custom?.id, kcal: 250 });
-    expect(foodLog.entries().find((entry) => entry.id === custom?.id)?.kcal).toBe(250);
+    expect(text('.food-add-sheet__error')).toBe('Serveren svarer ikke lige nu. Prøv igen om lidt.');
   });
 
-  it('still logs a scanned food whose name is taken and explains why it was not saved', async () => {
-    const { harness, settle, text } = await setup();
-    const foodLog = TestBed.inject(FoodLogService);
-    const input = { quantity: '1 stk', kcal: 150, protein: 12, carbs: 0, fat: 0 };
-    foodLog.addCustomFood({ ...input, name: 'Egen bar' });
+  it('edits only the amount of a logged item', async () => {
+    const { page, click, settle } = await setup();
 
-    harness.fixture.debugElement
-      .query(By.directive(BarcodeScanner))
-      .triggerEventHandler('customSaved', {
-        ...input,
-        id: 'food-scan',
-        name: ' egen BAR',
-        isCustom: true,
-      });
+    await click(page.querySelector('[aria-label="Rediger Kyllingesalat"]'));
+    expect(page.querySelectorAll('.food-picker__step--portion input')).toHaveLength(1);
+    await click(page.querySelectorAll('.food-picker__stepper')[1]);
+    await click(page.querySelector('.food-picker__confirm'));
+
+    const request = http.expectOne({ method: 'PATCH', url: `${FOOD_LOGS_URL}/2` });
+    expect(request.request.body).toEqual({ quantity: 2, unit: 'Serving' });
+    request.flush({ ...lunch, quantity: 2, caloriesConsumed: 900 });
     await settle();
 
-    expect(foodLog.customFoods()).toHaveLength(1);
-    expect(foodLog.entries().some((entry) => entry.id === 'food-scan')).toBe(true);
-    expect(text('.food-page__notice')).toContain('allerede en egen vare med navnet');
-  });
-
-  it('only lets the amount be edited for a food that is not the user own', async () => {
-    const { page, settle } = await setup();
-
-    page.querySelector<HTMLButtonElement>('[aria-label="Rediger Kyllingesalat"]')?.click();
-    await settle();
-
-    expect(document.querySelector('.food-picker__amount')).not.toBeNull();
-    expect(document.querySelector('.food-picker__edit-macros')).toBeNull();
+    const entry = TestBed.inject(FoodLogService)
+      .entries()
+      .find((candidate) => candidate.logId === '2');
+    expect(entry).toMatchObject({ quantity: '2 portion', kcal: 900, meal: 'frokost' });
   });
 
   it('opens the add sheet on the meal from the query param and clears it again', async () => {

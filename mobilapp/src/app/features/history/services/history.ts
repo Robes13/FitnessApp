@@ -98,7 +98,7 @@ export class HistoryService {
     if (!food || !meal) {
       return;
     }
-    this.foodLog.add(food, meal);
+    this.foodLog.add(food, meal).subscribe();
     this.reloggedState.set(entry.id);
     this.clearReloggedTimer();
     this.reloggedTimer = setTimeout(() => {

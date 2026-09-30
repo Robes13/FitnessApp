@@ -1,4 +1,5 @@
 import { Component, EnvironmentProviders, Provider } from '@angular/core';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, Routes, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -7,6 +8,7 @@ import { CollectionsService } from '../../../../core/services/collections/collec
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
 import { COLLECTIONS_ROUTES } from '../../collections.routes';
 import { BUNDLE_ID_PREFIX } from '../../services/collections-view';
+import { testFood } from '../../../../core/testing/fixtures';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 
 @Component({ template: '' })
@@ -83,6 +85,25 @@ describe('RecipePage', () => {
 
     await click(button('Aftensmad'));
     await click(page.querySelector('.recipe-page__log-button'));
+    // Until collections are on the API, the bundle is logged as one food of its own.
+    const http = TestBed.inject(HttpTestingController);
+    const food = testFood({ foodId: 5, name: 'Meal prep', caloriesPer100: 240 });
+    http.expectOne({ method: 'POST', url: '/api/v1/foods' }).flush(food);
+    http
+      .expectOne({ method: 'PUT', url: '/api/v1/foods/5/servings/Serving' })
+      .flush({ foodServingId: 1, unit: 'Serving', gramsPerUnit: 100 });
+    const log = http.expectOne({ method: 'POST', url: '/api/v1/me/food-logs' });
+    expect(log.request.body).toMatchObject({ foodId: 5, quantity: 1, mealType: 'Dinner' });
+    log.flush({
+      ...log.request.body,
+      foodLogId: 1,
+      foodName: 'Meal prep',
+      caloriesConsumed: 240,
+      proteinConsumed: 28,
+      carbohydratesConsumed: 6,
+      fatConsumed: 11,
+    });
+    await click(null);
 
     const logged = TestBed.inject(FoodLogService)
       .entries()
