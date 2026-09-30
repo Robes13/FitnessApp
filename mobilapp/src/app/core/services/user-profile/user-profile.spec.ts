@@ -3,7 +3,12 @@ import { DEFAULT_PROFILE } from '../../constants/profile-defaults';
 import { STORAGE_KEY } from '../../constants/storage-key';
 import { FakeStorage, createFakeStorage } from '../../testing/fake-document';
 import { provideCoreTestEnvironment } from '../../testing/test-providers';
+import { injectTranslate } from '../language/translate';
 import { UserProfileService } from './user-profile';
+
+function translate(key: string): string {
+  return TestBed.runInInjectionContext(() => injectTranslate())(key);
+}
 
 describe('UserProfileService', () => {
   let storage: FakeStorage;
@@ -25,7 +30,7 @@ describe('UserProfileService', () => {
     expect(service.initial()).toBe('');
     expect(service.age()).toBe(0);
     expect(service.bmi()).toBe(23.7);
-    expect(service.activityLevel().label).toBe('Aktiv');
+    expect(translate(service.activityLevel().labelKey)).toBe('Aktiv');
     expect(service.trainingFrequency()).toBe(0);
     expect(service.intensity()).toBeNull();
     expect(service.goalDefinition()).toBeNull();
@@ -49,8 +54,8 @@ describe('UserProfileService', () => {
     expect(service.initial()).toBe('A');
     expect(service.age()).toBe(28);
     expect(service.intensity()?.id).toBe('moderat');
-    expect(service.goalDefinition()?.label).toBe('Tabe mig');
-    expect(service.paceDefinition()?.rateLabel).toBe('0,5 kg/uge');
+    expect(translate(service.goalDefinition()?.labelKey ?? '')).toBe('Tabe mig');
+    expect(translate(service.paceDefinition()?.rateLabelKey ?? '')).toBe('0,5 kg/uge');
     expect(JSON.parse(storage.getItem(STORAGE_KEY.PROFILE) ?? '{}')).toMatchObject({
       username: 'anna',
       goal: 'tabe',

@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { WeightChangeTone } from '../../services/weight-view';
 import {
@@ -8,9 +10,9 @@ import {
 } from './weight-chart-geometry';
 
 /** A curve needs two weigh-ins; with one, the user is told the curve is on its way. */
-const EMPTY_MESSAGE = {
-  none: 'Ingen vægtdata endnu.',
-  single: 'Din kurve vises, når du har vejet dig igen.',
+const EMPTY_MESSAGE_KEY = {
+  none: 'weight.chart.emptyNone',
+  single: 'weight.chart.emptySingle',
 } as const;
 
 /**
@@ -22,7 +24,7 @@ const EMPTY_MESSAGE = {
  */
 @Component({
   selector: 'app-weight-chart',
-  imports: [UiEmptyState],
+  imports: [TranslatePipe, UiEmptyState],
   templateUrl: './weight-chart.html',
   styleUrl: './weight-chart.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +45,8 @@ export class WeightChart {
   readonly deltaText = input.required<string>();
   readonly deltaTone = input.required<WeightChangeTone>();
 
+  private readonly t = injectTranslate();
+
   protected readonly width = WEIGHT_CHART_WIDTH;
   protected readonly height = WEIGHT_CHART_HEIGHT;
   protected readonly viewBox = `0 0 ${WEIGHT_CHART_WIDTH} ${WEIGHT_CHART_HEIGHT}`;
@@ -52,10 +56,13 @@ export class WeightChart {
   );
   protected readonly hasSeries = computed(() => this.geometry().linePath !== '');
   protected readonly emptyMessage = computed(() =>
-    this.seriesKg().length === 0 ? EMPTY_MESSAGE.none : EMPTY_MESSAGE.single,
+    this.t(this.seriesKg().length === 0 ? EMPTY_MESSAGE_KEY.none : EMPTY_MESSAGE_KEY.single),
   );
-  protected readonly chartLabel = computed(
-    () => `Vægtudvikling, ${this.rangeLabel().toLowerCase()}: ${this.deltaText()}`,
+  protected readonly chartLabel = computed(() =>
+    this.t('weight.chart.ariaLabel', {
+      range: this.rangeLabel().toLowerCase(),
+      delta: this.deltaText(),
+    }),
   );
   protected readonly deltaClass = computed(() => `weight-chart__delta--${this.deltaTone()}`);
 }

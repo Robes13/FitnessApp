@@ -1,8 +1,14 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  booleanAttribute,
+  computed,
+  input,
+  output,
+} from '@angular/core';
+import { injectTranslate } from '../../../core/services/language/translate';
 import { UiIcon } from '../ui-icon/ui-icon';
 import { UiIconButton } from '../ui-icon-button/ui-icon-button';
-
-const DEFAULT_BACK_LABEL = 'Tilbage';
 
 /**
  * Page header for subpages (Recipe, Profile): round back button on the left, centered
@@ -22,10 +28,13 @@ const DEFAULT_BACK_LABEL = 'Tilbage';
 })
 export class UiPageHeader {
   readonly title = input.required<string>();
-  readonly backLabel = input(DEFAULT_BACK_LABEL);
+  readonly backLabel = input<string>();
   readonly hideBack = input(false, { transform: booleanAttribute });
 
   readonly back = output<void>();
+
+  private readonly t = injectTranslate();
+  protected readonly backLabelText = computed(() => this.backLabel() ?? this.t('common.back'));
 
   protected onBack(): void {
     this.back.emit();

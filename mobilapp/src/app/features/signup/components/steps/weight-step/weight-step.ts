@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../../../core/constants/nutrition';
 import { formatWeightKg } from '../../../../../core/utils/date-format';
 import { Figure, bandToneForGender } from '../../../../../shared/components/figure';
@@ -10,7 +11,6 @@ import { SignupStateService } from '../../../services/signup-state';
 
 /** Design's `wMinus`/`wPlus`: one kilo at a time. */
 const STEP_KG = 1;
-const FIGURE_LABEL = 'Figur med håndvægt';
 
 /**
  * Step 4 (`s2`): the weight as a large orange number with a ruler from 30 to 300 kg.
@@ -19,7 +19,7 @@ const FIGURE_LABEL = 'Figur med håndvægt';
  */
 @Component({
   selector: 'app-weight-step',
-  imports: [Figure, UiRuler],
+  imports: [Figure, TranslatePipe, UiRuler],
   templateUrl: './weight-step.html',
   styleUrl: './weight-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,7 +31,6 @@ export class WeightStep {
   protected readonly rulerGlowStrength = RULER_BLEED_IDLE_STRONG;
   protected readonly minKg = WEIGHT_MIN_KG;
   protected readonly maxKg = WEIGHT_MAX_KG;
-  protected readonly figureLabel = FIGURE_LABEL;
 
   protected readonly weightText = computed(() => formatWeightKg(this.state.weightKg()));
   protected readonly bandTone = computed(() => bandToneForGender(this.state.gender()));

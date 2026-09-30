@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
@@ -18,7 +19,7 @@ const RELOG_ICON_STROKE_WIDTH = 2.4;
   templateUrl: './history-page.html',
   styleUrl: './history-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiChip, UiEmptyState, UiIcon, UiIconButton],
+  imports: [TranslatePipe, UiChip, UiEmptyState, UiIcon, UiIconButton],
   providers: [HistoryService],
   host: { class: 'history-page' },
 })

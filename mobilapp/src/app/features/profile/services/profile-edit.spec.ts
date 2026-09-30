@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { firstValueFrom } from 'rxjs';
 import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
@@ -173,13 +172,5 @@ describe('ProfileEditService', () => {
     editor.applyEmail('  mads@mail.dk ');
 
     expect(profiles.profile().email).toBe('mads@mail.dk');
-  });
-
-  it('cannot change the password without a backend', async () => {
-    const { editor } = setup();
-
-    await expect(firstValueFrom(editor.changePassword('langnokkode'))).rejects.toEqual({
-      message: 'Der er ingen forbindelse til en server endnu.',
-    });
   });
 });

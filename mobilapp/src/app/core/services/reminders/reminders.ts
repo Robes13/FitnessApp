@@ -12,7 +12,7 @@ import {
 import {
   DEFAULT_REMINDER_SETTINGS,
   REMINDER_DEFINITIONS,
-  REMINDER_ERROR,
+  REMINDER_ERROR_KEY,
   REMINDER_IDS,
   REMINDER_NOTIFICATION_IDS,
 } from '../../constants/reminders';
@@ -27,6 +27,8 @@ import {
   WeekdayIndex,
 } from '../../models/reminder';
 import { isClockTime } from '../../utils/clock-time';
+import { LanguageService } from '../language/language';
+import { injectTranslate } from '../language/translate';
 import { REMINDER_NOTIFIER } from './reminder-notifier';
 import { SessionService } from '../session/session';
 import { StorageService } from '../storage/storage';
@@ -44,9 +46,9 @@ const ASKABLE_PERMISSIONS: readonly ReminderPermission[] = ['unknown', 'prompt']
  *
  * Scheduling is idempotent: every sync cancels all of the app's fixed notification ids and
  * schedules the enabled ones again. A sync runs on start (the effect's first run), whenever
- * the settings, the master switch or the login state change, after a permission request and
- * when the app returns to the foreground (the user may have changed the permission in the
- * phone's settings). Logging out – and the reload after deleting the account – therefore
+ * the settings, the master switch, the login state or the language (the notification texts)
+ * change, after a permission request and when the app returns to the foreground (the user may
+ * have changed the permission in the phone's settings). Logging out – and the reload after deleting the account – therefore
  * cancels everything.
  *
  * Permission is never requested on its own; only when the user turns a reminder or the
@@ -62,11 +64,14 @@ export class ReminderService {
   private readonly profiles = inject(UserProfileService);
   private readonly session = inject(SessionService);
   private readonly notifier = inject(REMINDER_NOTIFIER);
+  private readonly language = inject(LanguageService);
+  private readonly t = injectTranslate();
 
   private readonly settingsState = signal<ReminderSettings>(this.restore());
   private readonly permissionState = signal<ReminderPermission>(
     this.notifier.isAvailable() ? 'unknown' : 'unsupported',
   );
+  /** Translation key of the scheduling error, else `null`. */
   private readonly scheduleErrorState = signal<string | null>(null);
   /**
    * The permission state when asking for permission failed, else `null`. That error stays until
@@ -79,10 +84,14 @@ export class ReminderService {
 
   readonly settings: Signal<ReminderSettings> = this.settingsState.asReadonly();
   readonly permission: Signal<ReminderPermission> = this.permissionState.asReadonly();
-  /** Danish, user-facing text when scheduling or asking for permission failed, else `null`. */
-  readonly error: Signal<string | null> = computed(() =>
-    this.permissionErrorFor() === null ? this.scheduleErrorState() : REMINDER_ERROR.PERMISSION,
-  );
+  /** User-facing text (in the app's language) when scheduling or asking for permission failed, else `null`. */
+  readonly error: Signal<string | null> = computed(() => {
+    const key =
+      this.permissionErrorFor() === null
+        ? this.scheduleErrorState()
+        : REMINDER_ERROR_KEY.PERMISSION;
+    return key === null ? null : this.t(key);
+  });
   readonly isSupported = computed(() => this.permissionState() !== 'unsupported');
   readonly masterEnabled = computed(() => this.profiles.profile().notificationsEnabled);
   readonly enabledCount = computed(
@@ -97,6 +106,7 @@ export class ReminderService {
       this.settingsState();
       this.masterEnabled();
       this.session.isLoggedIn();
+      this.language.language();
       untracked(() => void this.sync());
     });
 
@@ -176,7 +186,7 @@ export class ReminderService {
       this.scheduleErrorState.set(null);
     } catch (error: unknown) {
       console.error('ReminderService kunne ikke planlægge påmindelserne.', error);
-      this.scheduleErrorState.set(REMINDER_ERROR.SCHEDULE);
+      this.scheduleErrorState.set(REMINDER_ERROR_KEY.SCHEDULE);
     }
   }
 
@@ -200,8 +210,8 @@ export class ReminderService {
         const setting = settings[definition.id];
         return {
           notificationId: definition.notificationId,
-          title: definition.title,
-          body: definition.body,
+          title: this.t(definition.titleKey),
+          body: this.t(definition.bodyKey),
           time: setting.time,
           weekday: definition.allowsWeekday ? setting.weekday : null,
         };

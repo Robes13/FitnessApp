@@ -6,6 +6,8 @@ import {
   linkedSignal,
   output,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { WEIGHT_MIN_KG } from '../../../../core/constants/nutrition';
 import { formatDecimal } from '../../../../core/utils/date-format';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
@@ -22,7 +24,7 @@ import { WeightRulerInput } from '../weight-ruler-input/weight-ruler-input';
  */
 @Component({
   selector: 'app-weight-edit-sheet',
-  imports: [UiButton, UiSheet, WeightRulerInput],
+  imports: [TranslatePipe, UiButton, UiSheet, WeightRulerInput],
   templateUrl: './weight-edit-sheet.html',
   styleUrl: './weight-edit-sheet.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,11 +36,13 @@ export class WeightEditSheet {
   readonly removed = output<void>();
   readonly closed = output<void>();
 
+  private readonly t = injectTranslate();
+
   protected readonly isOpen = computed(() => this.row() !== null);
   /** `'I dag kl. 07:45'`. */
   protected readonly whenText = computed(() => {
     const row = this.row();
-    return row ? `${row.date} kl. ${row.time}` : '';
+    return row ? this.t('weight.editSheet.when', { date: row.date, time: row.time }) : '';
   });
 
   // Falls back to the ruler's minimum only while closed, so the ruler never gets an invalid value.

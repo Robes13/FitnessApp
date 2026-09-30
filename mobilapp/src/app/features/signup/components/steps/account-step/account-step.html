@@ -1,25 +1,28 @@
-<h1 class="account-step__title">Opret din <span class="account-step__title-accent">konto</span></h1>
-<p class="account-step__subtitle">Vælg et brugernavn og en adgangskode.</p>
+<h1 class="account-step__title">
+  {{ 'signup.accountStep.titleStart' | translate }}
+  <span class="account-step__title-accent">{{ 'signup.accountStep.titleAccent' | translate }}</span>
+</h1>
+<p class="account-step__subtitle">{{ 'signup.accountStep.subtitle' | translate }}</p>
 
 <form class="account-step__fields" [formGroup]="form" (submit)="$event.preventDefault()">
   <app-ui-text-input
     formControlName="username"
-    placeholder="Brugernavn"
-    ariaLabel="Brugernavn"
+    [placeholder]="'signup.accountStep.username' | translate"
+    [ariaLabel]="'signup.accountStep.username' | translate"
     autocomplete="username"
   />
   <app-ui-text-input
     formControlName="password"
     type="password"
-    placeholder="Adgangskode (mindst 8 tegn)"
-    ariaLabel="Adgangskode"
+    [placeholder]="'signup.accountStep.passwordPlaceholder' | translate"
+    [ariaLabel]="'signup.accountStep.password' | translate"
     autocomplete="new-password"
   />
   <app-ui-text-input
     formControlName="passwordRepeat"
     type="password"
-    placeholder="Gentag adgangskode"
-    ariaLabel="Gentag adgangskode"
+    [placeholder]="'signup.accountStep.passwordRepeat' | translate"
+    [ariaLabel]="'signup.accountStep.passwordRepeat' | translate"
     autocomplete="new-password"
     [invalid]="mismatch()"
     invalidTone="accent"

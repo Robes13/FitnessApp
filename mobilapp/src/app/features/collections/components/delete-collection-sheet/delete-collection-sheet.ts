@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
 
@@ -10,7 +11,7 @@ import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
  */
 @Component({
   selector: 'app-delete-collection-sheet',
-  imports: [UiButton, UiSheet],
+  imports: [TranslatePipe, UiButton, UiSheet],
   templateUrl: './delete-collection-sheet.html',
   styleUrl: './delete-collection-sheet.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

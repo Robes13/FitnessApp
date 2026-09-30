@@ -1,6 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { APP_PATH } from '../../../../core/constants/app-route';
+import { LANGUAGE_OPTIONS } from '../../../../core/constants/language';
+import { Language } from '../../../../core/models/language';
+import { LanguageService } from '../../../../core/services/language/language';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { ReminderService } from '../../../../core/services/reminders/reminders';
 import { SessionService } from '../../../../core/services/session/session';
 import { ThemeService } from '../../../../core/services/theme/theme';
@@ -9,6 +14,7 @@ import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiPageHeader } from '../../../../shared/components/ui-page-header/ui-page-header';
 import { UiRowButton } from '../../../../shared/components/ui-row-button/ui-row-button';
+import { UiSegmentedControl } from '../../../../shared/components/ui-segmented-control/ui-segmented-control';
 import { UiSwitch } from '../../../../shared/components/ui-switch/ui-switch';
 import { Achievements } from '../../components/achievements/achievements';
 import { ProfileAvatar } from '../../../../shared/components/profile-avatar/profile-avatar';
@@ -21,11 +27,11 @@ import { AchievementsService } from '../../services/achievements';
 import { ProfileEditRowId } from '../../services/profile-edit';
 import { ProfileRowsService } from '../../services/profile-rows';
 
-const REMINDERS_VALUE = {
-  OFF: 'Fra',
-  NONE: 'Ingen',
-  ONE_ACTIVE: 'aktiv',
-  MANY_ACTIVE: 'aktive',
+const REMINDERS_VALUE_KEY = {
+  OFF: 'profile.page.remindersOff',
+  NONE: 'profile.page.remindersNone',
+  ACTIVE_ONE: 'profile.page.remindersActiveOne',
+  ACTIVE_MANY: 'profile.page.remindersActiveMany',
 } as const;
 
 /**
@@ -45,10 +51,12 @@ const REMINDERS_VALUE = {
     ProfileLogoutSheet,
     ProfilePhotoSheet,
     ProfileRemindersSheet,
+    TranslatePipe,
     UiButton,
     UiIcon,
     UiPageHeader,
     UiRowButton,
+    UiSegmentedControl,
     UiSwitch,
   ],
   templateUrl: './profile-page.html',
@@ -61,9 +69,11 @@ export class ProfilePage {
   private readonly profiles = inject(UserProfileService);
   private readonly session = inject(SessionService);
   private readonly theme = inject(ThemeService);
+  private readonly languageService = inject(LanguageService);
   private readonly rows = inject(ProfileRowsService);
   private readonly achievementsService = inject(AchievementsService);
   private readonly reminders = inject(ReminderService);
+  private readonly t = injectTranslate();
 
   protected readonly displayName = this.profiles.displayName;
   protected readonly initial = this.profiles.initial;
@@ -76,17 +86,21 @@ export class ProfilePage {
   protected readonly accountRows = this.rows.accountRows;
   protected readonly achievements = this.achievementsService.achievements;
   protected readonly isLight = this.theme.isLight;
+  protected readonly languages = LANGUAGE_OPTIONS;
+  protected readonly language = this.languageService.language;
   protected readonly notificationsEnabled = this.reminders.masterEnabled;
   /** The "Påmindelser" row's value: "Fra", "Ingen", "1 aktiv" or "3 aktive". */
   protected readonly remindersValue = computed(() => {
     const count = this.reminders.enabledCount();
     if (!this.reminders.masterEnabled()) {
-      return REMINDERS_VALUE.OFF;
+      return this.t(REMINDERS_VALUE_KEY.OFF);
     }
     if (count === 0) {
-      return REMINDERS_VALUE.NONE;
+      return this.t(REMINDERS_VALUE_KEY.NONE);
     }
-    return `${count} ${count === 1 ? REMINDERS_VALUE.ONE_ACTIVE : REMINDERS_VALUE.MANY_ACTIVE}`;
+    return this.t(count === 1 ? REMINDERS_VALUE_KEY.ACTIVE_ONE : REMINDERS_VALUE_KEY.ACTIVE_MANY, {
+      count,
+    });
   });
 
   protected readonly editRow = signal<ProfileEditRowId | null>(null);
@@ -147,6 +161,12 @@ export class ProfilePage {
 
   protected setLight(light: boolean): void {
     this.theme.set(light ? 'light' : 'dark');
+  }
+
+  protected setLanguage(language: Language | null): void {
+    if (language !== null) {
+      void this.languageService.set(language);
+    }
   }
 
   protected setNotifications(enabled: boolean): void {

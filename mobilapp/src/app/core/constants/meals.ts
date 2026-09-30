@@ -3,10 +3,10 @@ import { MealDefinition, MealId, MealTone } from '../models/meal';
 export const MEAL_IDS: readonly MealId[] = ['morgen', 'frokost', 'aften', 'snack'];
 
 export const MEALS: readonly MealDefinition[] = [
-  { id: 'morgen', label: 'Morgenmad' },
-  { id: 'frokost', label: 'Frokost' },
-  { id: 'aften', label: 'Aftensmad' },
-  { id: 'snack', label: 'Snacks' },
+  { id: 'morgen', labelKey: 'core.meals.breakfast' },
+  { id: 'frokost', labelKey: 'core.meals.lunch' },
+  { id: 'aften', labelKey: 'core.meals.dinner' },
+  { id: 'snack', labelKey: 'core.meals.snack' },
 ];
 
 /**

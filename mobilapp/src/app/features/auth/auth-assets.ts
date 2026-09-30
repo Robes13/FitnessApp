@@ -6,5 +6,5 @@
 export const AUTH_ASSET = {
   /** The photo background on login and forgot password. */
   BACKDROP: 'images/login-bg.jpg',
-  LOGO: 'images/nutrify-logo.svg',
+  LOGO: 'images/nutrify-logo-v2.svg',
 } as const;

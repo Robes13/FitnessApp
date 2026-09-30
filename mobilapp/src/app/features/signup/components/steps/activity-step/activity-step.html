@@ -1,5 +1,8 @@
 <h1 class="activity-step__title">
-  Hvor mange <span class="activity-step__title-accent">skridt?</span>
+  {{ 'signup.activityStep.titleStart' | translate }}
+  <span class="activity-step__title-accent">{{
+    'signup.activityStep.titleAccent' | translate
+  }}</span>
 </h1>
 <p class="activity-step__subtitle">{{ subtitle() }}</p>
 
@@ -9,7 +12,9 @@
       <div class="activity-step__count" [style.animation-name]="tickAnimation()">
         {{ stepsText() }}
       </div>
-      <div class="activity-step__count-caption">skridt på en almindelig dag</div>
+      <div class="activity-step__count-caption">
+        {{ 'signup.activityStep.countCaption' | translate }}
+      </div>
       @for (particle of confetti(); track $index) {
         <span
           class="activity-step__confetti"
@@ -29,10 +34,18 @@
 
     <div class="activity-step__facts">
       <div>
-        ≈ <span class="activity-step__fact-value">{{ kmText() }} km</span> til fods
+        ≈
+        <span class="activity-step__fact-value">{{
+          'signup.activityStep.kmValue' | translate: { km: kmText() }
+        }}</span>
+        {{ 'signup.activityStep.onFoot' | translate }}
       </div>
       <div>
-        ≈ <span class="activity-step__fact-value">{{ kcalText() }} kcal</span> ekstra
+        ≈
+        <span class="activity-step__fact-value"
+          >{{ kcalText() }} {{ 'common.unit.kcal' | translate }}</span
+        >
+        {{ 'signup.activityStep.extra' | translate }}
       </div>
     </div>
   </div>
@@ -41,7 +54,7 @@
     class="activity-step__scene"
     viewBox="0 0 200 300"
     preserveAspectRatio="xMidYMax meet"
-    aria-label="Figur der går"
+    [attr.aria-label]="'signup.activityStep.figureLabel' | translate"
   >
     <g
       class="activity-step__walk"
@@ -368,5 +381,5 @@
   [glowReach]="rulerGlowReach"
   [glowStrength]="rulerGlowStrength"
   [(dragging)]="dragging"
-  ariaLabel="Skridt om dagen"
+  [ariaLabel]="'signup.activityStep.rulerLabel' | translate"
 />

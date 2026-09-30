@@ -1,10 +1,12 @@
 import { FigureTempo } from '../../../../../shared/components/figure';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { INTENSITIES, RPE_MAX, RPE_MIN } from '../../../../../core/constants/nutrition';
 import { IntensityId } from '../../../../../core/models/profile';
 import { Tone } from '../../../../../core/models/tone';
 import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { clamp } from '../../../../../core/utils/math';
+import { injectTranslate } from '../../../../../core/services/language/translate';
 import {
   FigureBandTone,
   FigureBody,
@@ -20,11 +22,11 @@ import { SignupStateService } from '../../../services/signup-state';
 const EFFORT_BAR_BASE_HEIGHT = 12;
 const EFFORT_BAR_STEP_HEIGHT = 2.8;
 
-const INTRO_UNSELECTED = 'Hvor hårdt går du typisk til den, når du træner?';
-const TALK_TEST_UNSELECTED = 'Vælg det niveau, der passer til de fleste træninger.';
-const CAPTION_UNSELECTED = 'Sæt din anstrengelse på skalaen, eller vælg et niveau nedenfor.';
-const CAPTION_SELECTED = 'på anstrengelsesskalaen, hvor 10 er alt hvad du har.';
-const HINT_SELECTED = 'Tryk på skalaen for at finjustere.';
+const INTRO_UNSELECTED_KEY = 'signup.trainingIntensityStep.introUnselected';
+const TALK_TEST_UNSELECTED_KEY = 'signup.trainingIntensityStep.talkTestUnselected';
+const CAPTION_UNSELECTED_KEY = 'signup.trainingIntensityStep.captionUnselected';
+const CAPTION_SELECTED_KEY = 'signup.trainingIntensityStep.captionSelected';
+const HINT_SELECTED_KEY = 'signup.trainingIntensityStep.hintSelected';
 const RPE_PLACEHOLDER = '–';
 
 const HEAT_DURATION_S = 2.2;
@@ -170,7 +172,7 @@ function barClasses(index: number, reached: boolean, selected: boolean, tone: To
  */
 @Component({
   selector: 'app-training-intensity-step',
-  imports: [FigureTempo, FigureBody, UiOptionCard],
+  imports: [FigureTempo, FigureBody, UiOptionCard, TranslatePipe],
   templateUrl: './training-intensity-step.html',
   styleUrl: './training-intensity-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -178,6 +180,7 @@ function barClasses(index: number, reached: boolean, selected: boolean, tone: To
 })
 export class TrainingIntensityStep {
   private readonly calculator = inject(NutritionCalculator);
+  private readonly t = injectTranslate();
 
   protected readonly state = inject(SignupStateService);
 
@@ -207,15 +210,20 @@ export class TrainingIntensityStep {
   protected readonly intro = computed(() => {
     const intensity = this.intensity();
     return intensity === null
-      ? INTRO_UNSELECTED
-      : `Sådan føles ${intensity.adjective} træning for de fleste.`;
+      ? this.t(INTRO_UNSELECTED_KEY)
+      : this.t('signup.trainingIntensityStep.introSelected', {
+          intensity: this.t(intensity.adjectiveKey),
+        });
   });
 
   protected readonly caption = computed(() =>
-    this.rpe() === null ? CAPTION_UNSELECTED : CAPTION_SELECTED,
+    this.t(this.rpe() === null ? CAPTION_UNSELECTED_KEY : CAPTION_SELECTED_KEY),
   );
-  protected readonly hint = computed(() => (this.rpe() === null ? '' : HINT_SELECTED));
-  protected readonly talkTest = computed(() => this.intensity()?.talkTest ?? TALK_TEST_UNSELECTED);
+  protected readonly hint = computed(() => (this.rpe() === null ? '' : this.t(HINT_SELECTED_KEY)));
+  protected readonly talkTest = computed(() => {
+    const intensity = this.intensity();
+    return intensity ? this.t(intensity.talkTestKey) : this.t(TALK_TEST_UNSELECTED_KEY);
+  });
 
   protected readonly segments = computed<readonly EffortSegment[]>(() => {
     const rpe = this.rpe();
@@ -226,7 +234,7 @@ export class TrainingIntensityStep {
       return {
         value,
         height: EFFORT_BAR_BASE_HEIGHT + value * EFFORT_BAR_STEP_HEIGHT,
-        ariaLabel: `Anstrengelse ${value} af ${RPE_MAX}`,
+        ariaLabel: this.t('signup.trainingIntensityStep.segmentLabel', { value, max: RPE_MAX }),
         toneClass: filled ? `${SEGMENT_BLOCK}--${tone}` : `${SEGMENT_BLOCK}--empty`,
       };
     });
@@ -238,7 +246,7 @@ export class TrainingIntensityStep {
       const selected = intensity.id === selectedId;
       return {
         id: intensity.id,
-        label: intensity.label,
+        label: this.t(intensity.labelKey),
         scaleLabel: intensity.scaleLabel,
         rpe: intensity.rpe,
         selected,

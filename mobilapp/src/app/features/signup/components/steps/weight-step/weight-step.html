@@ -1,17 +1,20 @@
-<h1 class="weight-step__title">Hvad er din <span class="weight-step__title-accent">vægt?</span></h1>
-<p class="weight-step__subtitle">Din vægt i dag – du kan altid rette den senere.</p>
+<h1 class="weight-step__title">
+  {{ 'signup.weightStep.titleStart' | translate }}
+  <span class="weight-step__title-accent">{{ 'signup.weightStep.titleAccent' | translate }}</span>
+</h1>
+<p class="weight-step__subtitle">{{ 'signup.weightStep.subtitle' | translate }}</p>
 
 <div class="weight-step__stage">
   <div class="weight-step__readout">
     <p class="weight-step__value">
       <span class="weight-step__number">{{ weightText() }}</span>
-      <span class="weight-step__unit">kg</span>
+      <span class="weight-step__unit">{{ 'common.unit.kg' | translate }}</span>
     </p>
     <div class="weight-step__steppers">
       <button
         type="button"
         class="weight-step__stepper"
-        aria-label="Et kilo mindre"
+        [attr.aria-label]="'signup.weightStep.decrease' | translate"
         (click)="adjust(-1)"
       >
         −
@@ -19,13 +22,13 @@
       <button
         type="button"
         class="weight-step__stepper"
-        aria-label="Et kilo mere"
+        [attr.aria-label]="'signup.weightStep.increase' | translate"
         (click)="adjust(1)"
       >
         +
       </button>
     </div>
-    <p class="weight-step__hint">Træk i skalaen nedenfor, eller brug − og +.</p>
+    <p class="weight-step__hint">{{ 'signup.weightStep.hint' | translate }}</p>
   </div>
 
   <app-figure
@@ -33,7 +36,7 @@
     [weightKg]="state.weightKg()"
     [heightCm]="state.heightCm()"
     [bandTone]="bandTone()"
-    [ariaLabel]="figureLabel"
+    [ariaLabel]="'signup.weightStep.figureLabel' | translate"
     showDumbbell
   />
 </div>
@@ -44,5 +47,5 @@
   [max]="maxKg"
   [(value)]="state.weightKg"
   [glowStrength]="rulerGlowStrength"
-  ariaLabel="Vægt i kilo"
+  [ariaLabel]="'signup.weightStep.rulerLabel' | translate"
 />

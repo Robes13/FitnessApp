@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { NewCollectionInput } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
@@ -12,7 +13,7 @@ import { NewCollectionSheet } from '../../components/new-collection-sheet/new-co
 import { CollectionEntry, CollectionsViewService } from '../../services/collections-view';
 
 const DEFAULT_MEAL: MealId = 'morgen';
-const EMPTY_MESSAGE = 'Der er ingen retter eller varer i den her samling endnu.';
+const EMPTY_MESSAGE_KEY = 'collections.page.empty';
 
 /**
  * The collections screen: one filter and one list with the user's collections, their foods and
@@ -21,7 +22,7 @@ const EMPTY_MESSAGE = 'Der er ingen retter eller varer i den her samling endnu.'
  */
 @Component({
   selector: 'app-collections-page',
-  imports: [NewCollectionSheet, UiChip, UiEmptyState, UiIcon, UiIconButton],
+  imports: [NewCollectionSheet, TranslatePipe, UiChip, UiEmptyState, UiIcon, UiIconButton],
   templateUrl: './collections-page.html',
   styleUrl: './collections-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,7 +36,7 @@ export class CollectionsPage {
   /** Id of the selected fixed collection – `null` is "All". */
   protected readonly selectedId = signal<string | null>(null);
   protected readonly sheetOpen = signal(false);
-  protected readonly emptyMessage = EMPTY_MESSAGE;
+  protected readonly emptyMessageKey = EMPTY_MESSAGE_KEY;
 
   protected readonly chips = computed(() => this.view.chips());
   protected readonly entries = computed(() => this.view.entriesFor(this.selectedId()));

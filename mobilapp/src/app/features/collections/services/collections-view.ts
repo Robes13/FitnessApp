@@ -4,6 +4,7 @@ import { FoodCollection, FoodItem, Ingredient, Macros, Recipe } from '../../../c
 import { MEAL_TONES } from '../../../core/constants/meals';
 import { MealId, MealTone } from '../../../core/models/meal';
 import { CollectionsService } from '../../../core/services/collections/collections';
+import { Translate, injectTranslate } from '../../../core/services/language/translate';
 import { formatGrams } from '../../../core/utils/date-format';
 
 /** The prefix in front of a collection's id when the whole collection opens as one "bundle". */
@@ -12,8 +13,8 @@ export const BUNDLE_ID_PREFIX = 'col:';
 /** The icon on a dish that doesn't belong to any collection. */
 const RECIPE_FALLBACK_ICON: CollectionIconName = 'utensils';
 
-const EMPTY_SUBTITLE = 'Ingen varer endnu';
-const ALL_CHIP_LABEL = 'Alle';
+const EMPTY_SUBTITLE_KEY = 'collections.view.emptySubtitle';
+const ALL_CHIP_LABEL_KEY = 'collections.view.allChip';
 
 /** A row in the list on the collections screen: a bundle, a standalone food or a dish. */
 export interface CollectionEntry {
@@ -47,16 +48,18 @@ export interface RecipeDetail {
   readonly contents: readonly Ingredient[];
 }
 
-function countLabel(count: number): string {
-  return count === 1 ? '1 vare' : `${count} varer`;
+function countLabel(t: Translate, count: number): string {
+  return count === 1
+    ? t('collections.view.itemCountOne')
+    : t('collections.view.itemCountMany', { count });
 }
 
-function itemNames(items: readonly FoodItem[]): string {
-  return items.length > 0 ? items.map((item) => item.name).join(', ') : EMPTY_SUBTITLE;
+function itemNames(t: Translate, items: readonly FoodItem[]): string {
+  return items.length > 0 ? items.map((item) => item.name).join(', ') : t(EMPTY_SUBTITLE_KEY);
 }
 
-function macrosText({ kcal, protein }: Macros): string {
-  return `${Math.round(kcal)} kcal · ${formatGrams(protein)} g protein`;
+function macrosText(t: Translate, { kcal, protein }: Macros): string {
+  return t('collections.view.macros', { kcal: Math.round(kcal), protein: formatGrams(protein) });
 }
 
 function sumMacros(parts: readonly Macros[]): Macros {
@@ -86,11 +89,12 @@ function sumMacros(parts: readonly Macros[]): Macros {
 @Injectable({ providedIn: 'root' })
 export class CollectionsViewService {
   private readonly collections = inject(CollectionsService);
+  private readonly t = injectTranslate();
 
   /** "All" followed by the fixed collections. None exist yet, so the list is short. */
   chips(): readonly CollectionFilterChip[] {
     return [
-      { id: null, label: ALL_CHIP_LABEL },
+      { id: null, label: this.t(ALL_CHIP_LABEL_KEY) },
       ...this.collections
         .baseCollections()
         .map((collection) => ({ id: collection.id, label: collection.name })),
@@ -153,14 +157,14 @@ export class CollectionsViewService {
 
   private bundleEntry(collection: FoodCollection): CollectionEntry {
     const macros = sumMacros(collection.items);
-    const count = countLabel(collection.items.length);
+    const count = countLabel(this.t, collection.items.length);
     const baseName = this.baseNameFor(collection.meal);
     return {
       id: `${BUNDLE_ID_PREFIX}${collection.id}`,
       title: collection.name,
-      subtitle: itemNames(collection.items),
+      subtitle: itemNames(this.t, collection.items),
       meta: baseName ? `${baseName} · ${count}` : count,
-      macrosText: macrosText(macros),
+      macrosText: macrosText(this.t, macros),
       icon: collection.icon,
       tone: MEAL_TONES[collection.meal],
     };
@@ -172,7 +176,7 @@ export class CollectionsViewService {
       title: item.name,
       subtitle: item.brand ?? item.quantity,
       meta: `${collection.name} · ${item.quantity}`,
-      macrosText: macrosText(item),
+      macrosText: macrosText(this.t, item),
       icon: collection.icon,
       tone: MEAL_TONES[collection.meal],
     };
@@ -184,8 +188,11 @@ export class CollectionsViewService {
       id: recipe.id,
       title: recipe.title,
       subtitle: recipe.subtitle,
-      meta: `${collection?.name ?? recipe.category} · ${recipe.timeMinutes} min`,
-      macrosText: macrosText(recipe),
+      meta: this.t('collections.view.recipeMeta', {
+        category: collection?.name ?? recipe.category,
+        minutes: recipe.timeMinutes,
+      }),
+      macrosText: macrosText(this.t, recipe),
       icon: collection?.icon ?? RECIPE_FALLBACK_ICON,
       tone: MEAL_TONES[recipe.meal],
     };
@@ -197,7 +204,7 @@ export class CollectionsViewService {
     return {
       id: `${BUNDLE_ID_PREFIX}${collection.id}`,
       title: collection.name,
-      subtitle: itemNames(collection.items),
+      subtitle: itemNames(this.t, collection.items),
       icon: collection.icon,
       tone: MEAL_TONES[collection.meal],
       meal: collection.meal,

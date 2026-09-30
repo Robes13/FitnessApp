@@ -6,6 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { RouterLink } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { SessionService } from '../../../../core/services/session/session';
@@ -37,6 +38,7 @@ const CELEBRATION_VIBRATION_MS: readonly number[] = [16, 45, 28];
   selector: 'app-home-page',
   imports: [
     RouterLink,
+    TranslatePipe,
     ProfileAvatar,
     HomeCelebrationToast,
     HomeDayCard,

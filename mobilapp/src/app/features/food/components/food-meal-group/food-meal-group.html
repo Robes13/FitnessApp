@@ -10,7 +10,7 @@
     <button
       type="button"
       class="food-meal-group__name"
-      [attr.aria-label]="'Rediger ' + entry.name"
+      [attr.aria-label]="editLabel(entry)"
       (click)="edit.emit(entry)"
     >
       <span class="food-meal-group__dot"></span>
@@ -18,11 +18,13 @@
       <span class="food-meal-group__quantity">{{ entry.quantity }}</span>
     </button>
     <span class="food-meal-group__end">
-      <span class="food-meal-group__kcal">{{ entry.kcal }} kcal</span>
+      <span class="food-meal-group__kcal"
+        >{{ entry.kcal }} {{ 'common.unit.kcal' | translate }}</span
+      >
       <button
         type="button"
         class="food-meal-group__remove"
-        [attr.aria-label]="'Fjern ' + entry.name"
+        [attr.aria-label]="removeLabel(entry)"
         (click)="removed.emit(entry)"
       >
         <app-ui-icon name="close" size="xs" [strokeWidth]="2.4" />

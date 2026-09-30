@@ -11,6 +11,7 @@ import { SessionService } from '../../../core/services/session/session';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { NOW } from '../../../core/utils/now';
 import { clamp } from '../../../core/utils/math';
+import { injectTranslate } from '../../../core/services/language/translate';
 
 /** Design's `order`: `s1, sAlder, sKon, s2, s3, sAkt, sFreq, sDur, sInt, s4, sMaal, s5, sNotif, s6`. */
 export type SignupStepId =
@@ -62,16 +63,16 @@ const FIRST_STEP: SignupStepId = 'account';
 const SUMMARY_STEP: SignupStepId = 'summary';
 
 const CHAPTER_DEFINITIONS: readonly {
-  readonly label: string;
+  readonly labelKey: string;
   readonly steps: readonly SignupStepId[];
 }[] = [
-  { label: 'Dig', steps: ['account', 'birthday', 'gender', 'weight', 'height'] },
+  { labelKey: 'signup.chapters.you', steps: ['account', 'birthday', 'gender', 'weight', 'height'] },
   {
-    label: 'Aktivitet',
+    labelKey: 'signup.chapters.activity',
     steps: ['activity', 'training-frequency', 'training-duration', 'training-intensity'],
   },
-  { label: 'Mål', steps: ['goal', 'goal-weight', 'pace'] },
-  { label: 'Afslut', steps: ['notifications', 'summary'] },
+  { labelKey: 'signup.chapters.goal', steps: ['goal', 'goal-weight', 'pace'] },
+  { labelKey: 'signup.chapters.finish', steps: ['notifications', 'summary'] },
 ];
 
 /**
@@ -83,9 +84,9 @@ const EDIT_CHAINS: Partial<Record<SignupStepId, readonly SignupStepId[]>> = {
   goal: ['goal', 'goal-weight', 'pace'],
 };
 
-const NEXT_LABEL = 'Næste';
-const SAVE_LABEL = 'Gem';
-const SUBMIT_LABEL = 'Opret konto';
+const NEXT_LABEL_KEY = 'signup.state.next';
+const SAVE_LABEL_KEY = 'common.save';
+const SUBMIT_LABEL_KEY = 'signup.state.submit';
 const PERCENT_MAX = 100;
 
 /**
@@ -104,6 +105,7 @@ export class SignupStateService {
   private readonly authApi = inject(AuthApi);
   private readonly router = inject(Router);
   private readonly now = inject(NOW);
+  private readonly t = injectTranslate();
 
   // --- Draft. The starting values are the design's initial state (= DEFAULT_PROFILE). ---
   readonly username = signal('');
@@ -176,7 +178,7 @@ export class SignupStateService {
     const visibleOrder = this.visibleOrder();
     const stepNumber = this.stepNumber();
     const current = this.stepState();
-    return CHAPTER_DEFINITIONS.map(({ label, steps }) => {
+    return CHAPTER_DEFINITIONS.map(({ labelKey, steps }) => {
       const visible = steps.filter((id) => visibleOrder.includes(id));
       const index = visible.indexOf(current);
       const last = visible[visible.length - 1];
@@ -187,7 +189,7 @@ export class SignupStateService {
           : done
             ? PERCENT_MAX
             : 0;
-      return { label, flex: visible.length, pct, active: index >= 0, done };
+      return { label: this.t(labelKey), flex: visible.length, pct, active: index >= 0, done };
     });
   });
 
@@ -255,9 +257,9 @@ export class SignupStateService {
 
   readonly nextLabel = computed(() => {
     if (this.stepState() === SUMMARY_STEP) {
-      return SUBMIT_LABEL;
+      return this.t(SUBMIT_LABEL_KEY);
     }
-    return this.nextIsSave() ? SAVE_LABEL : NEXT_LABEL;
+    return this.t(this.nextIsSave() ? SAVE_LABEL_KEY : NEXT_LABEL_KEY);
   });
 
   /**

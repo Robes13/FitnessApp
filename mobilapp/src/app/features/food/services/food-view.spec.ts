@@ -60,7 +60,7 @@ describe('FoodViewService', () => {
   it('sums the logged meals against the daily target', () => {
     const { view } = setup();
 
-    expect(view.todayLabel).toBe('Mandag 21. sep');
+    expect(view.todayLabel()).toBe('Mandag 21. sep');
     expect(view.kcalTarget()).toBe(KCAL_TARGET);
     expect(view.kcalEaten()).toBe(830);
     expect(view.kcalRemaining()).toBe(1170);

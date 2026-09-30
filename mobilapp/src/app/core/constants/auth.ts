@@ -1,9 +1,9 @@
-/** Brugerrettede fejltekster fra auth-laget. */
-export const AUTH_ERROR_MESSAGE = {
-  NO_BACKEND: 'Der er ingen forbindelse til en server endnu.',
-  INVALID_EMAIL: 'Skriv en gyldig e-mail.',
-  INVALID_CODE: 'Koden er 4 cifre.',
-  PASSWORD_TOO_SHORT: 'Mindst 8 tegn.',
+/** Translation keys of the auth layer's user-facing error messages. */
+export const AUTH_ERROR_MESSAGE_KEY = {
+  NO_BACKEND: 'core.auth.error.noBackend',
+  INVALID_EMAIL: 'core.auth.error.invalidEmail',
+  INVALID_CODE: 'core.auth.error.invalidCode',
+  PASSWORD_TOO_SHORT: 'core.auth.error.passwordTooShort',
 } as const;
 
 /** Backend endpoints for auth, relative to the API's base URL. */

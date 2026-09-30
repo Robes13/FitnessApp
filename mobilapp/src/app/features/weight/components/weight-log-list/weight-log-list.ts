@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { WEIGHT_LOG_LIST_TEXT } from '../../../../core/constants/weight';
+import { TranslatePipe } from '@ngx-translate/core';
+import { WEIGHT_LOG_LIST_TEXT_KEY } from '../../../../core/constants/weight';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { WeighLogRow } from '../../services/weight-view';
@@ -11,7 +13,7 @@ import { WeighLogRow } from '../../services/weight-view';
  */
 @Component({
   selector: 'app-weight-log-list',
-  imports: [UiButton, UiEmptyState],
+  imports: [TranslatePipe, UiButton, UiEmptyState],
   templateUrl: './weight-log-list.html',
   styleUrl: './weight-log-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,14 +29,17 @@ export class WeightLogList {
   readonly rowSelected = output<string>();
   readonly expandToggled = output<void>();
 
+  private readonly t = injectTranslate();
+
   protected readonly showToggle = computed(() => this.expanded() || this.hiddenCount() > 0);
   protected readonly toggleLabel = computed(() =>
     this.expanded()
-      ? WEIGHT_LOG_LIST_TEXT.showFewer
-      : WEIGHT_LOG_LIST_TEXT.showAll(this.hiddenCount()),
+      ? this.t(WEIGHT_LOG_LIST_TEXT_KEY.showFewer)
+      : this.t(WEIGHT_LOG_LIST_TEXT_KEY.showAll, { hiddenCount: this.hiddenCount() }),
   );
 
   protected rowLabel(row: WeighLogRow): string {
-    return WEIGHT_LOG_LIST_TEXT.editRow(row.date, row.time, row.kg);
+    const { date, time, kg } = row;
+    return this.t(WEIGHT_LOG_LIST_TEXT_KEY.editRow, { date, time, kg });
   }
 }

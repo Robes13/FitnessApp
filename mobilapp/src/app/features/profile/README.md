@@ -36,21 +36,25 @@ afledt af `core/`-stores, så en ændring et andet sted i appen slår igennem me
 3. **Min plan** – Mål, [Tempo], Køn, Højde, [Målvægt], Aktivitet, Træningsdage, [Længde],
    [Intensitet] og Dagligt kaloriemål. De fire i kantede parenteser er betingede; se
    [`services/README.md`](services/README.md).
-4. **Konto** – E-mail, Adgangskode, Enheder, kontakterne "Lys tilstand" og
+4. **Konto** – E-mail, Enheder, kontakterne "Lys tilstand" og
    "Notifikationer" samt rækken "Påmindelser", der åbner påmindelses-arket.
 5. **Præstationer** – 12 badges i fire kolonner.
 6. **Log ud** – rød tekst i en omrids-pille, der åbner bekræftelsen.
 7. **Slet konto** – en diskret tekstknap under "Log ud", der åbner sin egen bekræftelse.
 
 Hver række åbner det samme redigeringsark; arket finder selv ud af, om rækken er en liste,
-et tal, en tekst eller en adgangskode.
+et tal eller en tekst. Adgangskoden kan ikke ændres herfra – det sker via "Glemt
+adgangskode?" på login-siden.
 
-## Tema og notifikationer
+## Tema, sprog og notifikationer
 
 "Lys tilstand" styrer `ThemeService` (ikke profilen): den sætter `data-theme` på `<html>` og
 husker valget. "Notifikationer" er **hovedkontakten** for påmindelser: den går gennem
 `ReminderService.setMasterEnabled()`, som skriver `notificationsEnabled` på profilen og – når
 den slås til – beder om lov til notifikationer. Begge er almindelige `app-ui-switch`.
+
+"Sprog" er en `app-ui-segmented-control` (compact) med Dansk/English. Valget går til
+`LanguageService.set()`, som gemmer det og genindlæser appen på det nye sprog.
 
 ## Påmindelser
 

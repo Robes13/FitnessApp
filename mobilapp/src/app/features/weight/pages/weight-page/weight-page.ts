@@ -6,6 +6,8 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
 import { WeightChart } from '../../components/weight-chart/weight-chart';
@@ -20,8 +22,8 @@ const SAVED_LABEL_MS = 1400;
 /** How long the pupils follow the direction the weight was changed in. */
 const LOOK_DURATION_MS = 900;
 
-const SAVE_LABEL = 'Gem vejning';
-const SAVED_LABEL = 'Gemt ✓';
+const SAVE_LABEL_KEY = 'weight.page.save';
+const SAVED_LABEL_KEY = 'weight.page.saved';
 
 /**
  * The weight screen: record today's weight on the bathroom scale, save the weigh-in and see the trend.
@@ -33,6 +35,7 @@ const SAVED_LABEL = 'Gemt ✓';
 @Component({
   selector: 'app-weight-page',
   imports: [
+    TranslatePipe,
     UiButton,
     UiChip,
     WeightChart,
@@ -49,6 +52,7 @@ const SAVED_LABEL = 'Gemt ✓';
 })
 export class WeightPage {
   protected readonly view = inject(WeightViewService);
+  private readonly t = injectTranslate();
 
   private readonly saved = signal(false);
   private readonly lookDirectionState = signal(0);
@@ -57,7 +61,9 @@ export class WeightPage {
 
   protected readonly isSaved = this.saved.asReadonly();
   protected readonly lookDirection = this.lookDirectionState.asReadonly();
-  protected readonly saveLabel = computed(() => (this.saved() ? SAVED_LABEL : SAVE_LABEL));
+  protected readonly saveLabel = computed(() =>
+    this.t(this.saved() ? SAVED_LABEL_KEY : SAVE_LABEL_KEY),
+  );
   protected readonly deltaClass = computed(
     () => `weight-page__tile-value--${this.view.deltaTone()}`,
   );

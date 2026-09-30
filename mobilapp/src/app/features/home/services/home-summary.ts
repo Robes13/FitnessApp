@@ -10,8 +10,8 @@ import { NutritionCalculator } from '../../../core/services/nutrition-calculator
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import {
-  DAY_NAMES_LONG,
-  DAY_NAMES_SHORT,
+  DAY_NAME_LONG_KEYS,
+  DAY_NAME_SHORT_KEYS,
   addDays,
   formatDayLabel,
   formatDecimal,
@@ -24,6 +24,7 @@ import {
 } from '../../../core/utils/date-format';
 import { clamp } from '../../../core/utils/math';
 import { NOW } from '../../../core/utils/now';
+import { Translate, injectTranslate } from '../../../core/services/language/translate';
 import { ProgressBarTone } from '../../../shared/components/ui-progress-bar/ui-progress-bar';
 
 /** The ring's color: green for a closed ring, orange in progress, empty for days not yet reached. */
@@ -85,7 +86,9 @@ export interface HomeTodo {
 }
 
 const NO_VALUE = '–';
-const GREETING = 'Hej';
+const GREETING_KEY = 'home.summary.greeting';
+/** The greeting when a name follows – its own message so a translation can place the comma. */
+const GREETING_BEFORE_NAME_KEY = 'home.summary.greetingBeforeName';
 
 /** The circumference of the day ring (r = 16 in a 40×40 viewBox). */
 const RING_CIRCUMFERENCE = 100.5;
@@ -98,19 +101,19 @@ const SOLID_WEEK_MIN_HITS = 2;
 
 const GOAL_REACHED_MARGIN_KG = 0.05;
 const MIN_GOAL_PROGRESS = 0.04;
-const DEFAULT_PACE_RATE_LABEL = '0,5 kg/uge';
+const DEFAULT_PACE_RATE_LABEL_KEY = 'home.summary.defaultPaceRate';
 const DEFAULT_PACE_KG_PER_WEEK = 0.5;
 
 interface MacroDefinition {
-  readonly label: string;
+  readonly labelKey: string;
   readonly key: keyof Omit<Macros, 'kcal'>;
   readonly tone: ProgressBarTone;
 }
 
 const MACRO_DEFINITIONS: readonly MacroDefinition[] = [
-  { label: 'Protein', key: 'protein', tone: 'accent' },
-  { label: 'Kulhydrat', key: 'carbs', tone: 'selected' },
-  { label: 'Fedt', key: 'fat', tone: 'secondary' },
+  { labelKey: 'home.summary.macros.protein', key: 'protein', tone: 'accent' },
+  { labelKey: 'home.summary.macros.carbs', key: 'carbs', tone: 'selected' },
+  { labelKey: 'home.summary.macros.fat', key: 'fat', tone: 'secondary' },
 ];
 
 /**
@@ -131,6 +134,7 @@ export class HomeSummaryService {
   private readonly weightLog = inject(WeightLogService);
   private readonly calculator = inject(NutritionCalculator);
   private readonly now = inject(NOW);
+  private readonly t = injectTranslate();
 
   /** `null` = follow today, matching the design's `s.selDay ?? todayIdx`. */
   private readonly selected = signal<number | null>(null);
@@ -142,8 +146,10 @@ export class HomeSummaryService {
   readonly displayName = this.profileService.displayName;
   readonly initial = this.profileService.initial;
   readonly kcalTarget = inject(AdaptiveGoalService).kcalTarget;
-  readonly todayLabel = computed(() => formatDayLabel(this.now()));
-  readonly weekProgressLabel = computed(() => `Dag ${this.todayIndex() + 1} af 7`);
+  readonly todayLabel = computed(() => formatDayLabel(this.t, this.now()));
+  readonly weekProgressLabel = computed(() =>
+    this.t('home.summary.weekProgress', { dayNumber: this.todayIndex() + 1 }),
+  );
 
   /** The profile photo for the header avatar; `null` shows the initial instead. */
   readonly photo: Signal<ProfilePhoto | null> = computed(() => this.profileService.profile().photo);
@@ -156,7 +162,7 @@ export class HomeSummaryService {
     const today = this.todayIndex();
     const monday = addDays(startOfDay(this.now()), -today);
     return this.foodLog
-      .dailyTotals(monday, addDays(monday, DAY_NAMES_SHORT.length - 1))
+      .dailyTotals(monday, addDays(monday, DAY_NAME_SHORT_KEYS.length - 1))
       .map((day, index) => (index > today || day.entryCount === 0 ? null : day.totals));
   });
 
@@ -177,7 +183,9 @@ export class HomeSummaryService {
   /** False until the app knows the user's name – until then Home just greets with `'Hej'`. */
   readonly hasName = computed(() => this.displayName() !== '');
   /** "Hej," when a name follows, so the comma sits right after the word and not before the name. */
-  readonly greeting = computed(() => (this.hasName() ? `${GREETING},` : GREETING));
+  readonly greeting = computed(() =>
+    this.t(this.hasName() ? GREETING_BEFORE_NAME_KEY : GREETING_KEY),
+  );
 
   readonly weekRings = computed<readonly WeekRing[]>(() => {
     const today = this.todayIndex();
@@ -187,7 +195,7 @@ export class HomeSummaryService {
         part === null ? 'none' : part >= RING_FULL_THRESHOLD ? 'positive' : 'accent';
       return {
         index,
-        label: DAY_NAMES_SHORT[index] ?? '',
+        label: this.dayName(DAY_NAME_SHORT_KEYS[index]),
         dashOffset: RING_CIRCUMFERENCE * (1 - (part ?? 0)),
         tone,
         toneClass: `${RING_PROGRESS_BLOCK}--${tone}`,
@@ -204,7 +212,7 @@ export class HomeSummaryService {
     const part = this.dayParts()[selected] ?? null;
     const weightKg = this.weightForDay(selected);
     return {
-      title: `${DAY_NAMES_LONG[selected] ?? ''}${relativeDaySuffix(selected, today)}`,
+      title: dayTitle(this.t, this.dayName(DAY_NAME_LONG_KEYS[selected]), selected, today),
       progress: part ?? 0,
       progressTone: part === null ? 'muted' : part >= RING_FULL_THRESHOLD ? 'positive' : 'accent',
       kcalEatenText: String(this.dayTotals()[selected]?.kcal ?? NO_VALUE),
@@ -256,8 +264,8 @@ export class HomeSummaryService {
       hitText: String(hit),
       averageKcalText: averageKcal === null ? NO_VALUE : formatInteger(averageKcal),
       proteinHitText: String(proteinHit),
-      streakText: `${streakDays} dage`,
-      note: weekNote(hit, loggedDays),
+      streakText: this.t('home.summary.streak', { streakDays }),
+      note: this.t(weekNoteKey(hit, loggedDays)),
     };
   });
 
@@ -265,8 +273,8 @@ export class HomeSummaryService {
     const todos: HomeTodo[] = [];
     if (!this.weightLog.weighedToday()) {
       todos.push({
-        title: 'Husk at veje dig i dag',
-        subtitle: 'Tryk her for at registrere din vægt',
+        title: this.t('home.summary.todos.weighTitle'),
+        subtitle: this.t('home.summary.todos.weighSubtitle'),
         path: APP_PATH.WEIGHT,
         queryParams: null,
       });
@@ -275,8 +283,10 @@ export class HomeSummaryService {
     for (const meal of MEALS) {
       if ((byMeal.get(meal.id) ?? []).length === 0) {
         todos.push({
-          title: `Log din ${meal.label.toLowerCase()}`,
-          subtitle: 'Ikke registreret endnu',
+          title: this.t('home.summary.todos.mealTitle', {
+            meal: this.t(meal.labelKey).toLowerCase(),
+          }),
+          subtitle: this.t('home.summary.todos.mealSubtitle'),
           path: APP_PATH.FOOD,
           queryParams: { [QUERY_PARAM.ADD_MEAL]: meal.id },
         });
@@ -288,7 +298,7 @@ export class HomeSummaryService {
   readonly nextTodo = computed<HomeTodo | null>(() => this.todos()[0] ?? null);
   readonly todoCountLabel = computed(() => {
     const count = this.todos().length;
-    return count > 1 ? `1 / ${count}` : 'Kun én';
+    return count > 1 ? `1 / ${count}` : this.t('home.summary.todoCountSingle');
   });
 
   /** The goal card is hidden when the goal is to maintain weight. */
@@ -306,19 +316,28 @@ export class HomeSummaryService {
     const weeks = Math.max(1, Math.ceil(left / (pace?.kgPerWeek ?? DEFAULT_PACE_KG_PER_WEEK)));
 
     return {
-      toGoalText: reached ? 'Nået!' : `${formatDecimal(left)} kg`,
+      toGoalText: reached
+        ? this.t('home.summary.goal.reached')
+        : this.t('home.summary.goal.toGoal', { kg: formatDecimal(left) }),
       goalWeightText: formatWeightKg(target),
       progress: clamp(1 - left / totalDistance, MIN_GOAL_PROGRESS, 1),
       coach: reached
-        ? 'Du har ramt dit mål – overvej at skifte til "Holde vægten".'
+        ? this.t('home.summary.goal.coachReached')
         : goal === 'hold'
-          ? `Du holder dig inden for ±${formatDecimal(left)} kg af din målvægt.`
-          : `Med dit tempo på ${pace?.rateLabel ?? DEFAULT_PACE_RATE_LABEL} er du der om ca. ${weeks} uger.`,
+          ? this.t('home.summary.goal.coachHold', { kg: formatDecimal(left) })
+          : this.t('home.summary.goal.coachPace', {
+              pace: this.t(pace ? pace.rateLabelKey : DEFAULT_PACE_RATE_LABEL_KEY),
+              weeks,
+            }),
     };
   });
 
   selectDay(index: number): void {
     this.selected.set(index);
+  }
+
+  private dayName(key: string | undefined): string {
+    return key ? this.t(key) : '';
   }
 
   /** The weigh-in from that weekday, or `null` if the user didn't weigh in that day. */
@@ -339,31 +358,34 @@ export class HomeSummaryService {
       const hasData = logged !== null;
       const value = logged?.[macro.key] ?? 0;
       return {
-        label: macro.label,
+        label: this.t(macro.labelKey),
         value: goal > 0 ? Math.min(1, value / goal) : 0,
         tone: macro.tone,
-        text: `${hasData ? formatGrams(value) : NO_VALUE} / ${goal} g`,
+        text: this.t('home.summary.macroText', {
+          eaten: hasData ? formatGrams(value) : NO_VALUE,
+          goal,
+        }),
       };
     });
   }
 }
 
-/** `' · i dag'` / `' · i går'` / `''` matching the design's `dayTitle`. */
-function relativeDaySuffix(selected: number, today: number): string {
+/** `'Mandag · i dag'` / `'Søndag · i går'` / `'Fredag'` matching the design's `dayTitle`. */
+function dayTitle(t: Translate, dayName: string, selected: number, today: number): string {
   if (selected === today) {
-    return ' · i dag';
+    return t('home.summary.dayTitle.today', { dayName });
   }
-  return selected === today - 1 ? ' · i går' : '';
+  return selected === today - 1 ? t('home.summary.dayTitle.yesterday', { dayName }) : dayName;
 }
 
-function weekNote(hit: number, loggedDays: number): string {
+function weekNoteKey(hit: number, loggedDays: number): string {
   if (loggedDays === 0) {
-    return 'Ingen dage logget i denne uge endnu.';
+    return 'home.summary.weekNote.empty';
   }
   if (hit >= loggedDays) {
-    return 'Stærk uge – bliv ved.';
+    return 'home.summary.weekNote.strong';
   }
   return hit >= SOLID_WEEK_MIN_HITS
-    ? 'Solid uge. Protein er det, der løfter resten.'
-    : 'Ujævn uge. Sæt et enkelt mål: ram protein i morgen.';
+    ? 'home.summary.weekNote.solid'
+    : 'home.summary.weekNote.uneven';
 }

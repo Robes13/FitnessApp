@@ -6,7 +6,7 @@ skærm – den tegner den aktive side i en `<router-outlet>` og lægger tab bare
 | Fil                                 | Indhold                                                                                                                           |
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `shell.routes.ts`                   | `SHELL_ROUTES`: `ShellLayout` med børnene `'' → hjem`, `hjem`, `mad`, `vaegt`, `samling`, `historik` (alle lazy).                 |
-| `shell-navigation.ts`               | `TAB_BAR_ITEMS` (designets `tabDefs` i rækkefølge).                                                                               |
+| `shell-navigation.ts`               | `TAB_BAR_ITEMS` (designets `tabDefs` i rækkefølge) med `labelKey` (`shell.tabBar.*`).                                             |
 | `pages/shell-layout/shell-layout.*` | `ShellLayout` (`app-shell-layout`): outlet + `<app-ui-tab-bar>`, skjuler baren efter route-data og mens skærmtastaturet er åbent. |
 
 ## Beslutninger

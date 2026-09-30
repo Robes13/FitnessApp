@@ -6,10 +6,11 @@ export const WEIGHT_RANGE_DAYS: Readonly<Record<WeightRange, number>> = {
   '3m': 90,
 };
 
-export const WEIGHT_RANGE_LABEL: Readonly<Record<WeightRange, string>> = {
-  '1u': 'Sidste uge',
-  '4u': 'Sidste 4 uger',
-  '3m': 'Sidste 3 mdr.',
+/** Translation keys of the ranges' labels. */
+export const WEIGHT_RANGE_LABEL_KEY: Readonly<Record<WeightRange, string>> = {
+  '1u': 'core.weight.range.lastWeek',
+  '4u': 'core.weight.range.lastFourWeeks',
+  '3m': 'core.weight.range.lastThreeMonths',
 };
 
 /**
@@ -18,10 +19,11 @@ export const WEIGHT_RANGE_LABEL: Readonly<Record<WeightRange, string>> = {
  */
 export const WEIGHT_LOG_HISTORY_RANGE: WeightRange = '3m';
 
-/** Labels in the weigh-in list ("Seneste vejninger"). */
-export const WEIGHT_LOG_LIST_TEXT = {
-  showFewer: 'Vis færre',
-  showAll: (hiddenCount: number): string => `Vis alle (${hiddenCount} mere)`,
-  editRow: (date: string, time: string, kg: string): string =>
-    `Ret vejning ${date} kl. ${time}, ${kg} kg`,
+/** Translation keys of the labels in the weigh-in list ("Seneste vejninger"). */
+export const WEIGHT_LOG_LIST_TEXT_KEY = {
+  showFewer: 'core.weight.logList.showFewer',
+  /** Params: `hiddenCount`. */
+  showAll: 'core.weight.logList.showAll',
+  /** Params: `date`, `time`, `kg`. */
+  editRow: 'core.weight.logList.editRow',
 } as const;

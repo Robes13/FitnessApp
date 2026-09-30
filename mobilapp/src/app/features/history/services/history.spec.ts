@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { STORAGE_KEY } from '../../../core/constants/storage-key';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
+import { injectTranslate } from '../../../core/services/language/translate';
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
 import { TEST_FOOD, weighEntry } from '../../../core/testing/fixtures';
@@ -10,8 +11,8 @@ import {
   HistoryService,
   RELOGGED_DURATION_MS,
   formatFoodSummary,
-  RELOGGED_LABEL,
-  RELOG_LABEL,
+  RELOGGED_LABEL_KEY,
+  RELOG_LABEL_KEY,
 } from './history';
 
 interface Context {
@@ -147,8 +148,9 @@ describe('HistoryService', () => {
     const groups = history.groups();
     expect(groups.map((group) => group.label)).toEqual(['I dag · 21. sep', 'Lør. · 19. sep']);
     expect(groups[1]?.entries).toHaveLength(2);
+    const t = TestBed.runInInjectionContext(() => injectTranslate());
     expect(groups[1]?.foodSummary).toBe(
-      formatFoodSummary(foodLog.totalsFor(new Date(2026, 8, 19))),
+      formatFoodSummary(t, foodLog.totalsFor(new Date(2026, 8, 19))),
     );
     expect(groups[1]?.foodSummary).toMatch(/^420 kcal · P /);
   });
@@ -173,6 +175,7 @@ describe('HistoryService', () => {
     vi.useFakeTimers();
     try {
       const { history, foodLog } = setup();
+      const t = TestBed.runInInjectionContext(() => injectTranslate());
       foodLog.add(TEST_FOOD, 'aften');
       const entry = findEntry(history, 'Proteinbar');
 
@@ -181,12 +184,12 @@ describe('HistoryService', () => {
       expect(foodLog.entries()).toHaveLength(2);
       expect(foodLog.entries().at(-1)?.meal).toBe('aften');
       expect(history.isRelogged(entry)).toBe(true);
-      expect(history.relogLabel(entry)).toBe(RELOGGED_LABEL);
+      expect(history.relogLabel(entry)).toBe(t(RELOGGED_LABEL_KEY));
 
       vi.advanceTimersByTime(RELOGGED_DURATION_MS);
 
       expect(history.isRelogged(entry)).toBe(false);
-      expect(history.relogLabel(entry)).toBe(RELOG_LABEL);
+      expect(history.relogLabel(entry)).toBe(t(RELOG_LABEL_KEY));
     } finally {
       vi.useRealTimers();
     }

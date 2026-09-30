@@ -1,14 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { PASSWORD_MIN_LENGTH } from '../../../../../core/constants/nutrition';
+import { injectTranslate } from '../../../../../core/services/language/translate';
 import { UiFormError } from '../../../../../shared/components/ui-form-error/ui-form-error';
 import { UiTextInput } from '../../../../../shared/components/ui-text-input/ui-text-input';
 import { SignupStateService } from '../../../services/signup-state';
 
 /** Design's `pwHint` – both texts are verbatim from the prototype. */
-const MISMATCH_HINT = 'Adgangskoderne er ikke ens.';
-const MIN_LENGTH_HINT = 'Mindst 8 tegn.';
+const MISMATCH_HINT_KEY = 'signup.accountStep.mismatchHint';
+const MIN_LENGTH_HINT_KEY = 'signup.accountStep.minLengthHint';
 
 interface AccountForm {
   username: FormControl<string>;
@@ -26,7 +28,7 @@ interface AccountForm {
  */
 @Component({
   selector: 'app-account-step',
-  imports: [ReactiveFormsModule, UiFormError, UiTextInput],
+  imports: [ReactiveFormsModule, TranslatePipe, UiFormError, UiTextInput],
   templateUrl: './account-step.html',
   styleUrl: './account-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +36,7 @@ interface AccountForm {
 })
 export class AccountStep {
   private readonly state = inject(SignupStateService);
+  private readonly t = injectTranslate();
 
   protected readonly form = new FormGroup<AccountForm>({
     username: new FormControl(this.state.username(), { nonNullable: true }),
@@ -50,10 +53,12 @@ export class AccountStep {
 
   protected readonly hint = computed(() => {
     if (this.mismatch()) {
-      return MISMATCH_HINT;
+      return this.t(MISMATCH_HINT_KEY);
     }
     const password = this.state.password();
-    return password.length > 0 && password.length < PASSWORD_MIN_LENGTH ? MIN_LENGTH_HINT : '';
+    return password.length > 0 && password.length < PASSWORD_MIN_LENGTH
+      ? this.t(MIN_LENGTH_HINT_KEY)
+      : '';
   });
 
   constructor() {

@@ -1,12 +1,15 @@
-<h1 class="goal-step__title">Hvad er dit <span class="goal-step__title-accent">mål?</span></h1>
-<p class="goal-step__intro">Hvad vil du med din vægt?</p>
+<h1 class="goal-step__title">
+  {{ 'signup.goalStep.titleStart' | translate }}
+  <span class="goal-step__title-accent">{{ 'signup.goalStep.titleAccent' | translate }}</span>
+</h1>
+<p class="goal-step__intro">{{ 'signup.goalStep.intro' | translate }}</p>
 
 <div class="goal-step__options">
   @for (option of options; track option.id) {
     <button
       app-ui-option-card
-      [label]="option.label"
-      [description]="option.description"
+      [label]="option.labelKey | translate"
+      [description]="option.descriptionKey | translate"
       [selected]="state.goal() === option.id"
       selectionStyle="selected"
       (click)="select(option.id)"

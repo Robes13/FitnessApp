@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { PHOTO_SCREEN_THEME } from '../../../../core/constants/theme';
 import { SessionService } from '../../../../core/services/session/session';
@@ -9,7 +10,7 @@ import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiTextInput } from '../../../../shared/components/ui-text-input/ui-text-input';
 import { AUTH_ASSET } from '../../auth-assets';
-import { authErrorMessage } from '../../auth-error';
+import { authErrorKey } from '../../auth-error';
 import { AuthBackdrop } from '../../components/auth-backdrop/auth-backdrop';
 import { holdDarkSystemBarsWhileOpen } from '../../photo-screen';
 
@@ -27,7 +28,15 @@ interface LoginForm {
  */
 @Component({
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule, RouterLink, AuthBackdrop, UiButton, UiFormError, UiTextInput],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    TranslatePipe,
+    AuthBackdrop,
+    UiButton,
+    UiFormError,
+    UiTextInput,
+  ],
   templateUrl: './login-page.html',
   styleUrl: './login-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,7 +54,8 @@ export class LoginPage {
   protected readonly forgotPasswordPath = APP_PATH.FORGOT_PASSWORD;
 
   protected readonly loading = signal(false);
-  protected readonly errorMessage = signal<string | null>(null);
+  /** Translation key of the error shown below the fields – translated in the template. */
+  protected readonly errorKey = signal<string | null>(null);
 
   protected readonly form = new FormGroup<LoginForm>({
     username: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -62,7 +72,7 @@ export class LoginPage {
     }
     const { username, password } = this.form.getRawValue();
     this.loading.set(true);
-    this.errorMessage.set(null);
+    this.errorKey.set(null);
     this.session
       .login(username, password)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -73,7 +83,7 @@ export class LoginPage {
         },
         error: (error: unknown) => {
           this.loading.set(false);
-          this.errorMessage.set(authErrorMessage(error));
+          this.errorKey.set(authErrorKey(error));
         },
       });
   }

@@ -9,6 +9,7 @@ import {
   output,
   viewChild,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CollectionIconName } from '../../../../core/constants/collection-icons';
 import { MEALS, MEAL_TONES } from '../../../../core/constants/meals';
 import { FoodCollection, FoodItem, LoggedFood } from '../../../../core/models/food';
@@ -16,6 +17,7 @@ import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
 import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import {
   FoodPicker,
   FoodPickerCtaVerb,
@@ -39,16 +41,16 @@ const DEFAULT_TAB: AddSheetTab = 'varer';
 /** The picker's step until it has traveled (it always starts on search). */
 const DEFAULT_PICKER_STEP: FoodPickerStep = 'search';
 
-const TAB_OPTIONS: readonly SegmentOption<AddSheetTab>[] = [
-  { value: 'varer', label: 'Varer' },
-  { value: 'samlinger', label: 'Samlinger' },
+const TAB_LABEL_KEYS: readonly { readonly value: AddSheetTab; readonly labelKey: string }[] = [
+  { value: 'varer', labelKey: 'food.addSheet.tabItems' },
+  { value: 'samlinger', labelKey: 'food.addSheet.tabCollections' },
 ];
 
 /** The design's `addSheetVerb` / `addSheetWhat`. */
-const TITLE = {
-  add: 'Tilføj',
-  edit: 'Rediger',
-  editWhat: 'vare',
+const TITLE_KEY = {
+  add: 'food.addSheet.titleAdd',
+  edit: 'food.addSheet.titleEdit',
+  editWhat: 'food.addSheet.titleEditWhat',
 } as const;
 
 const CTA_VERB = { add: 'Tilføj', edit: 'Gem' } as const satisfies Record<
@@ -56,8 +58,7 @@ const CTA_VERB = { add: 'Tilføj', edit: 'Gem' } as const satisfies Record<
   FoodPickerCtaVerb
 >;
 
-const COLLECTIONS_EMPTY_MESSAGE =
-  'Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her med ét tryk.';
+const COLLECTIONS_EMPTY_MESSAGE_KEY = 'food.addSheet.collectionsEmpty';
 
 /** A collection in the "Collections" tab – the whole collection is logged as one food. */
 interface CollectionRowView {
@@ -85,7 +86,7 @@ interface CollectionRowView {
  */
 @Component({
   selector: 'app-food-add-sheet',
-  imports: [FoodPicker, UiChip, UiEmptyState, UiIcon, UiSegmentedControl, UiSheet],
+  imports: [FoodPicker, TranslatePipe, UiChip, UiEmptyState, UiIcon, UiSegmentedControl, UiSheet],
   templateUrl: './food-add-sheet.html',
   styleUrl: './food-add-sheet.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -110,11 +111,14 @@ export class FoodAddSheet {
 
   private readonly collections = inject(CollectionsService);
   private readonly foodLog = inject(FoodLogService);
+  private readonly t = injectTranslate();
   private readonly keyboardOpen = inject(KeyboardService).isOpen;
 
   protected readonly mealOptions = MEALS;
-  protected readonly tabOptions = TAB_OPTIONS;
-  protected readonly emptyMessage = COLLECTIONS_EMPTY_MESSAGE;
+  protected readonly tabOptions = computed<readonly SegmentOption<AddSheetTab>[]>(() =>
+    TAB_LABEL_KEYS.map(({ value, labelKey }) => ({ value, label: this.t(labelKey) })),
+  );
+  protected readonly emptyMessageKey = COLLECTIONS_EMPTY_MESSAGE_KEY;
 
   /** Every open (and close) starts over on the Foods tab. */
   protected readonly tab = linkedSignal<boolean, AddSheetTab>({
@@ -136,15 +140,17 @@ export class FoodAddSheet {
     }
     return this.foodLog.customFoods().find((food) => food.id === entry.id) ?? null;
   });
-  protected readonly title = computed(() => (this.isEditing() ? TITLE.edit : TITLE.add));
+  protected readonly title = computed(() =>
+    this.t(this.isEditing() ? TITLE_KEY.edit : TITLE_KEY.add),
+  );
   protected readonly titleAccent = computed(() =>
-    this.isEditing() ? TITLE.editWhat : this.mealLabel().toLowerCase(),
+    this.isEditing() ? this.t(TITLE_KEY.editWhat) : this.mealLabel().toLowerCase(),
   );
   protected readonly ctaVerb = computed<FoodPickerCtaVerb>(() =>
     this.isEditing() ? CTA_VERB.edit : CTA_VERB.add,
   );
-  protected readonly saveAndLogLabel = computed(
-    () => `Gem og log under ${this.mealLabel().toLowerCase()}`,
+  protected readonly saveAndLogLabel = computed(() =>
+    this.t('food.addSheet.saveAndLog', { mealName: this.mealLabel().toLowerCase() }),
   );
 
   /**
@@ -183,7 +189,8 @@ export class FoodAddSheet {
 
   private mealLabel(): string {
     const id = this.meal();
-    return MEALS.find((meal) => meal.id === id)?.label ?? '';
+    const meal = MEALS.find((candidate) => candidate.id === id);
+    return meal ? this.t(meal.labelKey) : '';
   }
 
   /** The design's `colsFull`: only collections with content are shown, and they're logged as one combined food. */
@@ -198,12 +205,15 @@ export class FoodAddSheet {
         .filter((title): title is string => title !== undefined),
       ...collection.items.map((item) => item.name),
     ];
-    const quantity = `${totals.count} ${totals.count === 1 ? 'vare' : 'varer'}`;
+    const quantity = this.t(
+      totals.count === 1 ? 'food.addSheet.itemCountOne' : 'food.addSheet.itemCountMany',
+      { count: totals.count },
+    );
     return {
       id: collection.id,
       name: collection.name,
       subtitle: titles.join(', '),
-      kcalLabel: `${totals.kcal} kcal`,
+      kcalLabel: `${totals.kcal} ${this.t('common.unit.kcal')}`,
       icon: collection.icon,
       toneClass: `food-add-sheet__icon--${MEAL_TONES[collection.meal]}`,
       item: {

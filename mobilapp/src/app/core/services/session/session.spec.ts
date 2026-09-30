@@ -8,7 +8,7 @@ import { provideCoreTestEnvironment } from '../../testing/test-providers';
 import { SessionService } from './session';
 import { UserProfileService } from '../user-profile/user-profile';
 
-const NO_BACKEND = { message: 'Der er ingen forbindelse til en server endnu.' };
+const NO_BACKEND = { messageKey: 'core.auth.error.noBackend' };
 
 describe('SessionService', () => {
   let storage: FakeStorage;

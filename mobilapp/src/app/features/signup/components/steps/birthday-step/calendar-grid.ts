@@ -14,7 +14,16 @@ export interface CalendarCell {
 
 /** The design's grid is always 6 weeks tall, so the layout doesn't jump between months. */
 export const CALENDAR_CELL_COUNT = 42;
-export const CALENDAR_WEEKDAYS = ['ma', 'ti', 'on', 'to', 'fr', 'lø', 'sø'] as const;
+/** Translation keys of the grid's column headings, Monday first: `'ma'`. */
+export const CALENDAR_WEEKDAY_KEYS: readonly string[] = [
+  'signup.birthdayStep.weekday.mon',
+  'signup.birthdayStep.weekday.tue',
+  'signup.birthdayStep.weekday.wed',
+  'signup.birthdayStep.weekday.thu',
+  'signup.birthdayStep.weekday.fri',
+  'signup.birthdayStep.weekday.sat',
+  'signup.birthdayStep.weekday.sun',
+];
 export const CALENDAR_MIN_YEAR = 1900;
 /** The design's default view when no date has been picked yet: June 1998. */
 export const CALENDAR_DEFAULT_YEAR = 1998;

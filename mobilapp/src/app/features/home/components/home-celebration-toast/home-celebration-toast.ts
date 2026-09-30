@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, output } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 
 /**
@@ -8,7 +9,7 @@ import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
  */
 @Component({
   selector: 'app-home-celebration-toast',
-  imports: [UiIcon],
+  imports: [UiIcon, TranslatePipe],
   templateUrl: './home-celebration-toast.html',
   styleUrl: './home-celebration-toast.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

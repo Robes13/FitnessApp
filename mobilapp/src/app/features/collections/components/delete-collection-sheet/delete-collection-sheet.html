@@ -1,7 +1,7 @@
 <app-ui-sheet
   [open]="open()"
-  title="Slet"
-  titleAccent="samling?"
+  [title]="'collections.deleteSheet.title' | translate"
+  [titleAccent]="'collections.deleteSheet.titleAccent' | translate"
   titleAccentTone="negative"
   titleSize="sm"
   hideClose
@@ -9,15 +9,15 @@
   layer="overlay"
 >
   <p class="delete-collection-sheet__body">
-    «{{ name() }}» og varerne i den bliver slettet. Det kan ikke fortrydes.
+    {{ 'collections.deleteSheet.body' | translate: { name: name() } }}
   </p>
 
   <div sheetFooter class="delete-collection-sheet__actions">
     <button app-ui-button type="button" variant="danger" block (click)="confirmed.emit()">
-      Ja, slet samlingen
+      {{ 'collections.deleteSheet.confirm' | translate }}
     </button>
     <button app-ui-button type="button" variant="outline" block (click)="closed.emit()">
-      Annuller
+      {{ 'collections.deleteSheet.cancel' | translate }}
     </button>
   </div>
 </app-ui-sheet>

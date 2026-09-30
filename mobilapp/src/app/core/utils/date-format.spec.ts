@@ -1,9 +1,11 @@
+import { TestBed } from '@angular/core/testing';
+import { Translate, injectTranslate } from '../services/language/translate';
 import {
-  DAY_LETTERS,
-  DAY_NAMES_LONG,
-  DAY_NAMES_SHORT,
-  MONTH_NAMES_LONG,
-  MONTH_NAMES_SHORT,
+  DAY_LETTER_KEYS,
+  DAY_NAME_LONG_KEYS,
+  DAY_NAME_SHORT_KEYS,
+  MONTH_NAME_LONG_KEYS,
+  MONTH_NAME_SHORT_KEYS,
   addDays,
   daysBetween,
   formatDayLabel,
@@ -24,12 +26,18 @@ import {
 const MONDAY = new Date(2026, 8, 21, 10, 30);
 
 describe('date-format', () => {
+  let t: Translate;
+
+  beforeEach(() => {
+    t = TestBed.runInInjectionContext(() => injectTranslate());
+  });
+
   it('exposes Danish day and month names', () => {
-    expect(DAY_NAMES_SHORT).toHaveLength(7);
-    expect(DAY_NAMES_LONG[0]).toBe('Mandag');
-    expect(DAY_LETTERS).toEqual(['M', 'Ti', 'O', 'To', 'F', 'L', 'S']);
-    expect(MONTH_NAMES_LONG[8]).toBe('september');
-    expect(MONTH_NAMES_SHORT[8]).toBe('sep');
+    expect(DAY_NAME_SHORT_KEYS).toHaveLength(7);
+    expect(t(DAY_NAME_LONG_KEYS[0])).toBe('Mandag');
+    expect(DAY_LETTER_KEYS.map((key) => t(key))).toEqual(['M', 'Ti', 'O', 'To', 'F', 'L', 'S']);
+    expect(t(MONTH_NAME_LONG_KEYS[8])).toBe('september');
+    expect(t(MONTH_NAME_SHORT_KEYS[8])).toBe('sep');
   });
 
   it('indexes weeks from Monday', () => {
@@ -52,17 +60,17 @@ describe('date-format', () => {
   });
 
   it('formats relative days like the design', () => {
-    expect(formatRelativeDay(MONDAY, MONDAY)).toBe('I dag');
-    expect(formatRelativeDay(new Date(2026, 8, 21, 0, 1), MONDAY)).toBe('I dag');
-    expect(formatRelativeDay(addDays(MONDAY, -1), MONDAY)).toBe('I går');
-    expect(formatRelativeDay(addDays(MONDAY, -3), MONDAY)).toBe('3 dage siden');
-    expect(formatRelativeDay(addDays(MONDAY, 2), MONDAY)).toBe('I dag');
+    expect(formatRelativeDay(t, MONDAY, MONDAY)).toBe('I dag');
+    expect(formatRelativeDay(t, new Date(2026, 8, 21, 0, 1), MONDAY)).toBe('I dag');
+    expect(formatRelativeDay(t, addDays(MONDAY, -1), MONDAY)).toBe('I går');
+    expect(formatRelativeDay(t, addDays(MONDAY, -3), MONDAY)).toBe('3 dage siden');
+    expect(formatRelativeDay(t, addDays(MONDAY, 2), MONDAY)).toBe('I dag');
   });
 
   it('formats day labels', () => {
-    expect(formatDayLabel(MONDAY)).toBe('Mandag 21. sep');
-    expect(formatDayMonth(MONDAY)).toBe('21. sep');
-    expect(formatWeekdayAbbreviated(addDays(MONDAY, 1))).toBe('Tir.');
+    expect(formatDayLabel(t, MONDAY)).toBe('Mandag 21. sep');
+    expect(formatDayMonth(t, MONDAY)).toBe('21. sep');
+    expect(formatWeekdayAbbreviated(t, addDays(MONDAY, 1))).toBe('Tir.');
     expect(formatTime(new Date(2026, 8, 21, 7, 5))).toBe('07:05');
   });
 

@@ -93,7 +93,6 @@ describe('ProfilePage', () => {
       'Intensitet',
       'Dagligt kaloriemål',
       'E-mail',
-      'Adgangskode',
       'Enheder',
       'Påmindelser',
     ]);

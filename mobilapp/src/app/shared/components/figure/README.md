@@ -77,7 +77,7 @@ intensitet valgt eller "mildt" – og `accent` (75 %) er standarden.
 <app-figure [weightKg]="weight()" [heightCm]="height()" showDumbbell showCeiling />
 ```
 
-Færdig SVG med `role="img"` og `aria-label` (standard `Figur`, designets tekst). Værten er
+Færdig SVG med `role="img"` og `aria-label` (standard `shared.figure.ariaLabel` – `Figur`, designets tekst). Værten er
 `display: block`; forælderen sætter bredde/højde (designet: `flex: 1; max-width: 215px`).
 `showCeiling` tegner loftlinje, lampesnor og lampe fra højdetrinnet. De er altid i DOM'en, men
 har `opacity = ceilOp`, så de kan fade ind ved 212 cm som i designet.

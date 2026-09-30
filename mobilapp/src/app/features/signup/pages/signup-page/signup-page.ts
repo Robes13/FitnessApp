@@ -1,9 +1,18 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { ApiError } from '../../../../core/models/api-error';
 import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-icon-button';
@@ -25,13 +34,15 @@ import { TrainingIntensityStep } from '../../components/steps/training-intensity
 import { WeightStep } from '../../components/steps/weight-step/weight-step';
 import { SignupStateService } from '../../services/signup-state';
 
-const BACK_LABEL = 'Tilbage';
 /** The design has no error state here – the text is our own, in the design's tone. */
-const SUBMIT_ERROR_MESSAGE = 'Kontoen kunne ikke oprettes. Prøv igen.';
+const SUBMIT_ERROR_MESSAGE_KEY = 'signup.page.submitError';
 
-function errorMessage(error: unknown): string {
-  const message = (error as Partial<ApiError> | null)?.message;
-  return typeof message === 'string' && message.length > 0 ? message : SUBMIT_ERROR_MESSAGE;
+/** The key of the error to show; the page translates it live, so it follows a language switch. */
+function errorMessageKey(error: unknown): string {
+  const messageKey = (error as Partial<ApiError> | null)?.messageKey;
+  return typeof messageKey === 'string' && messageKey.length > 0
+    ? messageKey
+    : SUBMIT_ERROR_MESSAGE_KEY;
 }
 
 /**
@@ -41,6 +52,7 @@ function errorMessage(error: unknown): string {
 @Component({
   selector: 'app-signup-page',
   imports: [
+    TranslatePipe,
     UiButton,
     UiFormError,
     UiIcon,
@@ -69,14 +81,17 @@ function errorMessage(error: unknown): string {
 export class SignupPage {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly t = injectTranslate();
 
   protected readonly state = inject(SignupStateService);
   /** Above the on-screen keyboard the progress header slims down, so the fields keep the room. */
   protected readonly keyboardOpen = inject(KeyboardService).isOpen;
   protected readonly submitting = signal(false);
-  protected readonly error = signal<string | null>(null);
-
-  protected readonly backLabel = BACK_LABEL;
+  private readonly errorKey = signal<string | null>(null);
+  protected readonly error = computed(() => {
+    const key = this.errorKey();
+    return key === null ? null : this.t(key);
+  });
 
   /** On the summary, the button creates the account – otherwise it just moves on. */
   protected onNext(): void {
@@ -88,7 +103,7 @@ export class SignupPage {
       return;
     }
     this.submitting.set(true);
-    this.error.set(null);
+    this.errorKey.set(null);
     this.state
       .submit()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -99,7 +114,7 @@ export class SignupPage {
         },
         error: (error: unknown) => {
           this.submitting.set(false);
-          this.error.set(errorMessage(error));
+          this.errorKey.set(errorMessageKey(error));
         },
       });
   }

@@ -14,6 +14,7 @@ import {
 } from '../../../core/utils/date-format';
 import { clamp, roundTo } from '../../../core/utils/math';
 import { NOW } from '../../../core/utils/now';
+import { injectTranslate } from '../../../core/services/language/translate';
 
 /** The tone of a weight change: green when it goes the right way, red when it doesn't. */
 export type WeightChangeTone = Extract<Tone, 'positive' | 'negative' | 'muted'>;
@@ -39,15 +40,22 @@ export interface WeighLogRow {
 /** A range chip below the chart. */
 export interface WeightRangeOption {
   readonly id: WeightRange;
-  readonly label: string;
+  readonly labelKey: string;
 }
 
 /** The chip texts from the design's `ranges` – shorter than the chart's `rangeLabel`. */
 export const WEIGHT_RANGE_OPTIONS: readonly WeightRangeOption[] = [
-  { id: '1u', label: '1 uge' },
-  { id: '4u', label: '4 uger' },
-  { id: '3m', label: '3 mdr.' },
+  { id: '1u', labelKey: 'weight.view.ranges.week' },
+  { id: '4u', labelKey: 'weight.view.ranges.fourWeeks' },
+  { id: '3m', labelKey: 'weight.view.ranges.threeMonths' },
 ];
+
+/** The chart's left-hand footer per range – design's `rangeLabel` with `'Sidste '` swapped for `'-'`. */
+const WEIGHT_RANGE_START_LABEL_KEY: Readonly<Record<WeightRange, string>> = {
+  '1u': 'weight.view.rangeStart.week',
+  '4u': 'weight.view.rangeStart.fourWeeks',
+  '3m': 'weight.view.rangeStart.threeMonths',
+};
 
 /** The design's default range. */
 export const DEFAULT_WEIGHT_RANGE: WeightRange = '4u';
@@ -62,8 +70,8 @@ const MAINTAIN_TOLERANCE_KG = 0.5;
 /** The design shows six weigh-ins in the list until the user expands it. */
 export const COLLAPSED_LOG_ROWS = 6;
 
-const EMPTY_LOG_MESSAGE = 'Ingen vejninger endnu.';
-const NO_RECENT_LOG_MESSAGE = 'Ingen vejninger de sidste 3 mdr.';
+const EMPTY_LOG_MESSAGE_KEY = 'weight.view.emptyLog';
+const NO_RECENT_LOG_MESSAGE_KEY = 'weight.view.noRecentLog';
 /** Design's `good` for "maintain": the deviation from the goal with a small bonus. */
 const MAINTAIN_PROGRESS_BONUS_KG = 0.3;
 
@@ -98,6 +106,7 @@ export class WeightViewService {
   private readonly profile = inject(UserProfileService);
   private readonly log = inject(WeightLogService);
   private readonly now = inject(NOW);
+  private readonly t = injectTranslate();
 
   /** `null` = the user hasn't touched the draft yet; so it follows the profile's weight. */
   private readonly draftTenths = signal<number | null>(null);
@@ -162,9 +171,10 @@ export class WeightViewService {
   readonly lastWeighLabel = computed(() => {
     const latest = this.log.latest();
     if (latest === null) {
-      return 'Ingen vejninger endnu';
+      return this.t('weight.view.neverWeighed');
     }
-    return `Sidst vejet ${formatRelativeDay(new Date(latest.at), this.now()).toLowerCase()}`;
+    const day = formatRelativeDay(this.t, new Date(latest.at), this.now()).toLowerCase();
+    return this.t('weight.view.lastWeighed', { day });
   });
 
   /** The weigh-ins in the selected range, oldest first. Empty until the user has weighed in. */
@@ -175,7 +185,9 @@ export class WeightViewService {
   /** `'Sidste 4 uger'` – the heading on the right in the chart card. */
   readonly rangeLabel = computed(() => this.log.rangeLabel(this.rangeState()));
   /** `'-4 uger'` – the chart's left-hand footer. */
-  readonly rangeStartLabel = computed(() => this.rangeLabel().replace('Sidste ', '-'));
+  readonly rangeStartLabel = computed(() =>
+    this.t(WEIGHT_RANGE_START_LABEL_KEY[this.rangeState()]),
+  );
 
   /** The difference between the chart's first and last point. */
   readonly rangeDeltaKg = computed(() => {
@@ -187,7 +199,9 @@ export class WeightViewService {
     }
     return last - first;
   });
-  readonly rangeDeltaText = computed(() => `${formatSignedDecimal(this.rangeDeltaKg())} kg`);
+  readonly rangeDeltaText = computed(() =>
+    this.t('weight.view.rangeDelta', { delta: formatSignedDecimal(this.rangeDeltaKg()) }),
+  );
   /** Neutral until the range holds two weigh-ins – a lone point has no change to judge. */
   readonly rangeDeltaTone = computed<WeightChangeTone>(() =>
     this.seriesKg().length < 2 ? 'muted' : rangeTone(this.rangeDeltaKg(), this.goal()),
@@ -213,11 +227,11 @@ export class WeightViewService {
       const deltaTone: WeightChangeTone = previous ? weightChangeTone(change, goal) : 'muted';
       return {
         id: entry.id,
-        date: formatRelativeDay(at, this.now()),
+        date: formatRelativeDay(this.t, at, this.now()),
         time: formatTime(at),
         kg: formatDecimal(entry.kg),
         kgValue: entry.kg,
-        delta: previous ? formatSignedDecimal(change) : 'Start',
+        delta: previous ? formatSignedDecimal(change) : this.t('weight.view.logStart'),
         deltaTone,
         deltaClass: `weight-log-list__delta--${deltaTone}`,
       };
@@ -239,7 +253,7 @@ export class WeightViewService {
 
   /** Distinguishes "never weighed" from "nothing in the last 3 months". */
   readonly logEmptyMessage = computed(() =>
-    this.hasEntries() ? NO_RECENT_LOG_MESSAGE : EMPTY_LOG_MESSAGE,
+    this.t(this.hasEntries() ? NO_RECENT_LOG_MESSAGE_KEY : EMPTY_LOG_MESSAGE_KEY),
   );
 
   /** The weigh-in open in the edit sheet, or `null` when the sheet is closed. */

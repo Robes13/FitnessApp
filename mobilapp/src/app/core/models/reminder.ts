@@ -24,14 +24,17 @@ export interface ReminderSetting {
 
 export type ReminderSettings = Readonly<Record<ReminderId, ReminderSetting>>;
 
-/** A reminder kind: its label in the sheet, its notification text and its defaults. */
+/**
+ * A reminder kind: its label in the sheet, its notification text (as translation keys) and its
+ * defaults.
+ */
 export interface ReminderDefinition {
   readonly id: ReminderId;
-  readonly label: string;
+  readonly labelKey: string;
   /** Stable id of the local notification, so rescheduling replaces instead of duplicating. */
   readonly notificationId: number;
-  readonly title: string;
-  readonly body: string;
+  readonly titleKey: string;
+  readonly bodyKey: string;
   /** Only the weigh-in can be limited to one day a week. */
   readonly allowsWeekday: boolean;
   readonly defaults: ReminderSetting;

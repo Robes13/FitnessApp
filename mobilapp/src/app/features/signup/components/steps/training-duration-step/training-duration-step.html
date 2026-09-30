@@ -1,5 +1,8 @@
 <h1 class="training-duration-step__title">
-  Hvor længe <span class="training-duration-step__title-accent">ad gangen?</span>
+  {{ 'signup.trainingDurationStep.titleStart' | translate }}
+  <span class="training-duration-step__title-accent">{{
+    'signup.trainingDurationStep.titleAccent' | translate
+  }}</span>
 </h1>
 <p class="training-duration-step__subtitle">{{ subtitle() }}</p>
 
@@ -7,7 +10,9 @@
   <div class="training-duration-step__readout">
     <div class="training-duration-step__count-row">
       <div class="training-duration-step__count">{{ minutesText() }}</div>
-      <div class="training-duration-step__unit">min</div>
+      <div class="training-duration-step__unit">
+        {{ 'signup.trainingDurationStep.unit' | translate }}
+      </div>
     </div>
 
     <div class="training-duration-step__pill">
@@ -15,14 +20,16 @@
       <span class="training-duration-step__pill-label">{{ label() }}</span>
     </div>
 
-    <p class="training-duration-step__hint">Træk i skalaen nedenfor.</p>
+    <p class="training-duration-step__hint">
+      {{ 'signup.trainingDurationStep.hint' | translate }}
+    </p>
   </div>
 
   <svg
     class="training-duration-step__scene"
     viewBox="0 0 200 300"
     preserveAspectRatio="xMidYMax meet"
-    aria-label="Stopur og figur"
+    [attr.aria-label]="'signup.trainingDurationStep.figureLabel' | translate"
   >
     <g class="training-duration-step__dial">
       <circle
@@ -81,5 +88,5 @@
   [(value)]="state.trainingMinutes"
   [step]="rulerStep"
   [(dragging)]="dragging"
-  ariaLabel="Minutter pr. træning"
+  [ariaLabel]="'signup.trainingDurationStep.rulerLabel' | translate"
 />

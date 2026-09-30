@@ -5,6 +5,7 @@ import {
   computed,
   input,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { formatDecimal } from '../../../../core/utils/date-format';
 import {
   FigureBody,
@@ -39,7 +40,7 @@ import {
  */
 @Component({
   selector: 'app-weight-scale-scene',
-  imports: [FigureBody],
+  imports: [FigureBody, TranslatePipe],
   templateUrl: './weight-scale-scene.html',
   styleUrl: './weight-scale-scene.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

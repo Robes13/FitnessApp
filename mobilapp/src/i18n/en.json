@@ -1,0 +1,1064 @@
+{
+  "common": {
+    "back": "Back",
+    "close": "Close",
+    "save": "Save",
+    "unit": {
+      "kg": "kg",
+      "g": "g",
+      "kcal": "kcal",
+      "cm": "cm"
+    }
+  },
+  "core": {
+    "nutrition": {
+      "goals": {
+        "lose": {
+          "label": "Lose weight",
+          "description": "Calorie deficit and movement"
+        },
+        "maintain": {
+          "label": "Maintain weight",
+          "description": "Balance and good habits"
+        },
+        "gain": {
+          "label": "Gain weight",
+          "description": "Surplus and strength"
+        }
+      },
+      "paces": {
+        "calm": {
+          "label": "Gentle",
+          "description": "Easy to stick to, least noticeable",
+          "rate": "0.25 kg/week"
+        },
+        "moderate": {
+          "label": "Moderate",
+          "description": "Recommended for most",
+          "rate": "0.5 kg/week"
+        },
+        "fast": {
+          "label": "Fast",
+          "description": "Takes discipline",
+          "rate": "1 kg/week"
+        }
+      },
+      "activityLevels": {
+        "sedentary": "Sedentary",
+        "lightlyActive": "Lightly active",
+        "active": "Active",
+        "veryActive": "Very active",
+        "extremelyActive": "Extremely active",
+        "marathonReady": "Marathon-ready"
+      },
+      "intensities": {
+        "mild": {
+          "label": "Mild",
+          "description": "You can talk the whole way through – easy walking, light cycling, mobility.",
+          "talkTest": "You can talk the whole way through.",
+          "zone": "light effort",
+          "adjective": "mild"
+        },
+        "moderate": {
+          "label": "Moderate",
+          "description": "You can talk in short sentences – brisk walking, jogging, strength with breaks.",
+          "talkTest": "You can talk in short sentences.",
+          "zone": "moderate effort",
+          "adjective": "moderate"
+        },
+        "hard": {
+          "label": "Hard",
+          "description": "You struggle to get words out – intervals, hills, heavy lifts.",
+          "talkTest": "You struggle to get words out.",
+          "zone": "hard effort",
+          "adjective": "hard"
+        }
+      },
+      "genders": {
+        "male": {
+          "label": "Male",
+          "description": "Calculated with the male metabolic formula"
+        },
+        "female": {
+          "label": "Female",
+          "description": "Calculated with the female metabolic formula"
+        },
+        "other": {
+          "label": "Other",
+          "description": "Average of the two formulas"
+        }
+      },
+      "unitSystems": {
+        "metric": {
+          "label": "Metric",
+          "description": "kg · cm"
+        },
+        "imperial": {
+          "label": "Imperial",
+          "description": "lb · in"
+        }
+      }
+    },
+    "meals": {
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "snack": "Snacks"
+    },
+    "reminders": {
+      "breakfast": {
+        "title": "Time for breakfast",
+        "body": "Remember to log your breakfast."
+      },
+      "lunch": {
+        "title": "Time for lunch",
+        "body": "Remember to log your lunch."
+      },
+      "dinner": {
+        "title": "Time for dinner",
+        "body": "Remember to log your dinner."
+      },
+      "weighIn": {
+        "label": "Weigh-in",
+        "title": "Time to weigh yourself",
+        "body": "Step on the scale and log your weight."
+      },
+      "dailyLog": {
+        "label": "Daily food log",
+        "title": "Remember to log today's food",
+        "body": "Add today's meals before you go to bed."
+      },
+      "error": {
+        "schedule": "The reminders couldn't be scheduled on the phone. Try again later.",
+        "permission": "We couldn't ask for notification permission. Try again later."
+      }
+    },
+    "collectionIcons": {
+      "egg": "Egg",
+      "bolt": "Lightning",
+      "utensils": "Cutlery",
+      "cookie": "Cookie",
+      "coffee": "Coffee",
+      "salad": "Salad",
+      "fish": "Fish",
+      "flame": "Flame",
+      "leaf": "Leaf",
+      "heart": "Heart",
+      "star": "Star",
+      "dumbbell": "Dumbbell",
+      "apple": "Apple",
+      "carrot": "Carrot",
+      "sprout": "Sprout",
+      "soup": "Soup",
+      "pizza": "Pizza",
+      "icecream": "Ice cream",
+      "cake": "Cake",
+      "sandwich": "Sandwich",
+      "milk": "Milk",
+      "droplet": "Drop",
+      "timer": "Timer",
+      "sun": "Sun",
+      "moon": "Moon",
+      "target": "Target",
+      "trophy": "Trophy",
+      "bike": "Bike",
+      "bag": "Bag",
+      "sparkles": "Sparkle"
+    },
+    "auth": {
+      "error": {
+        "noBackend": "There is no connection to a server yet.",
+        "invalidEmail": "Enter a valid email.",
+        "invalidCode": "The code is 4 digits.",
+        "passwordTooShort": "At least 8 characters."
+      }
+    },
+    "barcode": {
+      "hintIdleNative": "Tap \"Scan barcode\" and hold the camera over the barcode",
+      "hintIdleWeb": "The camera can't be used here. Enter the barcode number instead.",
+      "hintScanning": "Reading barcode…",
+      "hintLookingUp": "Looking up item…",
+      "permissionDenied": "The app doesn't have camera access. Allow access in Settings to scan barcodes – or enter the numbers below.",
+      "unreadable": "We couldn't read the barcode. Try again with better light, or enter the numbers below.",
+      "moduleInstalling": "The barcode scanner is being downloaded from Google Play. Try again in a moment.",
+      "lookupError": "We couldn't look up the item. Check your internet connection and try again.",
+      "invalidBarcode": "The barcode must be {{minDigits}}–{{maxDigits}} digits.",
+      "invalidAmount": "Enter an amount between {{minGrams}} and {{maxGrams}} g.",
+      "duplicateName": "You already have a custom item with that name.",
+      "servingLabel": "Serving",
+      "amountLabel": "Amount ({{unit}})",
+      "amountAriaLabelMillilitres": "Amount in millilitres",
+      "amountAriaLabelGrams": "Amount in grams",
+      "barcodeLabelNative": "Or enter the barcode",
+      "barcodeLabelWeb": "Enter the barcode",
+      "unnamedProduct": "Item {{barcode}}"
+    },
+    "weight": {
+      "range": {
+        "lastWeek": "Last week",
+        "lastFourWeeks": "Last 4 weeks",
+        "lastThreeMonths": "Last 3 mo"
+      },
+      "logList": {
+        "showFewer": "Show fewer",
+        "showAll": "Show all ({{hiddenCount}} more)",
+        "editRow": "Edit weigh-in {{date}} at {{time}}, {{kg}} kg"
+      }
+    },
+    "passwordStrength": {
+      "weak": "Weak",
+      "ok": "OK",
+      "good": "Good",
+      "strong": "Strong"
+    },
+    "date": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "{{days}} days ago",
+      "dayMonth": "{{day}} {{month}}",
+      "dayLabel": "{{weekday}} {{dayMonth}}",
+      "weekdayAbbreviated": "{{weekday}}",
+      "dayShort": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      },
+      "dayLong": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+      },
+      "dayLetter": {
+        "mon": "M",
+        "tue": "Tu",
+        "wed": "W",
+        "thu": "Th",
+        "fri": "F",
+        "sat": "Sa",
+        "sun": "Su"
+      },
+      "monthLong": {
+        "jan": "January",
+        "feb": "February",
+        "mar": "March",
+        "apr": "April",
+        "may": "May",
+        "jun": "June",
+        "jul": "July",
+        "aug": "August",
+        "sep": "September",
+        "oct": "October",
+        "nov": "November",
+        "dec": "December"
+      },
+      "monthShort": {
+        "jan": "Jan",
+        "feb": "Feb",
+        "mar": "Mar",
+        "apr": "Apr",
+        "may": "May",
+        "jun": "Jun",
+        "jul": "Jul",
+        "aug": "Aug",
+        "sep": "Sep",
+        "oct": "Oct",
+        "nov": "Nov",
+        "dec": "Dec"
+      }
+    }
+  },
+  "auth": {
+    "error": {
+      "fallback": "Something went wrong. Try again."
+    },
+    "loginPage": {
+      "headingStart": "Eat smart.",
+      "headingAccent": "Train hard.",
+      "username": "Username",
+      "password": "Password",
+      "submit": "Log in",
+      "newHere": "New here?",
+      "createAccount": "Create account",
+      "forgotPassword": "Forgot password?"
+    },
+    "forgotPasswordPage": {
+      "stepOf": "Step {{step}} of {{total}}",
+      "emailTitleStart": "Forgot your",
+      "emailTitleAccent": "pass­word?",
+      "emailBody": "Enter the email your account was created with. We'll send a 4-digit code.",
+      "emailPlaceholder": "you@mail.com",
+      "emailLabel": "Email",
+      "sendCode": "Send code",
+      "rememberIt": "Remember it?",
+      "logIn": "Log in",
+      "codeTitleStart": "Check your",
+      "codeTitleAccent": "email",
+      "codeBodyStart": "The code was sent to",
+      "codeBodyEnd": "and is valid for 15 minutes.",
+      "codeLabel": "Four-digit code",
+      "confirmCode": "Confirm code",
+      "noEmail": "No email?",
+      "resend": "Resend",
+      "resent": "Sent again",
+      "passwordTitleStart": "Choose a new",
+      "passwordTitleAccent": "pass­word",
+      "passwordBody": "At least 8 characters. Numbers and capital letters are a good idea.",
+      "newPassword": "New password",
+      "repeatPassword": "Repeat password",
+      "savePassword": "Save password",
+      "loggingIn": "Logging in with new password…",
+      "mismatch": "The passwords don't match."
+    }
+  },
+  "collections": {
+    "mealPicker": {
+      "defaultAriaLabel": "Choose meal"
+    },
+    "deleteSheet": {
+      "title": "Delete",
+      "titleAccent": "collection?",
+      "body": "“{{name}}” and its items will be deleted. This can't be undone.",
+      "confirm": "Yes, delete collection",
+      "cancel": "Cancel"
+    },
+    "newCollectionSheet": {
+      "titleNew": "New",
+      "titleEdit": "Edit",
+      "titleAccent": "collection",
+      "submitCreate": "Create collection",
+      "submitEdit": "Save changes",
+      "namePlaceholder": "Name, e.g. Meal prep",
+      "nameLabel": "Collection name",
+      "mealCaption": "Belongs to",
+      "iconCaption": "Choose icon",
+      "itemsCaption": "Items in the collection",
+      "emptyDraft": "Search for an item or scan a barcode to fill the collection.",
+      "search": "Search item",
+      "scan": "Scan",
+      "pickerTitle": "Add",
+      "pickerTitleAccent": "to collection",
+      "showMoreIcons": "Show more ({{count}})",
+      "showFewerIcons": "Show fewer",
+      "duplicateName": "You already have a collection with that name.",
+      "duplicateCustomFood": "You already have a custom item named \"{{foodName}}\", so it wasn't saved again under My items.",
+      "saveAndAdd": "Save and add to collection",
+      "removeItem": "Remove {{foodName}}"
+    },
+    "page": {
+      "title": "Collections",
+      "subtitle": "Your items and dishes – log them straight as eaten.",
+      "create": "Create collection",
+      "filter": "Filter by collection",
+      "empty": "There are no dishes or items in this collection yet."
+    },
+    "view": {
+      "emptySubtitle": "No items yet",
+      "allChip": "All",
+      "itemCountOne": "1 item",
+      "itemCountMany": "{{count}} items",
+      "macros": "{{kcal}} kcal · {{protein}} g protein",
+      "recipeMeta": "{{category}} · {{minutes}} min"
+    },
+    "recipePage": {
+      "title": "Recipe",
+      "edit": "Edit collection",
+      "contents": "Contents",
+      "logUnder": "Log as eaten under",
+      "log": "Log {{kcal}} kcal",
+      "delete": "Delete collection",
+      "backToCollections": "Back to collections",
+      "notFound": "We couldn't find this recipe.",
+      "noContents": "There are no items in the collection yet.",
+      "calories": "Calories",
+      "protein": "Protein",
+      "carbs": "Carbs",
+      "fat": "Fat"
+    }
+  },
+  "food": {
+    "mealGroup": {
+      "editItem": "Edit {{foodName}}",
+      "removeItem": "Remove {{foodName}}"
+    },
+    "addSheet": {
+      "tabsLabel": "Items or collections",
+      "tabItems": "Items",
+      "tabCollections": "Collections",
+      "titleAdd": "Add",
+      "titleEdit": "Edit",
+      "titleEditWhat": "item",
+      "collectionsEmpty": "You have no collections with items yet. Build one under Collection, then log it here with one tap.",
+      "saveAndLog": "Save and log under {{mealName}}",
+      "itemCountOne": "{{count}} item",
+      "itemCountMany": "{{count}} items"
+    },
+    "view": {
+      "protein": "Protein",
+      "carbs": "Carbs",
+      "fat": "Fat",
+      "macroProgress": "{{eaten}} / {{goal}} g",
+      "addTo": "+ Add to {{mealName}}"
+    },
+    "page": {
+      "titleStart": "Today's",
+      "titleAccent": "food",
+      "summaryLabel": "Calories today",
+      "leftToday": "Left today",
+      "eatenOfGoal": "{{eaten}} eaten · goal {{goal}}",
+      "addFood": "Add food",
+      "scan": "Scan barcode",
+      "duplicateCustomFood": "You already have a custom item named \"{{foodName}}\", so it wasn't saved again."
+    }
+  },
+  "history": {
+    "entries": {
+      "foodSummary": "{{kcal}} kcal · P {{protein}} g · C {{carbs}} g · F {{fat}} g",
+      "groupLabel": "{{day}} · {{date}}",
+      "mealValue": "{{kcal}} kcal",
+      "relog": "Log again today",
+      "relogged": "Logged today",
+      "today": "Today",
+      "weighSubtitle": "Weigh-in recorded",
+      "weighSubtitleLatest": "Latest weigh-in",
+      "weighTitle": "Weigh-in",
+      "weighValue": "{{kg}} kg",
+      "yesterday": "Yesterday"
+    },
+    "filters": {
+      "all": "All",
+      "food": "Food",
+      "goal": "Goal",
+      "weigh": "Weigh-in"
+    },
+    "page": {
+      "empty": "No entries yet.",
+      "filtersAriaLabel": "Filter history",
+      "titleAccent": "history",
+      "titleStart": "Your"
+    }
+  },
+  "home": {
+    "celebrationToast": {
+      "subtitle": "The ring is closed – well done",
+      "title": "Daily goal reached"
+    },
+    "dayCard": {
+      "calories": "Calories",
+      "weight": "Weight"
+    },
+    "goalCard": {
+      "goal": "Goal",
+      "toGoal": "To goal"
+    },
+    "page": {
+      "profileAriaLabel": "Profile"
+    },
+    "summary": {
+      "dayTitle": {
+        "today": "{{dayName}} · today",
+        "yesterday": "{{dayName}} · yesterday"
+      },
+      "defaultPaceRate": "0.5 kg/week",
+      "goal": {
+        "coachHold": "You're staying within ±{{kg}} kg of your goal weight.",
+        "coachPace": "At your pace of {{pace}}, you'll get there in about {{weeks}} weeks.",
+        "coachReached": "You've hit your goal – consider switching to \"Maintain weight\".",
+        "reached": "Reached!",
+        "toGoal": "{{kg}} kg"
+      },
+      "greeting": "Hi",
+      "greetingBeforeName": "Hi,",
+      "macroText": "{{eaten}} / {{goal}} g",
+      "macros": {
+        "carbs": "Carbs",
+        "fat": "Fat",
+        "protein": "Protein"
+      },
+      "streak": "{{streakDays}} days",
+      "todoCountSingle": "Just one",
+      "todos": {
+        "mealSubtitle": "Not recorded yet",
+        "mealTitle": "Log your {{meal}}",
+        "weighSubtitle": "Tap here to record your weight",
+        "weighTitle": "Remember to weigh yourself today"
+      },
+      "weekNote": {
+        "empty": "No days logged this week yet.",
+        "solid": "Solid week. Protein is what lifts the rest.",
+        "strong": "Strong week – keep it up.",
+        "uneven": "Uneven week. Set one goal: hit protein tomorrow."
+      },
+      "weekProgress": "Day {{dayNumber}} of 7"
+    },
+    "todoCard": {
+      "caption": "Next step"
+    },
+    "verifyEmail": {
+      "changeEmail": "Change email",
+      "checkAgain": "Check again",
+      "checking": "Checking…",
+      "copyEnd": ". The app unlocks once you've confirmed.",
+      "copyStart": "We've sent a confirmation code to",
+      "emailAriaLabel": "Email",
+      "emailFallback": "your email",
+      "invalidEmail": "Enter a valid email.",
+      "notVerified": "Not confirmed",
+      "requestFailed": "Something went wrong. Try again.",
+      "resend": "Resend code",
+      "resendHint": "Nothing received?",
+      "resendHintSent": "New code sent – check spam too.",
+      "resendSent": "Code sent ✓",
+      "titleAccent": "email",
+      "titleStart": "Check your"
+    },
+    "weekCard": {
+      "averageKcal": "kcal avg.",
+      "caption": "This week",
+      "daysOnTarget": "days on target",
+      "proteinHit": "protein hit",
+      "streak": "streak"
+    },
+    "weekRings": {
+      "ariaLabel": "Days of the week"
+    }
+  },
+  "weight": {
+    "chart": {
+      "ariaLabel": "Weight trend, {{range}}: {{delta}}",
+      "caption": "Weight",
+      "emptyNone": "No weight data yet.",
+      "emptySingle": "Your curve appears once you've weighed in again.",
+      "goalFooter": "– goal {{goal}} kg",
+      "today": "Today"
+    },
+    "editSheet": {
+      "cancel": "Cancel",
+      "confirmDelete": "Yes, delete weigh-in",
+      "confirmMessage": "Delete the weigh-in from {{when}}? This can't be undone.",
+      "delete": "Delete",
+      "titleAccent": "weigh-in",
+      "titleStart": "Edit",
+      "when": "{{date}} at {{time}}"
+    },
+    "logList": {
+      "title": "Recent weigh-ins"
+    },
+    "page": {
+      "rangesAriaLabel": "Choose period",
+      "save": "Save weigh-in",
+      "saved": "Saved ✓",
+      "sinceLast": "Since last time",
+      "titleAccent": "weight",
+      "titleStart": "Log",
+      "toGoal": "To goal"
+    },
+    "rulerInput": {
+      "ariaLabel": "Weight in kilos",
+      "minus": "Minus 0.1",
+      "plus": "Plus 0.1"
+    },
+    "scaleScene": {
+      "ariaLabel": "Figure on scale"
+    },
+    "view": {
+      "emptyLog": "No weigh-ins yet.",
+      "lastWeighed": "Last weighed {{day}}",
+      "logStart": "Start",
+      "neverWeighed": "No weigh-ins yet",
+      "noRecentLog": "No weigh-ins in the last 3 mo.",
+      "rangeDelta": "{{delta}} kg",
+      "rangeStart": {
+        "fourWeeks": "-4 weeks",
+        "threeMonths": "-3 mo",
+        "week": "-week"
+      },
+      "ranges": {
+        "fourWeeks": "4 weeks",
+        "threeMonths": "3 mo",
+        "week": "1 week"
+      }
+    }
+  },
+  "shell": {
+    "tabBar": {
+      "food": "Food",
+      "weight": "Weight",
+      "home": "Home",
+      "collections": "Collection",
+      "history": "History"
+    }
+  },
+  "profile": {
+    "page": {
+      "title": "Profile",
+      "changePhoto": "Change profile photo",
+      "weight": "Weight",
+      "height": "Height",
+      "bmi": "BMI",
+      "myPlan": "My plan",
+      "account": "Account",
+      "lightMode": "Light mode",
+      "language": "Language",
+      "notifications": "Notifications",
+      "reminders": "Reminders",
+      "achievements": "Achievements",
+      "logout": "Log out",
+      "deleteAccount": "Delete account",
+      "remindersOff": "Off",
+      "remindersNone": "None",
+      "remindersActiveOne": "{{count}} active",
+      "remindersActiveMany": "{{count}} active"
+    },
+    "rows": {
+      "goal": "Goal",
+      "pace": "Pace",
+      "gender": "Sex",
+      "height": "Height",
+      "heightValue": "{{heightCm}} cm",
+      "goalWeight": "Goal weight",
+      "goalWeightValue": "{{goalWeightKg}} kg",
+      "steps": "Activity",
+      "stepsValue": "{{steps}} steps · {{activityLevel}}",
+      "trainFreq": "Training days",
+      "trainFreqNone": "None",
+      "trainFreqValue": "{{frequency}} / week",
+      "trainDur": "Length",
+      "trainDurValue": "{{minutes}} min",
+      "trainInt": "Intensity",
+      "kcal": "Daily calorie goal",
+      "kcalValue": "{{kcal}} kcal",
+      "kcalValueAdjusted": "{{kcal}} kcal · adjusted {{adjustment}}",
+      "email": "Email",
+      "units": "Units",
+      "emailPlaceholder": "you@mail.com"
+    },
+    "edit": {
+      "goalTitle": "Your goal",
+      "paceTitle": "Pace",
+      "genderTitle": "Sex",
+      "unitsTitle": "Units",
+      "intensityTitle": "Intensity",
+      "heightTitle": "Height",
+      "stepsTitle": "Steps per day",
+      "stepsHint": "Your typical daily level",
+      "stepsUnit": "steps",
+      "trainFreqTitle": "Training days",
+      "trainFreqHint": "Regular workouts per week",
+      "trainFreqUnit": "/ week",
+      "trainDurTitle": "Length per workout",
+      "trainDurUnit": "min",
+      "kcalTitle": "Daily calorie goal",
+      "kcalHint": "Suggested: {{kcal}} kcal",
+      "kcalHintAdjusted": "Suggested: {{kcal}} kcal (adjusted {{adjustment}} kcal based on your weight trend)",
+      "emailTitle": "Email",
+      "emailPlaceholder": "you@mail.com",
+      "goalWeightTitle": "Goal weight",
+      "goalWeightHint": "Now: {{currentKg}} kg",
+      "goalWeightHintPending": "Your goal weight doesn't match the goal \"{{goal}}\" (now: {{currentKg}} kg). Choose a new goal weight – the goal changes when you save.",
+      "goalWeightTooLow": "That goal is too low for your height.",
+      "goalWeightTooHigh": "That goal is very high for your height.",
+      "goalWeightBelowCurrent": "Goal weight must be below your current weight ({{currentKg}} kg).",
+      "goalWeightAboveCurrent": "Goal weight must be above your current weight ({{currentKg}} kg).",
+      "goalWeightRange": "Choose a goal weight between {{min}} and {{max}} kg."
+    },
+    "editSheet": {
+      "decrease": "Less",
+      "value": "Value",
+      "increase": "More",
+      "email": "Email"
+    },
+    "photoSheet": {
+      "titleStart": "Profile",
+      "titleAccent": "photo",
+      "cropAriaLabel": "Drag the photo to move it. The arrow keys move it too.",
+      "dragHint": "Drag the photo to move it.",
+      "zoom": "Zoom",
+      "recenter": "Recentre",
+      "remove": "Remove photo",
+      "chooseAnother": "Choose another photo",
+      "use": "Use photo",
+      "choose": "Choose photo",
+      "cropLaterHint": "You'll crop the photo once it's chosen.",
+      "saveError": "The photo couldn't be saved. Free up space and try again.",
+      "readError": "The photo couldn't be loaded. Try another one."
+    },
+    "logoutSheet": {
+      "titleStart": "Log",
+      "titleAccent": "out?",
+      "body": "Your data will be kept. You'll need to log in again to continue.",
+      "confirm": "Yes, log me out",
+      "cancel": "Cancel"
+    },
+    "deleteAccountSheet": {
+      "titleStart": "Delete",
+      "titleAccent": "account?",
+      "body": "All your data on this device will be deleted: profile, food log, weigh-ins, custom items and collections. This can't be undone.",
+      "confirm": "Yes, delete my account",
+      "cancel": "Cancel"
+    },
+    "remindersSheet": {
+      "titleStart": "Your",
+      "titleAccent": "reminders",
+      "noticeUnsupported": "Reminders only work in the app on your phone. Your choices are saved, so they're ready there.",
+      "noticeMasterOff": "Notifications are turned off. Turn them on to get your reminders.",
+      "noticeDenied": "The app isn't allowed to send notifications. Allow it under the app's notifications in your phone's settings – then your reminders will be scheduled again.",
+      "noticePrompt": "The app needs permission to send notifications before your reminders can appear.",
+      "enableMaster": "Turn on notifications",
+      "requestPermission": "Allow notifications",
+      "everyDay": "Every day",
+      "switchLabel": "Reminder for {{reminder}}",
+      "timeLabel": "Time for {{reminder}}",
+      "summary": "{{day}} at {{time}}",
+      "weekdayGroup": "Which day",
+      "done": "Done"
+    },
+    "achievements": {
+      "streak7": "7-day streak",
+      "firstWeigh": "First weigh-in",
+      "meals10": "10 meals",
+      "lost2": "2 kg lost",
+      "protein5": "Protein goal 5x",
+      "ownCollection": "Own collection",
+      "streak30": "30-day streak",
+      "meals50": "50 meals",
+      "lost5": "5 kg lost",
+      "scans10": "10 scans",
+      "noLateSnack": "No late snack",
+      "perfectWeek": "Perfect week",
+      "proteinGlyph": "P",
+      "unitDays": "days",
+      "unitMeals": "meals",
+      "unitScans": "scans",
+      "complete": "Done",
+      "missing": "Missing",
+      "progress": "{{value}}/{{target}} {{unit}}"
+    }
+  },
+  "shared": {
+    "figure": {
+      "ariaLabel": "Figure"
+    },
+    "spinner": {
+      "loading": "Loading…"
+    },
+    "tabBar": {
+      "ariaLabel": "Main navigation"
+    },
+    "textInput": {
+      "revealPassword": "Show password"
+    },
+    "foodPicker": {
+      "unit": {
+        "piece": "pcs",
+        "portion": "serv."
+      },
+      "moreCollapsed": "More details (carbs, fat)",
+      "moreExpanded": "Hide carbs and fat",
+      "createBlank": "Create an item yourself",
+      "createNamed": "Create \"{{query}}\" as new item",
+      "emptyBlank": "You have no items yet. Search, scan a barcode or create one yourself.",
+      "emptyNoMatches": "No items match your search.",
+      "duplicateName": "You already have a custom item with that name.",
+      "macroError": "Protein, carbs and fat must be 0 or more.",
+      "kcalError": "Calories must be at least 1.",
+      "stat": {
+        "protein": "protein",
+        "carbs": "carbs",
+        "fat": "fat"
+      },
+      "ctaAdd": "Add {{amount}} {{unit}}",
+      "ctaSave": "Save {{amount}} {{unit}}",
+      "macroBase": "Nutrition per {{quantity}}",
+      "baseLabel": "{{quantity}} · {{kcal}} kcal",
+      "searchPlaceholder": "Search food, e.g. oats",
+      "scanBarcode": "Scan barcode",
+      "ownFood": "Own item",
+      "resultMeta": "{{quantity}} · P {{protein}} · C {{carbs}} · F {{fat}}",
+      "kcalAmount": "{{kcal}} kcal",
+      "noBarcodeNeeded": "No barcode needed",
+      "newFoodTitle": "New own item",
+      "newFoodSubtitle": "Saved under My items",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Grandma's meatballs",
+      "portionLabel": "Serving",
+      "amount": "Amount",
+      "kcalLabel": "Calories",
+      "proteinLabel": "Protein (g)",
+      "carbsLabel": "Carbs (g)",
+      "fatLabel": "Fat (g)",
+      "saveWithoutLogging": "Save without logging",
+      "standardPortion": "Default: {{portion}}",
+      "decrease": "Less",
+      "increase": "More",
+      "dragHint": "Hold the number and drag sideways to adjust."
+    },
+    "barcodeScanner": {
+      "title": "Scan barcode",
+      "scanButton": "Scan barcode",
+      "lookingUp": "Looking up item",
+      "openSettings": "Open settings",
+      "retry": "Try again",
+      "barcodePlaceholder": "e.g. 5701234567890",
+      "barcodeAriaLabel": "Barcode",
+      "lookUp": "Look up",
+      "enterManually": "Enter manually instead",
+      "noBarcode": "Item has no barcode",
+      "amountQuestion": "How much did you have?",
+      "rescan": "Scan again",
+      "add": "Add",
+      "unknownBadge": "Unknown item",
+      "unknownTitleStart": "That's one we",
+      "unknownTitleAccent": "don't know",
+      "unknownLead": "This barcode isn't in the database. Take the numbers from the package and we'll save it to your own items – next time it's ready in one tap.",
+      "barcodeValue": "Barcode {{barcode}}",
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Caramel protein bar",
+      "portionLabel": "Serving",
+      "portionPlaceholder": "e.g. 55 g",
+      "kcalLabel": "Calories",
+      "proteinLabel": "Protein (g)",
+      "saveAndAdd": "Save and add",
+      "verdictOver": "This puts you {{kcalOver}} kcal over today's goal. Consider half, or save it for after training.",
+      "verdictProtein": "Good protein source – {{protein}} g protein. You'll have {{kcalLeft}} kcal left afterwards.",
+      "verdictFits": "Fits in nicely. {{kcalLeft}} kcal left afterwards.",
+      "kcalAmount": "{{kcal}} kcal",
+      "stat": {
+        "protein": "protein",
+        "carbs": "carbs",
+        "fat": "fat"
+      }
+    }
+  },
+  "signup": {
+    "accountStep": {
+      "minLengthHint": "At least 8 characters.",
+      "mismatchHint": "The passwords don't match.",
+      "password": "Password",
+      "passwordPlaceholder": "Password (at least 8 characters)",
+      "passwordRepeat": "Repeat password",
+      "subtitle": "Choose a username and a password.",
+      "titleAccent": "account",
+      "titleStart": "Create your",
+      "username": "Username"
+    },
+    "activityStep": {
+      "countCaption": "steps on a typical day",
+      "extra": "extra",
+      "figureLabel": "Figure walking",
+      "kmValue": "{{km}} km",
+      "onFoot": "on foot",
+      "rulerLabel": "Steps per day",
+      "subtitleEveryday": "A regular day. Used for your calorie needs.",
+      "subtitleHigh": "You really do walk a lot. Used for your calorie needs.",
+      "subtitleLazy": "Couch league – totally fair. Used for your calorie needs.",
+      "subtitleSolid": "A solid daily level. Used for your calorie needs.",
+      "titleAccent": "steps?",
+      "titleStart": "How many"
+    },
+    "birthdayCake": {
+      "figureLabel": "Figure with birthday cake"
+    },
+    "birthdayStep": {
+      "ageCaption": "Age",
+      "ageUnit": "years",
+      "hintNoDate": "Choose your date of birth above.",
+      "hintTooOld": "Check the date again.",
+      "hintTooYoung": "You must be at least 16 to use Nutrify.",
+      "labelNoDate": "No date selected yet",
+      "monthLabel": "Month",
+      "nextMonth": "Next month",
+      "nextYear": "One year forward",
+      "previousMonth": "Previous month",
+      "previousYear": "One year back",
+      "selected": "Selected: {{day}} {{month}} {{year}}",
+      "subtitle": "Your age is part of calculating your calorie needs.",
+      "titleAccent": "birthday?",
+      "titleStart": "When is your",
+      "weekday": {
+        "fri": "fr",
+        "mon": "mo",
+        "sat": "sa",
+        "sun": "su",
+        "thu": "th",
+        "tue": "tu",
+        "wed": "we"
+      },
+      "yearInput": "Year",
+      "yearLabel": "Year"
+    },
+    "chapters": {
+      "activity": "Activity",
+      "finish": "Finish",
+      "goal": "Goal",
+      "you": "You"
+    },
+    "genderStep": {
+      "subtitle": "We use it to calculate your calorie needs.",
+      "titleAccent": "sex?",
+      "titleStart": "What is your"
+    },
+    "goalStep": {
+      "intro": "What do you want to do with your weight?",
+      "titleAccent": "goal?",
+      "titleStart": "What is your"
+    },
+    "goalWeightStep": {
+      "deltaFromNow": "{{sign}}{{amount}} kg from now",
+      "figureLabel": "Figure at goal weight",
+      "hintTooHigh": "That goal is very high for your height.",
+      "hintTooLow": "That goal is too low for your height.",
+      "now": "Now: {{weight}} kg. Drag the scale below.",
+      "quipGain": "How much do you want to gain? The scale starts just above your {{weight}} kg.",
+      "quipLose": "How much do you want to lose? The scale stops just below your {{weight}} kg.",
+      "rulerLabel": "Goal weight in kilos",
+      "sameAsNow": "Same as now",
+      "titleAccent": "goal weight?",
+      "titleStart": "What is your"
+    },
+    "heightStep": {
+      "bmiCaption": "Height and weight give",
+      "bmiNote": "Used for your calorie needs",
+      "bmiUnit": "BMI",
+      "decrease": "One centimetre less",
+      "figureLabel": "Figure under the ceiling",
+      "increase": "One centimetre more",
+      "rulerLabel": "Height in centimetres",
+      "subtitle": "Together with your {{weight}} kg, we use it for your calorie needs.",
+      "titleAccent": "tall",
+      "titleEnd": "are you?",
+      "titleStart": "How"
+    },
+    "notificationsStep": {
+      "captionNo": "No reminders. You'll find everything in the app when you open it.",
+      "captionUnanswered": "Choose whether we may send you reminders – you can always change this in Profile.",
+      "captionYes": "We'll remind you to weigh in each morning, log meals during the day and check your weekly status.",
+      "choiceLabel": "Reminders",
+      "figureLabel": "Figure with bell",
+      "no": "No thanks",
+      "titleAccent": "nudge",
+      "titleEnd": "in your day?",
+      "titleStart": "A little",
+      "yes": "Yes please"
+    },
+    "paceStep": {
+      "introGain": "How fast do you want to gain?",
+      "introLose": "How fast do you want to lose?",
+      "summaryEmpty": "Choose a pace to see your daily calories.",
+      "summaryGain": "{{pace}} · {{rate}} means about {{kcal}} kcal extra per day.",
+      "summaryLose": "{{pace}} · {{rate}} means about {{kcal}} kcal less per day.",
+      "titleAccent": "fast?",
+      "titleStart": "How"
+    },
+    "page": {
+      "submitError": "The account couldn't be created. Try again."
+    },
+    "progress": {
+      "editingCaption": "Back to summary",
+      "editingLabel": "Editing",
+      "stepOf": "Step {{stepNumber}} of {{stepTotal}}"
+    },
+    "state": {
+      "next": "Next",
+      "submit": "Create account"
+    },
+    "summaryRows": {
+      "activity": "Activity",
+      "activityValue": "{{steps}} steps · {{activity}}",
+      "age": "Age",
+      "ageValue": "{{age}} years",
+      "gender": "Sex",
+      "goal": "Goal",
+      "height": "Height",
+      "heightValue": "{{height}} cm",
+      "noTraining": "No regular workouts",
+      "notifications": "Reminders",
+      "training": "Training",
+      "trainingSchedule": "{{days}} × {{minutes}} min",
+      "user": "User",
+      "weight": "Weight",
+      "weightValue": "{{weight}} kg"
+    },
+    "summaryStep": {
+      "captionNoEmail": "Enter your email – we'll use it to confirm your account. Tap a line to edit.",
+      "captionNoTerms": "All looks right? Tap a line to edit, and tick the box below.",
+      "captionReady": "Done. Just one last tap to go.",
+      "editLabel": "Edit {{label}}",
+      "emailLabel": "Your email",
+      "emailPlaceholder": "Your email · you@mail.com",
+      "figureLabel": "Figure with pen",
+      "termsAnd": "and",
+      "termsEnd": ".",
+      "termsPrivacy": "privacy policy",
+      "termsService": "terms of service",
+      "termsStart": "I accept Nutrify's",
+      "titleAccent": "confirm",
+      "titleStart": "Review and"
+    },
+    "trainingDurationStep": {
+      "figureLabel": "Stopwatch and figure",
+      "hint": "Drag the scale below.",
+      "labelClassic": "Classic session",
+      "labelEndurance": "Endurance session",
+      "labelLong": "Long session",
+      "labelShort": "Short and effective",
+      "labelVeryLong": "Really long session",
+      "rulerLabel": "Minutes per workout",
+      "subtitleClassic": "The length most people can fit in.",
+      "subtitleEndurance": "Over two hours. Plan food, fluids and an easy day after.",
+      "subtitleLong": "Plenty of time for both warm-up and strength.",
+      "subtitleShort": "Short, but it counts. Better than nothing.",
+      "subtitleVeryLong": "Long sessions need food and fluids along the way.",
+      "titleAccent": "each time?",
+      "titleStart": "How long",
+      "unit": "min"
+    },
+    "trainingFrequencyStep": {
+      "countCaption": "planned workouts per week",
+      "figureLabel": "Figure lifting weights",
+      "hint": "Tap the days you usually train.",
+      "labelDaily": "Every day",
+      "labelGood": "Good rhythm",
+      "labelHigh": "High frequency",
+      "labelLight": "Easy rhythm",
+      "labelNone": "No regular workouts",
+      "subtitleGood": "The level most people can keep up all year.",
+      "subtitleHigh": "Many sessions a week. Remember a rest day in between.",
+      "subtitleLight": "Once or twice a week keeps the engine running.",
+      "subtitleNone": "Then we'll only count your steps. You can always change it later.",
+      "titleAccent": "you train?",
+      "titleStart": "How often do"
+    },
+    "trainingIntensityStep": {
+      "captionSelected": "on the effort scale, where 10 is all you've got.",
+      "captionUnselected": "Set your effort on the scale, or choose a level below.",
+      "figureLabel": "Figure working out",
+      "hintSelected": "Tap the scale to fine-tune.",
+      "introSelected": "This is how {{intensity}} training feels for most people.",
+      "introUnselected": "How hard do you usually push when you train?",
+      "scaleMax": "10 · all you've got",
+      "scaleMin": "1 · very easy",
+      "segmentLabel": "Effort {{value}} of {{max}}",
+      "talkTestUnselected": "Choose the level that fits most workouts.",
+      "titleAccent": "hard?",
+      "titleStart": "How"
+    },
+    "weightStep": {
+      "decrease": "One kilo less",
+      "figureLabel": "Figure with dumbbell",
+      "hint": "Drag the scale below, or use − and +.",
+      "increase": "One kilo more",
+      "rulerLabel": "Weight in kilos",
+      "subtitle": "Your weight today – you can always edit it later.",
+      "titleAccent": "weight?",
+      "titleStart": "What is your"
+    }
+  }
+}

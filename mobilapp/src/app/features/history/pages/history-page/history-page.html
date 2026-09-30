@@ -1,7 +1,14 @@
 <div class="history-page__scroll">
-  <h1 class="history-page__title">Din <span class="history-page__title-accent">historik</span></h1>
+  <h1 class="history-page__title">
+    {{ 'history.page.titleStart' | translate }}
+    <span class="history-page__title-accent">{{ 'history.page.titleAccent' | translate }}</span>
+  </h1>
 
-  <div class="history-page__filters" role="group" aria-label="Filtrér historik">
+  <div
+    class="history-page__filters"
+    role="group"
+    [attr.aria-label]="'history.page.filtersAriaLabel' | translate"
+  >
     @for (item of filters; track item.id) {
       <button
         app-ui-chip
@@ -10,17 +17,17 @@
         [selected]="item.id === filter()"
         (click)="selectFilter(item.id)"
       >
-        {{ item.label }}
+        {{ item.labelKey | translate }}
       </button>
     }
   </div>
 
   <div class="history-page__groups">
     @if (isEmpty()) {
-      <app-ui-empty-state message="Ingen poster endnu." />
+      <app-ui-empty-state [message]="'history.page.empty' | translate" />
     }
 
-    @for (group of groups(); track group.label) {
+    @for (group of groups(); track group.id) {
       <section class="history-page__group">
         <h2 class="history-page__group-label">{{ group.label }}</h2>
         @if (group.foodSummary) {

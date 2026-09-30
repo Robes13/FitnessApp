@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { injectTranslate } from '../language/translate';
 import {
   ACTIVITY_LEVELS,
   ADAPTIVE_MAX_ADJUSTMENT_KCAL,
@@ -66,12 +67,13 @@ const DIGIT_PATTERN = /\d/;
 const LEADING_NUMBER_PATTERN = /^[\d.,\s]+/;
 const CM_PER_M = 100;
 
-const PASSWORD_STRENGTHS: readonly PasswordStrength[] = [
-  { score: 0, percent: 30, label: 'Svag', tone: 'negative' },
-  { score: 1, percent: 30, label: 'Svag', tone: 'negative' },
-  { score: 2, percent: 55, label: 'OK', tone: 'accent' },
-  { score: 3, percent: 80, label: 'God', tone: 'warning' },
-  { score: 4, percent: 100, label: 'Stærk', tone: 'positive' },
+/** Indexed by score. */
+const PASSWORD_STRENGTHS: readonly (Omit<PasswordStrength, 'label'> & { labelKey: string })[] = [
+  { score: 0, percent: 30, labelKey: 'core.passwordStrength.weak', tone: 'negative' },
+  { score: 1, percent: 30, labelKey: 'core.passwordStrength.weak', tone: 'negative' },
+  { score: 2, percent: 55, labelKey: 'core.passwordStrength.ok', tone: 'accent' },
+  { score: 3, percent: 80, labelKey: 'core.passwordStrength.good', tone: 'warning' },
+  { score: 4, percent: 100, labelKey: 'core.passwordStrength.strong', tone: 'positive' },
 ];
 const EMPTY_PASSWORD_STRENGTH: PasswordStrength = {
   score: 0,
@@ -87,6 +89,8 @@ const EMPTY_PASSWORD_STRENGTH: PasswordStrength = {
  */
 @Injectable({ providedIn: 'root' })
 export class NutritionCalculator {
+  private readonly t = injectTranslate();
+
   /** Completed years as of `today`. 0 if the date is missing or invalid. */
   ageFromBirthday(isoDate: string | null, today: Date): number {
     const birthday = parseIsoDate(isoDate);
@@ -279,7 +283,12 @@ export class NutritionCalculator {
       Number(password.length >= PASSWORD_STRONG_LENGTH) +
       Number(UPPERCASE_PATTERN.test(password)) +
       Number(DIGIT_PATTERN.test(password));
-    return PASSWORD_STRENGTHS[score] ?? EMPTY_PASSWORD_STRENGTH;
+    const strength = PASSWORD_STRENGTHS[score];
+    if (!strength) {
+      return EMPTY_PASSWORD_STRENGTH;
+    }
+    const { labelKey, ...rest } = strength;
+    return { ...rest, label: this.t(labelKey) };
   }
 
   isValidEmail(value: string): boolean {

@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { injectTranslate } from '../../../../../core/services/language/translate';
 import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { formatDecimal, formatWeightKg } from '../../../../../core/utils/date-format';
 import {
@@ -21,9 +23,9 @@ const GOAL_WEIGHT_LAYOUT = { quipWidth: 290, asideWidth: 150, figureWidth: 215 }
 const MOOD_GAIN = 0.4;
 const MOOD_OTHER = 0.6;
 
-const SAME_AS_NOW = 'Samme som nu';
-const HINT_TOO_LOW = 'Det mål er for lavt for din højde.';
-const HINT_TOO_HIGH = 'Det mål er meget højt for din højde.';
+const SAME_AS_NOW_KEY = 'signup.goalWeightStep.sameAsNow';
+const HINT_TOO_LOW_KEY = 'signup.goalWeightStep.hintTooLow';
+const HINT_TOO_HIGH_KEY = 'signup.goalWeightStep.hintTooHigh';
 const MINUS_SIGN = '−';
 const PLUS_SIGN = '+';
 
@@ -34,7 +36,7 @@ const PLUS_SIGN = '+';
  */
 @Component({
   selector: 'app-goal-weight-step',
-  imports: [FigureBody, UiRuler],
+  imports: [FigureBody, TranslatePipe, UiRuler],
   templateUrl: './goal-weight-step.html',
   styleUrl: './goal-weight-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,6 +49,7 @@ const PLUS_SIGN = '+';
 })
 export class GoalWeightStep {
   private readonly calculator = inject(NutritionCalculator);
+  private readonly t = injectTranslate();
 
   protected readonly state = inject(SignupStateService);
   protected readonly layout = GOAL_WEIGHT_LAYOUT;
@@ -68,17 +71,20 @@ export class GoalWeightStep {
   protected readonly deltaLabel = computed(() => {
     const difference = Math.round((this.goalWeightKg() - this.state.weightKg()) * 10) / 10;
     if (difference === 0) {
-      return SAME_AS_NOW;
+      return this.t(SAME_AS_NOW_KEY);
     }
     const sign = difference < 0 ? MINUS_SIGN : PLUS_SIGN;
-    return `${sign}${formatDecimal(Math.abs(difference), 1)} kg fra nu`;
+    return this.t('signup.goalWeightStep.deltaFromNow', {
+      sign,
+      amount: formatDecimal(Math.abs(difference), 1),
+    });
   });
 
   protected readonly quip = computed(() => {
     const current = Math.round(this.state.weightKg());
     return this.state.goal() === 'tage'
-      ? `Hvor meget vil du op? Skalaen starter lige over dine ${current} kg.`
-      : `Hvor meget vil du ned? Skalaen stopper lige under dine ${current} kg.`;
+      ? this.t('signup.goalWeightStep.quipGain', { weight: current })
+      : this.t('signup.goalWeightStep.quipLose', { weight: current });
   });
 
   /** Empty when the goal is realistic – otherwise one of the design's two warnings. */
@@ -91,7 +97,7 @@ export class GoalWeightStep {
     if (realistic) {
       return '';
     }
-    return this.state.goal() === 'tabe' ? HINT_TOO_LOW : HINT_TOO_HIGH;
+    return this.t(this.state.goal() === 'tabe' ? HINT_TOO_LOW_KEY : HINT_TOO_HIGH_KEY);
   });
 
   protected readonly goalGeometry = animatedFigure(() =>

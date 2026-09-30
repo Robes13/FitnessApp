@@ -2,9 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { DEFAULT_PROFILE } from '../../constants/profile-defaults';
 import { provideCoreTestEnvironment } from '../../testing/test-providers';
+import { injectTranslate } from '../language/translate';
 import { AuthApi } from './auth-api';
 
-const NO_BACKEND = { message: 'Der er ingen forbindelse til en server endnu.' };
+const NO_BACKEND = { messageKey: 'core.auth.error.noBackend' };
 
 describe('AuthApi', () => {
   let api: AuthApi;
@@ -29,5 +30,8 @@ describe('AuthApi', () => {
     );
     await expect(firstValueFrom(api.verifyResetCode('1234'))).rejects.toEqual(NO_BACKEND);
     await expect(firstValueFrom(api.resetPassword('hemmelig1'))).rejects.toEqual(NO_BACKEND);
+    expect(TestBed.runInInjectionContext(() => injectTranslate())(NO_BACKEND.messageKey)).toBe(
+      'Der er ingen forbindelse til en server endnu.',
+    );
   });
 });

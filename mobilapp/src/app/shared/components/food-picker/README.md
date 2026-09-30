@@ -33,7 +33,7 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
 | `startStep`       | `'search'` | `search` eller `new-food` (scannerens "Varen har ingen stregkode" åbner direkte i formularen)           |
 | `editItem`        | `null`     | Redigér en logget vare: starter i `portion` med varens egen mængde som basis                            |
 | `editBaseItem`    | `null`     | Den egne vare, `editItem` blev logget fra. Bliver basis for skaleringen og gør kcal/makroer redigerbare |
-| `ctaVerb`         | `'Tilføj'` | `Tilføj` eller `Gem` i portionsknappen                                                                  |
+| `ctaVerb`         | `'Tilføj'` | `Tilføj` eller `Gem` i portionsknappen (en nøgle – teksten oversættes via `CTA_LABEL_KEY`)              |
 | `saveAndLogLabel` | (påkrævet) | Primær knap i "Ny egen vare", fx `'Gem og log under morgenmad'` – forælderen kender måltidet            |
 | `showScan`        | `true`     | Vis scan-knappen ved søgefeltet                                                                         |
 

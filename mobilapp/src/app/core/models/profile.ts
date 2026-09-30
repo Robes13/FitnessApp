@@ -39,17 +39,18 @@ export interface UserProfile {
   photo: ProfilePhoto | null;
 }
 
+/** Texts are translation keys (`…Key`). */
 export interface GoalDefinition {
   id: GoalId;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
 }
 
 export interface PaceDefinition {
   id: PaceId;
-  label: string;
-  description: string;
-  rateLabel: string;
+  labelKey: string;
+  descriptionKey: string;
+  rateLabelKey: string;
   kcalPerDay: number;
   kgPerWeek: number;
 }
@@ -59,31 +60,31 @@ export interface ActivityLevel {
   maxSteps: number;
   /** Physical Activity Level – factor on the basal metabolic rate. */
   pal: number;
-  label: string;
+  labelKey: string;
 }
 
 export interface IntensityDefinition {
   id: IntensityId;
-  label: string;
-  description: string;
-  talkTest: string;
+  labelKey: string;
+  descriptionKey: string;
+  talkTestKey: string;
   scaleLabel: string;
-  zone: string;
+  zoneKey: string;
   level: 1 | 2 | 3;
   rpe: number;
   maxRpe: number;
-  adjective: string;
+  adjectiveKey: string;
   tone: Tone;
 }
 
 export interface GenderDefinition {
   id: Gender;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
 }
 
 export interface UnitSystemDefinition {
   id: UnitSystem;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
 }

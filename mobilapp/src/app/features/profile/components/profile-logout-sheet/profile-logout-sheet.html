@@ -1,7 +1,7 @@
 <app-ui-sheet
   [open]="open()"
-  title="Log"
-  titleAccent="ud?"
+  [title]="'profile.logoutSheet.titleStart' | translate"
+  [titleAccent]="'profile.logoutSheet.titleAccent' | translate"
   titleAccentTone="negative"
   titleSize="sm"
   hideClose
@@ -13,15 +13,15 @@
   </span>
 
   <p class="profile-logout-sheet__body">
-    Dine data bliver gemt. Du skal logge ind igen for at fortsætte.
+    {{ 'profile.logoutSheet.body' | translate }}
   </p>
 
   <div sheetFooter class="profile-logout-sheet__actions">
     <button app-ui-button type="button" variant="danger" block (click)="confirmed.emit()">
-      Ja, log mig ud
+      {{ 'profile.logoutSheet.confirm' | translate }}
     </button>
     <button app-ui-button type="button" variant="outline" block (click)="closed.emit()">
-      Annuller
+      {{ 'profile.logoutSheet.cancel' | translate }}
     </button>
   </div>
 </app-ui-sheet>

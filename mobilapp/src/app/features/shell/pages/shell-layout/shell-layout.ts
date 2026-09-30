@@ -10,7 +10,8 @@ import {
 import { filter, map } from 'rxjs';
 import { ROUTE_DATA } from '../../../../core/constants/route-data';
 import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
-import { UiTabBar } from '../../../../shared/components/ui-tab-bar/ui-tab-bar';
+import { injectTranslate } from '../../../../core/services/language/translate';
+import { TabBarItem, UiTabBar } from '../../../../shared/components/ui-tab-bar/ui-tab-bar';
 import { TAB_BAR_ITEMS } from '../../shell-navigation';
 
 /**
@@ -36,8 +37,11 @@ export class ShellLayout {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly keyboard = inject(KeyboardService);
+  private readonly t = injectTranslate();
 
-  protected readonly tabBarItems = TAB_BAR_ITEMS;
+  protected readonly tabBarItems = computed<readonly TabBarItem[]>(() =>
+    TAB_BAR_ITEMS.map(({ labelKey, ...item }) => ({ ...item, label: this.t(labelKey) })),
+  );
 
   private readonly tabBarHidden = toSignal(
     this.router.events.pipe(

@@ -19,7 +19,7 @@ Arket lever inde i `@if (open())`: når det er lukket, findes intet af det i DOM
 Forælderen ejer tilstanden. `open` er et krævet input, og arket udsender `closed`, når
 brugeren
 
-- klikker på luk-knappen (`aria-label` = `closeLabel`, standard "Luk"),
+- klikker på luk-knappen (`aria-label` = `closeLabel`, standard `common.close` – "Luk"),
 - klikker på scrimmen uden for panelet, eller
 - trykker Escape.
 

@@ -92,6 +92,9 @@ filtype.
   en metode på klassen — ikke som udtryk i templaten.
 - Templates skal være simple og lette at læse. Brug `@if` / `@for` /
   `@switch`.
+- **Al brugersynlig tekst ligger som nøgler i `src/i18n/da.json` og `en.json`**
+  (ngx-translate) — `translate`-pipen i templates og `injectTranslate()` i
+  TypeScript, altid inde i `computed()`. Se [`src/i18n/README.md`](src/i18n/README.md).
 - Angulars indbyggede funktionalitet foretrækkes frem for specialbyggede
   løsninger, når det giver mening.
 
@@ -250,6 +253,7 @@ filtype.
 - [ ] Er nye features lazy loadet?
 - [ ] Går alle imports den rigtige vej (`features → shared → core`)?
 - [ ] Håndterer UI'et loading, tom tilstand og fejl?
+- [ ] Ligger al ny brugersynlig tekst som nøgle i både `da.json` og `en.json`?
 - [ ] Er ubrugt kode og imports fjernet?
 - [ ] Bygger `npm run build` uden fejl eller advarsler?
 - [ ] Følger commit-beskeden Conventional Commits?

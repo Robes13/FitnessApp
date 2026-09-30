@@ -1,16 +1,14 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   computed,
   effect,
   inject,
   input,
   linkedSignal,
   output,
-  signal,
 } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormControl,
@@ -19,9 +17,8 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { map } from 'rxjs';
-import { PASSWORD_MIN_LENGTH } from '../../../../core/constants/nutrition';
-import { ApiError } from '../../../../core/models/api-error';
 import { GoalId } from '../../../../core/models/profile';
 import { NutritionCalculator } from '../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
@@ -48,22 +45,12 @@ interface TextForm {
   value: FormControl<string>;
 }
 
-interface PasswordForm {
-  password: FormControl<string>;
-  repeat: FormControl<string>;
-}
-
-/** Shown if the backend responds with something unexpected. */
-const GENERIC_ERROR = 'Adgangskoden kunne ikke gemmes. Prøv igen.';
-
 /**
  * The "Rediger profil" sheet. One component covers all of the design's `editDefs` variants:
  *
  * - **options** – pick between cards; the choice is saved immediately and the sheet closes.
  * - **number** – −/+ around a number field, saved with "Gem".
  * - **text** – e-mail.
- * - **password** – two fields that must match and be at least 8 characters. The password
- *   isn't part of the profile, so it's sent to the backend; the button shows a spinner meanwhile.
  *
  * The parent owns which row is open (`row`); `null` means closed.
  *
@@ -76,6 +63,7 @@ const GENERIC_ERROR = 'Adgangskoden kunne ikke gemmes. Prøv igen.';
   selector: 'app-profile-edit-sheet',
   imports: [
     ReactiveFormsModule,
+    TranslatePipe,
     UiButton,
     UiFormError,
     UiIcon,
@@ -95,7 +83,6 @@ export class ProfileEditSheet {
 
   private readonly editor = inject(ProfileEditService);
   private readonly calculator = inject(NutritionCalculator);
-  private readonly destroyRef = inject(DestroyRef);
 
   /** A goal waiting for a new goal weight. Reset whenever another row is opened. */
   private readonly pendingGoal = linkedSignal<ProfileEditRowId | null, GoalId | null>({
@@ -115,7 +102,6 @@ export class ProfileEditSheet {
   protected readonly isOpen = computed(() => this.definition() !== null);
   protected readonly title = computed(() => this.definition()?.title ?? '');
   protected readonly hint = computed(() => this.definition()?.hint ?? '');
-  protected readonly isPassword = computed(() => this.definition()?.kind === 'password');
   protected readonly optionsDefinition = computed<OptionsEditDefinition | null>(() => {
     const definition = this.definition();
     return definition?.kind === 'options' ? definition : null;
@@ -135,20 +121,6 @@ export class ProfileEditSheet {
   protected readonly textForm = new FormGroup<TextForm>({
     value: new FormControl('', { nonNullable: true }),
   });
-  protected readonly passwordForm = new FormGroup<PasswordForm>(
-    {
-      password: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH)],
-      }),
-      repeat: new FormControl('', { nonNullable: true }),
-    },
-    { validators: passwordsMatch },
-  );
-
-  protected readonly saving = signal(false);
-  protected readonly errorMessage = signal<string | null>(null);
-
   private readonly numberValue = toSignal(this.numberForm.controls.value.valueChanges, {
     initialValue: null,
   });
@@ -166,21 +138,14 @@ export class ProfileEditSheet {
     this.textForm.statusChanges.pipe(map(() => this.textForm.valid)),
     { initialValue: false },
   );
-  private readonly passwordStatus = toSignal(
-    this.passwordForm.statusChanges.pipe(map(() => this.passwordForm.valid)),
-    { initialValue: false },
-  );
 
-  protected readonly canSaveNumber = computed(() => this.numberStatus() && !this.saving());
-  protected readonly canSaveText = computed(() => this.textStatus() && !this.saving());
-  protected readonly canSavePassword = computed(() => this.passwordStatus() && !this.saving());
+  protected readonly canSaveNumber = this.numberStatus;
+  protected readonly canSaveText = this.textStatus;
 
   constructor() {
     // Every time the sheet opens on a new row, the right field is filled with the current value.
     effect(() => {
       const definition = this.definition();
-      this.saving.set(false);
-      this.errorMessage.set(null);
       if (definition === null) {
         return;
       }
@@ -202,10 +167,6 @@ export class ProfileEditSheet {
           ]);
           this.textForm.controls.value.setValue(definition.value);
           this.textForm.controls.value.updateValueAndValidity();
-          return;
-        case 'password':
-          this.passwordForm.reset({ password: '', repeat: '' });
-          this.passwordForm.updateValueAndValidity();
           return;
         default:
           return;
@@ -265,27 +226,6 @@ export class ProfileEditSheet {
     this.closed.emit();
   }
 
-  protected savePassword(): void {
-    if (!this.passwordForm.valid || this.saving()) {
-      return;
-    }
-    this.saving.set(true);
-    this.errorMessage.set(null);
-    this.editor
-      .changePassword(this.passwordForm.controls.password.value)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.saving.set(false);
-          this.closed.emit();
-        },
-        error: (error: unknown) => {
-          this.saving.set(false);
-          this.errorMessage.set(toErrorMessage(error));
-        },
-      });
-  }
-
   private validGoalWeight(control: AbstractControl): ValidationErrors | null {
     const value = control.value as number | null;
     return value !== null && this.goalWeightErrorFor(value) !== null ? { goalWeight: true } : null;
@@ -302,15 +242,4 @@ export class ProfileEditSheet {
   private validEmail(control: AbstractControl): ValidationErrors | null {
     return this.calculator.isValidEmail(String(control.value ?? '')) ? null : { email: true };
   }
-}
-
-function passwordsMatch(group: AbstractControl): ValidationErrors | null {
-  const password = group.get('password')?.value as string | undefined;
-  const repeat = group.get('repeat')?.value as string | undefined;
-  return password === repeat ? null : { mismatch: true };
-}
-
-function toErrorMessage(error: unknown): string {
-  const message = (error as Partial<ApiError> | null)?.message;
-  return typeof message === 'string' && message !== '' ? message : GENERIC_ERROR;
 }

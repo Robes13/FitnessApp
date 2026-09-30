@@ -11,33 +11,45 @@ import {
 import { Macros } from '../models/food';
 
 export const GOALS: readonly GoalDefinition[] = [
-  { id: 'tabe', label: 'Tabe mig', description: 'Kalorieunderskud og bevægelse' },
-  { id: 'hold', label: 'Holde vægten', description: 'Balance og gode vaner' },
-  { id: 'tage', label: 'Tage på', description: 'Overskud og styrke' },
+  {
+    id: 'tabe',
+    labelKey: 'core.nutrition.goals.lose.label',
+    descriptionKey: 'core.nutrition.goals.lose.description',
+  },
+  {
+    id: 'hold',
+    labelKey: 'core.nutrition.goals.maintain.label',
+    descriptionKey: 'core.nutrition.goals.maintain.description',
+  },
+  {
+    id: 'tage',
+    labelKey: 'core.nutrition.goals.gain.label',
+    descriptionKey: 'core.nutrition.goals.gain.description',
+  },
 ];
 
 export const PACES: readonly PaceDefinition[] = [
   {
     id: 'rolig',
-    label: 'Roligt',
-    description: 'Let at holde, mindst mærkbart',
-    rateLabel: '0,25 kg/uge',
+    labelKey: 'core.nutrition.paces.calm.label',
+    descriptionKey: 'core.nutrition.paces.calm.description',
+    rateLabelKey: 'core.nutrition.paces.calm.rate',
     kcalPerDay: 250,
     kgPerWeek: 0.25,
   },
   {
     id: 'moderat',
-    label: 'Moderat',
-    description: 'Anbefalet for de fleste',
-    rateLabel: '0,5 kg/uge',
+    labelKey: 'core.nutrition.paces.moderate.label',
+    descriptionKey: 'core.nutrition.paces.moderate.description',
+    rateLabelKey: 'core.nutrition.paces.moderate.rate',
     kcalPerDay: 500,
     kgPerWeek: 0.5,
   },
   {
     id: 'hurtig',
-    label: 'Hurtigt',
-    description: 'Kræver disciplin',
-    rateLabel: '1 kg/uge',
+    labelKey: 'core.nutrition.paces.fast.label',
+    descriptionKey: 'core.nutrition.paces.fast.description',
+    rateLabelKey: 'core.nutrition.paces.fast.rate',
     kcalPerDay: 1000,
     kgPerWeek: 1,
   },
@@ -45,66 +57,86 @@ export const PACES: readonly PaceDefinition[] = [
 
 /** The design's `actLevels`. The level chosen is the first one where steps < `maxSteps`. */
 export const ACTIVITY_LEVELS: readonly ActivityLevel[] = [
-  { maxSteps: 2500, pal: 1.25, label: 'Stillesiddende' },
-  { maxSteps: 5500, pal: 1.4, label: 'Let aktiv' },
-  { maxSteps: 9000, pal: 1.55, label: 'Aktiv' },
-  { maxSteps: 13000, pal: 1.7, label: 'Meget aktiv' },
-  { maxSteps: 18000, pal: 1.85, label: 'Ekstremt aktiv' },
-  { maxSteps: 99999, pal: 1.95, label: 'Maratonklar' },
+  { maxSteps: 2500, pal: 1.25, labelKey: 'core.nutrition.activityLevels.sedentary' },
+  { maxSteps: 5500, pal: 1.4, labelKey: 'core.nutrition.activityLevels.lightlyActive' },
+  { maxSteps: 9000, pal: 1.55, labelKey: 'core.nutrition.activityLevels.active' },
+  { maxSteps: 13000, pal: 1.7, labelKey: 'core.nutrition.activityLevels.veryActive' },
+  { maxSteps: 18000, pal: 1.85, labelKey: 'core.nutrition.activityLevels.extremelyActive' },
+  { maxSteps: 99999, pal: 1.95, labelKey: 'core.nutrition.activityLevels.marathonReady' },
 ];
 
 /** The design's `intDef`. An RPE number maps to the first level where rpe <= `maxRpe`. */
 export const INTENSITIES: readonly IntensityDefinition[] = [
   {
     id: 'mildt',
-    label: 'Mildt',
-    description: 'Du kan snakke hele vejen igennem – rolig gang, let cykling, mobility.',
-    talkTest: 'Du kan snakke hele vejen igennem.',
+    labelKey: 'core.nutrition.intensities.mild.label',
+    descriptionKey: 'core.nutrition.intensities.mild.description',
+    talkTestKey: 'core.nutrition.intensities.mild.talkTest',
     scaleLabel: '3/10',
-    zone: 'let anstrengelse',
+    zoneKey: 'core.nutrition.intensities.mild.zone',
     level: 1,
     rpe: 3,
     maxRpe: 4,
-    adjective: 'mild',
+    adjectiveKey: 'core.nutrition.intensities.mild.adjective',
     tone: 'positive',
   },
   {
     id: 'moderat',
-    label: 'Moderat',
-    description: 'Du kan snakke i korte sætninger – rask gang, jog, styrke med pauser.',
-    talkTest: 'Du kan snakke i korte sætninger.',
+    labelKey: 'core.nutrition.intensities.moderate.label',
+    descriptionKey: 'core.nutrition.intensities.moderate.description',
+    talkTestKey: 'core.nutrition.intensities.moderate.talkTest',
     scaleLabel: '6/10',
-    zone: 'moderat anstrengelse',
+    zoneKey: 'core.nutrition.intensities.moderate.zone',
     level: 2,
     rpe: 6,
     maxRpe: 7,
-    adjective: 'moderat',
+    adjectiveKey: 'core.nutrition.intensities.moderate.adjective',
     tone: 'accent',
   },
   {
     id: 'haardt',
-    label: 'Hårdt',
-    description: 'Du har svært ved at få ord frem – intervaller, bakker, tunge løft.',
-    talkTest: 'Du har svært ved at få ord frem.',
+    labelKey: 'core.nutrition.intensities.hard.label',
+    descriptionKey: 'core.nutrition.intensities.hard.description',
+    talkTestKey: 'core.nutrition.intensities.hard.talkTest',
     scaleLabel: '9/10',
-    zone: 'hård anstrengelse',
+    zoneKey: 'core.nutrition.intensities.hard.zone',
     level: 3,
     rpe: 9,
     maxRpe: 10,
-    adjective: 'hård',
+    adjectiveKey: 'core.nutrition.intensities.hard.adjective',
     tone: 'negative',
   },
 ];
 
 export const GENDERS: readonly GenderDefinition[] = [
-  { id: 'mand', label: 'Mand', description: 'Beregnes med mandlig stofskifte-formel' },
-  { id: 'kvinde', label: 'Kvinde', description: 'Beregnes med kvindelig stofskifte-formel' },
-  { id: 'andet', label: 'Andet', description: 'Gennemsnit af de to formler' },
+  {
+    id: 'mand',
+    labelKey: 'core.nutrition.genders.male.label',
+    descriptionKey: 'core.nutrition.genders.male.description',
+  },
+  {
+    id: 'kvinde',
+    labelKey: 'core.nutrition.genders.female.label',
+    descriptionKey: 'core.nutrition.genders.female.description',
+  },
+  {
+    id: 'andet',
+    labelKey: 'core.nutrition.genders.other.label',
+    descriptionKey: 'core.nutrition.genders.other.description',
+  },
 ];
 
 export const UNIT_SYSTEMS: readonly UnitSystemDefinition[] = [
-  { id: 'metrisk', label: 'Metrisk', description: 'kg · cm' },
-  { id: 'imperial', label: 'Imperial', description: 'lb · in' },
+  {
+    id: 'metrisk',
+    labelKey: 'core.nutrition.unitSystems.metric.label',
+    descriptionKey: 'core.nutrition.unitSystems.metric.description',
+  },
+  {
+    id: 'imperial',
+    labelKey: 'core.nutrition.unitSystems.imperial.label',
+    descriptionKey: 'core.nutrition.unitSystems.imperial.description',
+  },
 ];
 
 export const WEIGHT_MIN_KG = 30;

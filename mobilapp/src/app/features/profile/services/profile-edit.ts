@@ -1,5 +1,4 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
 import {
   GENDERS,
   GOALS,
@@ -17,7 +16,6 @@ import {
 } from '../../../core/constants/nutrition';
 import { GoalId } from '../../../core/models/profile';
 import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
-import { AuthApi } from '../../../core/services/auth-api/auth-api';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import {
@@ -25,6 +23,7 @@ import {
   formatSignedDecimal,
   formatWeightKg,
 } from '../../../core/utils/date-format';
+import { injectTranslate } from '../../../core/services/language/translate';
 
 /** The rows in Profile that can be edited. The ids are the design's `editDefs` keys. */
 export const PROFILE_EDIT_ROWS = [
@@ -39,7 +38,6 @@ export const PROFILE_EDIT_ROWS = [
   'trainInt',
   'kcal',
   'email',
-  'password',
   'units',
 ] as const;
 
@@ -79,12 +77,8 @@ export interface TextEditDefinition extends BaseEditDefinition {
   readonly value: string;
 }
 
-export interface PasswordEditDefinition extends BaseEditDefinition {
-  readonly kind: 'password';
-}
-
 export type ProfileEditDefinition =
-  OptionsEditDefinition | NumberEditDefinition | TextEditDefinition | PasswordEditDefinition;
+  OptionsEditDefinition | NumberEditDefinition | TextEditDefinition;
 
 /**
  * What happened when an option was picked. A new goal ("tabe"/"tage") that the stored goal
@@ -109,11 +103,9 @@ const TRAINING_FREQUENCY_STEP = 1;
 const TRAINING_MINUTES_STEP = 5;
 const KCAL_STEP = 50;
 
-const EMAIL_PLACEHOLDER = 'dig@mail.dk';
-
 /** The same two warnings as the sign-up flow's goal-weight step. */
-const GOAL_WEIGHT_TOO_LOW = 'Det mål er for lavt for din højde.';
-const GOAL_WEIGHT_TOO_HIGH = 'Det mål er meget højt for din højde.';
+const GOAL_WEIGHT_TOO_LOW_KEY = 'profile.edit.goalWeightTooLow';
+const GOAL_WEIGHT_TOO_HIGH_KEY = 'profile.edit.goalWeightTooHigh';
 
 const SAVED: OptionApplyResult = { kind: 'saved' };
 
@@ -121,16 +113,13 @@ const SAVED: OptionApplyResult = { kind: 'saved' };
  * The definitions behind the "Rediger profil" sheet: what a row is called, what kind of
  * field it shows, and what happens when the user saves. A port of the design's
  * `editDefs`/`openEdit`.
- *
- * The password isn't part of the profile, so it's sent to `AuthApi.resetPassword()` – the
- * backend is the only place a password can be changed.
  */
 @Injectable({ providedIn: 'root' })
 export class ProfileEditService {
   private readonly profiles = inject(UserProfileService);
   private readonly adaptiveGoal = inject(AdaptiveGoalService);
-  private readonly authApi = inject(AuthApi);
   private readonly calculator = inject(NutritionCalculator);
+  private readonly t = injectTranslate();
 
   definitionFor(row: ProfileEditRowId): ProfileEditDefinition {
     const profile = this.profiles.profile();
@@ -138,75 +127,75 @@ export class ProfileEditService {
       case 'goal':
         return {
           id: row,
-          title: 'Dit mål',
+          title: this.t('profile.edit.goalTitle'),
           hint: '',
           kind: 'options',
           selectedId: profile.goal,
           options: GOALS.map((goal) => ({
             id: goal.id,
-            label: goal.label,
-            description: goal.description,
+            label: this.t(goal.labelKey),
+            description: this.t(goal.descriptionKey),
           })),
         };
       case 'pace':
         return {
           id: row,
-          title: 'Tempo',
+          title: this.t('profile.edit.paceTitle'),
           hint: '',
           kind: 'options',
           selectedId: profile.pace,
           options: PACES.map((pace) => ({
             id: pace.id,
-            label: pace.label,
-            description: `${pace.rateLabel} · ${pace.description}`,
+            label: this.t(pace.labelKey),
+            description: `${this.t(pace.rateLabelKey)} · ${this.t(pace.descriptionKey)}`,
           })),
         };
       case 'gender':
         return {
           id: row,
-          title: 'Køn',
+          title: this.t('profile.edit.genderTitle'),
           hint: '',
           kind: 'options',
           selectedId: profile.gender,
           options: GENDERS.map((gender) => ({
             id: gender.id,
-            label: gender.label,
+            label: this.t(gender.labelKey),
             description: '',
           })),
         };
       case 'units':
         return {
           id: row,
-          title: 'Enheder',
+          title: this.t('profile.edit.unitsTitle'),
           hint: '',
           kind: 'options',
           selectedId: profile.units,
           options: UNIT_SYSTEMS.map((unit) => ({
             id: unit.id,
-            label: unit.label,
-            description: unit.description,
+            label: this.t(unit.labelKey),
+            description: this.t(unit.descriptionKey),
           })),
         };
       case 'trainInt':
         return {
           id: row,
-          title: 'Intensitet',
+          title: this.t('profile.edit.intensityTitle'),
           hint: '',
           kind: 'options',
           selectedId: this.profiles.intensity()?.id ?? null,
           options: INTENSITIES.map((intensity) => ({
             id: intensity.id,
-            label: intensity.label,
-            description: intensity.talkTest,
+            label: this.t(intensity.labelKey),
+            description: this.t(intensity.talkTestKey),
           })),
         };
       case 'height':
         return {
           id: row,
-          title: 'Højde',
+          title: this.t('profile.edit.heightTitle'),
           hint: '',
           kind: 'number',
-          unit: 'cm',
+          unit: this.t('common.unit.cm'),
           min: HEIGHT_EDIT_MIN_CM,
           max: HEIGHT_EDIT_MAX_CM,
           step: HEIGHT_STEP_CM,
@@ -217,10 +206,10 @@ export class ProfileEditService {
       case 'steps':
         return {
           id: row,
-          title: 'Skridt om dagen',
-          hint: 'Dit typiske dagligt niveau',
+          title: this.t('profile.edit.stepsTitle'),
+          hint: this.t('profile.edit.stepsHint'),
           kind: 'number',
-          unit: 'skridt',
+          unit: this.t('profile.edit.stepsUnit'),
           min: STEPS_MIN,
           max: STEPS_MAX,
           step: STEPS_STEP,
@@ -229,10 +218,10 @@ export class ProfileEditService {
       case 'trainFreq':
         return {
           id: row,
-          title: 'Træningsdage',
-          hint: 'Faste træninger om ugen',
+          title: this.t('profile.edit.trainFreqTitle'),
+          hint: this.t('profile.edit.trainFreqHint'),
           kind: 'number',
-          unit: '/ uge',
+          unit: this.t('profile.edit.trainFreqUnit'),
           min: 0,
           max: TRAINING_DAYS_PER_WEEK,
           step: TRAINING_FREQUENCY_STEP,
@@ -241,10 +230,10 @@ export class ProfileEditService {
       case 'trainDur':
         return {
           id: row,
-          title: 'Længde pr. træning',
+          title: this.t('profile.edit.trainDurTitle'),
           hint: '',
           kind: 'number',
-          unit: 'min',
+          unit: this.t('profile.edit.trainDurUnit'),
           min: TRAINING_MIN_MINUTES,
           max: TRAINING_MAX_MINUTES,
           step: TRAINING_MINUTES_STEP,
@@ -253,10 +242,10 @@ export class ProfileEditService {
       case 'kcal':
         return {
           id: row,
-          title: 'Dagligt kaloriemål',
+          title: this.t('profile.edit.kcalTitle'),
           hint: this.kcalHint(),
           kind: 'number',
-          unit: 'kcal',
+          unit: this.t('common.unit.kcal'),
           min: KCAL_MIN,
           max: KCAL_MAX,
           step: KCAL_STEP,
@@ -265,14 +254,12 @@ export class ProfileEditService {
       case 'email':
         return {
           id: row,
-          title: 'E-mail',
+          title: this.t('profile.edit.emailTitle'),
           hint: '',
           kind: 'text',
-          placeholder: EMAIL_PLACEHOLDER,
+          placeholder: this.t('profile.edit.emailPlaceholder'),
           value: profile.email,
         };
-      case 'password':
-        return { id: row, title: 'Ny adgangskode', hint: 'Mindst 8 tegn', kind: 'password' };
     }
   }
 
@@ -281,11 +268,14 @@ export class ProfileEditService {
    * the suggestion (after the 1200 kcal floor).
    */
   private kcalHint(): string {
-    const suggestion = `Beregnet forslag: ${formatInteger(this.adaptiveGoal.suggestedKcalTarget())} kcal`;
+    const suggestion = formatInteger(this.adaptiveGoal.suggestedKcalTarget());
     const adjustment = this.adaptiveGoal.suggestedAdjustmentKcal();
     return adjustment === 0
-      ? suggestion
-      : `${suggestion} (tilpasset ${formatSignedDecimal(adjustment, 0)} kcal ud fra din vægtudvikling)`;
+      ? this.t('profile.edit.kcalHint', { kcal: suggestion })
+      : this.t('profile.edit.kcalHintAdjusted', {
+          kcal: suggestion,
+          adjustment: formatSignedDecimal(adjustment, 0),
+        });
   }
 
   /**
@@ -301,15 +291,16 @@ export class ProfileEditService {
         ? this.calculator.goalWeightBounds(goal, profile.weightKg)
         : { min: WEIGHT_MIN_KG, max: WEIGHT_MAX_KG };
     const current = formatWeightKg(profile.weightKg);
-    const goalLabel = GOALS.find((item) => item.id === goal)?.label ?? '';
+    const goalDefinition = GOALS.find((item) => item.id === goal);
+    const goalLabel = goalDefinition ? this.t(goalDefinition.labelKey) : '';
     return {
       id: 'goalWeight',
-      title: 'Målvægt',
+      title: this.t('profile.edit.goalWeightTitle'),
       hint: pendingGoal
-        ? `Din målvægt passer ikke til målet "${goalLabel}" (nu: ${current} kg). Vælg en ny målvægt – målet skiftes, når du gemmer.`
-        : `Nu: ${current} kg`,
+        ? this.t('profile.edit.goalWeightHintPending', { goal: goalLabel, currentKg: current })
+        : this.t('profile.edit.goalWeightHint', { currentKg: current }),
       kind: 'number',
-      unit: 'kg',
+      unit: this.t('common.unit.kg'),
       min: bounds.min,
       max: bounds.max,
       step: GOAL_WEIGHT_STEP_KG,
@@ -333,16 +324,16 @@ export class ProfileEditService {
     const bounds = this.calculator.goalWeightBounds(goal, profile.weightKg);
     const current = formatWeightKg(profile.weightKg);
     if (goal === 'tabe' && goalWeightKg > bounds.max) {
-      return `Målvægten skal være under din nuværende vægt (${current} kg).`;
+      return this.t('profile.edit.goalWeightBelowCurrent', { currentKg: current });
     }
     if (goal === 'tage' && goalWeightKg < bounds.min) {
-      return `Målvægten skal være over din nuværende vægt (${current} kg).`;
+      return this.t('profile.edit.goalWeightAboveCurrent', { currentKg: current });
     }
     if (!this.calculator.isGoalWeightRealistic(goal, goalWeightKg, profile.heightCm)) {
-      return goal === 'tabe' ? GOAL_WEIGHT_TOO_LOW : GOAL_WEIGHT_TOO_HIGH;
+      return this.t(goal === 'tabe' ? GOAL_WEIGHT_TOO_LOW_KEY : GOAL_WEIGHT_TOO_HIGH_KEY);
     }
     if (goalWeightKg < bounds.min || goalWeightKg > bounds.max) {
-      return `Vælg en målvægt mellem ${bounds.min} og ${bounds.max} kg.`;
+      return this.t('profile.edit.goalWeightRange', { min: bounds.min, max: bounds.max });
     }
     return null;
   }
@@ -441,10 +432,6 @@ export class ProfileEditService {
 
   applyEmail(value: string): void {
     this.profiles.update({ email: value.trim() });
-  }
-
-  changePassword(password: string): Observable<void> {
-    return this.authApi.resetPassword(password);
   }
 }
 

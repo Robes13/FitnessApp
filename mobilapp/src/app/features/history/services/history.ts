@@ -10,26 +10,28 @@ import {
   formatDecimal,
   formatInteger,
   formatWeekdayAbbreviated,
+  toIsoDate,
 } from '../../../core/utils/date-format';
 import { NOW } from '../../../core/utils/now';
+import { Translate, injectTranslate } from '../../../core/services/language/translate';
 import { HistoryEntry, HistoryFilter, HistoryFilterId, HistoryGroup } from '../models/history';
 
 export const HISTORY_FILTERS: readonly HistoryFilter[] = [
-  { id: 'alle', label: 'Alle' },
-  { id: 'vejning', label: 'Vejning' },
-  { id: 'mad', label: 'Mad' },
-  { id: 'maal', label: 'Mål' },
+  { id: 'alle', labelKey: 'history.filters.all' },
+  { id: 'vejning', labelKey: 'history.filters.weigh' },
+  { id: 'mad', labelKey: 'history.filters.food' },
+  { id: 'maal', labelKey: 'history.filters.goal' },
 ];
 
-export const RELOG_LABEL = 'Log igen i dag';
-export const RELOGGED_LABEL = 'Logget i dag';
+export const RELOG_LABEL_KEY = 'history.entries.relog';
+export const RELOGGED_LABEL_KEY = 'history.entries.relogged';
 
 /** How long "Logget i dag" stays on the button after a relog. */
 export const RELOGGED_DURATION_MS = 2600;
 
-const WEIGH_TITLE = 'Vejning';
-const WEIGH_SUBTITLE = 'Vejning registreret';
-const WEIGH_SUBTITLE_LATEST = 'Seneste vejning';
+const WEIGH_TITLE_KEY = 'history.entries.weighTitle';
+const WEIGH_SUBTITLE_KEY = 'history.entries.weighSubtitle';
+const WEIGH_SUBTITLE_LATEST_KEY = 'history.entries.weighSubtitleLatest';
 
 /**
  * Builds the history entries and groups them by day.
@@ -46,6 +48,7 @@ export class HistoryService {
   private readonly now = inject(NOW);
   private readonly weightLog = inject(WeightLogService);
   private readonly foodLog = inject(FoodLogService);
+  private readonly t = injectTranslate();
 
   private readonly filterState = signal<HistoryFilterId>('alle');
   private readonly reloggedState = signal<string | null>(null);
@@ -65,7 +68,7 @@ export class HistoryService {
   });
 
   readonly groups: Signal<readonly HistoryGroup[]> = computed(() =>
-    groupByDay(this.visibleEntries()).map((group) => ({
+    groupByDay(this.t, this.visibleEntries()).map((group) => ({
       ...group,
       foodSummary: this.foodSummaryFor(group.entries),
     })),
@@ -86,7 +89,7 @@ export class HistoryService {
   }
 
   relogLabel(entry: HistoryEntry): string {
-    return this.isRelogged(entry) ? RELOGGED_LABEL : RELOG_LABEL;
+    return this.t(this.isRelogged(entry) ? RELOGGED_LABEL_KEY : RELOG_LABEL_KEY);
   }
 
   /** Adds the meal back to today's log and shows "Logget i dag" for 2.6 seconds. */
@@ -115,9 +118,9 @@ export class HistoryService {
       return {
         id: `vejning-${weigh.id}`,
         kind: 'vejning',
-        title: WEIGH_TITLE,
-        subtitle: index === 0 ? WEIGH_SUBTITLE_LATEST : WEIGH_SUBTITLE,
-        value: `${formatDecimal(weigh.kg)} kg`,
+        title: this.t(WEIGH_TITLE_KEY),
+        subtitle: this.t(index === 0 ? WEIGH_SUBTITLE_LATEST_KEY : WEIGH_SUBTITLE_KEY),
+        value: this.t('history.entries.weighValue', { kg: formatDecimal(weigh.kg) }),
         valueTone: 'default',
         ...this.whenOf(date),
         date,
@@ -133,8 +136,8 @@ export class HistoryService {
         id: `maaltid-${logId}`,
         kind: 'mad',
         title: food.name,
-        subtitle: mealLabel(meal),
-        value: `${food.kcal} kcal`,
+        subtitle: mealLabel(this.t, meal),
+        value: this.t('history.entries.mealValue', { kcal: food.kcal }),
         valueTone: 'default',
         ...this.whenOf(date),
         date,
@@ -147,14 +150,19 @@ export class HistoryService {
   /** The day's food totals, when the group shows at least one meal – otherwise `null`. */
   private foodSummaryFor(entries: readonly HistoryEntry[]): string | null {
     const meal = entries.find((entry) => entry.kind === 'mad');
-    return meal ? formatFoodSummary(this.foodLog.totalsFor(meal.date)) : null;
+    return meal ? formatFoodSummary(this.t, this.foodLog.totalsFor(meal.date)) : null;
   }
 
   /** `'I dag'` · `'I går'` · the weekday abbreviated, plus `'21. sep'`. */
   private whenOf(date: Date): Pick<HistoryEntry, 'when' | 'whenDate'> {
     const days = daysBetween(date, this.now());
-    const when = days <= 0 ? 'I dag' : days === 1 ? 'I går' : formatWeekdayAbbreviated(date);
-    return { when, whenDate: formatDayMonth(date) };
+    const when =
+      days <= 0
+        ? this.t('history.entries.today')
+        : days === 1
+          ? this.t('history.entries.yesterday')
+          : formatWeekdayAbbreviated(this.t, date);
+    return { when, whenDate: formatDayMonth(this.t, date) };
   }
 
   private clearReloggedTimer(): void {
@@ -165,34 +173,36 @@ export class HistoryService {
   }
 }
 
-function mealLabel(meal: MealId): string {
-  return MEALS.find((definition) => definition.id === meal)?.label ?? '';
+function mealLabel(t: Translate, meal: MealId): string {
+  const definition = MEALS.find((candidate) => candidate.id === meal);
+  return definition ? t(definition.labelKey) : '';
 }
 
 /** `'1.970 kcal · P 120 g · K 210 g · F 60 g'` */
-export function formatFoodSummary(totals: Macros): string {
-  return [
-    `${formatInteger(totals.kcal)} kcal`,
-    `P ${formatInteger(totals.protein)} g`,
-    `K ${formatInteger(totals.carbs)} g`,
-    `F ${formatInteger(totals.fat)} g`,
-  ].join(' · ');
+export function formatFoodSummary(t: Translate, totals: Macros): string {
+  return t('history.entries.foodSummary', {
+    kcal: formatInteger(totals.kcal),
+    protein: formatInteger(totals.protein),
+    carbs: formatInteger(totals.carbs),
+    fat: formatInteger(totals.fat),
+  });
 }
 
+/** Groups by calendar day, so the grouping doesn't depend on the language of the label. */
 function groupByDay(
+  t: Translate,
   entries: readonly HistoryEntry[],
 ): readonly Omit<HistoryGroup, 'foodSummary'>[] {
-  const order: string[] = [];
-  const byLabel = new Map<string, HistoryEntry[]>();
+  const groups = new Map<string, { id: string; label: string; entries: HistoryEntry[] }>();
   for (const entry of entries) {
-    const label = `${entry.when} · ${entry.whenDate}`;
-    const bucket = byLabel.get(label);
-    if (bucket) {
-      bucket.push(entry);
+    const id = toIsoDate(entry.date);
+    const group = groups.get(id);
+    if (group) {
+      group.entries.push(entry);
     } else {
-      byLabel.set(label, [entry]);
-      order.push(label);
+      const label = t('history.entries.groupLabel', { day: entry.when, date: entry.whenDate });
+      groups.set(id, { id, label, entries: [entry] });
     }
   }
-  return order.map((label) => ({ label, entries: byLabel.get(label) ?? [] }));
+  return [...groups.values()];
 }

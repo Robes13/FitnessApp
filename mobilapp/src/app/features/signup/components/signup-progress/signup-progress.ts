@@ -6,11 +6,12 @@ import {
   input,
 } from '@angular/core';
 import { UiProgressRing } from '../../../../shared/components/ui-progress-ring/ui-progress-ring';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { SignupChapter } from '../../services/signup-state';
 
 /** The design's `chapterLabel` when the user edits an answer from the summary. */
-const EDITING_LABEL = 'Retter';
-const EDITING_CAPTION = 'Tilbage til opsummering';
+const EDITING_LABEL_KEY = 'signup.progress.editingLabel';
+const EDITING_CAPTION_KEY = 'signup.progress.editingCaption';
 
 /** 48 px ring with a 3 px stroke – the design's progress ring in the signup header. */
 const RING_DIAMETER = 48;
@@ -45,16 +46,23 @@ export class SignupProgress {
    */
   readonly compact = input(false, { transform: booleanAttribute });
 
+  private readonly t = injectTranslate();
+
   protected readonly ringDiameter = RING_DIAMETER;
   protected readonly ringStrokeWidth = RING_STROKE_WIDTH;
 
   protected readonly chapterLabel = computed(() =>
     this.editing()
-      ? EDITING_LABEL
+      ? this.t(EDITING_LABEL_KEY)
       : (this.chapters().find((chapter) => chapter.active)?.label ?? ''),
   );
 
   protected readonly caption = computed(() =>
-    this.editing() ? EDITING_CAPTION : `Trin ${this.stepNumber()} af ${this.stepTotal()}`,
+    this.editing()
+      ? this.t(EDITING_CAPTION_KEY)
+      : this.t('signup.progress.stepOf', {
+          stepNumber: this.stepNumber(),
+          stepTotal: this.stepTotal(),
+        }),
   );
 }

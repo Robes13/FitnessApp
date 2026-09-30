@@ -57,27 +57,41 @@ export const BARCODE_PLUGIN_ERROR = {
   PERMISSION_DENIED: 'User denied access to camera.',
 } as const;
 
-/** User-facing texts of the scanner (Danish). */
-export const BARCODE_SCANNER_TEXT = {
-  HINT_IDLE_NATIVE: 'Tryk på "Scan stregkode" og hold kameraet over stregkoden',
-  HINT_IDLE_WEB: 'Kameraet kan ikke bruges her. Indtast stregkodens tal i stedet.',
-  HINT_SCANNING: 'Læser stregkode…',
-  HINT_LOOKING_UP: 'Slår varen op…',
-  PERMISSION_DENIED:
-    'Appen har ikke adgang til kameraet. Giv adgang under Indstillinger for at scanne stregkoder – eller indtast tallene herunder.',
-  UNREADABLE:
-    'Vi kunne ikke læse stregkoden. Prøv igen med bedre lys, eller indtast tallene herunder.',
-  MODULE_INSTALLING: 'Stregkodescanneren hentes fra Google Play. Prøv igen om et øjeblik.',
-  LOOKUP_ERROR: 'Vi kunne ikke slå varen op. Tjek din internetforbindelse, og prøv igen.',
-  INVALID_BARCODE: `Stregkoden skal være ${BARCODE_MIN_DIGITS}–${BARCODE_MAX_DIGITS} cifre.`,
-  INVALID_AMOUNT: `Angiv en mængde mellem ${SCAN_AMOUNT_MIN_GRAMS} og ${SCAN_AMOUNT_MAX_GRAMS} g.`,
-  DUPLICATE_NAME: 'Du har allerede en egen vare med det navn.',
-  SERVING_LABEL: 'Portion',
-  AMOUNT_LABEL: (unit: string): string => `Mængde (${unit})`,
-  AMOUNT_ARIA_LABEL: (unit: string): string =>
-    `Mængde i ${unit === PRODUCT_BASE_UNIT.MILLILITRES ? 'milliliter' : 'gram'}`,
-  BARCODE_LABEL_NATIVE: 'Eller indtast stregkoden',
-  BARCODE_LABEL_WEB: 'Indtast stregkoden',
-  /** Name of a product Open Food Facts has no name for. */
-  UNNAMED_PRODUCT: (barcode: string): string => `Vare ${barcode}`,
+/** Translation keys of the scanner's user-facing texts. */
+export const BARCODE_SCANNER_TEXT_KEY = {
+  HINT_IDLE_NATIVE: 'core.barcode.hintIdleNative',
+  HINT_IDLE_WEB: 'core.barcode.hintIdleWeb',
+  HINT_SCANNING: 'core.barcode.hintScanning',
+  HINT_LOOKING_UP: 'core.barcode.hintLookingUp',
+  PERMISSION_DENIED: 'core.barcode.permissionDenied',
+  UNREADABLE: 'core.barcode.unreadable',
+  MODULE_INSTALLING: 'core.barcode.moduleInstalling',
+  LOOKUP_ERROR: 'core.barcode.lookupError',
+  /** Params: `BARCODE_SCANNER_TEXT_PARAMS.INVALID_BARCODE`. */
+  INVALID_BARCODE: 'core.barcode.invalidBarcode',
+  /** Params: `BARCODE_SCANNER_TEXT_PARAMS.INVALID_AMOUNT`. */
+  INVALID_AMOUNT: 'core.barcode.invalidAmount',
+  DUPLICATE_NAME: 'core.barcode.duplicateName',
+  SERVING_LABEL: 'core.barcode.servingLabel',
+  /** Params: `unit`. */
+  AMOUNT_LABEL: 'core.barcode.amountLabel',
+  AMOUNT_ARIA_LABEL_MILLILITRES: 'core.barcode.amountAriaLabelMillilitres',
+  AMOUNT_ARIA_LABEL_GRAMS: 'core.barcode.amountAriaLabelGrams',
+  BARCODE_LABEL_NATIVE: 'core.barcode.barcodeLabelNative',
+  BARCODE_LABEL_WEB: 'core.barcode.barcodeLabelWeb',
+  /** Name of a product Open Food Facts has no name for. Params: `barcode`. */
+  UNNAMED_PRODUCT: 'core.barcode.unnamedProduct',
 } as const;
+
+/** The fixed params of the scanner's validation messages. */
+export const BARCODE_SCANNER_TEXT_PARAMS = {
+  INVALID_BARCODE: { minDigits: BARCODE_MIN_DIGITS, maxDigits: BARCODE_MAX_DIGITS },
+  INVALID_AMOUNT: { minGrams: SCAN_AMOUNT_MIN_GRAMS, maxGrams: SCAN_AMOUNT_MAX_GRAMS },
+} as const;
+
+/** Translation key of the amount field's accessible name for the item's base unit. */
+export function amountAriaLabelKey(unit: string): string {
+  return unit === PRODUCT_BASE_UNIT.MILLILITRES
+    ? BARCODE_SCANNER_TEXT_KEY.AMOUNT_ARIA_LABEL_MILLILITRES
+    : BARCODE_SCANNER_TEXT_KEY.AMOUNT_ARIA_LABEL_GRAMS;
+}

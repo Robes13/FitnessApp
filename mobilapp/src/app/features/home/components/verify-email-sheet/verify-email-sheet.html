@@ -1,12 +1,18 @@
-<app-ui-sheet [open]="open()" hideClose title="Tjek din" titleAccent="mail" titleSize="lg">
+<app-ui-sheet
+  [open]="open()"
+  hideClose
+  [title]="'home.verifyEmail.titleStart' | translate"
+  [titleAccent]="'home.verifyEmail.titleAccent' | translate"
+  titleSize="lg"
+>
   <span sheetLeading class="verify-email-sheet__badge">
     <app-ui-icon name="mail" size="2xl" />
   </span>
 
   <p class="verify-email-sheet__copy">
-    Vi har sendt en bekræftelseskode til
+    {{ 'home.verifyEmail.copyStart' | translate }}
     <span class="verify-email-sheet__email">{{ emailLabel() }}</span
-    >. Appen låses op, når du har bekræftet.
+    >{{ 'home.verifyEmail.copyEnd' | translate }}
   </p>
 
   @if (editingEmail()) {
@@ -17,11 +23,13 @@
         type="email"
         inputMode="email"
         autocomplete="email"
-        ariaLabel="E-mail"
+        [ariaLabel]="'home.verifyEmail.emailAriaLabel' | translate"
         size="md"
         [invalid]="emailInvalid()"
       />
-      <button app-ui-button type="submit" size="md" [loading]="saving()">Gem</button>
+      <button app-ui-button type="submit" size="md" [loading]="saving()">
+        {{ 'common.save' | translate }}
+      </button>
     </form>
   }
 
@@ -36,7 +44,7 @@
       size="md"
       (click)="toggleEmailEditor()"
     >
-      Ændre mail
+      {{ 'home.verifyEmail.changeEmail' | translate }}
     </button>
     <button app-ui-button type="button" size="md" [loading]="resending()" (click)="resend()">
       {{ resendLabel() }}

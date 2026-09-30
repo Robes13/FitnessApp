@@ -1,11 +1,11 @@
-<app-ui-page-header title="Opskrift" (back)="back()">
+<app-ui-page-header [title]="'collections.recipePage.title' | translate" (back)="back()">
   @if (collection()) {
     <button
       headerAction
       app-ui-icon-button
       size="sm"
       type="button"
-      aria-label="Rediger samling"
+      [attr.aria-label]="'collections.recipePage.edit' | translate"
       (click)="editOpen.set(true)"
     >
       <app-ui-icon name="pencil" size="lg" />
@@ -34,9 +34,9 @@
       }
     </ul>
 
-    <h3 class="recipe-page__caption">Indhold</h3>
+    <h3 class="recipe-page__caption">{{ 'collections.recipePage.contents' | translate }}</h3>
     @if (recipe.contents.length === 0) {
-      <app-ui-empty-state class="recipe-page__empty" [message]="noContentsMessage" />
+      <app-ui-empty-state class="recipe-page__empty" [message]="noContentsMessageKey | translate" />
     } @else {
       <ul class="recipe-page__contents">
         @for (line of recipe.contents; track $index) {
@@ -49,8 +49,13 @@
     }
 
     <section class="recipe-page__log">
-      <h3 class="recipe-page__caption recipe-page__caption--flush">Log som spist under</h3>
-      <app-meal-picker [(value)]="meal" ariaLabel="Log som spist under" />
+      <h3 class="recipe-page__caption recipe-page__caption--flush">
+        {{ 'collections.recipePage.logUnder' | translate }}
+      </h3>
+      <app-meal-picker
+        [(value)]="meal"
+        [ariaLabel]="'collections.recipePage.logUnder' | translate"
+      />
       <button
         app-ui-button
         variant="primary"
@@ -60,7 +65,7 @@
         class="recipe-page__log-button"
         (click)="log()"
       >
-        Log {{ recipe.macros.kcal }} kcal
+        {{ 'collections.recipePage.log' | translate: { kcal: recipe.macros.kcal } }}
       </button>
     </section>
 
@@ -74,11 +79,11 @@
         class="recipe-page__delete"
         (click)="deleteOpen.set(true)"
       >
-        Slet samling
+        {{ 'collections.recipePage.delete' | translate }}
       </button>
     }
   } @else {
-    <app-ui-empty-state class="recipe-page__empty" [message]="notFoundMessage" />
+    <app-ui-empty-state class="recipe-page__empty" [message]="notFoundMessageKey | translate" />
     <button
       app-ui-button
       variant="outline"
@@ -87,7 +92,7 @@
       class="recipe-page__back"
       (click)="back()"
     >
-      Tilbage til samlinger
+      {{ 'collections.recipePage.backToCollections' | translate }}
     </button>
   }
 </div>

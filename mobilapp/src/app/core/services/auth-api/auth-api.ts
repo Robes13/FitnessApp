@@ -1,6 +1,6 @@
 import { Injectable, InjectionToken, inject } from '@angular/core';
 import { Observable, map, throwError, timer } from 'rxjs';
-import { AUTH_ENDPOINT, AUTH_ERROR_MESSAGE, AuthEndpoint } from '../../constants/auth';
+import { AUTH_ENDPOINT, AUTH_ERROR_MESSAGE_KEY, AuthEndpoint } from '../../constants/auth';
 import { ApiError } from '../../models/api-error';
 import { RegisterRequest, VerificationStatusResponse } from '../../models/auth';
 import { UserProfile } from '../../models/profile';
@@ -73,7 +73,7 @@ export class AuthApi {
   }
 
   private notImplemented(): Observable<never> {
-    const error: ApiError = { message: AUTH_ERROR_MESSAGE.NO_BACKEND };
+    const error: ApiError = { messageKey: AUTH_ERROR_MESSAGE_KEY.NO_BACKEND };
     return throwError(() => error);
   }
 }

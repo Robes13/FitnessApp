@@ -33,14 +33,9 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "node_modules/@fontsource-variable/archivo/wdth.css",
-              "src/styles.scss"
-            ],
+            "styles": ["node_modules/@fontsource-variable/archivo/wdth.css", "src/styles.scss"],
             "stylePreprocessorOptions": {
-              "includePaths": [
-                "src/styles"
-              ]
+              "includePaths": ["src/styles"]
             },
             "outputPath": "dist/mobilapp"
           },
@@ -81,7 +76,8 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": { "providersFile": "src/app/core/testing/global-test-providers.ts" }
         }
       }
     }

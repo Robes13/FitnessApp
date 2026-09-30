@@ -7,16 +7,17 @@
   />
   <div class="home-day-card__stats">
     <div>
-      <div class="home-day-card__caption">Kalorier</div>
+      <div class="home-day-card__caption">{{ 'home.dayCard.calories' | translate }}</div>
       <div class="home-day-card__number">
         {{ summary().kcalEatenText }}
         <span class="home-day-card__unit">/ {{ summary().kcalTargetText }}</span>
       </div>
     </div>
     <div class="home-day-card__stat--end">
-      <div class="home-day-card__caption">Vægt</div>
+      <div class="home-day-card__caption">{{ 'home.dayCard.weight' | translate }}</div>
       <div class="home-day-card__number home-day-card__number--accent">
-        {{ summary().weightText }} <span class="home-day-card__unit">kg</span>
+        {{ summary().weightText }}
+        <span class="home-day-card__unit">{{ 'common.unit.kg' | translate }}</span>
       </div>
     </div>
   </div>

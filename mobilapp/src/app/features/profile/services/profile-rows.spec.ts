@@ -125,12 +125,11 @@ describe('ProfileRowsService', () => {
     expect(valueOf(rows.planRows(), 'Intensitet')).toBe('Hårdt');
   });
 
-  it('falls back to the placeholder e-mail and masks the password', () => {
+  it('falls back to the placeholder e-mail', () => {
     const { rows, profiles } = setup();
 
-    expect(labels(rows.accountRows())).toEqual(['E-mail', 'Adgangskode', 'Enheder']);
+    expect(labels(rows.accountRows())).toEqual(['E-mail', 'Enheder']);
     expect(valueOf(rows.accountRows(), 'E-mail')).toBe('dig@mail.dk');
-    expect(valueOf(rows.accountRows(), 'Adgangskode')).toBe('••••••••');
     expect(valueOf(rows.accountRows(), 'Enheder')).toBe('kg · cm');
 
     profiles.update({ email: 'mads@mail.dk', units: 'imperial' });

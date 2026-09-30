@@ -7,7 +7,9 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ProfilePhoto } from '../../../../core/models/profile';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { formatDecimal } from '../../../../core/utils/date-format';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
@@ -34,8 +36,8 @@ const PERCENT = 100;
 /** These texts don't exist in the design – the file selection can't fail in the prototype. */
 const PHOTO_MAX_DIMENSION = 768;
 const PHOTO_JPEG_QUALITY = 0.8;
-const SAVE_ERROR = 'Billedet kunne ikke gemmes. Frigør plads og prøv igen.';
-const READ_ERROR = 'Billedet kunne ikke indlæses. Prøv et andet.';
+const SAVE_ERROR_KEY = 'profile.photoSheet.saveError';
+const READ_ERROR_KEY = 'profile.photoSheet.readError';
 
 interface KeyDirection {
   readonly x: number;
@@ -64,7 +66,7 @@ const KEY_STEP_LARGE_PX = 24;
  */
 @Component({
   selector: 'app-profile-photo-sheet',
-  imports: [ProfileAvatar, UiButton, UiFormError, UiIcon, UiSheet],
+  imports: [ProfileAvatar, TranslatePipe, UiButton, UiFormError, UiIcon, UiSheet],
   templateUrl: './profile-photo-sheet.html',
   styleUrl: './profile-photo-sheet.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,6 +77,7 @@ export class ProfilePhotoSheet {
   readonly closed = output<void>();
 
   private readonly profiles = inject(UserProfileService);
+  private readonly t = injectTranslate();
 
   protected readonly zoomMin = PHOTO_ZOOM_PERCENT_MIN;
   protected readonly zoomMax = PHOTO_ZOOM_PERCENT_MAX;
@@ -89,7 +92,12 @@ export class ProfilePhotoSheet {
     () => `${formatDecimal(this.zoomPercent() / PERCENT, 1)}×`,
   );
 
-  protected readonly errorMessage = signal<string | null>(null);
+  /** The key of the shown error, translated in `errorMessage` so it follows the language. */
+  private readonly errorKey = signal<string | null>(null);
+  protected readonly errorMessage = computed(() => {
+    const key = this.errorKey();
+    return key === null ? null : this.t(key);
+  });
 
   private dragStart: DragStart | null = null;
 
@@ -105,10 +113,10 @@ export class ProfilePhotoSheet {
     if (!file) {
       return;
     }
-    this.errorMessage.set(null);
+    this.errorKey.set(null);
     readImage(file).then(
       (image) => this.setPhoto(image.dataUrl, image.aspectRatio),
-      () => this.errorMessage.set(READ_ERROR),
+      () => this.errorKey.set(READ_ERROR_KEY),
     );
   }
 
@@ -170,13 +178,13 @@ export class ProfilePhotoSheet {
   }
 
   protected removePhoto(): void {
-    this.errorMessage.set(null);
+    this.errorKey.set(null);
     this.savePhoto(null);
   }
 
   private savePhoto(photo: ProfilePhoto | null): void {
     const saved = this.profiles.updatePersisted({ photo });
-    this.errorMessage.set(saved ? null : SAVE_ERROR);
+    this.errorKey.set(saved ? null : SAVE_ERROR_KEY);
   }
 
   private setPhoto(dataUrl: string, aspectRatio: number): void {

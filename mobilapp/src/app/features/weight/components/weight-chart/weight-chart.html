@@ -1,8 +1,8 @@
 <div class="weight-chart__head">
   <div>
-    <div class="weight-chart__caption">Vægt</div>
+    <div class="weight-chart__caption">{{ 'weight.chart.caption' | translate }}</div>
     <div class="weight-chart__weight">
-      {{ weightText() }}<span class="weight-chart__unit">kg</span>
+      {{ weightText() }}<span class="weight-chart__unit">{{ 'common.unit.kg' | translate }}</span>
     </div>
   </div>
   <div class="weight-chart__range">
@@ -56,8 +56,10 @@
   </svg>
   <div class="weight-chart__footer">
     <span>{{ rangeStartLabel() }}</span>
-    <span class="weight-chart__footer-goal">– mål {{ goalWeightText() }} kg</span>
-    <span>I dag</span>
+    <span class="weight-chart__footer-goal">{{
+      'weight.chart.goalFooter' | translate: { goal: goalWeightText() }
+    }}</span>
+    <span>{{ 'weight.chart.today' | translate }}</span>
   </div>
 } @else {
   <app-ui-empty-state [message]="emptyMessage()" />

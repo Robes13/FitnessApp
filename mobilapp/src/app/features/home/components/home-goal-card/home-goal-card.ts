@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { UiCard } from '../../../../shared/components/ui-card/ui-card';
 import { UiProgressBar } from '../../../../shared/components/ui-progress-bar/ui-progress-bar';
 import { GoalSummary } from '../../services/home-summary';
@@ -10,7 +11,7 @@ import { GoalSummary } from '../../services/home-summary';
  */
 @Component({
   selector: 'app-home-goal-card',
-  imports: [UiCard, UiProgressBar],
+  imports: [UiCard, UiProgressBar, TranslatePipe],
   templateUrl: './home-goal-card.html',
   styleUrl: './home-goal-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

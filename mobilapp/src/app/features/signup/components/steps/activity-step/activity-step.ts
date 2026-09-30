@@ -8,11 +8,13 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { STEPS_MAX, STEPS_MIN } from '../../../../../core/constants/nutrition';
 import { Gender } from '../../../../../core/models/profile';
 import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { formatDecimal, formatInteger } from '../../../../../core/utils/date-format';
 import { clamp, roundTo } from '../../../../../core/utils/math';
+import { injectTranslate } from '../../../../../core/services/language/translate';
 import { animatedFigure, computeFigureGeometry } from '../../../../../shared/components/figure';
 import {
   RULER_BLEED_IDLE_STRONG,
@@ -41,10 +43,10 @@ const CONFETTI_COUNT = 12;
 const SUBTITLE_EVERYDAY_STEPS = 6000;
 const SUBTITLE_SOLID_STEPS = 12000;
 
-const SUBTITLE_LAZY = 'Sofa-liga – helt fair. Bruges til dit kaloriebehov.';
-const SUBTITLE_EVERYDAY = 'Almindelig hverdag. Bruges til dit kaloriebehov.';
-const SUBTITLE_SOLID = 'Solidt hverdagsniveau. Bruges til dit kaloriebehov.';
-const SUBTITLE_HIGH = 'Du går altså meget. Bruges til dit kaloriebehov.';
+const SUBTITLE_LAZY_KEY = 'signup.activityStep.subtitleLazy';
+const SUBTITLE_EVERYDAY_KEY = 'signup.activityStep.subtitleEveryday';
+const SUBTITLE_SOLID_KEY = 'signup.activityStep.subtitleSolid';
+const SUBTITLE_HIGH_KEY = 'signup.activityStep.subtitleHigh';
 
 /** The ruler: one tick per 100 steps, 5.6 px between ticks, a label every 2,000. */
 const RULER_TICK_UNIT = 100;
@@ -161,7 +163,7 @@ const GROUND_DASHES: readonly GroundDash[] = Array.from(
  */
 @Component({
   selector: 'app-activity-step',
-  imports: [FigureTempo, UiRuler],
+  imports: [FigureTempo, TranslatePipe, UiRuler],
   templateUrl: './activity-step.html',
   styleUrl: './activity-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -169,6 +171,7 @@ const GROUND_DASHES: readonly GroundDash[] = Array.from(
 })
 export class ActivityStep {
   private readonly calculator = inject(NutritionCalculator);
+  private readonly t = injectTranslate();
   private confettiTimer: ReturnType<typeof setTimeout> | null = null;
   private previousSteps: number | null = null;
 
@@ -195,8 +198,8 @@ export class ActivityStep {
 
   protected readonly steps = computed(() => clamp(this.state.stepsPerDay(), STEPS_MIN, STEPS_MAX));
   protected readonly stepsText = computed(() => formatInteger(this.steps()));
-  protected readonly activityLabel = computed(
-    () => this.calculator.activityLevelFor(this.steps()).label,
+  protected readonly activityLabel = computed(() =>
+    this.t(this.calculator.activityLevelFor(this.steps()).labelKey),
   );
   protected readonly kmText = computed(() =>
     formatDecimal(this.calculator.stepsToKm(this.steps())),
@@ -205,15 +208,17 @@ export class ActivityStep {
     formatInteger(this.calculator.stepsToKcal(this.steps(), this.state.weightKg())),
   );
 
-  protected readonly subtitle = computed(() => {
+  protected readonly subtitle = computed(() => this.t(this.subtitleKey()));
+
+  private readonly subtitleKey = computed(() => {
     const steps = this.steps();
     if (steps < LAZY_MAX_STEPS) {
-      return SUBTITLE_LAZY;
+      return SUBTITLE_LAZY_KEY;
     }
     if (steps < SUBTITLE_EVERYDAY_STEPS) {
-      return SUBTITLE_EVERYDAY;
+      return SUBTITLE_EVERYDAY_KEY;
     }
-    return steps < SUBTITLE_SOLID_STEPS ? SUBTITLE_SOLID : SUBTITLE_HIGH;
+    return steps < SUBTITLE_SOLID_STEPS ? SUBTITLE_SOLID_KEY : SUBTITLE_HIGH_KEY;
   });
 
   protected readonly tickAnimation = computed(() => (this.tickFlip() ? 'numtickA' : 'numtickB'));

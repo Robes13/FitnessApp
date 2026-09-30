@@ -6,6 +6,7 @@ export const STORAGE_KEY = {
   WEIGHT_LOG: 'nutrify.weight-log',
   COLLECTIONS: 'nutrify.collections',
   THEME: 'nutrify.theme',
+  LANGUAGE: 'nutrify.language',
   SCAN_COUNT: 'nutrify.scan-count',
   PRODUCT_CACHE: 'nutrify.product-cache',
   REMINDERS: 'nutrify.reminders',

@@ -8,12 +8,14 @@ import {
   signal,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { NewCollectionInput } from '../../../../core/models/food';
 import { formatGrams } from '../../../../core/utils/date-format';
 import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
@@ -27,8 +29,8 @@ import { CollectionsViewService } from '../../services/collections-view';
 const DEFAULT_MEAL: MealId = 'morgen';
 /** Dishes and bundles are logged as one portion, exactly like the design's `logRecipe`. */
 const LOG_QUANTITY = '1 portion';
-const NOT_FOUND_MESSAGE = 'Vi kunne ikke finde den her opskrift.';
-const NO_CONTENTS_MESSAGE = 'Der er ingen varer i samlingen endnu.';
+const NOT_FOUND_MESSAGE_KEY = 'collections.recipePage.notFound';
+const NO_CONTENTS_MESSAGE_KEY = 'collections.recipePage.noContents';
 
 interface RecipeStat {
   readonly label: string;
@@ -50,6 +52,7 @@ interface RecipeStat {
     DeleteCollectionSheet,
     MealPicker,
     NewCollectionSheet,
+    TranslatePipe,
     UiButton,
     UiEmptyState,
     UiIcon,
@@ -73,6 +76,7 @@ export class RecipePage {
   private readonly collections = inject(CollectionsService);
   private readonly foodLog = inject(FoodLogService);
   private readonly router = inject(Router);
+  private readonly t = injectTranslate();
 
   protected readonly detail = computed(() => this.view.detailFor(this.recipeId()));
   /** Selected meal – starts on the dish's own meal and resets when a new dish is opened. */
@@ -81,19 +85,28 @@ export class RecipePage {
   protected readonly collection = computed(() => this.view.editableCollectionFor(this.recipeId()));
   protected readonly editOpen = signal(false);
   protected readonly deleteOpen = signal(false);
-  protected readonly notFoundMessage = NOT_FOUND_MESSAGE;
-  protected readonly noContentsMessage = NO_CONTENTS_MESSAGE;
+  protected readonly notFoundMessageKey = NOT_FOUND_MESSAGE_KEY;
+  protected readonly noContentsMessageKey = NO_CONTENTS_MESSAGE_KEY;
 
   protected readonly stats = computed<readonly RecipeStat[]>(() => {
     const macros = this.detail()?.macros;
     if (!macros) {
       return [];
     }
+    const grams = (value: number): string => `${formatGrams(value)} ${this.t('common.unit.g')}`;
     return [
-      { label: 'Kalorier', value: `${Math.round(macros.kcal)}`, accent: true },
-      { label: 'Protein', value: `${formatGrams(macros.protein)} g`, accent: false },
-      { label: 'Kulhydrat', value: `${formatGrams(macros.carbs)} g`, accent: false },
-      { label: 'Fedt', value: `${formatGrams(macros.fat)} g`, accent: false },
+      {
+        label: this.t('collections.recipePage.calories'),
+        value: `${Math.round(macros.kcal)}`,
+        accent: true,
+      },
+      {
+        label: this.t('collections.recipePage.protein'),
+        value: grams(macros.protein),
+        accent: false,
+      },
+      { label: this.t('collections.recipePage.carbs'), value: grams(macros.carbs), accent: false },
+      { label: this.t('collections.recipePage.fat'), value: grams(macros.fat), accent: false },
     ];
   });
 

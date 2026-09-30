@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { GOALS, GOAL_WEIGHT_MIN_KG } from '../../../../../core/constants/nutrition';
 import { GoalId } from '../../../../../core/models/profile';
 import { UiOptionCard } from '../../../../../shared/components/ui-option-card/ui-option-card';
@@ -7,8 +8,8 @@ import { SignupStateService } from '../../../services/signup-state';
 /** Design's `goalsDef`: the glyph on the right and its fixed color per goal. */
 interface GoalOption {
   readonly id: GoalId;
-  readonly label: string;
-  readonly description: string;
+  readonly labelKey: string;
+  readonly descriptionKey: string;
   readonly glyph: string;
   readonly glyphClass: string;
 }
@@ -29,7 +30,7 @@ const GOAL_WEIGHT_OFFSET_KG = 5;
  */
 @Component({
   selector: 'app-goal-step',
-  imports: [UiOptionCard],
+  imports: [TranslatePipe, UiOptionCard],
   templateUrl: './goal-step.html',
   styleUrl: './goal-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,8 +41,8 @@ export class GoalStep {
 
   protected readonly options: readonly GoalOption[] = GOALS.map((goal) => ({
     id: goal.id,
-    label: goal.label,
-    description: goal.description,
+    labelKey: goal.labelKey,
+    descriptionKey: goal.descriptionKey,
     glyph: GOAL_GLYPHS[goal.id],
     glyphClass: GOAL_GLYPH_CLASSES[goal.id],
   }));

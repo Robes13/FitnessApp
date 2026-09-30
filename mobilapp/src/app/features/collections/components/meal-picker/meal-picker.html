@@ -1,4 +1,4 @@
-<div class="meal-picker__grid" role="radiogroup" [attr.aria-label]="ariaLabel()">
+<div class="meal-picker__grid" role="radiogroup" [attr.aria-label]="groupLabel()">
   @for (meal of meals; track meal.id) {
     <button
       #option
@@ -11,7 +11,7 @@
       [tabindex]="tabIndexFor(meal.id)"
       (click)="select(meal.id)"
     >
-      {{ meal.label }}
+      {{ meal.labelKey | translate }}
     </button>
   }
 </div>

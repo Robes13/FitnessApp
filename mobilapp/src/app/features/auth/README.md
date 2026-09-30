@@ -8,7 +8,7 @@ De to skærme, en udlogget bruger kan se: **Login** og **Glemt adgangskode**. Be
 | `auth.routes.ts`                      | `AUTH_ROUTES` – `/login` → `LoginPage`.                            |
 | `forgot-password.routes.ts`           | `FORGOT_PASSWORD_ROUTES` – `/glemt-adgangskode`.                   |
 | `auth-assets.ts`                      | `AUTH_ASSET` – stierne til fotoet og logoet i `public/images/`.    |
-| `auth-error.ts`                       | `authErrorMessage()` – `ApiError` → dansk tekst til brugeren.      |
+| `auth-error.ts`                       | `authErrorKey(error)` – `ApiError` → oversættelsesnøgle.           |
 | `photo-screen.ts`                     | `holdDarkSystemBarsWhileOpen()` – lyse bar-ikoner på fotoskærmene. |
 | [`components/`](components/README.md) | Feature-komponenter (fotobaggrunden).                              |
 | [`pages/`](pages/README.md)           | Route-komponenterne.                                               |

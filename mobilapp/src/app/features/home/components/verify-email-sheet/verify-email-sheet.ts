@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { NutritionCalculator } from '../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { SessionService } from '../../../../core/services/session/session';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
@@ -23,9 +25,9 @@ interface VerifyEmailForm {
 }
 
 /** Shown in place of the address if the profile doesn't have an e-mail yet. */
-const EMAIL_FALLBACK = 'din mail';
-const INVALID_EMAIL_MESSAGE = 'Skriv en gyldig e-mail.';
-const REQUEST_FAILED_MESSAGE = 'Noget gik galt. Prøv igen.';
+const EMAIL_FALLBACK_KEY = 'home.verifyEmail.emailFallback';
+const INVALID_EMAIL_MESSAGE_KEY = 'home.verifyEmail.invalidEmail';
+const REQUEST_FAILED_MESSAGE_KEY = 'home.verifyEmail.requestFailed';
 /** One extra rotation per check, matching the design's `refreshRot`. */
 const ROTATION_PER_CHECK_DEG = 360;
 /**
@@ -37,7 +39,15 @@ const ROTATION_PER_CHECK_DEG = 360;
  */
 @Component({
   selector: 'app-verify-email-sheet',
-  imports: [ReactiveFormsModule, UiButton, UiFormError, UiIcon, UiSheet, UiTextInput],
+  imports: [
+    ReactiveFormsModule,
+    TranslatePipe,
+    UiButton,
+    UiFormError,
+    UiIcon,
+    UiSheet,
+    UiTextInput,
+  ],
   templateUrl: './verify-email-sheet.html',
   styleUrl: './verify-email-sheet.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,6 +59,7 @@ export class VerifyEmailSheet {
   private readonly profileService = inject(UserProfileService);
   private readonly calculator = inject(NutritionCalculator);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly t = injectTranslate();
 
   protected readonly form = new FormGroup<VerifyEmailForm>({
     email: new FormControl('', { nonNullable: true }),
@@ -65,26 +76,33 @@ export class VerifyEmailSheet {
   protected readonly checking = signal(false);
   protected readonly failedChecks = signal(0);
   protected readonly rotationDeg = signal(0);
-  protected readonly errorMessage = signal<string | null>(null);
+  /** The error's translation key, so a shown error follows a language switch. */
+  private readonly errorKey = signal<string | null>(null);
+  protected readonly errorMessage = computed(() => {
+    const key = this.errorKey();
+    return key === null ? null : this.t(key);
+  });
 
   protected readonly emailLabel = computed(
-    () => this.profileService.profile().email.trim() || EMAIL_FALLBACK,
+    () => this.profileService.profile().email.trim() || this.t(EMAIL_FALLBACK_KEY),
   );
   protected readonly emailInvalid = computed(() => {
     const value = this.emailValue().trim();
     return value.length > 3 && !this.calculator.isValidEmail(value);
   });
   protected readonly resendLabel = computed(() =>
-    this.resent() ? 'Kode sendt ✓' : 'Gensend kode',
+    this.t(this.resent() ? 'home.verifyEmail.resendSent' : 'home.verifyEmail.resend'),
   );
   protected readonly resendHint = computed(() =>
-    this.resent() ? 'Ny kode sendt – tjek også spam.' : 'Ikke modtaget noget?',
+    this.t(this.resent() ? 'home.verifyEmail.resendHintSent' : 'home.verifyEmail.resendHint'),
   );
   protected readonly checkLabel = computed(() => {
     if (this.checking()) {
-      return 'Tjekker…';
+      return this.t('home.verifyEmail.checking');
     }
-    return this.failedChecks() > 0 ? 'Ikke bekræftet' : 'Tjek igen';
+    return this.t(
+      this.failedChecks() > 0 ? 'home.verifyEmail.notVerified' : 'home.verifyEmail.checkAgain',
+    );
   });
   protected readonly rotation = computed(() => `${this.rotationDeg()}deg`);
 
@@ -93,19 +111,19 @@ export class VerifyEmailSheet {
     if (opening) {
       this.form.controls.email.setValue(this.profileService.profile().email);
     }
-    this.errorMessage.set(null);
+    this.errorKey.set(null);
     this.editingEmail.set(opening);
   }
 
   protected saveEmail(): void {
     const email = this.form.controls.email.value.trim();
     if (!this.calculator.isValidEmail(email)) {
-      this.errorMessage.set(INVALID_EMAIL_MESSAGE);
+      this.errorKey.set(INVALID_EMAIL_MESSAGE_KEY);
       return;
     }
     this.profileService.update({ email });
     this.editingEmail.set(false);
-    this.errorMessage.set(null);
+    this.errorKey.set(null);
     this.saving.set(true);
     this.session
       .resendVerification()
@@ -117,13 +135,13 @@ export class VerifyEmailSheet {
         },
         error: () => {
           this.saving.set(false);
-          this.errorMessage.set(REQUEST_FAILED_MESSAGE);
+          this.errorKey.set(REQUEST_FAILED_MESSAGE_KEY);
         },
       });
   }
 
   protected resend(): void {
-    this.errorMessage.set(null);
+    this.errorKey.set(null);
     this.resending.set(true);
     this.session
       .resendVerification()
@@ -138,7 +156,7 @@ export class VerifyEmailSheet {
         },
         error: () => {
           this.resending.set(false);
-          this.errorMessage.set(REQUEST_FAILED_MESSAGE);
+          this.errorKey.set(REQUEST_FAILED_MESSAGE_KEY);
         },
       });
   }
@@ -147,7 +165,7 @@ export class VerifyEmailSheet {
     if (this.checking()) {
       return;
     }
-    this.errorMessage.set(null);
+    this.errorKey.set(null);
     this.checking.set(true);
     this.rotationDeg.update((degrees) => degrees + ROTATION_PER_CHECK_DEG);
     this.session
@@ -162,7 +180,7 @@ export class VerifyEmailSheet {
         },
         error: () => {
           this.checking.set(false);
-          this.errorMessage.set(REQUEST_FAILED_MESSAGE);
+          this.errorKey.set(REQUEST_FAILED_MESSAGE_KEY);
         },
       });
   }

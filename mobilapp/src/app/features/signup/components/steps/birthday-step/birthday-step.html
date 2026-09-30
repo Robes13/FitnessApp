@@ -1,31 +1,41 @@
 <h1 class="birthday-step__title">
-  Hvornår har du <span class="birthday-step__title-accent">fødselsdag?</span>
+  {{ 'signup.birthdayStep.titleStart' | translate }}
+  <span class="birthday-step__title-accent">{{
+    'signup.birthdayStep.titleAccent' | translate
+  }}</span>
 </h1>
-<p class="birthday-step__subtitle">Din alder indgår i beregningen af dit kaloriebehov.</p>
+<p class="birthday-step__subtitle">{{ 'signup.birthdayStep.subtitle' | translate }}</p>
 
 <div class="birthday-step__controls">
   <div class="birthday-step__control">
     <button
       type="button"
       class="birthday-step__nav"
-      aria-label="Et år tilbage"
+      [attr.aria-label]="'signup.birthdayStep.previousYear' | translate"
       (click)="shift(-1, 0)"
     >
       −
     </button>
     <span class="birthday-step__field">
-      <span class="birthday-step__field-label">År</span>
+      <span class="birthday-step__field-label">{{
+        'signup.birthdayStep.yearLabel' | translate
+      }}</span>
       <input
         class="birthday-step__year"
         type="text"
         inputmode="numeric"
         maxlength="4"
-        aria-label="Årstal"
+        [attr.aria-label]="'signup.birthdayStep.yearInput' | translate"
         [formControl]="yearControl"
         (blur)="onYearBlur()"
       />
     </span>
-    <button type="button" class="birthday-step__nav" aria-label="Et år frem" (click)="shift(1, 0)">
+    <button
+      type="button"
+      class="birthday-step__nav"
+      [attr.aria-label]="'signup.birthdayStep.nextYear' | translate"
+      (click)="shift(1, 0)"
+    >
       +
     </button>
   </div>
@@ -34,16 +44,23 @@
     <button
       type="button"
       class="birthday-step__nav"
-      aria-label="Forrige måned"
+      [attr.aria-label]="'signup.birthdayStep.previousMonth' | translate"
       (click)="shift(0, -1)"
     >
       ‹
     </button>
     <span class="birthday-step__field">
-      <span class="birthday-step__field-label">Måned</span>
+      <span class="birthday-step__field-label">{{
+        'signup.birthdayStep.monthLabel' | translate
+      }}</span>
       <span class="birthday-step__month">{{ monthName() }}</span>
     </span>
-    <button type="button" class="birthday-step__nav" aria-label="Næste måned" (click)="shift(0, 1)">
+    <button
+      type="button"
+      class="birthday-step__nav"
+      [attr.aria-label]="'signup.birthdayStep.nextMonth' | translate"
+      (click)="shift(0, 1)"
+    >
       ›
     </button>
   </div>
@@ -51,8 +68,8 @@
 
 <div class="birthday-step__calendar">
   <div class="birthday-step__weekdays">
-    @for (weekday of weekdays; track weekday) {
-      <span class="birthday-step__weekday">{{ weekday }}</span>
+    @for (weekdayKey of weekdayKeys; track weekdayKey) {
+      <span class="birthday-step__weekday">{{ weekdayKey | translate }}</span>
     }
   </div>
   <div class="birthday-step__grid">
@@ -78,10 +95,12 @@
 
 <div class="birthday-step__stage">
   <div class="birthday-step__readout">
-    <span class="birthday-step__age-caption">Alder</span>
+    <span class="birthday-step__age-caption">{{
+      'signup.birthdayStep.ageCaption' | translate
+    }}</span>
     <span class="birthday-step__age">
       <span class="birthday-step__age-number">{{ ageText() }}</span>
-      <span class="birthday-step__age-unit">år</span>
+      <span class="birthday-step__age-unit">{{ 'signup.birthdayStep.ageUnit' | translate }}</span>
     </span>
     @if (ageHint(); as hint) {
       <p class="birthday-step__age-hint">{{ hint }}</p>

@@ -21,11 +21,13 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { concat, map, of, switchMap } from 'rxjs';
 import { DEFAULT_QUANTITY_UNIT } from '../../../core/constants/nutrition';
 import { FoodItem, Macros } from '../../../core/models/food';
 import { CUSTOM_FOOD_ID_PREFIX, FoodLogService } from '../../../core/services/food-log/food-log';
 import { FoodSearchService } from '../../../core/services/food-search/food-search';
+import { injectTranslate } from '../../../core/services/language/translate';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
 import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiButton } from '../ui-button/ui-button';
@@ -40,6 +42,7 @@ import { UiTextInput } from '../ui-text-input/ui-text-input';
 export type FoodPickerStep = 'search' | 'new-food' | 'portion';
 /** Step a parent can start on. `portion` is only started via `editItem`. */
 export type FoodPickerStartStep = Exclude<FoodPickerStep, 'portion'>;
+/** Identifies the portion step's button text (see `CTA_LABEL_KEY`); not shown as-is. */
 export type FoodPickerCtaVerb = 'Tilføj' | 'Gem';
 
 /** The result of a selection: the item with macros scaled to `amount` `unit`. */
@@ -54,7 +57,7 @@ type FoodUnitId = 'g' | 'stk' | 'portion';
 
 interface FoodUnitOption {
   readonly id: FoodUnitId;
-  readonly label: string;
+  readonly labelKey: string;
 }
 
 interface NewFoodForm {
@@ -90,9 +93,9 @@ const EMPTY_RESULTS: readonly FoodItem[] = [];
 const EMPTY_MACROS: Macros = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
 
 const FOOD_UNITS: readonly FoodUnitOption[] = [
-  { id: 'g', label: 'g' },
-  { id: 'stk', label: 'stk' },
-  { id: 'portion', label: 'port.' },
+  { id: 'g', labelKey: 'common.unit.g' },
+  { id: 'stk', labelKey: 'shared.foodPicker.unit.piece' },
+  { id: 'portion', labelKey: 'shared.foodPicker.unit.portion' },
 ];
 const DEFAULT_FOOD_UNIT: FoodUnitId = 'g';
 /** Amount when the "Portion" field is left empty (design's `parseFloat(nfAmt) || 1`). */
@@ -109,27 +112,41 @@ const PIECE_CHIP_VALUES: readonly number[] = [1, 2, 3, 4];
 const GRAM_CHIP_MULTIPLIERS: readonly number[] = [2, 3];
 const HALF = 2;
 
-const MORE_LABEL = {
-  collapsed: 'Flere detaljer (kulhydrat, fedt)',
-  expanded: 'Skjul kulhydrat og fedt',
+const MORE_LABEL_KEY = {
+  collapsed: 'shared.foodPicker.moreCollapsed',
+  expanded: 'shared.foodPicker.moreExpanded',
 } as const;
 const MORE_ICON: Readonly<Record<'collapsed' | 'expanded', IconName>> = {
   collapsed: 'plus',
   expanded: 'minus',
 };
-const CREATE_LABEL = {
-  blank: 'Opret en vare selv',
-  named: (query: string) => `Opret "${query}" som ny vare`,
+const CREATE_LABEL_KEY = {
+  blank: 'shared.foodPicker.createBlank',
+  /** Params: `query`. */
+  named: 'shared.foodPicker.createNamed',
 } as const;
 /** Before a search the list is the user's own foods, so "nothing matches" would be wrong. */
-const EMPTY_MESSAGE = {
-  blank: 'Du har ingen varer endnu. Søg, scan en stregkode eller opret en selv.',
-  noMatches: 'Ingen varer matcher din søgning.',
+const EMPTY_MESSAGE_KEY = {
+  blank: 'shared.foodPicker.emptyBlank',
+  noMatches: 'shared.foodPicker.emptyNoMatches',
 } as const;
-const DUPLICATE_NAME_ERROR = 'Du har allerede en egen vare med det navn.';
-const MACRO_ERROR = 'Protein, kulhydrat og fedt skal være 0 eller større.';
-const KCAL_ERROR = 'Kalorier skal være mindst 1.';
-const STAT_LABEL = { kcal: 'kcal', protein: 'protein', carbs: 'kulhydrat', fat: 'fedt' } as const;
+const DUPLICATE_NAME_ERROR_KEY = 'shared.foodPicker.duplicateName';
+const MACRO_ERROR_KEY = 'shared.foodPicker.macroError';
+const KCAL_ERROR_KEY = 'shared.foodPicker.kcalError';
+const STAT_LABEL_KEY = {
+  kcal: 'common.unit.kcal',
+  protein: 'shared.foodPicker.stat.protein',
+  carbs: 'shared.foodPicker.stat.carbs',
+  fat: 'shared.foodPicker.stat.fat',
+} as const;
+/**
+ * The portion step's button text per verb – one full phrase each, so word order can change.
+ * Params: `amount`, `unit`.
+ */
+const CTA_LABEL_KEY: Readonly<Record<FoodPickerCtaVerb, string>> = {
+  Tilføj: 'shared.foodPicker.ctaAdd',
+  Gem: 'shared.foodPicker.ctaSave',
+};
 
 interface DragState {
   readonly startX: number;
@@ -181,6 +198,7 @@ function notBlank(control: AbstractControl<string>): ValidationErrors | null {
     UiIconButton,
     UiSpinner,
     UiTextInput,
+    TranslatePipe,
   ],
   templateUrl: './food-picker.html',
   styleUrl: './food-picker.scss',
@@ -218,6 +236,7 @@ export class FoodPicker {
   private readonly foodSearch = inject(FoodSearchService);
   private readonly foodLog = inject(FoodLogService);
   private readonly calculator = inject(NutritionCalculator);
+  private readonly t = injectTranslate();
 
   protected readonly step = linkedSignal<FoodPickerStep>(() =>
     this.editItem() ? 'portion' : this.startStep(),
@@ -261,11 +280,13 @@ export class FoodPicker {
     () => !this.isSearching() && this.results().length === 0,
   );
   protected readonly emptyMessage = computed(() =>
-    this.query().trim() === '' ? EMPTY_MESSAGE.blank : EMPTY_MESSAGE.noMatches,
+    this.t(this.query().trim() === '' ? EMPTY_MESSAGE_KEY.blank : EMPTY_MESSAGE_KEY.noMatches),
   );
   protected readonly createLabel = computed(() => {
     const query = this.query().trim();
-    return query === '' ? CREATE_LABEL.blank : CREATE_LABEL.named(query);
+    return query === ''
+      ? this.t(CREATE_LABEL_KEY.blank)
+      : this.t(CREATE_LABEL_KEY.named, { query });
   });
 
   // --- New custom item -------------------------------------------------------------------
@@ -289,18 +310,20 @@ export class FoodPicker {
   });
   /** Case-insensitive, trimmed match against the user's own foods. */
   protected readonly nameError = computed(() =>
-    this.foodLog.hasCustomFoodNamed(this.formValue().name) ? DUPLICATE_NAME_ERROR : null,
+    this.foodLog.hasCustomFoodNamed(this.formValue().name)
+      ? this.t(DUPLICATE_NAME_ERROR_KEY)
+      : null,
   );
   protected readonly nameInvalid = computed(() => this.nameError() !== null);
   protected readonly canSaveNewFood = computed(() => this.formValid() && !this.nameInvalid());
   protected readonly macroError = computed(() => {
     const { protein, carbs, fat } = this.formValue();
-    return hasNegativeMacro([protein, carbs, fat]) ? MACRO_ERROR : null;
+    return hasNegativeMacro([protein, carbs, fat]) ? this.t(MACRO_ERROR_KEY) : null;
   });
   protected readonly selectedUnit = computed(() => this.formValue().unit);
   protected readonly showMore = signal(false);
   protected readonly moreLabel = computed(() =>
-    this.showMore() ? MORE_LABEL.expanded : MORE_LABEL.collapsed,
+    this.t(this.showMore() ? MORE_LABEL_KEY.expanded : MORE_LABEL_KEY.collapsed),
   );
   protected readonly moreIcon = computed(() =>
     this.showMore() ? MORE_ICON.expanded : MORE_ICON.collapsed,
@@ -335,9 +358,9 @@ export class FoodPicker {
     }
     const { kcal, protein, carbs, fat } = this.macroFormValue();
     if (hasNegativeMacro([protein, carbs, fat])) {
-      return MACRO_ERROR;
+      return this.t(MACRO_ERROR_KEY);
     }
-    return kcal === null || kcal < 1 ? KCAL_ERROR : null;
+    return kcal === null || kcal < 1 ? this.t(KCAL_ERROR_KEY) : null;
   });
   /** The base the portion is scaled from: the item, with the edited macros when editing is allowed. */
   private readonly portionBase = computed<FoodItem | null>(() => {
@@ -354,8 +377,8 @@ export class FoodPicker {
       fat: Math.round(fat ?? 0),
     };
   });
-  protected readonly macroBaseLabel = computed(
-    () => `Næringsindhold pr. ${this.portionItem()?.quantity ?? ''}`,
+  protected readonly macroBaseLabel = computed(() =>
+    this.t('shared.foodPicker.macroBase', { quantity: this.portionItem()?.quantity ?? '' }),
   );
   private readonly baseQuantity = computed(() =>
     this.calculator.parseQuantity(this.portionItem()?.quantity ?? ''),
@@ -380,7 +403,9 @@ export class FoodPicker {
   protected readonly portionName = computed(() => this.portionItem()?.name ?? '');
   protected readonly baseLabel = computed(() => {
     const item = this.portionBase();
-    return item ? `${item.quantity} · ${item.kcal} kcal` : '';
+    return item
+      ? this.t('shared.foodPicker.baseLabel', { quantity: item.quantity, kcal: item.kcal })
+      : '';
   });
   private readonly ratio = computed(() => (this.amount() ?? 0) / this.baseAmount());
   protected readonly scaled = computed<Macros>(() => {
@@ -390,10 +415,10 @@ export class FoodPicker {
   protected readonly stats = computed<readonly PortionStat[]>(() => {
     const macros = this.scaled();
     return [
-      { label: STAT_LABEL.kcal, value: macros.kcal, accent: true },
-      { label: STAT_LABEL.protein, value: macros.protein, accent: false },
-      { label: STAT_LABEL.carbs, value: macros.carbs, accent: false },
-      { label: STAT_LABEL.fat, value: macros.fat, accent: false },
+      { label: this.t(STAT_LABEL_KEY.kcal), value: macros.kcal, accent: true },
+      { label: this.t(STAT_LABEL_KEY.protein), value: macros.protein, accent: false },
+      { label: this.t(STAT_LABEL_KEY.carbs), value: macros.carbs, accent: false },
+      { label: this.t(STAT_LABEL_KEY.fat), value: macros.fat, accent: false },
     ];
   });
   protected readonly chipValues = computed<readonly number[]>(() => {
@@ -404,8 +429,11 @@ export class FoodPicker {
     const half = Math.round(base / HALF / GRAM_STEP) * GRAM_STEP || GRAM_STEP;
     return [half, base, ...GRAM_CHIP_MULTIPLIERS.map((factor) => base * factor)];
   });
-  protected readonly ctaLabel = computed(
-    () => `${this.ctaVerb()} ${this.amount() ?? ''} ${this.unit()}`,
+  protected readonly ctaLabel = computed(() =>
+    this.t(CTA_LABEL_KEY[this.ctaVerb()], {
+      amount: String(this.amount() ?? ''),
+      unit: this.unit(),
+    }),
   );
   protected readonly canConfirm = computed(
     () => (this.amount() ?? 0) > 0 && (!this.canEditMacros() || this.macroFormValid()),

@@ -1,14 +1,18 @@
 <button
   type="button"
   class="home-celebration-toast__button"
-  aria-label="Luk"
+  [attr.aria-label]="'common.close' | translate"
   (click)="dismissed.emit()"
 >
   <span class="home-celebration-toast__icon">
     <app-ui-icon name="check" size="md" [strokeWidth]="3" />
   </span>
   <span class="home-celebration-toast__text">
-    <span class="home-celebration-toast__title">Dagsmål nået</span>
-    <span class="home-celebration-toast__subtitle">Ringen er lukket – godt gået</span>
+    <span class="home-celebration-toast__title">{{
+      'home.celebrationToast.title' | translate
+    }}</span>
+    <span class="home-celebration-toast__subtitle">{{
+      'home.celebrationToast.subtitle' | translate
+    }}</span>
   </span>
 </button>

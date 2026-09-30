@@ -15,6 +15,7 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    "resolveJsonModule": true,
     "importHelpers": true,
     "target": "ES2022",
     "module": "preserve"

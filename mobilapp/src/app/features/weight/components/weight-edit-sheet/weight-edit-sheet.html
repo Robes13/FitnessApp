@@ -1,7 +1,7 @@
 <app-ui-sheet
   [open]="isOpen()"
-  title="Ret"
-  titleAccent="vejning"
+  [title]="'weight.editSheet.titleStart' | translate"
+  [titleAccent]="'weight.editSheet.titleAccent' | translate"
   scrollable
   (closed)="closed.emit()"
 >
@@ -9,7 +9,7 @@
 
   <p class="weight-edit-sheet__value">
     <span class="weight-edit-sheet__number">{{ draftText() }}</span>
-    <span class="weight-edit-sheet__unit">kg</span>
+    <span class="weight-edit-sheet__unit">{{ 'common.unit.kg' | translate }}</span>
   </p>
 
   <app-weight-ruler-input
@@ -20,7 +20,7 @@
 
   @if (confirmingDelete()) {
     <p class="weight-edit-sheet__confirm">
-      Vil du slette vejningen fra {{ whenText() }}? Det kan ikke fortrydes.
+      {{ 'weight.editSheet.confirmMessage' | translate: { when: whenText() } }}
     </p>
   }
 
@@ -34,14 +34,14 @@
         class="weight-edit-sheet__confirm-delete"
         (click)="confirmDelete()"
       >
-        Ja, slet vejning
+        {{ 'weight.editSheet.confirmDelete' | translate }}
       </button>
       <button app-ui-button type="button" variant="outline" block (click)="cancelDelete()">
-        Annuller
+        {{ 'weight.editSheet.cancel' | translate }}
       </button>
     } @else {
       <button app-ui-button type="button" block class="weight-edit-sheet__save" (click)="save()">
-        Gem
+        {{ 'common.save' | translate }}
       </button>
       <button
         app-ui-button
@@ -51,7 +51,7 @@
         class="weight-edit-sheet__delete"
         (click)="askDelete()"
       >
-        Slet
+        {{ 'weight.editSheet.delete' | translate }}
       </button>
     }
   </div>

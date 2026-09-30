@@ -15,6 +15,7 @@ import {
   NonNullableFormBuilder,
   ReactiveFormsModule,
 } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { REMINDER_DEFINITIONS, REMINDER_IDS } from '../../../../core/constants/reminders';
 import {
   ReminderId,
@@ -24,7 +25,8 @@ import {
 } from '../../../../core/models/reminder';
 import { ReminderService } from '../../../../core/services/reminders/reminders';
 import { formatClockTime, parseClockTime } from '../../../../core/utils/clock-time';
-import { DAY_NAMES_LONG, DAY_NAMES_SHORT } from '../../../../core/utils/date-format';
+import { DAY_NAME_LONG_KEYS, DAY_NAME_SHORT_KEYS } from '../../../../core/utils/date-format';
+import { Translate, injectTranslate } from '../../../../core/services/language/translate';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
@@ -38,7 +40,7 @@ type TimeForm = FormGroup<Record<ReminderId, FormControl<string>>>;
 type ReminderNoticeAction = 'enable-master' | 'request-permission';
 
 interface ReminderNotice {
-  readonly text: string;
+  readonly textKey: string;
   readonly action: ReminderNoticeAction | null;
 }
 
@@ -64,27 +66,26 @@ interface WeekdayOptionView extends WeekdayOption {
   readonly selected: boolean;
 }
 
-const NOTICE = {
-  UNSUPPORTED:
-    'Påmindelser virker kun i appen på din telefon. Dine valg bliver gemt, så de er klar dér.',
-  MASTER_OFF: 'Notifikationer er slået fra. Slå dem til for at få dine påmindelser.',
-  DENIED:
-    'Appen har ikke lov til at sende notifikationer. Giv lov under appens notifikationer i ' +
-    'telefonens indstillinger – så bliver dine påmindelser planlagt igen.',
-  PROMPT: 'Appen skal have lov til at sende notifikationer, før dine påmindelser kan komme frem.',
+const NOTICE_KEY = {
+  UNSUPPORTED: 'profile.remindersSheet.noticeUnsupported',
+  MASTER_OFF: 'profile.remindersSheet.noticeMasterOff',
+  DENIED: 'profile.remindersSheet.noticeDenied',
+  PROMPT: 'profile.remindersSheet.noticePrompt',
 } as const;
 
-const NOTICE_ACTION_LABEL: Readonly<Record<ReminderNoticeAction, string>> = {
-  'enable-master': 'Slå notifikationer til',
-  'request-permission': 'Tillad notifikationer',
+const NOTICE_ACTION_LABEL_KEY: Readonly<Record<ReminderNoticeAction, string>> = {
+  'enable-master': 'profile.remindersSheet.enableMaster',
+  'request-permission': 'profile.remindersSheet.requestPermission',
 };
 
-const EVERY_DAY_LABEL = 'Hver dag';
+const EVERY_DAY_LABEL_KEY = 'profile.remindersSheet.everyDay';
 const WEEKDAY_INDEXES: readonly WeekdayIndex[] = [0, 1, 2, 3, 4, 5, 6];
-const WEEKDAY_OPTIONS: readonly WeekdayOption[] = [
-  { value: null, label: EVERY_DAY_LABEL },
-  ...WEEKDAY_INDEXES.map((index) => ({ value: index, label: DAY_NAMES_SHORT[index] })),
-];
+function weekdayOptions(t: Translate): readonly WeekdayOption[] {
+  return [
+    { value: null, label: t(EVERY_DAY_LABEL_KEY) },
+    ...WEEKDAY_INDEXES.map((index) => ({ value: index, label: t(DAY_NAME_SHORT_KEYS[index]) })),
+  ];
+}
 
 /**
  * "Påmindelser": one switch per reminder kind (breakfast, lunch, dinner, weigh-in and the
@@ -98,7 +99,16 @@ const WEEKDAY_OPTIONS: readonly WeekdayOption[] = [
  */
 @Component({
   selector: 'app-profile-reminders-sheet',
-  imports: [ReactiveFormsModule, UiButton, UiChip, UiFormError, UiSheet, UiSwitch, UiTextInput],
+  imports: [
+    ReactiveFormsModule,
+    TranslatePipe,
+    UiButton,
+    UiChip,
+    UiFormError,
+    UiSheet,
+    UiSwitch,
+    UiTextInput,
+  ],
   templateUrl: './profile-reminders-sheet.html',
   styleUrl: './profile-reminders-sheet.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -110,6 +120,7 @@ export class ProfileRemindersSheet {
 
   private readonly reminders = inject(ReminderService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly t = injectTranslate();
 
   protected readonly timeForm: TimeForm = this.formBuilder.group(
     timeValues(this.reminders.settings()),
@@ -125,40 +136,44 @@ export class ProfileRemindersSheet {
 
   protected readonly notice = computed<ReminderNotice | null>(() => {
     if (!this.reminders.isSupported()) {
-      return { text: NOTICE.UNSUPPORTED, action: null };
+      return { textKey: NOTICE_KEY.UNSUPPORTED, action: null };
     }
     if (!this.reminders.masterEnabled()) {
-      return { text: NOTICE.MASTER_OFF, action: 'enable-master' };
+      return { textKey: NOTICE_KEY.MASTER_OFF, action: 'enable-master' };
     }
     if (this.reminders.permission() === 'denied') {
-      return { text: NOTICE.DENIED, action: null };
+      return { textKey: NOTICE_KEY.DENIED, action: null };
     }
     if (this.reminders.permission() === 'prompt' && this.reminders.enabledCount() > 0) {
-      return { text: NOTICE.PROMPT, action: 'request-permission' };
+      return { textKey: NOTICE_KEY.PROMPT, action: 'request-permission' };
     }
     return null;
   });
-  protected readonly noticeActionLabel = computed(() => {
+  protected readonly noticeActionLabelKey = computed(() => {
     const action = this.notice()?.action;
-    return action ? NOTICE_ACTION_LABEL[action] : null;
+    return action ? NOTICE_ACTION_LABEL_KEY[action] : null;
   });
 
   protected readonly rows = computed<readonly ReminderRow[]>(() => {
     const settings = this.reminders.settings();
+    const options = weekdayOptions(this.t);
     return REMINDER_DEFINITIONS.map((definition) => {
       const setting = settings[definition.id];
       const weekday = definition.allowsWeekday ? setting.weekday : null;
+      const label = this.t(definition.labelKey);
       return {
         id: definition.id,
-        label: definition.label,
-        summary: summaryFor(setting.time, weekday),
+        label,
+        summary: summaryFor(this.t, setting.time, weekday),
         enabled: setting.enabled,
         allowsWeekday: definition.allowsWeekday,
         weekdayOptions: definition.allowsWeekday
-          ? WEEKDAY_OPTIONS.map((option) => ({ ...option, selected: option.value === weekday }))
+          ? options.map((option) => ({ ...option, selected: option.value === weekday }))
           : [],
-        switchLabel: `Påmindelse om ${definition.label.toLowerCase()}`,
-        timeLabel: `Tidspunkt for ${definition.label.toLowerCase()}`,
+        switchLabel: this.t('profile.remindersSheet.switchLabel', {
+          reminder: label.toLowerCase(),
+        }),
+        timeLabel: this.t('profile.remindersSheet.timeLabel', { reminder: label.toLowerCase() }),
         timeControl: this.timeForm.controls[definition.id],
       };
     });
@@ -230,7 +245,11 @@ function timeValues(settings: ReminderSettings): Record<ReminderId, string> {
 }
 
 /** `'Hver dag kl. 21:00'` or `'Mandag kl. 07:30'`. */
-function summaryFor(time: ReminderSetting['time'], weekday: WeekdayIndex | null): string {
-  const day = weekday === null ? EVERY_DAY_LABEL : DAY_NAMES_LONG[weekday];
-  return `${day} kl. ${formatClockTime(time)}`;
+function summaryFor(
+  t: Translate,
+  time: ReminderSetting['time'],
+  weekday: WeekdayIndex | null,
+): string {
+  const day = t(weekday === null ? EVERY_DAY_LABEL_KEY : DAY_NAME_LONG_KEYS[weekday]);
+  return t('profile.remindersSheet.summary', { day, time: formatClockTime(time) });
 }

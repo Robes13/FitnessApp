@@ -1,5 +1,7 @@
 import { FigureTempo } from '../../../../../shared/components/figure';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { injectTranslate } from '../../../../../core/services/language/translate';
 import {
   TRAINING_MAX_MINUTES,
   TRAINING_MIN_MINUTES,
@@ -21,17 +23,17 @@ const CLASSIC_MAX_MINUTES = 50;
 const LONG_MAX_MINUTES = 80;
 const VERY_LONG_MAX_MINUTES = 120;
 
-const LABEL_SHORT = 'Kort og effektivt';
-const LABEL_CLASSIC = 'Klassisk pas';
-const LABEL_LONG = 'Lang session';
-const LABEL_VERY_LONG = 'Rigtig lang session';
-const LABEL_ENDURANCE = 'Udholdenhedspas';
+const LABEL_SHORT_KEY = 'signup.trainingDurationStep.labelShort';
+const LABEL_CLASSIC_KEY = 'signup.trainingDurationStep.labelClassic';
+const LABEL_LONG_KEY = 'signup.trainingDurationStep.labelLong';
+const LABEL_VERY_LONG_KEY = 'signup.trainingDurationStep.labelVeryLong';
+const LABEL_ENDURANCE_KEY = 'signup.trainingDurationStep.labelEndurance';
 
-const SUBTITLE_SHORT = 'Kort, men det tæller. Bedre end intet.';
-const SUBTITLE_CLASSIC = 'Den længde de fleste kan få til at passe ind.';
-const SUBTITLE_LONG = 'Godt med tid til både opvarmning og styrke.';
-const SUBTITLE_VERY_LONG = 'Lange pas kræver mad og væske undervejs.';
-const SUBTITLE_ENDURANCE = 'Over to timer. Planlæg mad, væske og en rolig dag efter.';
+const SUBTITLE_SHORT_KEY = 'signup.trainingDurationStep.subtitleShort';
+const SUBTITLE_CLASSIC_KEY = 'signup.trainingDurationStep.subtitleClassic';
+const SUBTITLE_LONG_KEY = 'signup.trainingDurationStep.subtitleLong';
+const SUBTITLE_VERY_LONG_KEY = 'signup.trainingDurationStep.subtitleVeryLong';
+const SUBTITLE_ENDURANCE_KEY = 'signup.trainingDurationStep.subtitleEndurance';
 
 /** The stopwatch ring: the full circumference of the circle with r = 58 (the design's `364.4`). */
 const DIAL_CIRCUMFERENCE = 364.4;
@@ -55,7 +57,7 @@ const RULER_STEP = 5;
  */
 @Component({
   selector: 'app-training-duration-step',
-  imports: [FigureTempo, FigureBody, UiRuler],
+  imports: [FigureTempo, FigureBody, TranslatePipe, UiRuler],
   templateUrl: './training-duration-step.html',
   styleUrl: './training-duration-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,6 +65,7 @@ const RULER_STEP = 5;
 })
 export class TrainingDurationStep {
   protected readonly state = inject(SignupStateService);
+  private readonly t = injectTranslate();
 
   protected readonly rulerMin = TRAINING_MIN_MINUTES;
   protected readonly rulerMax = TRAINING_MAX_MINUTES;
@@ -79,32 +82,36 @@ export class TrainingDurationStep {
   );
   protected readonly minutesText = computed(() => String(this.minutes()));
 
-  protected readonly label = computed(() => {
+  protected readonly label = computed(() => this.t(this.labelKey()));
+
+  private readonly labelKey = computed(() => {
     const minutes = this.minutes();
     if (minutes < SHORT_MAX_MINUTES) {
-      return LABEL_SHORT;
+      return LABEL_SHORT_KEY;
     }
     if (minutes < CLASSIC_MAX_MINUTES) {
-      return LABEL_CLASSIC;
+      return LABEL_CLASSIC_KEY;
     }
     if (minutes < LONG_MAX_MINUTES) {
-      return LABEL_LONG;
+      return LABEL_LONG_KEY;
     }
-    return minutes < VERY_LONG_MAX_MINUTES ? LABEL_VERY_LONG : LABEL_ENDURANCE;
+    return minutes < VERY_LONG_MAX_MINUTES ? LABEL_VERY_LONG_KEY : LABEL_ENDURANCE_KEY;
   });
 
-  protected readonly subtitle = computed(() => {
+  protected readonly subtitle = computed(() => this.t(this.subtitleKey()));
+
+  private readonly subtitleKey = computed(() => {
     const minutes = this.minutes();
     if (minutes < SHORT_MAX_MINUTES) {
-      return SUBTITLE_SHORT;
+      return SUBTITLE_SHORT_KEY;
     }
     if (minutes < CLASSIC_MAX_MINUTES) {
-      return SUBTITLE_CLASSIC;
+      return SUBTITLE_CLASSIC_KEY;
     }
     if (minutes < LONG_MAX_MINUTES) {
-      return SUBTITLE_LONG;
+      return SUBTITLE_LONG_KEY;
     }
-    return minutes < VERY_LONG_MAX_MINUTES ? SUBTITLE_VERY_LONG : SUBTITLE_ENDURANCE;
+    return minutes < VERY_LONG_MAX_MINUTES ? SUBTITLE_VERY_LONG_KEY : SUBTITLE_ENDURANCE_KEY;
   });
 
   /** The ring's remaining stroke amount – 0 at 180 minutes. */

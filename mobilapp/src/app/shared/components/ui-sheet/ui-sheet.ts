@@ -13,6 +13,7 @@ import {
   output,
   viewChild,
 } from '@angular/core';
+import { injectTranslate } from '../../../core/services/language/translate';
 import { UiIcon } from '../ui-icon/ui-icon';
 import { UiIconButton } from '../ui-icon-button/ui-icon-button';
 
@@ -27,8 +28,6 @@ export type SheetMaxHeight = 'auto' | 'medium' | 'tall' | 'full';
 export type SheetTitleSize = 'sm' | 'md' | 'lg';
 /** The color of `titleAccent`: orange (default) or red – the design's "Log <red>out?</red>". */
 export type SheetTitleAccentTone = 'accent' | 'negative';
-
-const DEFAULT_CLOSE_LABEL = 'Luk';
 
 /**
  * The elements in the panel that Tab is allowed to land on. Used to keep focus inside the open
@@ -105,7 +104,7 @@ export class UiSheet {
   readonly titleAccentTone = input<SheetTitleAccentTone>('accent');
   /** No space between `title` and `titleAccent`: "Profile" + "picture" → "Profilepicture". */
   readonly titleAccentJoined = input(false, { transform: booleanAttribute });
-  readonly closeLabel = input(DEFAULT_CLOSE_LABEL);
+  readonly closeLabel = input<string>();
   /** Hides the close button and disables closing via the scrim and Escape. */
   readonly hideClose = input(false, { transform: booleanAttribute });
   readonly layer = input<SheetLayer>('sheet');
@@ -121,11 +120,13 @@ export class UiSheet {
   readonly closed = output<void>();
 
   private readonly document = inject(DOCUMENT);
+  private readonly t = injectTranslate();
   private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
 
   /** The element that had focus when the sheet opened – focus is returned there on close. */
   private previouslyFocused: HTMLElement | null = null;
 
+  protected readonly closeLabelText = computed(() => this.closeLabel() ?? this.t('common.close'));
   protected readonly dismissible = computed(() => !this.hideClose());
   protected readonly hasTitle = computed(() => this.title() !== '' || this.titleAccent() !== '');
   protected readonly hasHeader = computed(() => this.hasTitle() || this.dismissible());

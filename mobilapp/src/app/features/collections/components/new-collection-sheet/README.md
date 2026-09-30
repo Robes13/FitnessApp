@@ -53,6 +53,6 @@ samlingens navn, måltid, ikon og varer, knappen hedder "Gem ændringer", og ark
   kolonner) og wrapper rundt om det antal ikoner, der faktisk vises — 12 eller 30. Er det
   valgte ikon foldet væk med "Vis færre", overtager det første synlige tab-pladsen.
 - Hvert ikon får et rigtigt navn med som `aria-label` ("Æg", "Håndvægt" …) i stedet for
-  "Ikon 1" … "Ikon 30". Oversættelsen er `COLLECTION_ICON_LABELS` i
+  "Ikon 1" … "Ikon 30". Nøglerne er `COLLECTION_ICON_LABEL_KEYS` i
   `core/constants/collection-icons.ts` — ved siden af `COLLECTION_ICON_NAMES`, så enhver
   ikonvælger bruger de samme navne. Designet har kun tegningerne.

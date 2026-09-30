@@ -1,7 +1,7 @@
 # ShellLayout
 
 `app-shell-layout` – rammen om tab-skærmene: en `<router-outlet>` til den aktive side og
-`<app-ui-tab-bar [items]="TAB_BAR_ITEMS">` nederst.
+`<app-ui-tab-bar [items]="tabBarItems()">` nederst – `TAB_BAR_ITEMS` med teksterne oversat til det aktive sprog, så fanerne skifter sprog live.
 
 | Fil                    | Indhold                                                                                                |
 | ---------------------- | ------------------------------------------------------------------------------------------------------ |

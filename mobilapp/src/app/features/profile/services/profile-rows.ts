@@ -10,6 +10,7 @@ import {
   formatWeightKg,
 } from '../../../core/utils/date-format';
 import { clamp } from '../../../core/utils/math';
+import { injectTranslate } from '../../../core/services/language/translate';
 
 import { ProfileEditRowId } from './profile-edit';
 
@@ -21,7 +22,6 @@ export interface ProfileRow {
 
 /** The design's `'–'` for a value the user hasn't chosen yet. */
 const EMPTY_VALUE = '–';
-const PASSWORD_MASK = '••••••••';
 
 /**
  * The rows under "Min plan" and "Konto" on the profile page – the design's `profileRows`
@@ -40,62 +40,94 @@ export class ProfileRowsService {
   private readonly profiles = inject(UserProfileService);
   private readonly calculator = inject(NutritionCalculator);
   private readonly adaptiveGoal = inject(AdaptiveGoalService);
+  private readonly t = injectTranslate();
 
   readonly planRows: Signal<readonly ProfileRow[]> = computed(() => {
     const profile = this.profiles.profile();
     const goal = this.profiles.goalDefinition();
     const pace = this.profiles.paceDefinition();
     const frequency = this.profiles.trainingFrequency();
-    const rows: ProfileRow[] = [{ id: 'goal', label: 'Mål', value: goal?.label ?? EMPTY_VALUE }];
+    const rows: ProfileRow[] = [
+      {
+        id: 'goal',
+        label: this.t('profile.rows.goal'),
+        value: goal ? this.t(goal.labelKey) : EMPTY_VALUE,
+      },
+    ];
     const maintains = profile.goal === 'hold';
     if (!maintains) {
-      rows.push({ id: 'pace', label: 'Tempo', value: pace?.rateLabel ?? EMPTY_VALUE });
+      rows.push({
+        id: 'pace',
+        label: this.t('profile.rows.pace'),
+        value: pace ? this.t(pace.rateLabelKey) : EMPTY_VALUE,
+      });
     }
     rows.push(
-      { id: 'gender', label: 'Køn', value: this.genderLabel() },
-      { id: 'height', label: 'Højde', value: `${Math.round(profile.heightCm)} cm` },
+      { id: 'gender', label: this.t('profile.rows.gender'), value: this.genderLabel() },
+      {
+        id: 'height',
+        label: this.t('profile.rows.height'),
+        value: this.t('profile.rows.heightValue', { heightCm: Math.round(profile.heightCm) }),
+      },
     );
     if (profile.goal !== null && !maintains) {
-      rows.push({ id: 'goalWeight', label: 'Målvægt', value: `${this.goalWeightKg()} kg` });
+      rows.push({
+        id: 'goalWeight',
+        label: this.t('profile.rows.goalWeight'),
+        value: this.t('profile.rows.goalWeightValue', { goalWeightKg: this.goalWeightKg() }),
+      });
     }
     rows.push(
       {
         id: 'steps',
-        label: 'Aktivitet',
-        value: `${formatInteger(profile.stepsPerDay)} skridt · ${this.profiles.activityLevel().label}`,
+        label: this.t('profile.rows.steps'),
+        value: this.t('profile.rows.stepsValue', {
+          steps: formatInteger(profile.stepsPerDay),
+          activityLevel: this.t(this.profiles.activityLevel().labelKey),
+        }),
       },
       {
         id: 'trainFreq',
-        label: 'Træningsdage',
-        value: frequency === 0 ? 'Ingen' : `${frequency} / uge`,
+        label: this.t('profile.rows.trainFreq'),
+        value:
+          frequency === 0
+            ? this.t('profile.rows.trainFreqNone')
+            : this.t('profile.rows.trainFreqValue', { frequency }),
       },
     );
     if (frequency > 0) {
       rows.push(
-        { id: 'trainDur', label: 'Længde', value: `${Math.round(profile.trainingMinutes)} min` },
+        {
+          id: 'trainDur',
+          label: this.t('profile.rows.trainDur'),
+          value: this.t('profile.rows.trainDurValue', {
+            minutes: Math.round(profile.trainingMinutes),
+          }),
+        },
         {
           id: 'trainInt',
-          label: 'Intensitet',
-          value: this.profiles.intensity()?.label ?? EMPTY_VALUE,
+          label: this.t('profile.rows.trainInt'),
+          value: this.intensityLabel(),
         },
       );
     }
     rows.push({
       id: 'kcal',
-      label: 'Dagligt kaloriemål',
+      label: this.t('profile.rows.kcal'),
       value: this.kcalText(),
     });
     return rows;
   });
 
   readonly accountRows: Signal<readonly ProfileRow[]> = computed(() => [
-    { id: 'email' as const, label: 'E-mail', value: this.email() },
-    { id: 'password' as const, label: 'Adgangskode', value: PASSWORD_MASK },
-    { id: 'units' as const, label: 'Enheder', value: this.unitsLabel() },
+    { id: 'email' as const, label: this.t('profile.rows.email'), value: this.email() },
+    { id: 'units' as const, label: this.t('profile.rows.units'), value: this.unitsLabel() },
   ]);
 
   /** The design's `profileEmail`: the placeholder shows until the user has typed their e-mail. */
-  readonly email = computed(() => this.profiles.profile().email || 'dig@mail.dk');
+  readonly email = computed(
+    () => this.profiles.profile().email || this.t('profile.rows.emailPlaceholder'),
+  );
 
   readonly weightText = computed(() => formatWeightKg(this.profiles.profile().weightKg));
   readonly heightText = computed(() => String(Math.round(this.profiles.profile().heightCm)));
@@ -103,21 +135,31 @@ export class ProfileRowsService {
   readonly bmiText = computed(() => formatDecimal(this.profiles.bmi(), 1));
 
   private readonly kcalText = computed(() => {
-    const target = `${formatInteger(this.adaptiveGoal.kcalTarget())} kcal`;
+    const target = formatInteger(this.adaptiveGoal.kcalTarget());
     const adjustment = this.adaptiveGoal.adjustmentKcal();
     return adjustment === 0
-      ? target
-      : `${target} · tilpasset ${formatSignedDecimal(adjustment, 0)}`;
+      ? this.t('profile.rows.kcalValue', { kcal: target })
+      : this.t('profile.rows.kcalValueAdjusted', {
+          kcal: target,
+          adjustment: formatSignedDecimal(adjustment, 0),
+        });
   });
 
   private readonly genderLabel = computed(() => {
     const gender = this.profiles.profile().gender;
-    return GENDERS.find((item) => item.id === gender)?.label ?? EMPTY_VALUE;
+    const definition = GENDERS.find((item) => item.id === gender);
+    return definition ? this.t(definition.labelKey) : EMPTY_VALUE;
   });
 
   private readonly unitsLabel = computed(() => {
     const units = this.profiles.profile().units;
-    return UNIT_SYSTEMS.find((item) => item.id === units)?.description ?? EMPTY_VALUE;
+    const definition = UNIT_SYSTEMS.find((item) => item.id === units);
+    return definition ? this.t(definition.descriptionKey) : EMPTY_VALUE;
+  });
+
+  private readonly intensityLabel = computed(() => {
+    const intensity = this.profiles.intensity();
+    return intensity ? this.t(intensity.labelKey) : EMPTY_VALUE;
   });
 
   /** The goal weight is kept within the bounds the goal allows (the design's `gMin`/`gMax`). */

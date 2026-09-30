@@ -1,5 +1,7 @@
+import { TestBed } from '@angular/core/testing';
 import { INTENSITIES } from '../../../../../core/constants/nutrition';
-import { SummaryDraft, buildSummaryRows } from './summary-rows';
+import { injectTranslate } from '../../../../../core/services/language/translate';
+import { SummaryDraft, SummaryRow, buildSummaryRows } from './summary-rows';
 
 const BASE: SummaryDraft = {
   username: 'mads',
@@ -18,8 +20,15 @@ const BASE: SummaryDraft = {
   notifications: true,
 };
 
+function summaryRows(draft: SummaryDraft): readonly SummaryRow[] {
+  return buildSummaryRows(
+    TestBed.runInInjectionContext(() => injectTranslate()),
+    draft,
+  );
+}
+
 function valueOf(draft: SummaryDraft, label: string): string {
-  const row = buildSummaryRows(draft).find((candidate) => candidate.label === label);
+  const row = summaryRows(draft).find((candidate) => candidate.label === label);
   if (!row) {
     throw new Error(`Linjen "${label}" mangler`);
   }
@@ -28,7 +37,7 @@ function valueOf(draft: SummaryDraft, label: string): string {
 
 describe('buildSummaryRows', () => {
   it('bygger designets ni linjer i rækkefølge', () => {
-    const labels = buildSummaryRows(BASE).map((row) => row.label);
+    const labels = summaryRows(BASE).map((row) => row.label);
 
     expect(labels).toEqual([
       'Bruger',
@@ -44,13 +53,13 @@ describe('buildSummaryRows', () => {
   });
 
   it('fremhæver kun målet', () => {
-    const accented = buildSummaryRows(BASE).filter((row) => row.accent);
+    const accented = summaryRows(BASE).filter((row) => row.accent);
 
     expect(accented.map((row) => row.label)).toEqual(['Mål']);
   });
 
   it('sender hver linje tilbage til sit eget trin', () => {
-    const steps = buildSummaryRows(BASE).map((row) => row.step);
+    const steps = summaryRows(BASE).map((row) => row.step);
 
     expect(steps).toEqual([
       'account',

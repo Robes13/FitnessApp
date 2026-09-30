@@ -1,7 +1,7 @@
 <app-ui-sheet
   [open]="open()"
   [title]="text().title"
-  titleAccent="samling"
+  [titleAccent]="'collections.newCollectionSheet.titleAccent' | translate"
   titleSize="sm"
   maxHeight="full"
   scrollable
@@ -10,8 +10,8 @@
   <app-ui-text-input
     class="new-collection-sheet__name"
     [formControl]="form.controls.name"
-    placeholder="Navn, f.eks. Meal prep"
-    ariaLabel="Navn på samlingen"
+    [placeholder]="'collections.newCollectionSheet.namePlaceholder' | translate"
+    [ariaLabel]="'collections.newCollectionSheet.nameLabel' | translate"
     autocomplete="off"
     [invalid]="nameTaken()"
   />
@@ -21,11 +21,19 @@
     [message]="nameError()"
   />
 
-  <h3 class="new-collection-sheet__caption">Hører under</h3>
-  <app-meal-picker [(value)]="meal" filled ariaLabel="Hører under" />
+  <h3 class="new-collection-sheet__caption">
+    {{ 'collections.newCollectionSheet.mealCaption' | translate }}
+  </h3>
+  <app-meal-picker
+    [(value)]="meal"
+    filled
+    [ariaLabel]="'collections.newCollectionSheet.mealCaption' | translate"
+  />
 
   <div class="new-collection-sheet__caption new-collection-sheet__caption--row">
-    <h3 class="new-collection-sheet__caption-text">Vælg ikon</h3>
+    <h3 class="new-collection-sheet__caption-text">
+      {{ 'collections.newCollectionSheet.iconCaption' | translate }}
+    </h3>
     <button type="button" class="new-collection-sheet__more" (click)="toggleIcons()">
       {{ moreIconsLabel() }}
     </button>
@@ -33,7 +41,7 @@
   <div
     class="new-collection-sheet__icons"
     role="radiogroup"
-    aria-label="Vælg ikon"
+    [attr.aria-label]="'collections.newCollectionSheet.iconCaption' | translate"
     (keydown)="onIconKeydown($event)"
   >
     @for (name of icons(); track name; let index = $index) {
@@ -53,13 +61,15 @@
     }
   </div>
 
-  <h3 class="new-collection-sheet__caption">Varer i samlingen</h3>
+  <h3 class="new-collection-sheet__caption">
+    {{ 'collections.newCollectionSheet.itemsCaption' | translate }}
+  </h3>
   @if (draft().length === 0) {
     <app-ui-empty-state
       tone="subtle"
       size="sm"
       class="new-collection-sheet__empty"
-      message="Søg en vare eller scan en stregkode for at fylde samlingen."
+      [message]="'collections.newCollectionSheet.emptyDraft' | translate"
     />
   } @else {
     <ul class="new-collection-sheet__draft">
@@ -71,11 +81,13 @@
             <span class="new-collection-sheet__item-qty">{{ item.quantity }}</span>
           </button>
           <span class="new-collection-sheet__row-end">
-            <span class="new-collection-sheet__kcal">{{ item.kcal }} kcal</span>
+            <span class="new-collection-sheet__kcal"
+              >{{ item.kcal }} {{ 'common.unit.kcal' | translate }}</span
+            >
             <button
               type="button"
               class="new-collection-sheet__remove"
-              [attr.aria-label]="'Fjern ' + item.name"
+              [attr.aria-label]="removeLabel(item)"
               (click)="removeAt(index)"
             >
               <app-ui-icon name="close" size="xs" [strokeWidth]="2.4" />
@@ -97,7 +109,7 @@
       (click)="openSearch()"
     >
       <app-ui-icon name="plus" size="sm" [strokeWidth]="2.4" />
-      Søg vare
+      {{ 'collections.newCollectionSheet.search' | translate }}
     </button>
     <button
       app-ui-button
@@ -109,7 +121,7 @@
       (click)="openScanner()"
     >
       <app-ui-icon name="scan" size="md" />
-      Scan
+      {{ 'collections.newCollectionSheet.scan' | translate }}
     </button>
   </div>
 
@@ -137,8 +149,8 @@
 
 <app-ui-sheet
   [open]="pickerOpen()"
-  title="Tilføj"
-  titleAccent="til samling"
+  [title]="'collections.newCollectionSheet.pickerTitle' | translate"
+  [titleAccent]="'collections.newCollectionSheet.pickerTitleAccent' | translate"
   titleSize="md"
   layer="sheet-high"
   maxHeight="full"
@@ -150,7 +162,7 @@
       [startStep]="pickerStartStep()"
       [editItem]="editItem()"
       [ctaVerb]="editItem() ? 'Gem' : 'Tilføj'"
-      [saveAndLogLabel]="saveAndAddLabel"
+      [saveAndLogLabel]="saveAndAddLabelKey | translate"
       (picked)="onPicked($event)"
       (customFoodCreated)="onCustomFoodCreated($event)"
       (scanRequested)="openScannerFromPicker()"

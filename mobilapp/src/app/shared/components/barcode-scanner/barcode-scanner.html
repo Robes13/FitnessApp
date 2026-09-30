@@ -5,7 +5,7 @@
     [class.barcode-scanner__overlay--keyboard]="keyboardOpen()"
     role="dialog"
     aria-modal="true"
-    aria-label="Scan stregkode"
+    [attr.aria-label]="'shared.barcodeScanner.title' | translate"
     tabindex="-1"
   >
     <div class="barcode-scanner__glow" aria-hidden="true"></div>
@@ -16,12 +16,12 @@
         size="sm"
         tone="translucent"
         type="button"
-        aria-label="Luk"
+        [attr.aria-label]="'common.close' | translate"
         (click)="close()"
       >
         <app-ui-icon name="close" size="md" [strokeWidth]="2.5" />
       </button>
-      <span class="barcode-scanner__title">Scan stregkode</span>
+      <span class="barcode-scanner__title">{{ 'shared.barcodeScanner.title' | translate }}</span>
       <span class="barcode-scanner__header-spacer" aria-hidden="true"></span>
     </header>
 
@@ -50,7 +50,7 @@
         <div class="barcode-scanner__line"></div>
       </div>
       @if (isLookingUp()) {
-        <app-ui-spinner size="lg" ariaLabel="Slår varen op" />
+        <app-ui-spinner size="lg" [ariaLabel]="'shared.barcodeScanner.lookingUp' | translate" />
       }
       <p
         class="barcode-scanner__hint"
@@ -62,12 +62,12 @@
       </p>
       @if (isPermissionDenied()) {
         <button app-ui-button variant="outline" size="sm" type="button" (click)="openSettings()">
-          Åbn indstillinger
+          {{ 'shared.barcodeScanner.openSettings' | translate }}
         </button>
       }
       @if (isLookupError()) {
         <button app-ui-button variant="outline" size="sm" type="button" (click)="retryLookup()">
-          Prøv igen
+          {{ 'shared.barcodeScanner.retry' | translate }}
         </button>
       }
     </div>
@@ -76,7 +76,7 @@
       <form class="barcode-scanner__code" [formGroup]="barcodeForm" (ngSubmit)="submitBarcode()">
         @if (showScanButton()) {
           <button app-ui-button size="lg" type="button" block (click)="startScan()">
-            Scan stregkode
+            {{ 'shared.barcodeScanner.scanButton' | translate }}
           </button>
         }
         <span class="barcode-scanner__label barcode-scanner__label--overlay">
@@ -89,12 +89,14 @@
             inputMode="numeric"
             size="md"
             translucent
-            placeholder="f.eks. 5701234567890"
-            ariaLabel="Stregkode"
+            [placeholder]="'shared.barcodeScanner.barcodePlaceholder' | translate"
+            [ariaLabel]="'shared.barcodeScanner.barcodeAriaLabel' | translate"
             [maxLength]="barcodeMaxLength"
             [invalid]="hasBarcodeError()"
           />
-          <button app-ui-button variant="surface" size="md" type="submit">Slå op</button>
+          <button app-ui-button variant="surface" size="md" type="submit">
+            {{ 'shared.barcodeScanner.lookUp' | translate }}
+          </button>
         </div>
         <app-ui-form-error [message]="barcodeError()" tone="negative" />
       </form>
@@ -102,10 +104,10 @@
 
     <div class="barcode-scanner__actions">
       <button app-ui-button variant="subtle" size="sm" type="button" (click)="requestManual()">
-        Indtast manuelt i stedet
+        {{ 'shared.barcodeScanner.enterManually' | translate }}
       </button>
       <button app-ui-button variant="ghost" size="sm" type="button" (click)="requestNoBarcode()">
-        Varen har ingen stregkode
+        {{ 'shared.barcodeScanner.noBarcode' | translate }}
       </button>
     </div>
   </div>
@@ -114,7 +116,9 @@
     @if (product()) {
       <div class="barcode-scanner__result">
         <p class="barcode-scanner__subtitle">{{ resultSubtitle() }}</p>
-        <p class="barcode-scanner__caption">Hvor meget tog du?</p>
+        <p class="barcode-scanner__caption">
+          {{ 'shared.barcodeScanner.amountQuestion' | translate }}
+        </p>
         <div class="barcode-scanner__portions">
           @for (portion of portions(); track portion.grams) {
             <button
@@ -168,7 +172,7 @@
         class="barcode-scanner__action"
         (click)="rescan()"
       >
-        Scan igen
+        {{ 'shared.barcodeScanner.rescan' | translate }}
       </button>
       <button
         app-ui-button
@@ -177,7 +181,7 @@
         [disabled]="!canAddScanned()"
         (click)="addScanned()"
       >
-        Tilføj
+        {{ 'shared.barcodeScanner.add' | translate }}
       </button>
     </div>
   </app-ui-sheet>
@@ -189,56 +193,70 @@
     scrollable
     (closed)="rescan()"
   >
-    <span class="barcode-scanner__badge" sheetTitle>Ukendt vare</span>
+    <span class="barcode-scanner__badge" sheetTitle>{{
+      'shared.barcodeScanner.unknownBadge' | translate
+    }}</span>
     <form class="barcode-scanner__unknown" [formGroup]="form">
       <h3 class="barcode-scanner__heading">
-        Den kender vi <span class="barcode-scanner__heading-accent">ikke</span>
+        {{ 'shared.barcodeScanner.unknownTitleStart' | translate }}
+        <span class="barcode-scanner__heading-accent">{{
+          'shared.barcodeScanner.unknownTitleAccent' | translate
+        }}</span>
       </h3>
       <p class="barcode-scanner__lead">
-        Stregkoden findes ikke i databasen. Tag tallene fra pakken, så gemmer vi varen under dine
-        egne – næste gang er den klar med ét tryk.
+        {{ 'shared.barcodeScanner.unknownLead' | translate }}
       </p>
       @if (barcode()) {
-        <p class="barcode-scanner__code-value">Stregkode {{ barcode() }}</p>
+        <p class="barcode-scanner__code-value">
+          {{ 'shared.barcodeScanner.barcodeValue' | translate: { barcode: barcode() } }}
+        </p>
       }
       <div class="barcode-scanner__fields">
         <div class="barcode-scanner__field">
-          <span class="barcode-scanner__label">Navn</span>
+          <span class="barcode-scanner__label">{{
+            'shared.barcodeScanner.nameLabel' | translate
+          }}</span>
           <app-ui-text-input
             formControlName="name"
-            placeholder="f.eks. Proteinbar Karamel"
-            ariaLabel="Navn"
+            [placeholder]="'shared.barcodeScanner.namePlaceholder' | translate"
+            [ariaLabel]="'shared.barcodeScanner.nameLabel' | translate"
             [invalid]="nameTaken()"
           />
           <app-ui-form-error [message]="nameError()" tone="negative" />
         </div>
         <div class="barcode-scanner__field">
-          <span class="barcode-scanner__label">Portion</span>
+          <span class="barcode-scanner__label">{{
+            'shared.barcodeScanner.portionLabel' | translate
+          }}</span>
           <app-ui-text-input
             formControlName="quantity"
-            placeholder="f.eks. 55 g"
-            ariaLabel="Portion"
+            [placeholder]="'shared.barcodeScanner.portionPlaceholder' | translate"
+            [ariaLabel]="'shared.barcodeScanner.portionLabel' | translate"
           />
         </div>
         <div class="barcode-scanner__field-row">
           <div class="barcode-scanner__field">
-            <span class="barcode-scanner__label">Kalorier</span>
+            <span class="barcode-scanner__label">{{
+              'shared.barcodeScanner.kcalLabel' | translate
+            }}</span>
             <app-ui-text-input
               formControlName="kcal"
               type="number"
               inputMode="numeric"
               placeholder="210"
-              ariaLabel="Kalorier"
+              [ariaLabel]="'shared.barcodeScanner.kcalLabel' | translate"
             />
           </div>
           <div class="barcode-scanner__field">
-            <span class="barcode-scanner__label">Protein (g)</span>
+            <span class="barcode-scanner__label">{{
+              'shared.barcodeScanner.proteinLabel' | translate
+            }}</span>
             <app-ui-text-input
               formControlName="protein"
               type="number"
               inputMode="numeric"
               placeholder="20"
-              ariaLabel="Protein (g)"
+              [ariaLabel]="'shared.barcodeScanner.proteinLabel' | translate"
             />
           </div>
         </div>
@@ -252,7 +270,7 @@
         class="barcode-scanner__action"
         (click)="rescan()"
       >
-        Scan igen
+        {{ 'shared.barcodeScanner.rescan' | translate }}
       </button>
       <button
         app-ui-button
@@ -261,7 +279,7 @@
         [disabled]="!canSaveUnknown()"
         (click)="saveUnknown()"
       >
-        Gem og tilføj
+        {{ 'shared.barcodeScanner.saveAndAdd' | translate }}
       </button>
     </div>
   </app-ui-sheet>

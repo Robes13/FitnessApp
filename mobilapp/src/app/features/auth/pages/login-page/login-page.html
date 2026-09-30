@@ -9,37 +9,44 @@
   <div class="login-page__spacer"></div>
 
   <h1 class="login-page__heading">
-    Spis klogt.<br /><span class="login-page__heading-accent">Træn stærkt.</span>
+    {{ 'auth.loginPage.headingStart' | translate }}<br /><span class="login-page__heading-accent">{{
+      'auth.loginPage.headingAccent' | translate
+    }}</span>
   </h1>
 
   <form class="login-page__form" [formGroup]="form" (ngSubmit)="submit()">
     <app-ui-text-input
       formControlName="username"
-      placeholder="Brugernavn"
-      ariaLabel="Brugernavn"
+      [placeholder]="'auth.loginPage.username' | translate"
+      [ariaLabel]="'auth.loginPage.username' | translate"
       autocomplete="username"
       translucent
     />
     <app-ui-text-input
       formControlName="password"
       type="password"
-      placeholder="Adgangskode"
-      ariaLabel="Adgangskode"
+      [placeholder]="'auth.loginPage.password' | translate"
+      [ariaLabel]="'auth.loginPage.password' | translate"
       autocomplete="current-password"
       translucent
     />
-    @if (errorMessage(); as message) {
-      <app-ui-form-error [message]="message" tone="negative" />
+    @if (errorKey(); as key) {
+      <app-ui-form-error [message]="key | translate" tone="negative" />
     }
     <button class="login-page__submit" app-ui-button type="submit" block [loading]="loading()">
-      Log ind
+      {{ 'auth.loginPage.submit' | translate }}
     </button>
   </form>
 
   <div class="login-page__footer">
-    <span> Ny her? <a class="login-page__link" [routerLink]="signupPath">Opret konto</a> </span>
+    <span>
+      {{ 'auth.loginPage.newHere' | translate }}
+      <a class="login-page__link" [routerLink]="signupPath">{{
+        'auth.loginPage.createAccount' | translate
+      }}</a>
+    </span>
     <a class="login-page__link login-page__link--muted" [routerLink]="forgotPasswordPath">
-      Glemt adgangskode?
+      {{ 'auth.loginPage.forgotPassword' | translate }}
     </a>
   </div>
 </div>

@@ -16,6 +16,7 @@ phone-first.
 | [`ARCHITECTURE.md`](ARCHITECTURE.md)           | Arkitektur- og kodregler (bindende)     |
 | [`CLAUDE.md`](CLAUDE.md)                       | Instruktion til AI-assistenter i repoet |
 | [`src/styles/README.md`](src/styles/README.md) | Design tokens og global styling         |
+| [`src/i18n/README.md`](src/i18n/README.md)     | Oversættelse (ngx-translate) og sprog   |
 
 ---
 
@@ -29,6 +30,7 @@ phone-first.
 | **SPM** til iOS-afhængigheder              | Ingen CocoaPods-installation nødvendig              |
 | SCSS med CSS-variabler                     | Design tokens kan skifte tema i runtime             |
 | Intet UI-framework                         | Kravet er systemets eget design — ingen Bootstrap   |
+| ngx-translate (`da.json` / `en.json`)      | Sprogskift live i appen, uden reload                |
 
 ---
 
@@ -249,6 +251,7 @@ mobilapp/
     ├── main.ts
     ├── styles.scss         Kun globale styles: tokens + reset + keyframes
     ├── styles/             Design tokens, reset, mixins, animationer
+    ├── i18n/               da.json + en.json – alle tekster (ngx-translate)
     └── app/
         ├── app.ts          Rodkomponenten (kun en <router-outlet>)
         ├── app.routes.ts   Rod-routing; alle features lazy loades

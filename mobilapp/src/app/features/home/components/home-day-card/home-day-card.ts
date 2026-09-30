@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { UiCard } from '../../../../shared/components/ui-card/ui-card';
 import { UiProgressBar } from '../../../../shared/components/ui-progress-bar/ui-progress-bar';
 import { DaySummary } from '../../services/home-summary';
@@ -9,7 +10,7 @@ import { DaySummary } from '../../services/home-summary';
  */
 @Component({
   selector: 'app-home-day-card',
-  imports: [UiCard, UiProgressBar],
+  imports: [UiCard, UiProgressBar, TranslatePipe],
   templateUrl: './home-day-card.html',
   styleUrl: './home-day-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

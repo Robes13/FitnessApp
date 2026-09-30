@@ -85,7 +85,8 @@ verdict-boksen.
 | Protein ≥ 15 g                | grøn (`positive-tint`)       | _God proteinkilde – P g protein. Du har N kcal tilbage bagefter._                           |
 | Ellers                        | neutral (`surface-2`)        | _Passer fint ind. N kcal tilbage bagefter._                                                 |
 
-`buildScanVerdict` er eksporteret og testet for sig.
+`buildScanVerdict(t, kcalRemaining, item)` er eksporteret og testet for sig; teksterne ligger
+under `shared.barcodeScanner.verdict*` i oversættelsesfilerne.
 
 ## "Ukendt vare"-arket
 

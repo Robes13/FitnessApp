@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LoggedFood } from '../../../../core/models/food';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { MealGroupView } from '../../services/food-view';
 
@@ -12,7 +14,7 @@ import { MealGroupView } from '../../services/food-view';
  */
 @Component({
   selector: 'app-food-meal-group',
-  imports: [UiIcon],
+  imports: [TranslatePipe, UiIcon],
   templateUrl: './food-meal-group.html',
   styleUrl: './food-meal-group.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,4 +28,14 @@ export class FoodMealGroup {
   readonly removed = output<LoggedFood>();
   /** "+ Add to <meal>". */
   readonly add = output<void>();
+
+  private readonly t = injectTranslate();
+
+  protected editLabel(entry: LoggedFood): string {
+    return this.t('food.mealGroup.editItem', { foodName: entry.name });
+  }
+
+  protected removeLabel(entry: LoggedFood): string {
+    return this.t('food.mealGroup.removeItem', { foodName: entry.name });
+  }
 }

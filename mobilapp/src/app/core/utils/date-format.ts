@@ -1,48 +1,80 @@
+import { signal } from '@angular/core';
+import { DEFAULT_LANGUAGE, INTL_LOCALE } from '../constants/language';
 import { DAYS_PER_WEEK, MS_PER_DAY } from '../constants/time';
+import { Language } from '../models/language';
+import { Translate } from '../services/language/translate';
 
-export const DAY_NAMES_SHORT = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'] as const;
-export const DAY_NAMES_LONG = [
-  'Mandag',
-  'Tirsdag',
-  'Onsdag',
-  'Torsdag',
-  'Fredag',
-  'Lørdag',
-  'Søndag',
+/** Translation keys of the weekdays, Monday first: `'Man'`. */
+export const DAY_NAME_SHORT_KEYS = [
+  'core.date.dayShort.mon',
+  'core.date.dayShort.tue',
+  'core.date.dayShort.wed',
+  'core.date.dayShort.thu',
+  'core.date.dayShort.fri',
+  'core.date.dayShort.sat',
+  'core.date.dayShort.sun',
 ] as const;
-export const DAY_LETTERS = ['M', 'Ti', 'O', 'To', 'F', 'L', 'S'] as const;
-export const MONTH_NAMES_LONG = [
-  'januar',
-  'februar',
-  'marts',
-  'april',
-  'maj',
-  'juni',
-  'juli',
-  'august',
-  'september',
-  'oktober',
-  'november',
-  'december',
+/** Translation keys of the weekdays, Monday first: `'Mandag'`. */
+export const DAY_NAME_LONG_KEYS = [
+  'core.date.dayLong.mon',
+  'core.date.dayLong.tue',
+  'core.date.dayLong.wed',
+  'core.date.dayLong.thu',
+  'core.date.dayLong.fri',
+  'core.date.dayLong.sat',
+  'core.date.dayLong.sun',
 ] as const;
-export const MONTH_NAMES_SHORT = [
-  'jan',
-  'feb',
-  'mar',
-  'apr',
-  'maj',
-  'jun',
-  'jul',
-  'aug',
-  'sep',
-  'okt',
-  'nov',
-  'dec',
+/** Translation keys of the weekdays' letters, Monday first: `'M'`, `'Ti'`. */
+export const DAY_LETTER_KEYS = [
+  'core.date.dayLetter.mon',
+  'core.date.dayLetter.tue',
+  'core.date.dayLetter.wed',
+  'core.date.dayLetter.thu',
+  'core.date.dayLetter.fri',
+  'core.date.dayLetter.sat',
+  'core.date.dayLetter.sun',
+] as const;
+/** Translation keys of the months, January first: `'januar'`. */
+export const MONTH_NAME_LONG_KEYS = [
+  'core.date.monthLong.jan',
+  'core.date.monthLong.feb',
+  'core.date.monthLong.mar',
+  'core.date.monthLong.apr',
+  'core.date.monthLong.may',
+  'core.date.monthLong.jun',
+  'core.date.monthLong.jul',
+  'core.date.monthLong.aug',
+  'core.date.monthLong.sep',
+  'core.date.monthLong.oct',
+  'core.date.monthLong.nov',
+  'core.date.monthLong.dec',
+] as const;
+/** Translation keys of the months, January first: `'jan'`. */
+export const MONTH_NAME_SHORT_KEYS = [
+  'core.date.monthShort.jan',
+  'core.date.monthShort.feb',
+  'core.date.monthShort.mar',
+  'core.date.monthShort.apr',
+  'core.date.monthShort.may',
+  'core.date.monthShort.jun',
+  'core.date.monthShort.jul',
+  'core.date.monthShort.aug',
+  'core.date.monthShort.sep',
+  'core.date.monthShort.oct',
+  'core.date.monthShort.nov',
+  'core.date.monthShort.dec',
 ] as const;
 
 const SUNDAY_OFFSET = 6;
-/** All number and date formatting in the app is Danish (`LOCALE_ID` is `'da'`). */
-const LOCALE = 'da-DK';
+/**
+ * Numbers are formatted in the app's language (`'74,5'` in Danish, `'74.5'` in English). A signal,
+ * so a `computed()` that formats a number recomputes when `LanguageService` switches language.
+ */
+const numberLocale = signal(INTL_LOCALE[DEFAULT_LANGUAGE]);
+
+export function setNumberLocale(language: Language): void {
+  numberLocale.set(INTL_LOCALE[language]);
+}
 /** The design writes negative numbers with a typographic minus, not a hyphen. */
 const TYPOGRAPHIC_MINUS = '−';
 
@@ -87,30 +119,36 @@ export function fromIsoDate(isoDate: string): Date {
 }
 
 /** `'I dag'` / `'I går'` / `'3 dage siden'`. Future dates are treated as today. */
-export function formatRelativeDay(date: Date, today: Date): string {
+export function formatRelativeDay(t: Translate, date: Date, today: Date): string {
   const days = daysBetween(date, today);
   if (days <= 0) {
-    return 'I dag';
+    return t('core.date.today');
   }
   if (days === 1) {
-    return 'I går';
+    return t('core.date.yesterday');
   }
-  return `${days} dage siden`;
+  return t('core.date.daysAgo', { days });
 }
 
 /** `'21. sep'`. */
-export function formatDayMonth(date: Date): string {
-  return `${date.getDate()}. ${MONTH_NAMES_SHORT[date.getMonth()] ?? ''}`;
+export function formatDayMonth(t: Translate, date: Date): string {
+  const month = MONTH_NAME_SHORT_KEYS[date.getMonth()];
+  return t('core.date.dayMonth', { day: date.getDate(), month: month ? t(month) : '' });
 }
 
 /** `'Mandag 21. sep'`. */
-export function formatDayLabel(date: Date): string {
-  return `${DAY_NAMES_LONG[mondayIndex(date)] ?? ''} ${formatDayMonth(date)}`;
+export function formatDayLabel(t: Translate, date: Date): string {
+  const weekday = DAY_NAME_LONG_KEYS[mondayIndex(date)];
+  return t('core.date.dayLabel', {
+    weekday: weekday ? t(weekday) : '',
+    dayMonth: formatDayMonth(t, date),
+  });
 }
 
 /** `'Tir.'` – the weekday abbreviated with a period, as in the history. */
-export function formatWeekdayAbbreviated(date: Date): string {
-  return `${DAY_NAMES_SHORT[mondayIndex(date)] ?? ''}.`;
+export function formatWeekdayAbbreviated(t: Translate, date: Date): string {
+  const weekday = DAY_NAME_SHORT_KEYS[mondayIndex(date)];
+  return t('core.date.weekdayAbbreviated', { weekday: weekday ? t(weekday) : '' });
 }
 
 /** `'07:45'` – 24-hour time. */
@@ -122,7 +160,7 @@ export function formatTime(date: Date): string {
 
 /** Danish decimal number with a comma: `formatDecimal(74.5, 1)` → `'74,5'`. */
 export function formatDecimal(value: number, digits = 1): string {
-  return value.toLocaleString(LOCALE, {
+  return value.toLocaleString(numberLocale(), {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });
@@ -134,7 +172,7 @@ export function formatDecimal(value: number, digits = 1): string {
  * Home and Profile.
  */
 export function formatWeightKg(kg: number): string {
-  return kg.toLocaleString(LOCALE, { maximumFractionDigits: 1 });
+  return kg.toLocaleString(numberLocale(), { maximumFractionDigits: 1 });
 }
 
 /**
@@ -142,18 +180,18 @@ export function formatWeightKg(kg: number): string {
  * noise from summing never reaches the screen: `188.70000000000002` → `'188,7'`, `65` → `'65'`.
  */
 export function formatGrams(value: number): string {
-  return value.toLocaleString(LOCALE, { maximumFractionDigits: 1 });
+  return value.toLocaleString(numberLocale(), { maximumFractionDigits: 1 });
 }
 
 /** Danish integer with a thousands separator: `formatInteger(6000)` → `'6.000'`. */
 export function formatInteger(value: number): string {
-  return value.toLocaleString(LOCALE, { maximumFractionDigits: 0 });
+  return value.toLocaleString(numberLocale(), { maximumFractionDigits: 0 });
 }
 
 /** Signed delta: `'+0,6'`, `'−1,2'` (typographic minus) or `'0,0'`. */
 export function formatSignedDecimal(value: number, digits = 1): string {
   return value
-    .toLocaleString(LOCALE, {
+    .toLocaleString(numberLocale(), {
       signDisplay: 'exceptZero',
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,

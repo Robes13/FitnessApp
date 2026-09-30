@@ -1,7 +1,9 @@
 <div class="weight-page__scroll">
   <header class="weight-page__header">
     <h1 class="weight-page__title">
-      Registrér<br /><span class="weight-page__title-accent">vægt</span>
+      {{ 'weight.page.titleStart' | translate }}<br /><span class="weight-page__title-accent">{{
+        'weight.page.titleAccent' | translate
+      }}</span>
     </h1>
     <p class="weight-page__last-weighed">{{ view.lastWeighLabel() }}</p>
   </header>
@@ -14,21 +16,21 @@
           [class.weight-page__draft-value--wide]="view.draftIsWide()"
           >{{ view.draftText() }}</span
         >
-        <span class="weight-page__draft-unit">kg</span>
+        <span class="weight-page__draft-unit">{{ 'common.unit.kg' | translate }}</span>
       </p>
       <div class="weight-page__tiles">
         <div class="weight-page__tile">
-          <span class="weight-page__tile-label">Siden sidst</span>
+          <span class="weight-page__tile-label">{{ 'weight.page.sinceLast' | translate }}</span>
           <span class="weight-page__tile-value" [class]="deltaClass()">
             <span class="weight-page__tile-number">{{ view.deltaText() }}</span>
-            <span class="weight-page__tile-unit">kg</span>
+            <span class="weight-page__tile-unit">{{ 'common.unit.kg' | translate }}</span>
           </span>
         </div>
         <div class="weight-page__tile">
-          <span class="weight-page__tile-label">Til mål</span>
+          <span class="weight-page__tile-label">{{ 'weight.page.toGoal' | translate }}</span>
           <span class="weight-page__tile-value">
             <span class="weight-page__tile-number">{{ view.toGoalText() }}</span>
-            <span class="weight-page__tile-unit">kg</span>
+            <span class="weight-page__tile-unit">{{ 'common.unit.kg' | translate }}</span>
           </span>
         </div>
       </div>
@@ -65,7 +67,11 @@
     [deltaTone]="view.rangeDeltaTone()"
   />
 
-  <div class="weight-page__ranges" role="group" aria-label="Vælg periode">
+  <div
+    class="weight-page__ranges"
+    role="group"
+    [attr.aria-label]="'weight.page.rangesAriaLabel' | translate"
+  >
     @for (option of view.rangeOptions; track option.id) {
       <button
         app-ui-chip
@@ -73,7 +79,7 @@
         [selected]="view.range() === option.id"
         (click)="view.selectRange(option.id)"
       >
-        {{ option.label }}
+        {{ option.labelKey | translate }}
       </button>
     }
   </div>

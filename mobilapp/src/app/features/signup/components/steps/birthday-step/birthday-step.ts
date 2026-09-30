@@ -8,9 +8,10 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { MAX_AGE, MIN_AGE } from '../../../../../core/constants/nutrition';
 import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator/nutrition-calculator';
-import { MONTH_NAMES_LONG, startOfDay } from '../../../../../core/utils/date-format';
+import { MONTH_NAME_LONG_KEYS, startOfDay } from '../../../../../core/utils/date-format';
 import { NOW } from '../../../../../core/utils/now';
 import { bandToneForGender } from '../../../../../shared/components/figure';
 import { SignupStateService } from '../../../services/signup-state';
@@ -19,12 +20,13 @@ import {
   CALENDAR_DEFAULT_MONTH,
   CALENDAR_DEFAULT_YEAR,
   CALENDAR_MIN_YEAR,
-  CALENDAR_WEEKDAYS,
+  CALENDAR_WEEKDAY_KEYS,
   CalendarCell,
   buildCalendarCells,
   shiftCalendar,
 } from './calendar-grid';
 import { clamp } from '../../../../../core/utils/math';
+import { injectTranslate } from '../../../../../core/services/language/translate';
 
 const YEAR_LENGTH = 4;
 const ISO_YEAR_END = 4;
@@ -33,10 +35,10 @@ const ISO_MONTH_END = 7;
 const ISO_DAY_START = 8;
 
 /** The design's `ageHint`. */
-const HINT_NO_DATE = 'Vælg din fødselsdato ovenfor.';
-const HINT_TOO_YOUNG = 'Du skal være mindst 16 år for at bruge Nutrify.';
-const HINT_TOO_OLD = 'Tjek datoen igen.';
-const LABEL_NO_DATE = 'Ingen dato valgt endnu';
+const HINT_NO_DATE_KEY = 'signup.birthdayStep.hintNoDate';
+const HINT_TOO_YOUNG_KEY = 'signup.birthdayStep.hintTooYoung';
+const HINT_TOO_OLD_KEY = 'signup.birthdayStep.hintTooOld';
+const LABEL_NO_DATE_KEY = 'signup.birthdayStep.labelNoDate';
 const AGE_PLACEHOLDER = '–';
 
 /**
@@ -49,7 +51,7 @@ const AGE_PLACEHOLDER = '–';
  */
 @Component({
   selector: 'app-birthday-step',
-  imports: [BirthdayCake, ReactiveFormsModule],
+  imports: [BirthdayCake, ReactiveFormsModule, TranslatePipe],
   templateUrl: './birthday-step.html',
   styleUrl: './birthday-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,9 +60,10 @@ const AGE_PLACEHOLDER = '–';
 export class BirthdayStep {
   private readonly calculator = inject(NutritionCalculator);
   private readonly now = inject(NOW);
+  private readonly t = injectTranslate();
 
   protected readonly state = inject(SignupStateService);
-  protected readonly weekdays = CALENDAR_WEEKDAYS;
+  protected readonly weekdayKeys = CALENDAR_WEEKDAY_KEYS;
 
   /** The year while the user is typing – only becomes a display value at four digits. */
   private readonly yearDraft = signal<string | null>(null);
@@ -90,7 +93,7 @@ export class BirthdayStep {
     return iso ? Number(iso.slice(ISO_MONTH_START, ISO_MONTH_END)) - 1 : CALENDAR_DEFAULT_MONTH;
   });
 
-  protected readonly monthName = computed(() => MONTH_NAMES_LONG[this.month()]);
+  protected readonly monthName = computed(() => this.monthNameOf(this.month()));
   protected readonly yearText = computed(() => this.yearDraft() ?? String(this.year()));
 
   protected readonly cells = computed(() =>
@@ -106,24 +109,25 @@ export class BirthdayStep {
 
   protected readonly ageHint = computed(() => {
     if (!this.birthdayIso()) {
-      return HINT_NO_DATE;
+      return this.t(HINT_NO_DATE_KEY);
     }
     const age = this.age();
     if (age < MIN_AGE) {
-      return HINT_TOO_YOUNG;
+      return this.t(HINT_TOO_YOUNG_KEY);
     }
-    return age > MAX_AGE ? HINT_TOO_OLD : '';
+    return age > MAX_AGE ? this.t(HINT_TOO_OLD_KEY) : '';
   });
 
   /** The design's `birthdayLabel`: `Valgt: 16. maj 1998` or `Ingen dato valgt endnu`. */
   protected readonly birthdayLabel = computed(() => {
     const iso = this.birthdayIso();
     if (!iso) {
-      return LABEL_NO_DATE;
+      return this.t(LABEL_NO_DATE_KEY);
     }
     const day = Number(iso.slice(ISO_DAY_START));
-    const monthName = MONTH_NAMES_LONG[Number(iso.slice(ISO_MONTH_START, ISO_MONTH_END)) - 1];
-    return `Valgt: ${day}. ${monthName} ${iso.slice(0, ISO_YEAR_END)}`;
+    const monthName = this.monthNameOf(Number(iso.slice(ISO_MONTH_START, ISO_MONTH_END)) - 1);
+    const year = iso.slice(0, ISO_YEAR_END);
+    return this.t('signup.birthdayStep.selected', { day, month: monthName, year });
   });
 
   protected readonly hasBirthday = computed(() => this.birthdayIso().length > 0);
@@ -176,5 +180,11 @@ export class BirthdayStep {
     if (new Date(year, this.month(), 1) > today) {
       this.monthOverride.set(today.getMonth());
     }
+  }
+
+  /** 0 = January. */
+  private monthNameOf(month: number): string {
+    const key = MONTH_NAME_LONG_KEYS[month];
+    return key ? this.t(key) : '';
   }
 }

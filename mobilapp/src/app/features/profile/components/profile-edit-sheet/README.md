@@ -14,14 +14,13 @@
 Forælderen ejer, hvad der er åbent. Komponenten slår selv definitionen op i
 `ProfileEditService`, så profilsiden kun skal kende rækkens id.
 
-## De fire varianter
+## De tre varianter
 
-| Variant    | Felt                                | Gemmes                |
-| ---------- | ----------------------------------- | --------------------- |
-| `options`  | Liste af `app-ui-option-card`       | Straks ved valg       |
-| `number`   | −/+ omkring et talfelt med enhed    | Med "Gem"             |
-| `text`     | E-mail i `app-ui-text-input`        | Med "Gem"             |
-| `password` | To kodefelter, mindst 8 tegn og ens | Med "Gem" (asynkront) |
+| Variant   | Felt                             | Gemmes          |
+| --------- | -------------------------------- | --------------- |
+| `options` | Liste af `app-ui-option-card`    | Straks ved valg |
+| `number`  | −/+ omkring et talfelt med enhed | Med "Gem"       |
+| `text`    | E-mail i `app-ui-text-input`     | Med "Gem"       |
 
 Alle felter er typede reactive forms. Grænser (`min`/`max`) kommer fra definitionen og sættes
 som validators, når arket åbner, så "Gem" er slået fra, indtil tallet er gyldigt – præcis som
@@ -36,12 +35,6 @@ Returnerer `applyOption('goal', …)` `needs-goal-weight`, lukker arket ikke. De
 `pendingGoal` (et `linkedSignal`, der nulstilles, når en ny række åbnes) og viser
 målvægtsfeltet for det nye mål. "Gem" skriver mål og målvægt samlet; lukkes arket, er
 intet ændret.
-
-## Adgangskoden er asynkron
-
-Adgangskoden findes ikke i `UserProfile`. "Gem" kalder derfor `AuthApi.resetPassword()` via
-`ProfileEditService`: knappen viser spinner imens, og en fejl fra backenden vises i
-`app-ui-form-error` i stedet for at lukke arket.
 
 ## Kendte afvigelser fra designet
 

@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { PACES } from '../../../../../core/constants/nutrition';
 import { PaceId } from '../../../../../core/models/profile';
+import { injectTranslate } from '../../../../../core/services/language/translate';
 import { UiOptionCard } from '../../../../../shared/components/ui-option-card/ui-option-card';
 import { SignupStateService } from '../../../services/signup-state';
 
-const INTRO_GAIN = 'Hvor hurtigt vil du tage på?';
-const INTRO_LOSE = 'Hvor hurtigt vil du tabe dig?';
-const SUMMARY_EMPTY = 'Vælg et tempo for at se dagligt kalorietal.';
+const INTRO_GAIN_KEY = 'signup.paceStep.introGain';
+const INTRO_LOSE_KEY = 'signup.paceStep.introLose';
+const SUMMARY_EMPTY_KEY = 'signup.paceStep.summaryEmpty';
 
 /**
  * Step `pace` (the design's `s5`): the tempo of the weight change. The step is skipped when
@@ -15,7 +17,7 @@ const SUMMARY_EMPTY = 'Vælg et tempo for at se dagligt kalorietal.';
  */
 @Component({
   selector: 'app-pace-step',
-  imports: [UiOptionCard],
+  imports: [TranslatePipe, UiOptionCard],
   templateUrl: './pace-step.html',
   styleUrl: './pace-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,19 +25,26 @@ const SUMMARY_EMPTY = 'Vælg et tempo for at se dagligt kalorietal.';
 })
 export class PaceStep {
   protected readonly state = inject(SignupStateService);
+  private readonly t = injectTranslate();
   protected readonly options = PACES;
 
   protected readonly intro = computed(() =>
-    this.state.goal() === 'tage' ? INTRO_GAIN : INTRO_LOSE,
+    this.t(this.state.goal() === 'tage' ? INTRO_GAIN_KEY : INTRO_LOSE_KEY),
   );
 
   protected readonly summary = computed(() => {
     const pace = PACES.find((candidate) => candidate.id === this.state.pace());
     if (!pace) {
-      return SUMMARY_EMPTY;
+      return this.t(SUMMARY_EMPTY_KEY);
     }
-    const direction = this.state.goal() === 'tage' ? 'ekstra' : 'mindre';
-    return `${pace.label} · ${pace.rateLabel} svarer til ca. ${pace.kcalPerDay} kcal ${direction} om dagen.`;
+    const params = {
+      pace: this.t(pace.labelKey),
+      rate: this.t(pace.rateLabelKey),
+      kcal: pace.kcalPerDay,
+    };
+    return this.state.goal() === 'tage'
+      ? this.t('signup.paceStep.summaryGain', params)
+      : this.t('signup.paceStep.summaryLose', params);
   });
 
   protected select(id: PaceId): void {

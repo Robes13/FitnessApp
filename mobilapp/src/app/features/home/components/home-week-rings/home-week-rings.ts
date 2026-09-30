@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  booleanAttribute,
+  computed,
+  input,
+  output,
+} from '@angular/core';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { WeekRing } from '../../services/home-summary';
 
 /**
@@ -11,9 +19,13 @@ import { WeekRing } from '../../services/home-summary';
   templateUrl: './home-week-rings.html',
   styleUrl: './home-week-rings.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'home-week-rings', role: 'group', 'aria-label': 'Ugens dage' },
+  host: { class: 'home-week-rings', role: 'group', '[attr.aria-label]': 'ariaLabel()' },
 })
 export class HomeWeekRings {
+  private readonly t = injectTranslate();
+  // Bound rather than static, so the label follows the active language.
+  protected readonly ariaLabel = computed(() => this.t('home.weekRings.ariaLabel'));
+
   readonly rings = input.required<readonly WeekRing[]>();
   /** The daily goal was just hit: today's ring closes with a pop and halo. */
   readonly celebrating = input(false, { transform: booleanAttribute });

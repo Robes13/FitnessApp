@@ -8,8 +8,8 @@
           size="md"
           inputMode="search"
           autocomplete="off"
-          placeholder="Søg mad, f.eks. havregryn"
-          ariaLabel="Søg mad, f.eks. havregryn"
+          [placeholder]="'shared.foodPicker.searchPlaceholder' | translate"
+          [ariaLabel]="'shared.foodPicker.searchPlaceholder' | translate"
         />
         @if (showScan()) {
           <button
@@ -18,7 +18,7 @@
             tone="accent"
             type="button"
             class="food-picker__scan"
-            aria-label="Scan stregkode"
+            [attr.aria-label]="'shared.foodPicker.scanBarcode' | translate"
             (click)="requestScan()"
           >
             <app-ui-icon name="scan" size="xl" [strokeWidth]="2.2" />
@@ -38,15 +38,26 @@
                 <span class="food-picker__result-name">
                   {{ item.name }}
                   @if (item.isCustom) {
-                    <span class="food-picker__own">Egen vare</span>
+                    <span class="food-picker__own">{{
+                      'shared.foodPicker.ownFood' | translate
+                    }}</span>
                   }
                 </span>
                 <span class="food-picker__result-meta">
-                  {{ item.quantity }} · P {{ item.protein }} · K {{ item.carbs }} · F {{ item.fat }}
+                  {{
+                    'shared.foodPicker.resultMeta'
+                      | translate
+                        : {
+                            quantity: item.quantity,
+                            protein: item.protein,
+                            carbs: item.carbs,
+                            fat: item.fat,
+                          }
+                  }}
                 </span>
               </span>
               <span class="food-picker__result-kcal">
-                {{ item.kcal }} kcal
+                {{ 'shared.foodPicker.kcalAmount' | translate: { kcal: item.kcal } }}
                 <span class="food-picker__result-add"><app-ui-icon name="plus" size="sm" /></span>
               </span>
             </button>
@@ -56,7 +67,9 @@
           <span class="food-picker__create-icon"><app-ui-icon name="plus" size="md" /></span>
           <span class="food-picker__create-text">
             <span class="food-picker__create-title">{{ createLabel() }}</span>
-            <span class="food-picker__create-sub">Ingen stregkode nødvendig</span>
+            <span class="food-picker__create-sub">{{
+              'shared.foodPicker.noBarcodeNeeded' | translate
+            }}</span>
           </span>
         </button>
       </div>
@@ -74,24 +87,26 @@
           size="2xs"
           type="button"
           class="food-picker__back"
-          aria-label="Tilbage"
+          [attr.aria-label]="'common.back' | translate"
           (click)="closeNewFood()"
         >
           <app-ui-icon name="chevron-left" size="sm" [strokeWidth]="2.4" />
         </button>
         <div class="food-picker__heading-text">
-          <div class="food-picker__title">Ny egen vare</div>
-          <div class="food-picker__subtitle">Gemmes under Mine varer</div>
+          <div class="food-picker__title">{{ 'shared.foodPicker.newFoodTitle' | translate }}</div>
+          <div class="food-picker__subtitle">
+            {{ 'shared.foodPicker.newFoodSubtitle' | translate }}
+          </div>
         </div>
       </div>
 
       <div class="food-picker__fields">
         <label class="food-picker__field">
-          <span class="food-picker__label">Navn</span>
+          <span class="food-picker__label">{{ 'shared.foodPicker.nameLabel' | translate }}</span>
           <app-ui-text-input
             formControlName="name"
             autocomplete="off"
-            placeholder="f.eks. Mormors frikadeller"
+            [placeholder]="'shared.foodPicker.namePlaceholder' | translate"
             [invalid]="nameInvalid()"
           />
           @if (nameError()) {
@@ -100,7 +115,7 @@
         </label>
 
         <div class="food-picker__field">
-          <span class="food-picker__label">Portion</span>
+          <span class="food-picker__label">{{ 'shared.foodPicker.portionLabel' | translate }}</span>
           <div class="food-picker__portion-row">
             <app-ui-text-input
               class="food-picker__portion-amount"
@@ -108,7 +123,7 @@
               type="number"
               inputMode="numeric"
               placeholder="1"
-              ariaLabel="Mængde"
+              [ariaLabel]="'shared.foodPicker.amount' | translate"
             />
             <div class="food-picker__units">
               @for (unit of units; track unit.id) {
@@ -118,7 +133,7 @@
                   [selected]="unit.id === selectedUnit()"
                   (click)="selectUnit(unit.id)"
                 >
-                  {{ unit.label }}
+                  {{ unit.labelKey | translate }}
                 </button>
               }
             </div>
@@ -127,7 +142,7 @@
 
         <div class="food-picker__grid">
           <label class="food-picker__field">
-            <span class="food-picker__label">Kalorier</span>
+            <span class="food-picker__label">{{ 'shared.foodPicker.kcalLabel' | translate }}</span>
             <app-ui-text-input
               formControlName="kcal"
               type="number"
@@ -136,7 +151,9 @@
             />
           </label>
           <label class="food-picker__field">
-            <span class="food-picker__label">Protein (g)</span>
+            <span class="food-picker__label">{{
+              'shared.foodPicker.proteinLabel' | translate
+            }}</span>
             <app-ui-text-input
               formControlName="protein"
               type="number"
@@ -159,7 +176,9 @@
         @if (showMore()) {
           <div class="food-picker__grid">
             <label class="food-picker__field">
-              <span class="food-picker__label">Kulhydrat (g)</span>
+              <span class="food-picker__label">{{
+                'shared.foodPicker.carbsLabel' | translate
+              }}</span>
               <app-ui-text-input
                 formControlName="carbs"
                 type="number"
@@ -168,7 +187,7 @@
               />
             </label>
             <label class="food-picker__field">
-              <span class="food-picker__label">Fedt (g)</span>
+              <span class="food-picker__label">{{ 'shared.foodPicker.fatLabel' | translate }}</span>
               <app-ui-text-input
                 formControlName="fat"
                 type="number"
@@ -194,7 +213,7 @@
           [disabled]="!canSaveNewFood()"
           (click)="saveNewFood()"
         >
-          Gem uden at logge
+          {{ 'shared.foodPicker.saveWithoutLogging' | translate }}
         </button>
       </div>
     </form>
@@ -208,7 +227,7 @@
           size="2xs"
           type="button"
           class="food-picker__back"
-          aria-label="Tilbage"
+          [attr.aria-label]="'common.back' | translate"
           (click)="backFromPortion()"
         >
           <app-ui-icon name="chevron-left" size="sm" [strokeWidth]="2.4" />
@@ -216,7 +235,7 @@
         <div class="food-picker__heading-text">
           <div class="food-picker__title food-picker__title--truncate">{{ portionName() }}</div>
           <div class="food-picker__subtitle food-picker__subtitle--secondary">
-            Standard: {{ baseLabel() }}
+            {{ 'shared.foodPicker.standardPortion' | translate: { portion: baseLabel() } }}
           </div>
         </div>
       </div>
@@ -228,7 +247,7 @@
           tone="outline"
           type="button"
           class="food-picker__stepper"
-          aria-label="Mindre"
+          [attr.aria-label]="'shared.foodPicker.decrease' | translate"
           (click)="decrease()"
         >
           <app-ui-icon name="minus" size="lg" [strokeWidth]="3" />
@@ -247,7 +266,7 @@
             class="food-picker__amount-field"
             type="number"
             inputmode="numeric"
-            aria-label="Mængde"
+            [attr.aria-label]="'shared.foodPicker.amount' | translate"
             [value]="amountValue()"
             (input)="onAmountInput(amountField.value)"
           />
@@ -259,13 +278,13 @@
           tone="outline"
           type="button"
           class="food-picker__stepper"
-          aria-label="Mere"
+          [attr.aria-label]="'shared.foodPicker.increase' | translate"
           (click)="increase()"
         >
           <app-ui-icon name="plus" size="lg" [strokeWidth]="3" />
         </button>
       </div>
-      <p class="food-picker__hint">Hold på tallet og træk til siden for at justere.</p>
+      <p class="food-picker__hint">{{ 'shared.foodPicker.dragHint' | translate }}</p>
 
       <div class="food-picker__chips">
         @for (value of chipValues(); track value) {
@@ -300,19 +319,25 @@
           <div class="food-picker__label">{{ macroBaseLabel() }}</div>
           <div class="food-picker__grid">
             <label class="food-picker__field">
-              <span class="food-picker__label">Kalorier</span>
+              <span class="food-picker__label">{{
+                'shared.foodPicker.kcalLabel' | translate
+              }}</span>
               <app-ui-text-input formControlName="kcal" type="number" inputMode="numeric" />
             </label>
             <label class="food-picker__field">
-              <span class="food-picker__label">Protein (g)</span>
+              <span class="food-picker__label">{{
+                'shared.foodPicker.proteinLabel' | translate
+              }}</span>
               <app-ui-text-input formControlName="protein" type="number" inputMode="numeric" />
             </label>
             <label class="food-picker__field">
-              <span class="food-picker__label">Kulhydrat (g)</span>
+              <span class="food-picker__label">{{
+                'shared.foodPicker.carbsLabel' | translate
+              }}</span>
               <app-ui-text-input formControlName="carbs" type="number" inputMode="numeric" />
             </label>
             <label class="food-picker__field">
-              <span class="food-picker__label">Fedt (g)</span>
+              <span class="food-picker__label">{{ 'shared.foodPicker.fatLabel' | translate }}</span>
               <app-ui-text-input formControlName="fat" type="number" inputMode="numeric" />
             </label>
           </div>

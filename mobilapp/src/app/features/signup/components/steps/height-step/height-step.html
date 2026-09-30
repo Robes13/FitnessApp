@@ -1,17 +1,21 @@
-<h1 class="height-step__title">Hvor <span class="height-step__title-accent">høj</span> er du?</h1>
+<h1 class="height-step__title">
+  {{ 'signup.heightStep.titleStart' | translate }}
+  <span class="height-step__title-accent">{{ 'signup.heightStep.titleAccent' | translate }}</span>
+  {{ 'signup.heightStep.titleEnd' | translate }}
+</h1>
 <p class="height-step__subtitle">{{ subtitle() }}</p>
 
 <div class="height-step__stage">
   <div class="height-step__readout">
     <p class="height-step__value">
       <span class="height-step__number">{{ state.heightCm() }}</span>
-      <span class="height-step__unit">cm</span>
+      <span class="height-step__unit">{{ 'common.unit.cm' | translate }}</span>
     </p>
     <div class="height-step__steppers">
       <button
         type="button"
         class="height-step__stepper"
-        aria-label="En centimeter mindre"
+        [attr.aria-label]="'signup.heightStep.decrease' | translate"
         (click)="adjust(-1)"
       >
         −
@@ -19,19 +23,19 @@
       <button
         type="button"
         class="height-step__stepper"
-        aria-label="En centimeter mere"
+        [attr.aria-label]="'signup.heightStep.increase' | translate"
         (click)="adjust(1)"
       >
         +
       </button>
     </div>
     <div class="height-step__bmi">
-      <span class="height-step__bmi-caption">Højde og vægt giver</span>
+      <span class="height-step__bmi-caption">{{ 'signup.heightStep.bmiCaption' | translate }}</span>
       <span class="height-step__bmi-value">
         <span class="height-step__bmi-number">{{ bmiText() }}</span>
-        <span class="height-step__bmi-unit">i BMI</span>
+        <span class="height-step__bmi-unit">{{ 'signup.heightStep.bmiUnit' | translate }}</span>
       </span>
-      <span class="height-step__bmi-note">Bruges til dit kaloriebehov</span>
+      <span class="height-step__bmi-note">{{ 'signup.heightStep.bmiNote' | translate }}</span>
     </div>
   </div>
 
@@ -40,7 +44,7 @@
     [weightKg]="state.weightKg()"
     [heightCm]="state.heightCm()"
     [bandTone]="bandTone()"
-    [ariaLabel]="figureLabel"
+    [ariaLabel]="'signup.heightStep.figureLabel' | translate"
     showDumbbell
     showCeiling
   />
@@ -52,5 +56,5 @@
   [max]="maxCm"
   [(value)]="state.heightCm"
   [glowStrength]="rulerGlowStrength"
-  ariaLabel="Højde i centimeter"
+  [ariaLabel]="'signup.heightStep.rulerLabel' | translate"
 />

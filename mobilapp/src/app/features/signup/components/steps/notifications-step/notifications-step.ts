@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { injectTranslate } from '../../../../../core/services/language/translate';
 import {
   FigureBody,
   animatedFigure,
@@ -11,14 +13,13 @@ import {
 import { SignupStateService } from '../../../services/signup-state';
 import { bandToneForGender } from '../../../../../shared/components/figure';
 
-const CAPTION_YES =
-  'Vi minder dig om vejning om morgenen, måltider i løbet af dagen og din ugestatus.';
-const CAPTION_NO = 'Ingen påmindelser. Du finder alt i appen, når du selv åbner den.';
-const CAPTION_UNANSWERED = 'Vælg om vi må sende dig påmindelser – du kan altid skifte i Profil.';
+const CAPTION_YES_KEY = 'signup.notificationsStep.captionYes';
+const CAPTION_NO_KEY = 'signup.notificationsStep.captionNo';
+const CAPTION_UNANSWERED_KEY = 'signup.notificationsStep.captionUnanswered';
 
-const CHOICES: readonly SegmentOption<boolean>[] = [
-  { value: true, label: 'Ja tak' },
-  { value: false, label: 'Nej tak' },
+const CHOICES: readonly { readonly value: boolean; readonly labelKey: string }[] = [
+  { value: true, labelKey: 'signup.notificationsStep.yes' },
+  { value: false, labelKey: 'signup.notificationsStep.no' },
 ];
 
 /** The design's fixed dimensions from the screen (HTML line 905–930), bound as CSS variables. */
@@ -52,7 +53,7 @@ interface BellGeometry {
  */
 @Component({
   selector: 'app-notifications-step',
-  imports: [FigureBody, UiSegmentedControl],
+  imports: [FigureBody, TranslatePipe, UiSegmentedControl],
   templateUrl: './notifications-step.html',
   styleUrl: './notifications-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,19 +65,23 @@ interface BellGeometry {
   },
 })
 export class NotificationsStep {
+  private readonly t = injectTranslate();
+
   protected readonly state = inject(SignupStateService);
   protected readonly layout = NOTIFICATIONS_LAYOUT;
-  protected readonly choices = CHOICES;
+  protected readonly choices = computed<readonly SegmentOption<boolean>[]>(() =>
+    CHOICES.map(({ value, labelKey }) => ({ value, label: this.t(labelKey) })),
+  );
   protected readonly bellX = BELL_X;
 
   protected readonly caption = computed(() => {
     switch (this.state.notifications()) {
       case true:
-        return CAPTION_YES;
+        return this.t(CAPTION_YES_KEY);
       case false:
-        return CAPTION_NO;
+        return this.t(CAPTION_NO_KEY);
       default:
-        return CAPTION_UNANSWERED;
+        return this.t(CAPTION_UNANSWERED_KEY);
     }
   });
 

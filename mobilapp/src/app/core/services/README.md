@@ -8,6 +8,9 @@ Hver service har sin egen mappe med implementering og tests. Tilhørende adapter
 | ---------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `storage/storage.ts`                           | `StorageService`                                       | Fejlsikker JSON-indpakning af `localStorage`. Kaster aldrig; advarer i konsollen. `clearAll()` sletter alle `STORAGE_KEY`-nøgler.                                                                                                                                                                                                                    |
 | `theme/theme.ts`                               | `ThemeService`                                         | Mørk/lys tilstand på `<html data-theme>`, gemmes. Genskabes ved konstruktion; `initialize()` kan kaldes fra en app initializer. Styler også systembarerne via `SYSTEM_BARS_PLATFORM`, så ikonerne følger appens tema og ikke telefonens. `holdDarkSystemBars()` holder ikonerne lyse for en skærm, der er mørk i begge temaer (fotoskærmene).        |
+| `language/language.ts`                         | `LanguageService`                                      | Appens sprog (ngx-translate). `initialize()` genskaber det gemte sprog i en app initializer; `set()` skifter live uden reload og gemmer valget. `<html lang>` og talformatet følger med.                                                                                                                                                             |
+| `language/translate.ts`                        | `injectTranslate()`                                    | Giver `t(key, params)` til TypeScript. Læser det aktive sprog, så `computed()` genberegnes ved sprogskift.                                                                                                                                                                                                                                           |
+| `language/translation-loader.ts`               | `JsonTranslationLoader`                                | Leverer `src/i18n/<sprog>.json` fra bundlen (dansk statisk, andre sprog som lazy chunk) – virker offline.                                                                                                                                                                                                                                            |
 | `nutrition-calculator/nutrition-calculator.ts` | `NutritionCalculator`                                  | Rene beregninger: alder, BMR, træningsforbrug, kaloriemål (inkl. adaptiv tilpasning), makroer, målvægt, adgangskodestyrke, portioner.                                                                                                                                                                                                                |
 | `adaptive-goal/adaptive-goal.ts`               | `AdaptiveGoalService`                                  | Det daglige kaloriemål, appen viser og måler imod: formelmålet tilpasset madlog og vægtudvikling de sidste 21 dage (`kcalTarget`, `suggestedKcalTarget`, `adjustment`, `adjustmentKcal`, `suggestedAdjustmentKcal`). "I dag" er `FoodLogService.today`, så målet følger med over midnat.                                                             |
 | `auth-api/auth-api.ts`                         | `AuthApi` + `AUTH_API_DELAY_MS`                        | Klienten til auth-backenden. Signup-kaldene er stubs med typede requests; resten fejler med en `ApiError`.                                                                                                                                                                                                                                           |
@@ -138,9 +141,10 @@ leveres kun, når brugeren er logget ind, profilens `notificationsEnabled` (hove
 - **Idempotent planlægning.** Hver type har et fast notifikations-id (1001–1005). En sync
   annullerer alle fem og planlægger de slåede til igen, så der aldrig opstår dubletter.
   Syncs køres én ad gangen i en kø.
-- **Hvornår der synkroniseres.** Ved app-start (servicen oprettes i en app initializer, og
-  dens `effect()` kører første gang), når indstillinger, hovedkontakt eller login-tilstand
-  ændrer sig, efter en tilladelses-forespørgsel og når appen kommer i forgrunden igen
+- **Hvornår der synkroniseres.** Ved app-start (servicen oprettes i sprogets app initializer,
+  _efter_ at det gemte sprog er indlæst, og dens `effect()` kører første gang), når
+  indstillinger, hovedkontakt, login-tilstand eller sprog ændrer sig (notifikationernes titel
+  og tekst slås op med `injectTranslate()`, når der planlægges), efter en tilladelses-forespørgsel og når appen kommer i forgrunden igen
   (`visibilitychange`), så en tilladelse givet i telefonens indstillinger slår igennem.
 - **Log ud og slet konto.** Log ud sætter `isLoggedIn` til `false`, og effekten annullerer
   alle påmindelser. Efter `deleteAccount()` er nøglen slettet, og genindlæsningen starter
@@ -148,7 +152,7 @@ leveres kun, når brugeren er logget ind, profilens `notificationsEnabled` (hove
   påmindelser.
 - **Tilladelse** bedes der kun om, når brugeren selv slår en påmindelse eller hovedkontakten
   til – aldrig ved app-start. Afviser brugeren, gemmes valgene, men intet planlægges.
-- **Fejl** fra pluginet logges med `console.error` og vises som dansk tekst i `error`. En
+- **Fejl** fra pluginet logges med `console.error` og vises som tekst på appens sprog i `error` (nøglerne er `REMINDER_ERROR_KEY`). En
   fejl ved tilladelses-forespørgslen bliver stående, indtil tilladelsen ændrer sig (eller en
   ny forespørgsel lykkes) – ellers ville den sync, samme kontakt sætter i kø, nulstille den,
   før brugeren nåede at se den. En planlægningsfejl nulstilles af næste vellykkede sync.

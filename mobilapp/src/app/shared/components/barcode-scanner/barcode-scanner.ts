@@ -17,16 +17,19 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Subscription, map } from 'rxjs';
 import {
   BARCODE_MAX_DIGITS,
   BARCODE_PATTERN,
-  BARCODE_SCANNER_TEXT,
+  BARCODE_SCANNER_TEXT_KEY,
+  BARCODE_SCANNER_TEXT_PARAMS,
   PRODUCT_BASE_GRAMS,
   PRODUCT_BASE_UNIT,
   SCAN_AMOUNT_MAX_GRAMS,
   SCAN_AMOUNT_MIN_GRAMS,
   SCAN_AMOUNT_PRESETS_GRAMS,
+  amountAriaLabelKey,
 } from '../../../core/constants/barcode';
 import {
   BarcodeScanOutcome,
@@ -36,6 +39,7 @@ import {
 import { FoodItem } from '../../../core/models/food';
 import { BarcodeFlowService, formatAmount } from '../../../core/services/barcode-flow/barcode-flow';
 import { KeyboardService } from '../../../core/services/keyboard/keyboard';
+import { Translate, injectTranslate } from '../../../core/services/language/translate';
 import { UiButton } from '../ui-button/ui-button';
 import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiIcon } from '../ui-icon/ui-icon';
@@ -125,14 +129,14 @@ const SCAN_FRAME = {
   lineInsetX: 16,
 } as const;
 
-/** The overlay's status line per state (`idle` depends on whether the camera is available). */
-const STATUS_MESSAGE: Readonly<Record<Exclude<BarcodeScannerStatus, 'idle'>, string>> = {
-  scanning: BARCODE_SCANNER_TEXT.HINT_SCANNING,
-  'looking-up': BARCODE_SCANNER_TEXT.HINT_LOOKING_UP,
-  'permission-denied': BARCODE_SCANNER_TEXT.PERMISSION_DENIED,
-  unreadable: BARCODE_SCANNER_TEXT.UNREADABLE,
-  'module-installing': BARCODE_SCANNER_TEXT.MODULE_INSTALLING,
-  'lookup-error': BARCODE_SCANNER_TEXT.LOOKUP_ERROR,
+/** Translation key of the overlay's status line per state (`idle` depends on whether the camera is available). */
+const STATUS_MESSAGE_KEY: Readonly<Record<Exclude<BarcodeScannerStatus, 'idle'>, string>> = {
+  scanning: BARCODE_SCANNER_TEXT_KEY.HINT_SCANNING,
+  'looking-up': BARCODE_SCANNER_TEXT_KEY.HINT_LOOKING_UP,
+  'permission-denied': BARCODE_SCANNER_TEXT_KEY.PERMISSION_DENIED,
+  unreadable: BARCODE_SCANNER_TEXT_KEY.UNREADABLE,
+  'module-installing': BARCODE_SCANNER_TEXT_KEY.MODULE_INSTALLING,
+  'lookup-error': BARCODE_SCANNER_TEXT_KEY.LOOKUP_ERROR,
 };
 const ERROR_STATUSES: readonly BarcodeScannerStatus[] = [
   'permission-denied',
@@ -158,21 +162,27 @@ const HIGH_PROTEIN_GRAMS = 15;
  * Design's `verdict` texts (verbatim). `kcalRemaining` is the daily goal minus what's been eaten.
  * The protein line uses the item's actual grams, so the text follows the selected portion.
  */
-export function buildScanVerdict(kcalRemaining: number, item: FoodItem): ScanVerdict {
+export function buildScanVerdict(t: Translate, kcalRemaining: number, item: FoodItem): ScanVerdict {
   const leftAfter = kcalRemaining - item.kcal;
   if (leftAfter < 0) {
     return {
       tone: 'negative',
-      text: `Den skubber dig ${Math.abs(leftAfter)} kcal over dagens mål. Overvej en halv, eller gem den til efter træning.`,
+      text: t('shared.barcodeScanner.verdictOver', { kcalOver: Math.abs(leftAfter) }),
     };
   }
   if (item.protein >= HIGH_PROTEIN_GRAMS) {
     return {
       tone: 'positive',
-      text: `God proteinkilde – ${item.protein} g protein. Du har ${leftAfter} kcal tilbage bagefter.`,
+      text: t('shared.barcodeScanner.verdictProtein', {
+        protein: item.protein,
+        kcalLeft: leftAfter,
+      }),
     };
   }
-  return { tone: 'neutral', text: `Passer fint ind. ${leftAfter} kcal tilbage bagefter.` };
+  return {
+    tone: 'neutral',
+    text: t('shared.barcodeScanner.verdictFits', { kcalLeft: leftAfter }),
+  };
 }
 
 /**
@@ -197,6 +207,7 @@ export function buildScanVerdict(kcalRemaining: number, item: FoodItem): ScanVer
     UiSheet,
     UiSpinner,
     UiTextInput,
+    TranslatePipe,
   ],
   templateUrl: './barcode-scanner.html',
   styleUrl: './barcode-scanner.scss',
@@ -229,6 +240,7 @@ export class BarcodeScanner {
 
   private readonly flow = inject(BarcodeFlowService);
   private readonly document = inject(DOCUMENT);
+  private readonly t = injectTranslate();
   /** While typing a barcode the camera frame is only decoration, so it gives way to the field. */
   protected readonly keyboardOpen = inject(KeyboardService).isOpen;
   private readonly overlay = viewChild<ElementRef<HTMLElement>>('overlay');
@@ -300,22 +312,29 @@ export class BarcodeScanner {
   protected readonly hint = computed(() => {
     const status = this.status();
     if (status !== 'idle') {
-      return STATUS_MESSAGE[status];
+      return this.t(STATUS_MESSAGE_KEY[status]);
     }
-    return this.canScan
-      ? BARCODE_SCANNER_TEXT.HINT_IDLE_NATIVE
-      : BARCODE_SCANNER_TEXT.HINT_IDLE_WEB;
+    return this.t(
+      this.canScan
+        ? BARCODE_SCANNER_TEXT_KEY.HINT_IDLE_NATIVE
+        : BARCODE_SCANNER_TEXT_KEY.HINT_IDLE_WEB,
+    );
   });
 
   protected readonly barcodeLabel = computed(() =>
-    this.canScan
-      ? BARCODE_SCANNER_TEXT.BARCODE_LABEL_NATIVE
-      : BARCODE_SCANNER_TEXT.BARCODE_LABEL_WEB,
+    this.t(
+      this.canScan
+        ? BARCODE_SCANNER_TEXT_KEY.BARCODE_LABEL_NATIVE
+        : BARCODE_SCANNER_TEXT_KEY.BARCODE_LABEL_WEB,
+    ),
   );
 
   protected readonly barcodeError = computed(() =>
     this.barcodeSubmitted() && !BARCODE_PATTERN.test(this.barcodeValue())
-      ? BARCODE_SCANNER_TEXT.INVALID_BARCODE
+      ? this.t(
+          BARCODE_SCANNER_TEXT_KEY.INVALID_BARCODE,
+          BARCODE_SCANNER_TEXT_PARAMS.INVALID_BARCODE,
+        )
       : null,
   );
   protected readonly hasBarcodeError = computed(() => this.barcodeError() !== null);
@@ -331,16 +350,18 @@ export class BarcodeScanner {
       : null;
   });
   protected readonly amountError = computed(() =>
-    this.validGrams() === null ? BARCODE_SCANNER_TEXT.INVALID_AMOUNT : null,
+    this.validGrams() === null
+      ? this.t(BARCODE_SCANNER_TEXT_KEY.INVALID_AMOUNT, BARCODE_SCANNER_TEXT_PARAMS.INVALID_AMOUNT)
+      : null,
   );
   protected readonly hasAmountError = computed(() => this.amountError() !== null);
   /** Grams, or millilitres for a liquid. */
   private readonly amountUnit = computed(() => this.product()?.unit ?? PRODUCT_BASE_UNIT.GRAMS);
   protected readonly amountLabel = computed(() =>
-    BARCODE_SCANNER_TEXT.AMOUNT_LABEL(this.amountUnit()),
+    this.t(BARCODE_SCANNER_TEXT_KEY.AMOUNT_LABEL, { unit: this.amountUnit() }),
   );
   protected readonly amountAriaLabel = computed(() =>
-    BARCODE_SCANNER_TEXT.AMOUNT_ARIA_LABEL(this.amountUnit()),
+    this.t(amountAriaLabelKey(this.amountUnit())),
   );
 
   /** The product scaled to the chosen amount (design's `scanned`). */
@@ -375,12 +396,14 @@ export class BarcodeScanner {
     const presets = SCAN_AMOUNT_PRESETS_GRAMS.filter((grams) => grams !== serving);
     const servingOption = serving === null ? [] : [serving];
     return [...servingOption, ...presets].map((grams) => {
-      const kcal = `${this.flow.scale(product, grams).kcal} kcal`;
+      const kcal = this.t('shared.barcodeScanner.kcalAmount', {
+        kcal: this.flow.scale(product, grams).kcal,
+      });
       const isServing = grams === serving;
       const amount = formatAmount(product, grams);
       return {
         grams,
-        label: isServing ? BARCODE_SCANNER_TEXT.SERVING_LABEL : amount,
+        label: isServing ? this.t(BARCODE_SCANNER_TEXT_KEY.SERVING_LABEL) : amount,
         sub: isServing ? `${amount} · ${kcal}` : kcal,
         selected: grams === selected,
       };
@@ -393,17 +416,17 @@ export class BarcodeScanner {
       return [];
     }
     return [
-      { label: 'kcal', value: item.kcal, accent: true },
-      { label: 'protein', value: item.protein, accent: false },
-      { label: 'kulhydrat', value: item.carbs, accent: false },
-      { label: 'fedt', value: item.fat, accent: false },
+      { label: this.t('common.unit.kcal'), value: item.kcal, accent: true },
+      { label: this.t('shared.barcodeScanner.stat.protein'), value: item.protein, accent: false },
+      { label: this.t('shared.barcodeScanner.stat.carbs'), value: item.carbs, accent: false },
+      { label: this.t('shared.barcodeScanner.stat.fat'), value: item.fat, accent: false },
     ];
   });
 
   protected readonly verdict = computed<ScanVerdict | null>(() => {
     const remaining = this.kcalRemaining();
     const item = this.scaledItem();
-    return remaining === null || !item ? null : buildScanVerdict(remaining, item);
+    return remaining === null || !item ? null : buildScanVerdict(this.t, remaining, item);
   });
 
   protected readonly canAddScanned = computed(() => this.scaledItem() !== null);
@@ -412,7 +435,7 @@ export class BarcodeScanner {
     this.flow.isCustomFoodNameTaken(this.formValue().name),
   );
   protected readonly nameError = computed(() =>
-    this.nameTaken() ? BARCODE_SCANNER_TEXT.DUPLICATE_NAME : null,
+    this.nameTaken() ? this.t(BARCODE_SCANNER_TEXT_KEY.DUPLICATE_NAME) : null,
   );
 
   protected readonly canSaveUnknown = computed(() => {

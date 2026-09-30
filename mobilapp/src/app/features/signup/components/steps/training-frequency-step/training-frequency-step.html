@@ -1,5 +1,8 @@
 <h1 class="training-frequency-step__title">
-  Hvor ofte <span class="training-frequency-step__title-accent">træner du?</span>
+  {{ 'signup.trainingFrequencyStep.titleStart' | translate }}
+  <span class="training-frequency-step__title-accent">{{
+    'signup.trainingFrequencyStep.titleAccent' | translate
+  }}</span>
 </h1>
 <p class="training-frequency-step__subtitle">{{ subtitle() }}</p>
 
@@ -7,7 +10,9 @@
   <div class="training-frequency-step__readout">
     <div>
       <div class="training-frequency-step__count">{{ frequencyText() }}</div>
-      <div class="training-frequency-step__count-caption">planlagte træninger om ugen</div>
+      <div class="training-frequency-step__count-caption">
+        {{ 'signup.trainingFrequencyStep.countCaption' | translate }}
+      </div>
     </div>
 
     <div class="training-frequency-step__pill">
@@ -20,7 +25,7 @@
     class="training-frequency-step__scene"
     viewBox="0 0 200 300"
     preserveAspectRatio="xMidYMax meet"
-    aria-label="Figur der løfter vægt"
+    [attr.aria-label]="'signup.trainingFrequencyStep.figureLabel' | translate"
   >
     <ellipse
       class="training-frequency-step__shadow"
@@ -111,4 +116,6 @@
   }
 </div>
 
-<p class="training-frequency-step__hint">Tryk på de dage, du typisk træner.</p>
+<p class="training-frequency-step__hint">
+  {{ 'signup.trainingFrequencyStep.hint' | translate }}
+</p>

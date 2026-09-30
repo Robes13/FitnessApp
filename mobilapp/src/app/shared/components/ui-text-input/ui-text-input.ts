@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { IconName } from '../ui-icon/icon-registry';
 import { UiIcon } from '../ui-icon/ui-icon';
 
@@ -27,8 +28,7 @@ export type TextInputValue = string | number | null;
  */
 export type TextInputInvalidTone = 'negative' | 'accent';
 
-/** From the design (login, line 101). The button only toggles `aria-pressed`, not the text. */
-const REVEAL_LABEL = 'Vis adgangskode';
+/** From the design (login, line 101). The reveal button only toggles `aria-pressed`, not its label. */
 const REVEAL_ICON: Readonly<Record<'hidden' | 'shown', IconName>> = {
   hidden: 'eye',
   shown: 'eye-off',
@@ -55,7 +55,7 @@ const VERBATIM_TYPES: ReadonlySet<TextInputType> = new Set(['email', 'password']
  */
 @Component({
   selector: 'app-ui-text-input',
-  imports: [UiIcon],
+  imports: [UiIcon, TranslatePipe],
   templateUrl: './ui-text-input.html',
   styleUrl: './ui-text-input.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -96,7 +96,6 @@ export class UiTextInput implements ControlValueAccessor {
   protected readonly value = signal('');
   protected readonly disabled = signal(false);
   protected readonly revealed = signal(false);
-  protected readonly revealLabel = REVEAL_LABEL;
 
   protected readonly hasRevealToggle = computed(
     () => this.type() === 'password' && this.revealable(),

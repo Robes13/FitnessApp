@@ -1,7 +1,7 @@
 <app-ui-sheet
   [open]="open()"
-  title="Dine"
-  titleAccent="påmindelser"
+  [title]="'profile.remindersSheet.titleStart' | translate"
+  [titleAccent]="'profile.remindersSheet.titleAccent' | translate"
   titleSize="sm"
   maxHeight="tall"
   scrollable
@@ -9,10 +9,10 @@
 >
   @if (notice(); as notice) {
     <div class="profile-reminders-sheet__notice" role="status">
-      <p class="profile-reminders-sheet__notice-text">{{ notice.text }}</p>
-      @if (noticeActionLabel(); as actionLabel) {
+      <p class="profile-reminders-sheet__notice-text">{{ notice.textKey | translate }}</p>
+      @if (noticeActionLabelKey(); as actionLabelKey) {
         <button app-ui-button type="button" variant="outline" block (click)="runNoticeAction()">
-          {{ actionLabel }}
+          {{ actionLabelKey | translate }}
         </button>
       }
     </div>
@@ -43,7 +43,11 @@
               [formControl]="row.timeControl"
             />
             @if (row.allowsWeekday) {
-              <div class="profile-reminders-sheet__weekdays" role="group" aria-label="Hvilken dag">
+              <div
+                class="profile-reminders-sheet__weekdays"
+                role="group"
+                [attr.aria-label]="'profile.remindersSheet.weekdayGroup' | translate"
+              >
                 @for (option of row.weekdayOptions; track option.label) {
                   <button
                     app-ui-chip
@@ -65,5 +69,7 @@
 
   <app-ui-form-error tone="negative" [message]="error()" />
 
-  <button app-ui-button sheetFooter type="button" block (click)="closed.emit()">Færdig</button>
+  <button app-ui-button sheetFooter type="button" block (click)="closed.emit()">
+    {{ 'profile.remindersSheet.done' | translate }}
+  </button>
 </app-ui-sheet>

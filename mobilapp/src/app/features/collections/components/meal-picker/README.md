@@ -5,14 +5,18 @@ Designets 2×2-gitter med Morgenmad · Frokost · Aftensmad · Snacks. Bruges to
 "Log som spist under" på opskriftsskærmen (gennemsigtig).
 
 ```html
-<app-meal-picker [(value)]="meal" filled ariaLabel="Hører under" />
+<app-meal-picker
+  [(value)]="meal"
+  filled
+  [ariaLabel]="'collections.newCollectionSheet.mealCaption' | translate"
+/>
 ```
 
-| Input       | Betydning                                                                     |
-| ----------- | ----------------------------------------------------------------------------- |
-| `value`     | `model<MealId>` – det valgte måltid (tovejsbinding).                          |
-| `filled`    | Ikke-valgte knapper får `--color-surface` i stedet for at være gennemsigtige. |
-| `ariaLabel` | Gruppens navn. Knapperne er `role="radio"` i en `role="radiogroup"`.          |
+| Input       | Betydning                                                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------ |
+| `value`     | `model<MealId>` – det valgte måltid (tovejsbinding).                                                   |
+| `filled`    | Ikke-valgte knapper får `--color-surface` i stedet for at være gennemsigtige.                          |
+| `ariaLabel` | Gruppens (oversatte) navn, ellers "Vælg måltid". Knapperne er `role="radio"` i en `role="radiogroup"`. |
 
 **Tastatur:** gruppen følger radiogruppe-mønstret. Kun det valgte måltid er i
 tab-rækkefølgen (roving tabindex), og piletasterne flytter valget og fokus. Gitteret har to

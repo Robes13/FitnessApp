@@ -1,7 +1,10 @@
 <div class="summary-step__header">
   <div class="summary-step__intro">
     <h1 class="summary-step__title">
-      Tjek og <span class="summary-step__title-accent">bekræft</span>
+      {{ 'signup.summaryStep.titleStart' | translate }}
+      <span class="summary-step__title-accent">{{
+        'signup.summaryStep.titleAccent' | translate
+      }}</span>
     </h1>
     <p class="summary-step__caption">{{ caption() }}</p>
   </div>
@@ -11,7 +14,7 @@
     viewBox="0 0 200 300"
     preserveAspectRatio="xMidYMax meet"
     role="img"
-    aria-label="Figur med kuglepen"
+    [attr.aria-label]="'signup.summaryStep.figureLabel' | translate"
     focusable="false"
   >
     <g app-figure-body [geometry]="geometry()" [bandTone]="bandTone()"></g>
@@ -53,8 +56,8 @@
     type="email"
     inputMode="email"
     autocomplete="email"
-    ariaLabel="Din e-mail"
-    [placeholder]="emailPlaceholder"
+    [ariaLabel]="'signup.summaryStep.emailLabel' | translate"
+    [placeholder]="'signup.summaryStep.emailPlaceholder' | translate"
     [invalid]="emailInvalid()"
   />
 
@@ -90,8 +93,15 @@
       />
     </span>
     <span class="summary-step__terms-text">
-      Jeg accepterer Nutrifys <span class="summary-step__terms-link">servicevilkår</span> og
-      <span class="summary-step__terms-link">privatlivspolitik</span>.
+      {{ 'signup.summaryStep.termsStart' | translate }}
+      <span class="summary-step__terms-link">{{
+        'signup.summaryStep.termsService' | translate
+      }}</span>
+      {{ 'signup.summaryStep.termsAnd' | translate }}
+      <span class="summary-step__terms-link">{{
+        'signup.summaryStep.termsPrivacy' | translate
+      }}</span
+      >{{ 'signup.summaryStep.termsEnd' | translate }}
     </span>
   </button>
 </form>

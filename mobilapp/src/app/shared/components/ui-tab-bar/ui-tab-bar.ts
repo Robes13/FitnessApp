@@ -8,6 +8,7 @@ import {
   RouterLinkActive,
 } from '@angular/router';
 import { filter, map } from 'rxjs';
+import { injectTranslate } from '../../../core/services/language/translate';
 import { IconName } from '../ui-icon/icon-registry';
 import { UiIcon } from '../ui-icon/ui-icon';
 
@@ -18,7 +19,7 @@ export interface TabBarItem {
   readonly path: string;
 }
 
-const DEFAULT_ARIA_LABEL = 'Hovednavigation';
+const DEFAULT_ARIA_LABEL_KEY = 'shared.tabBar.ariaLabel';
 
 /** An item is active when its path is a prefix of the current URL (`/collection/x` → Collection). */
 const ACTIVE_MATCH: IsActiveMatchOptions = {
@@ -44,16 +45,21 @@ const ACTIVE_MATCH: IsActiveMatchOptions = {
   host: {
     class: 'ui-tab-bar',
     role: 'navigation',
-    '[attr.aria-label]': 'ariaLabel()',
+    '[attr.aria-label]': 'ariaLabelText()',
     '[style.--tab-count]': 'items().length',
     '[style.--tab-index]': 'knobIndex()',
   },
 })
 export class UiTabBar {
   readonly items = input.required<readonly TabBarItem[]>();
-  readonly ariaLabel = input(DEFAULT_ARIA_LABEL);
+  readonly ariaLabel = input<string>();
 
   private readonly router = inject(Router);
+  private readonly t = injectTranslate();
+
+  protected readonly ariaLabelText = computed(
+    () => this.ariaLabel() ?? this.t(DEFAULT_ARIA_LABEL_KEY),
+  );
 
   /** The latest URL after a completed navigation – used only as a trigger for `activeIndex`. */
   private readonly currentUrl = toSignal(

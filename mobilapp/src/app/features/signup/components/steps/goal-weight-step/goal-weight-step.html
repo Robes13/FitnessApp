@@ -1,5 +1,8 @@
 <h1 class="goal-weight-step__title">
-  Hvad er din <span class="goal-weight-step__title-accent">målvægt?</span>
+  {{ 'signup.goalWeightStep.titleStart' | translate }}
+  <span class="goal-weight-step__title-accent">{{
+    'signup.goalWeightStep.titleAccent' | translate
+  }}</span>
 </h1>
 <p class="goal-weight-step__quip">{{ quip() }}</p>
 
@@ -7,7 +10,7 @@
   <div class="goal-weight-step__readout">
     <p class="goal-weight-step__value">
       <span class="goal-weight-step__number">{{ goalWeightText() }}</span>
-      <span class="goal-weight-step__unit">kg</span>
+      <span class="goal-weight-step__unit">{{ 'common.unit.kg' | translate }}</span>
     </p>
 
     <p class="goal-weight-step__delta">
@@ -15,7 +18,9 @@
       <span class="goal-weight-step__delta-text">{{ deltaLabel() }}</span>
     </p>
 
-    <p class="goal-weight-step__now">Nu: {{ currentWeightText() }} kg. Træk i skalaen nedenfor.</p>
+    <p class="goal-weight-step__now">
+      {{ 'signup.goalWeightStep.now' | translate: { weight: currentWeightText() } }}
+    </p>
 
     <p class="goal-weight-step__hint">{{ hint() }}</p>
   </div>
@@ -25,7 +30,7 @@
     viewBox="0 0 200 300"
     preserveAspectRatio="xMidYMax meet"
     role="img"
-    aria-label="Figur ved målvægt"
+    [attr.aria-label]="'signup.goalWeightStep.figureLabel' | translate"
     focusable="false"
   >
     <ellipse
@@ -56,5 +61,5 @@
   [max]="bounds().max"
   [value]="goalWeightKg()"
   (valueChange)="state.goalWeightKg.set($event)"
-  ariaLabel="Målvægt i kilo"
+  [ariaLabel]="'signup.goalWeightStep.rulerLabel' | translate"
 />

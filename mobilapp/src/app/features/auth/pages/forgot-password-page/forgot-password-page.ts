@@ -11,16 +11,18 @@ import {
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Observable, switchMap, timer } from 'rxjs';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { PHOTO_SCREEN_THEME } from '../../../../core/constants/theme';
-import { AUTH_ERROR_MESSAGE } from '../../../../core/constants/auth';
+import { AUTH_ERROR_MESSAGE_KEY } from '../../../../core/constants/auth';
 import { PASSWORD_MIN_LENGTH, RESET_CODE_LENGTH } from '../../../../core/constants/nutrition';
 import { PasswordStrength } from '../../../../core/models/nutrition';
 import { AuthApi } from '../../../../core/services/auth-api/auth-api';
 import { NutritionCalculator } from '../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { SessionService } from '../../../../core/services/session/session';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import {
   FormErrorTone,
@@ -32,7 +34,7 @@ import { UiProgressBar } from '../../../../shared/components/ui-progress-bar/ui-
 import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
 import { UiTextInput } from '../../../../shared/components/ui-text-input/ui-text-input';
 import { AUTH_ASSET } from '../../auth-assets';
-import { authErrorMessage } from '../../auth-error';
+import { authErrorKey } from '../../auth-error';
 import { AuthBackdrop } from '../../components/auth-backdrop/auth-backdrop';
 import { holdDarkSystemBarsWhileOpen } from '../../photo-screen';
 
@@ -50,8 +52,9 @@ export const FORGOT_PASSWORD_DONE_DELAY_MS = new InjectionToken<number>(
 
 /** The design only shows the e-mail hint once more than three characters have been typed. */
 const EMAIL_HINT_MIN_LENGTH = 3;
-const MISMATCH_MESSAGE = 'Adgangskoderne er ikke ens.';
-const RESENT_MESSAGE = 'Sendt igen';
+const MISMATCH_MESSAGE_KEY = 'auth.forgotPasswordPage.mismatch';
+/** The flow's three input steps – shown as "Step n of 3". */
+const STEP_TOTAL = 3;
 const PERCENT_MAX = 100;
 const NON_DIGIT_PATTERN = /\D/g;
 
@@ -89,6 +92,7 @@ const EMPTY_MESSAGE: StepMessage = { text: '', tone: 'accent' };
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    TranslatePipe,
     AuthBackdrop,
     UiButton,
     UiFormError,
@@ -111,18 +115,20 @@ export class ForgotPasswordPage {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly doneDelayMs = inject(FORGOT_PASSWORD_DONE_DELAY_MS);
+  private readonly t = injectTranslate();
 
   /** Dark in both themes – the photo behind is dark. */
   protected readonly photoTheme = PHOTO_SCREEN_THEME;
   protected readonly logoSrc = AUTH_ASSET.LOGO;
   protected readonly loginPath = APP_PATH.LOGIN;
   protected readonly codeLength = RESET_CODE_LENGTH;
-  protected readonly resentMessage = RESENT_MESSAGE;
+  protected readonly stepTotal = STEP_TOTAL;
 
   protected readonly step = signal<ForgotPasswordStep>('email');
   protected readonly loading = signal(false);
   protected readonly resent = signal(false);
-  private readonly errorMessage = signal<string | null>(null);
+  /** Translation key of the backend's error – translated in `message`, so it follows the language. */
+  private readonly errorKey = signal<string | null>(null);
 
   protected readonly emailForm = new FormGroup<EmailForm>({
     email: new FormControl(this.profile.profile().email, {
@@ -182,9 +188,9 @@ export class ForgotPasswordPage {
 
   /** One place to decide what's shown below the field: an error beats the design's hint. */
   protected readonly message = computed<StepMessage>(() => {
-    const error = this.errorMessage();
-    if (error !== null) {
-      return { text: error, tone: 'negative' };
+    const errorKey = this.errorKey();
+    if (errorKey !== null) {
+      return { text: this.t(errorKey), tone: 'negative' };
     }
     switch (this.step()) {
       case 'email':
@@ -200,19 +206,23 @@ export class ForgotPasswordPage {
 
   private readonly emailHint = computed(() =>
     this.emailValue().length > EMAIL_HINT_MIN_LENGTH && this.emailInvalid()
-      ? AUTH_ERROR_MESSAGE.INVALID_EMAIL
+      ? this.t(AUTH_ERROR_MESSAGE_KEY.INVALID_EMAIL)
       : '',
   );
   private readonly codeHint = computed(() => {
     const length = this.codeValue().length;
-    return length > 0 && length < RESET_CODE_LENGTH ? AUTH_ERROR_MESSAGE.INVALID_CODE : '';
+    return length > 0 && length < RESET_CODE_LENGTH
+      ? this.t(AUTH_ERROR_MESSAGE_KEY.INVALID_CODE)
+      : '';
   });
   private readonly passwordHint = computed(() => {
     if (this.mismatch()) {
-      return MISMATCH_MESSAGE;
+      return this.t(MISMATCH_MESSAGE_KEY);
     }
     const length = this.passwordValue().length;
-    return length > 0 && length < PASSWORD_MIN_LENGTH ? AUTH_ERROR_MESSAGE.PASSWORD_TOO_SHORT : '';
+    return length > 0 && length < PASSWORD_MIN_LENGTH
+      ? this.t(AUTH_ERROR_MESSAGE_KEY.PASSWORD_TOO_SHORT)
+      : '';
   });
 
   constructor() {
@@ -231,7 +241,7 @@ export class ForgotPasswordPage {
 
   /** Step back; from the first step (and from the confirmation) back to login. */
   protected back(): void {
-    this.errorMessage.set(null);
+    this.errorKey.set(null);
     switch (this.step()) {
       case 'code':
         this.step.set('email');
@@ -272,7 +282,7 @@ export class ForgotPasswordPage {
       return;
     }
     this.loading.set(true);
-    this.errorMessage.set(null);
+    this.errorKey.set(null);
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.loading.set(false);
@@ -280,7 +290,7 @@ export class ForgotPasswordPage {
       },
       error: (error: unknown) => {
         this.loading.set(false);
-        this.errorMessage.set(authErrorMessage(error));
+        this.errorKey.set(authErrorKey(error));
       },
     });
   }
@@ -309,7 +319,7 @@ export class ForgotPasswordPage {
         next: () => void this.router.navigateByUrl(APP_PATH.HOME),
         error: (error: unknown) => {
           this.step.set('new-password');
-          this.errorMessage.set(authErrorMessage(error));
+          this.errorKey.set(authErrorKey(error));
         },
       });
   }

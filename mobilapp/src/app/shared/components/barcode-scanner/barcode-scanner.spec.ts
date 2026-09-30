@@ -8,6 +8,7 @@ import {
   ScannedProduct,
 } from '../../../core/models/barcode';
 import { FoodItem } from '../../../core/models/food';
+import { injectTranslate } from '../../../core/services/language/translate';
 import { BarcodeScannerService } from '../../../core/services/barcode-scanner/barcode-scanner';
 import { ProductLookupService } from '../../../core/services/product-lookup/product-lookup';
 import { TEST_FOOD } from '../../../core/testing/fixtures';
@@ -546,15 +547,16 @@ describe('buildScanVerdict', () => {
   const item: FoodItem = { ...TEST_FOOD };
 
   it('matches the design copy for the three cases', () => {
-    expect(buildScanVerdict(150, item)).toEqual({
+    const t = TestBed.runInInjectionContext(() => injectTranslate());
+    expect(buildScanVerdict(t, 150, item)).toEqual({
       tone: 'negative',
       text: 'Den skubber dig 60 kcal over dagens mål. Overvej en halv, eller gem den til efter træning.',
     });
-    expect(buildScanVerdict(500, item)).toEqual({
+    expect(buildScanVerdict(t, 500, item)).toEqual({
       tone: 'positive',
       text: 'God proteinkilde – 20 g protein. Du har 290 kcal tilbage bagefter.',
     });
-    expect(buildScanVerdict(500, { ...item, protein: 10 })).toEqual({
+    expect(buildScanVerdict(t, 500, { ...item, protein: 10 })).toEqual({
       tone: 'neutral',
       text: 'Passer fint ind. 290 kcal tilbage bagefter.',
     });

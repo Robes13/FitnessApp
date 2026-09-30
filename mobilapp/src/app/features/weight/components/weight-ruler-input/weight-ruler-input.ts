@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../../core/constants/nutrition';
 import { clamp, roundTo } from '../../../../core/utils/math';
 import { RULER_BLEED_IDLE_STRONG } from '../../../../shared/components/ui-ruler/ruler-geometry';
@@ -14,7 +15,7 @@ import { WEIGHT_STEP_KG } from '../../services/weight-view';
  */
 @Component({
   selector: 'app-weight-ruler-input',
-  imports: [UiRuler],
+  imports: [TranslatePipe, UiRuler],
   templateUrl: './weight-ruler-input.html',
   styleUrl: './weight-ruler-input.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

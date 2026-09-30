@@ -18,7 +18,7 @@
             [selected]="option.id === meal()"
             (click)="meal.set(option.id)"
           >
-            {{ option.label }}
+            {{ option.labelKey | translate }}
           </button>
         }
       </div>
@@ -28,8 +28,8 @@
       <app-ui-segmented-control
         class="food-add-sheet__tabs"
         variant="compact"
-        ariaLabel="Varer eller samlinger"
-        [options]="tabOptions"
+        [ariaLabel]="'food.addSheet.tabsLabel' | translate"
+        [options]="tabOptions()"
         [value]="tab()"
         (valueChange)="onTabChange($event)"
       />
@@ -50,7 +50,7 @@
           (cancelled)="closed.emit()"
         />
       } @else if (collectionRows().length === 0) {
-        <app-ui-empty-state [message]="emptyMessage" />
+        <app-ui-empty-state [message]="emptyMessageKey | translate" />
       } @else {
         <div class="food-add-sheet__collections">
           @for (row of collectionRows(); track row.id) {

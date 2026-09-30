@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { GENDERS } from '../../../../../core/constants/nutrition';
 import { Gender } from '../../../../../core/models/profile';
 import { UiOptionCard } from '../../../../../shared/components/ui-option-card/ui-option-card';
@@ -10,7 +11,7 @@ import { SignupStateService } from '../../../services/signup-state';
  */
 @Component({
   selector: 'app-gender-step',
-  imports: [UiOptionCard],
+  imports: [TranslatePipe, UiOptionCard],
   templateUrl: './gender-step.html',
   styleUrl: './gender-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

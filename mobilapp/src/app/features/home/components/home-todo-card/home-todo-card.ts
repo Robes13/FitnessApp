@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { RouterLink } from '@angular/router';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { HomeTodo } from '../../services/home-summary';
@@ -9,7 +10,7 @@ import { HomeTodo } from '../../services/home-summary';
  */
 @Component({
   selector: 'app-home-todo-card',
-  imports: [RouterLink, UiIcon],
+  imports: [RouterLink, UiIcon, TranslatePipe],
   templateUrl: './home-todo-card.html',
   styleUrl: './home-todo-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

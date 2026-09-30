@@ -1,5 +1,8 @@
 <h1 class="training-intensity-step__title">
-  Hvor <span class="training-intensity-step__title-accent">hårdt?</span>
+  {{ 'signup.trainingIntensityStep.titleStart' | translate }}
+  <span class="training-intensity-step__title-accent">{{
+    'signup.trainingIntensityStep.titleAccent' | translate
+  }}</span>
 </h1>
 <p class="training-intensity-step__subtitle">{{ intro() }}</p>
 
@@ -17,7 +20,7 @@
     class="training-intensity-step__scene"
     viewBox="0 0 200 300"
     preserveAspectRatio="xMidYMax meet"
-    aria-label="Figur der træner"
+    [attr.aria-label]="'signup.trainingIntensityStep.figureLabel' | translate"
   >
     <ellipse
       class="training-intensity-step__shadow"
@@ -85,8 +88,8 @@
 </div>
 
 <div class="training-intensity-step__scale-labels">
-  <span>1 · meget let</span>
-  <span>10 · alt hvad du har</span>
+  <span>{{ 'signup.trainingIntensityStep.scaleMin' | translate }}</span>
+  <span>{{ 'signup.trainingIntensityStep.scaleMax' | translate }}</span>
 </div>
 
 <div class="training-intensity-step__tiles">

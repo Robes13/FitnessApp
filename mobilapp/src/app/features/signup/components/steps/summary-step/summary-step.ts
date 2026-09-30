@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { INTENSITIES, RPE_MAX, RPE_MIN } from '../../../../../core/constants/nutrition';
 import { IntensityDefinition } from '../../../../../core/models/profile';
 import { NutritionCalculator } from '../../../../../core/services/nutrition-calculator/nutrition-calculator';
@@ -17,15 +18,11 @@ import { SignupStateService, SignupStepId } from '../../../services/signup-state
 import { bandToneForGender } from '../../../../../shared/components/figure';
 import { buildSummaryRows } from './summary-rows';
 import { clamp } from '../../../../../core/utils/math';
+import { injectTranslate } from '../../../../../core/services/language/translate';
 
-const CAPTION_NO_EMAIL =
-  'Skriv din e-mail – den bruger vi til at bekræfte kontoen. Tryk på en linje for at rette.';
-const CAPTION_NO_TERMS =
-  'Alt ser rigtigt ud? Tryk på en linje for at rette, og sæt et flueben nedenfor.';
-const CAPTION_READY = 'Sådan. Nu mangler kun det sidste tryk.';
-
-const EMAIL_PLACEHOLDER = 'Din e-mail · dig@mail.dk';
-const EDIT_LABEL_PREFIX = 'Ret ';
+const CAPTION_NO_EMAIL_KEY = 'signup.summaryStep.captionNoEmail';
+const CAPTION_NO_TERMS_KEY = 'signup.summaryStep.captionNoTerms';
+const CAPTION_READY_KEY = 'signup.summaryStep.captionReady';
 
 /** The design's fixed measurements from the screen (HTML line 849–856), bound as CSS variables. */
 const SUMMARY_LAYOUT = { figureWidth: 92, figureHeight: 124, captionHeight: 36 } as const;
@@ -70,7 +67,7 @@ function sparkPath(x: number, y: number): string {
  */
 @Component({
   selector: 'app-summary-step',
-  imports: [FigureBody, ReactiveFormsModule, UiIcon, UiRowButton, UiTextInput],
+  imports: [FigureBody, ReactiveFormsModule, TranslatePipe, UiIcon, UiRowButton, UiTextInput],
   templateUrl: './summary-step.html',
   styleUrl: './summary-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -84,10 +81,10 @@ function sparkPath(x: number, y: number): string {
 export class SummaryStep {
   private readonly calculator = inject(NutritionCalculator);
   private readonly now = inject(NOW);
+  private readonly t = injectTranslate();
 
   protected readonly state = inject(SignupStateService);
   protected readonly layout = SUMMARY_LAYOUT;
-  protected readonly emailPlaceholder = EMAIL_PLACEHOLDER;
   protected readonly checkStrokeWidth = CHECK_STROKE_WIDTH;
 
   protected readonly form = new FormGroup({
@@ -102,9 +99,9 @@ export class SummaryStep {
 
   protected readonly caption = computed(() => {
     if (!this.emailValid()) {
-      return CAPTION_NO_EMAIL;
+      return this.t(CAPTION_NO_EMAIL_KEY);
     }
-    return this.state.termsAccepted() ? CAPTION_READY : CAPTION_NO_TERMS;
+    return this.t(this.state.termsAccepted() ? CAPTION_READY_KEY : CAPTION_NO_TERMS_KEY);
   });
 
   private readonly intensity = computed<IntensityDefinition | null>(() => {
@@ -127,14 +124,14 @@ export class SummaryStep {
   });
 
   protected readonly rows = computed(() =>
-    buildSummaryRows({
+    buildSummaryRows(this.t, {
       username: this.state.username().trim(),
       age: this.calculator.ageFromBirthday(this.state.birthday(), this.now()),
       gender: this.state.gender(),
       weightKg: this.state.weightKg(),
       heightCm: this.state.heightCm(),
       stepsPerDay: this.state.stepsPerDay(),
-      activityLabel: this.calculator.activityLevelFor(this.state.stepsPerDay()).label,
+      activityLabel: this.t(this.calculator.activityLevelFor(this.state.stepsPerDay()).labelKey),
       trainingDayCount: this.state.trainingDays().filter(Boolean).length,
       trainingMinutes: this.state.trainingMinutes(),
       intensity: this.intensity(),
@@ -181,7 +178,7 @@ export class SummaryStep {
   }
 
   protected editLabel(label: string): string {
-    return `${EDIT_LABEL_PREFIX}${label}`;
+    return this.t('signup.summaryStep.editLabel', { label });
   }
 
   protected edit(step: SignupStepId): void {

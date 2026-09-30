@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/h
 import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, map, of, tap, timeout } from 'rxjs';
 import {
-  BARCODE_SCANNER_TEXT,
+  BARCODE_SCANNER_TEXT_KEY,
   KJ_PER_KCAL,
   OPEN_FOOD_FACTS,
   PRODUCT_BASE_GRAMS,
@@ -19,6 +19,7 @@ import {
   OpenFoodFactsProduct,
   OpenFoodFactsProductResponse,
 } from '../../models/open-food-facts';
+import { Translate, injectTranslate } from '../language/translate';
 import { StorageService } from '../storage/storage';
 
 /** Barcode → product. Insertion order is the age, so the oldest entry is dropped first. */
@@ -50,6 +51,7 @@ const MACRO_DECIMALS_FACTOR = 10;
 export class ProductLookupService {
   private readonly http = inject(HttpClient);
   private readonly storage = inject(StorageService);
+  private readonly t = injectTranslate();
 
   lookup(barcode: string): Observable<ProductLookupResult> {
     const cached = this.readCache()[barcode];
@@ -62,7 +64,7 @@ export class ProductLookupService {
       })
       .pipe(
         timeout(PRODUCT_LOOKUP_TIMEOUT_MS),
-        map((response) => toLookupResult(barcode, response)),
+        map((response) => toLookupResult(this.t, barcode, response)),
         tap((result) => {
           if (result.status === 'found') {
             this.writeCache(result.product);
@@ -110,19 +112,22 @@ function toErrorResult(barcode: string, error: unknown): ProductLookupResult {
   return { status: 'error', barcode };
 }
 
+/** `t` names a product Open Food Facts has no name for. */
 export function toLookupResult(
+  t: Translate,
   barcode: string,
   response: OpenFoodFactsProductResponse,
 ): ProductLookupResult {
   const product =
     response.status === OPEN_FOOD_FACTS.STATUS_FOUND && response.product
-      ? toScannedProduct(barcode, response.product)
+      ? toScannedProduct(t, barcode, response.product)
       : null;
   return product ? { status: 'found', product } : { status: 'not-found', barcode };
 }
 
 /** `null` when the product has no energy (kcal or kJ) – without it, it can't be logged. */
 export function toScannedProduct(
+  t: Translate,
   barcode: string,
   product: OpenFoodFactsProduct,
 ): ScannedProduct | null {
@@ -134,7 +139,7 @@ export function toScannedProduct(
   const name =
     product.product_name_da?.trim() ||
     product.product_name?.trim() ||
-    BARCODE_SCANNER_TEXT.UNNAMED_PRODUCT(barcode);
+    t(BARCODE_SCANNER_TEXT_KEY.UNNAMED_PRODUCT, { barcode });
   const brand = product.brands?.split(',')[0]?.trim() || undefined;
   const unit = baseUnit(product);
   return {

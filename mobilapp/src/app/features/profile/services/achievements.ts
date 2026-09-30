@@ -6,6 +6,7 @@ import { CollectionsService } from '../../../core/services/collections/collectio
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
+import { Translate, injectTranslate } from '../../../core/services/language/translate';
 import { formatDecimal, formatInteger } from '../../../core/utils/date-format';
 import { IconName } from '../../../shared/components/ui-icon/icon-registry';
 
@@ -77,9 +78,10 @@ export class AchievementsService {
   private readonly weightLog = inject(WeightLogService);
   private readonly collections = inject(CollectionsService);
   private readonly scanner = inject(BarcodeScannerService);
+  private readonly t = injectTranslate();
 
   readonly achievements: Signal<readonly Achievement[]> = computed(() =>
-    this.seeds().map((seed) => toAchievement(seed)),
+    this.seeds().map((seed) => toAchievement(this.t, seed)),
   );
 
   /**
@@ -113,20 +115,21 @@ export class AchievementsService {
     const week = this.weekStats();
     const loggedCount = this.foodLog.entries().length;
     const kgLost = this.kgLost();
+    const t = this.t;
     return [
       {
         id: 'streak-7',
         glyph: '7',
-        label: '7 dages streak',
+        label: t('profile.achievements.streak7'),
         value: Math.min(week.streakDays, 7),
         target: 7,
-        unit: 'dage',
+        unit: t('profile.achievements.unitDays'),
         tone: TONE_BY_TARGET.STREAK,
       },
       {
         id: 'first-weigh',
-        glyph: 'kg',
-        label: 'Første vejning',
+        glyph: t('common.unit.kg'),
+        label: t('profile.achievements.firstWeigh'),
         value: this.weightLog.entries().length > 0 ? 1 : 0,
         target: 1,
         unit: '',
@@ -135,34 +138,34 @@ export class AchievementsService {
       {
         id: 'meals-10',
         glyph: '10',
-        label: '10 måltider',
+        label: t('profile.achievements.meals10'),
         value: loggedCount,
         target: 10,
-        unit: 'måltider',
+        unit: t('profile.achievements.unitMeals'),
         tone: TONE_BY_TARGET.MEALS,
       },
       {
         id: 'lost-2',
         glyph: '−2',
-        label: '2 kg tabt',
+        label: t('profile.achievements.lost2'),
         value: kgLost,
         target: 2,
-        unit: 'kg',
+        unit: t('common.unit.kg'),
         tone: TONE_BY_TARGET.KG,
       },
       {
         id: 'protein-5',
-        glyph: 'P',
-        label: 'Protein-mål 5x',
+        glyph: t('profile.achievements.proteinGlyph'),
+        label: t('profile.achievements.protein5'),
         value: week.proteinHitDays,
         target: 5,
-        unit: 'dage',
+        unit: t('profile.achievements.unitDays'),
         tone: TONE_BY_TARGET.PROTEIN,
       },
       {
         id: 'own-collection',
         icon: 'pencil',
-        label: 'Egen samling',
+        label: t('profile.achievements.ownCollection'),
         value: this.collections.userCollections().length > 0 ? 1 : 0,
         target: 1,
         unit: '',
@@ -171,62 +174,62 @@ export class AchievementsService {
       {
         id: 'streak-30',
         glyph: '30',
-        label: '30 dages streak',
+        label: t('profile.achievements.streak30'),
         value: Math.min(week.streakDays, 30),
         target: 30,
-        unit: 'dage',
+        unit: t('profile.achievements.unitDays'),
         tone: TONE_BY_TARGET.STREAK,
       },
       {
         id: 'meals-50',
         glyph: '50',
-        label: '50 måltider',
+        label: t('profile.achievements.meals50'),
         value: loggedCount,
         target: 50,
-        unit: 'måltider',
+        unit: t('profile.achievements.unitMeals'),
         tone: TONE_BY_TARGET.MEALS,
       },
       {
         id: 'lost-5',
         glyph: '−5',
-        label: '5 kg tabt',
+        label: t('profile.achievements.lost5'),
         value: kgLost,
         target: 5,
-        unit: 'kg',
+        unit: t('common.unit.kg'),
         tone: TONE_BY_TARGET.KG,
       },
       {
         id: 'scans-10',
         icon: 'bolt',
-        label: '10 scanninger',
+        label: t('profile.achievements.scans10'),
         value: this.scanner.scanCount(),
         target: 10,
-        unit: 'scan',
+        unit: t('profile.achievements.unitScans'),
         tone: TONE_BY_TARGET.SCAN,
       },
       {
         id: 'no-late-snack',
         icon: 'moon',
-        label: 'Ingen sen snack',
+        label: t('profile.achievements.noLateSnack'),
         value: week.hitDays,
         target: 7,
-        unit: 'dage',
+        unit: t('profile.achievements.unitDays'),
         tone: TONE_BY_TARGET.SNACK,
       },
       {
         id: 'perfect-week',
         icon: 'star',
-        label: 'Perfekt uge',
+        label: t('profile.achievements.perfectWeek'),
         value: week.hitDays,
         target: 7,
-        unit: 'dage',
+        unit: t('profile.achievements.unitDays'),
         tone: TONE_BY_TARGET.WEEK,
       },
     ];
   });
 }
 
-function toAchievement(seed: AchievementSeed): Achievement {
+function toAchievement(t: Translate, seed: AchievementSeed): Achievement {
   const progress = Math.max(0, Math.min(1, seed.value / seed.target));
   const complete = seed.value >= seed.target;
   return {
@@ -237,19 +240,21 @@ function toAchievement(seed: AchievementSeed): Achievement {
     tone: seed.tone,
     progress,
     complete,
-    progressLabel: progressLabelFor(seed, complete),
+    progressLabel: progressLabelFor(t, seed, complete),
   };
 }
 
-function progressLabelFor(seed: AchievementSeed, complete: boolean): string {
+function progressLabelFor(t: Translate, seed: AchievementSeed, complete: boolean): string {
   if (complete) {
-    return 'Klaret';
+    return t('profile.achievements.complete');
   }
   if (seed.target === 1) {
-    return 'Mangler';
+    return t('profile.achievements.missing');
   }
   const value = Number.isInteger(seed.value)
     ? formatInteger(seed.value)
     : formatDecimal(seed.value, 1);
-  return seed.unit ? `${value}/${seed.target} ${seed.unit}` : `${value}/${seed.target}`;
+  return seed.unit
+    ? t('profile.achievements.progress', { value, target: seed.target, unit: seed.unit })
+    : `${value}/${seed.target}`;
 }

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
   FigureBandTone,
   FigureBody,
@@ -40,7 +41,7 @@ const EXPRESSION: Partial<FigureExpression> = { pupilOffsetX: 1 };
  */
 @Component({
   selector: 'app-birthday-cake',
-  imports: [FigureBody],
+  imports: [FigureBody, TranslatePipe],
   templateUrl: './birthday-cake.html',
   styleUrl: './birthday-cake.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

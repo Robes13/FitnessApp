@@ -1,4 +1,8 @@
-<app-ui-page-header title="Profil" backLabel="Tilbage" (back)="goBack()" />
+<app-ui-page-header
+  [title]="'profile.page.title' | translate"
+  [backLabel]="'common.back' | translate"
+  (back)="goBack()"
+/>
 
 <div class="profile-page__scroll">
   <section class="profile-page__identity">
@@ -7,7 +11,7 @@
       <button
         type="button"
         class="profile-page__photo-button"
-        aria-label="Skift profilbillede"
+        [attr.aria-label]="'profile.page.changePhoto' | translate"
         (click)="openPhoto()"
       >
         <app-ui-icon name="pencil" size="2xs" [strokeWidth]="3" />
@@ -21,25 +25,27 @@
 
   <section class="profile-page__stats">
     <div class="profile-page__stat">
-      <p class="profile-page__stat-label">Vægt</p>
+      <p class="profile-page__stat-label">{{ 'profile.page.weight' | translate }}</p>
       <p class="profile-page__stat-value profile-page__stat-value--accent">
-        {{ weightText() }}<span class="profile-page__stat-unit">kg</span>
+        {{ weightText()
+        }}<span class="profile-page__stat-unit">{{ 'common.unit.kg' | translate }}</span>
       </p>
     </div>
     <div class="profile-page__stat">
-      <p class="profile-page__stat-label">Højde</p>
+      <p class="profile-page__stat-label">{{ 'profile.page.height' | translate }}</p>
       <p class="profile-page__stat-value">
-        {{ heightText() }}<span class="profile-page__stat-unit">cm</span>
+        {{ heightText()
+        }}<span class="profile-page__stat-unit">{{ 'common.unit.cm' | translate }}</span>
       </p>
     </div>
     <div class="profile-page__stat">
-      <p class="profile-page__stat-label">BMI</p>
+      <p class="profile-page__stat-label">{{ 'profile.page.bmi' | translate }}</p>
       <p class="profile-page__stat-value">{{ bmiText() }}</p>
     </div>
   </section>
 
   <section class="profile-page__section">
-    <h2 class="profile-page__section-title">Min plan</h2>
+    <h2 class="profile-page__section-title">{{ 'profile.page.myPlan' | translate }}</h2>
     @for (row of planRows(); track row.id) {
       <button
         app-ui-row-button
@@ -51,7 +57,7 @@
   </section>
 
   <section class="profile-page__section">
-    <h2 class="profile-page__section-title">Konto</h2>
+    <h2 class="profile-page__section-title">{{ 'profile.page.account' | translate }}</h2>
     @for (row of accountRows(); track row.id) {
       <button
         app-ui-row-button
@@ -61,31 +67,42 @@
       ></button>
     }
     <div class="profile-page__toggle">
-      <span class="profile-page__toggle-label">Lys tilstand</span>
+      <span class="profile-page__toggle-label">{{ 'profile.page.lightMode' | translate }}</span>
       <app-ui-switch
-        ariaLabel="Lys tilstand"
+        [ariaLabel]="'profile.page.lightMode' | translate"
         [checked]="isLight()"
         (checkedChange)="setLight($event)"
       />
     </div>
     <div class="profile-page__toggle">
-      <span class="profile-page__toggle-label">Notifikationer</span>
+      <span class="profile-page__toggle-label">{{ 'profile.page.language' | translate }}</span>
+      <app-ui-segmented-control
+        class="profile-page__language"
+        variant="compact"
+        [ariaLabel]="'profile.page.language' | translate"
+        [options]="languages"
+        [value]="language()"
+        (valueChange)="setLanguage($event)"
+      />
+    </div>
+    <div class="profile-page__toggle">
+      <span class="profile-page__toggle-label">{{ 'profile.page.notifications' | translate }}</span>
       <app-ui-switch
-        ariaLabel="Notifikationer"
+        [ariaLabel]="'profile.page.notifications' | translate"
         [checked]="notificationsEnabled()"
         (checkedChange)="setNotifications($event)"
       />
     </div>
     <button
       app-ui-row-button
-      label="Påmindelser"
+      [label]="'profile.page.reminders' | translate"
       [value]="remindersValue()"
       (click)="openReminders()"
     ></button>
   </section>
 
   <section class="profile-page__section">
-    <h2 class="profile-page__section-title">Præstationer</h2>
+    <h2 class="profile-page__section-title">{{ 'profile.page.achievements' | translate }}</h2>
     <app-achievements [achievements]="achievements()" />
   </section>
 
@@ -97,7 +114,7 @@
     class="profile-page__logout"
     (click)="askLogout()"
   >
-    Log ud
+    {{ 'profile.page.logout' | translate }}
   </button>
 
   <button
@@ -108,7 +125,7 @@
     class="profile-page__delete-account"
     (click)="askDeleteAccount()"
   >
-    Slet konto
+    {{ 'profile.page.deleteAccount' | translate }}
   </button>
 </div>
 

@@ -1,14 +1,14 @@
 <button
   class="weight-ruler-input__step weight-ruler-input__step--minus"
   type="button"
-  aria-label="Minus 0,1"
+  [attr.aria-label]="'weight.rulerInput.minus' | translate"
   (click)="step(-1)"
 >
   −
 </button>
 <app-ui-ruler
   size="lg"
-  ariaLabel="Vægt i kilo"
+  [ariaLabel]="'weight.rulerInput.ariaLabel' | translate"
   [min]="minKg"
   [max]="maxKg"
   [step]="stepKg"
@@ -19,7 +19,7 @@
 <button
   class="weight-ruler-input__step weight-ruler-input__step--plus"
   type="button"
-  aria-label="Plus 0,1"
+  [attr.aria-label]="'weight.rulerInput.plus' | translate"
   (click)="step(1)"
 >
   +

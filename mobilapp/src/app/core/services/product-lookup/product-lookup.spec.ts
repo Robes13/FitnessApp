@@ -11,6 +11,7 @@ import { STORAGE_KEY } from '../../constants/storage-key';
 import { ProductLookupResult, ScannedProduct } from '../../models/barcode';
 import { OpenFoodFactsProductResponse } from '../../models/open-food-facts';
 import { FakeStorage, createFakeStorage } from '../../testing/fake-document';
+import { Translate, injectTranslate } from '../language/translate';
 import { provideCoreTestEnvironment } from '../../testing/test-providers';
 import { ProductLookupService, toScannedProduct } from './product-lookup';
 
@@ -174,13 +175,21 @@ describe('ProductLookupService', () => {
 });
 
 describe('toScannedProduct', () => {
+  let t: Translate;
+
+  beforeEach(() => {
+    t = TestBed.runInInjectionContext(() => injectTranslate());
+  });
+
   it('falls back to the English name, then to the barcode, and skips a missing brand', () => {
     expect(
-      toScannedProduct(BARCODE, { product_name: 'Oats', nutriments: { 'energy-kcal_100g': 370 } })
-        ?.item.name,
+      toScannedProduct(t, BARCODE, {
+        product_name: 'Oats',
+        nutriments: { 'energy-kcal_100g': 370 },
+      })?.item.name,
     ).toBe('Oats');
 
-    const unnamed = toScannedProduct(BARCODE, { nutriments: { 'energy-kcal_100g': 370 } });
+    const unnamed = toScannedProduct(t, BARCODE, { nutriments: { 'energy-kcal_100g': 370 } });
     expect(unnamed?.item.name).toBe(`Vare ${BARCODE}`);
     expect(unnamed?.item).not.toHaveProperty('brand');
     expect(unnamed?.servingGrams).toBeNull();
@@ -188,7 +197,10 @@ describe('toScannedProduct', () => {
 
   it('only reads a serving size given in grams', () => {
     const product = (serving: string): ScannedProduct | null =>
-      toScannedProduct(BARCODE, { serving_size: serving, nutriments: { 'energy-kcal_100g': 40 } });
+      toScannedProduct(t, BARCODE, {
+        serving_size: serving,
+        nutriments: { 'energy-kcal_100g': 40 },
+      });
 
     expect(product('30 g')?.servingGrams).toBe(30);
     expect(product('12,5g')?.servingGrams).toBe(13);
@@ -196,25 +208,28 @@ describe('toScannedProduct', () => {
   });
 
   it('falls back to kJ when kcal is missing', () => {
-    expect(toScannedProduct(BARCODE, { nutriments: { 'energy-kj_100g': 418.4 } })?.item.kcal).toBe(
-      100,
-    );
-    expect(toScannedProduct(BARCODE, { nutriments: { energy_100g: '837' } })?.item.kcal).toBe(200);
     expect(
-      toScannedProduct(BARCODE, {
+      toScannedProduct(t, BARCODE, { nutriments: { 'energy-kj_100g': 418.4 } })?.item.kcal,
+    ).toBe(100);
+    expect(toScannedProduct(t, BARCODE, { nutriments: { energy_100g: '837' } })?.item.kcal).toBe(
+      200,
+    );
+    expect(
+      toScannedProduct(t, BARCODE, {
         nutriments: { 'energy-kcal_100g': 50, 'energy-kj_100g': 1000 },
       })?.item.kcal,
     ).toBe(50);
   });
 
   it('labels liquids per 100 ml', () => {
-    const quantity = (product: Parameters<typeof toScannedProduct>[1]): string | undefined =>
-      toScannedProduct(BARCODE, { ...product, nutriments: { 'energy-kcal_100g': 42 } })?.item
+    const quantity = (product: Parameters<typeof toScannedProduct>[2]): string | undefined =>
+      toScannedProduct(t, BARCODE, { ...product, nutriments: { 'energy-kcal_100g': 42 } })?.item
         .quantity;
 
     expect(quantity({ nutrition_data_per: '100ml' })).toBe('100 ml');
     expect(
-      toScannedProduct(BARCODE, { quantity: '1 l', nutriments: { 'energy-kcal_100g': 42 } })?.unit,
+      toScannedProduct(t, BARCODE, { quantity: '1 l', nutriments: { 'energy-kcal_100g': 42 } })
+        ?.unit,
     ).toBe('ml');
     expect(quantity({ quantity: '1,5 L' })).toBe('100 ml');
     expect(quantity({ quantity: '33 cl' })).toBe('100 ml');
@@ -223,6 +238,6 @@ describe('toScannedProduct', () => {
   });
 
   it('rejects negative nutrition values', () => {
-    expect(toScannedProduct(BARCODE, { nutriments: { 'energy-kcal_100g': -5 } })).toBeNull();
+    expect(toScannedProduct(t, BARCODE, { nutriments: { 'energy-kcal_100g': -5 } })).toBeNull();
   });
 });

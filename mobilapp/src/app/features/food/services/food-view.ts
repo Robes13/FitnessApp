@@ -7,6 +7,7 @@ import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
 import { formatDayLabel, formatGrams } from '../../../core/utils/date-format';
 import { NOW } from '../../../core/utils/now';
+import { injectTranslate } from '../../../core/services/language/translate';
 import { ProgressBarTone } from '../../../shared/components/ui-progress-bar/ui-progress-bar';
 
 /** The meal the sheet opens on when the user hasn't selected one themselves (the design's `addMeal || 'morgen'`). */
@@ -18,15 +19,15 @@ const NO_KCAL_TEXT = '–';
 /** One of the three macros on the Mad screen. `key` points into `Macros`. */
 interface MacroDefinition {
   readonly key: 'protein' | 'carbs' | 'fat';
-  readonly label: string;
+  readonly labelKey: string;
   readonly tone: ProgressBarTone;
 }
 
 /** The design's `macros`: Protein orange, Carbs blue (`selected`), Fat gray (`secondary`). */
 const MACRO_DEFINITIONS: readonly MacroDefinition[] = [
-  { key: 'protein', label: 'Protein', tone: 'accent' },
-  { key: 'carbs', label: 'Kulhydrat', tone: 'selected' },
-  { key: 'fat', label: 'Fedt', tone: 'secondary' },
+  { key: 'protein', labelKey: 'food.view.protein', tone: 'accent' },
+  { key: 'carbs', labelKey: 'food.view.carbs', tone: 'selected' },
+  { key: 'fat', labelKey: 'food.view.fat', tone: 'secondary' },
 ];
 
 export interface MacroCardView {
@@ -64,9 +65,10 @@ export class FoodViewService {
   private readonly foodLog = inject(FoodLogService);
   private readonly calculator = inject(NutritionCalculator);
   private readonly now = inject(NOW);
+  private readonly t = injectTranslate();
 
   /** The design's `todayLabel`, e.g. `'Mandag 21. sep'`. The day doesn't change while the screen is open. */
-  readonly todayLabel = formatDayLabel(this.now());
+  readonly todayLabel = computed(() => formatDayLabel(this.t, this.now()));
 
   readonly kcalTarget: Signal<number> = inject(AdaptiveGoalService).kcalTarget;
   readonly kcalEaten = computed(() => this.foodLog.totals().kcal);
@@ -80,17 +82,17 @@ export class FoodViewService {
   readonly macroCards = computed<readonly MacroCardView[]>(() => {
     const goals = this.calculator.macroGoals(this.kcalTarget());
     const totals = this.foodLog.totals();
-    return MACRO_DEFINITIONS.map(({ key, label, tone }) => {
+    return MACRO_DEFINITIONS.map(({ key, labelKey, tone }) => {
       const value = totals[key];
       const goal = goals[key];
       const progress = fraction(value, goal);
       return {
         key,
-        label,
+        label: this.t(labelKey),
         tone,
         progress,
         percentLabel: `${Math.round(progress * PERCENT)}%`,
-        text: `${formatGrams(value)} / ${goal} g`,
+        text: this.t('food.view.macroProgress', { eaten: formatGrams(value), goal }),
       };
     });
   });
@@ -100,19 +102,21 @@ export class FoodViewService {
     return MEALS.map((meal) => {
       const entries = byMeal.get(meal.id) ?? [];
       const kcal = entries.reduce((sum, entry) => sum + entry.kcal, 0);
+      const label = this.t(meal.labelKey);
       return {
         id: meal.id,
-        label: meal.label,
-        addLabel: `+ Tilføj til ${meal.label.toLowerCase()}`,
+        label,
+        addLabel: this.t('food.view.addTo', { mealName: label.toLowerCase() }),
         entries,
-        kcalText: kcal > 0 ? `${kcal} kcal` : NO_KCAL_TEXT,
+        kcalText: kcal > 0 ? `${kcal} ${this.t('common.unit.kcal')}` : NO_KCAL_TEXT,
         hasKcal: kcal > 0,
       };
     });
   });
 
   mealLabel(id: MealId): string {
-    return MEALS.find((meal) => meal.id === id)?.label ?? '';
+    const meal = MEALS.find((candidate) => candidate.id === id);
+    return meal ? this.t(meal.labelKey) : '';
   }
 }
 

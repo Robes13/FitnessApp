@@ -28,6 +28,8 @@ export interface HistoryEntry {
 
 /** The entries for one day under the heading `'I dag · 21. sep'`. */
 export interface HistoryGroup {
+  /** The day as `YYYY-MM-DD` – a language-independent key for grouping and `track`. */
+  readonly id: string;
   readonly label: string;
   readonly entries: readonly HistoryEntry[];
   /** The day's logged kcal and macros (`'1.970 kcal · P 120 g · K 210 g · F 60 g'`), or `null` without meals. */
@@ -36,5 +38,5 @@ export interface HistoryGroup {
 
 export interface HistoryFilter {
   readonly id: HistoryFilterId;
-  readonly label: string;
+  readonly labelKey: string;
 }

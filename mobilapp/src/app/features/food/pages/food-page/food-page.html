@@ -1,10 +1,13 @@
 <div class="food-page__scroll">
   <header class="food-page__header">
-    <h1 class="food-page__title">Dagens <span class="food-page__title-accent">mad</span></h1>
-    <p class="food-page__date">{{ view.todayLabel }}</p>
+    <h1 class="food-page__title">
+      {{ 'food.page.titleStart' | translate }}
+      <span class="food-page__title-accent">{{ 'food.page.titleAccent' | translate }}</span>
+    </h1>
+    <p class="food-page__date">{{ view.todayLabel() }}</p>
   </header>
 
-  <section class="food-page__summary" aria-label="Kalorier i dag">
+  <section class="food-page__summary" [attr.aria-label]="'food.page.summaryLabel' | translate">
     <app-ui-progress-ring
       class="food-page__ring"
       [value]="view.kcalProgress()"
@@ -12,12 +15,15 @@
       [strokeWidth]="ringStrokeWidth"
     />
     <div class="food-page__summary-text">
-      <p class="food-page__summary-label">Tilbage i dag</p>
+      <p class="food-page__summary-label">{{ 'food.page.leftToday' | translate }}</p>
       <p class="food-page__summary-value">
-        {{ view.kcalLeft() }}<span class="food-page__summary-unit">kcal</span>
+        {{ view.kcalLeft()
+        }}<span class="food-page__summary-unit">{{ 'common.unit.kcal' | translate }}</span>
       </p>
       <p class="food-page__summary-meta">
-        {{ view.kcalEaten() }} spist · mål {{ view.kcalTarget() }}
+        {{
+          'food.page.eatenOfGoal' | translate: { eaten: view.kcalEaten(), goal: view.kcalTarget() }
+        }}
       </p>
     </div>
   </section>
@@ -43,14 +49,14 @@
   <div class="food-page__actions">
     <button app-ui-button type="button" class="food-page__add" (click)="openAdd()">
       <app-ui-icon name="plus" size="md" [strokeWidth]="3" />
-      Tilføj mad
+      {{ 'food.page.addFood' | translate }}
     </button>
     <button
       app-ui-icon-button
       type="button"
       tone="outline"
       class="food-page__scan"
-      aria-label="Scan stregkode"
+      [attr.aria-label]="'food.page.scan' | translate"
       (click)="openScanner()"
     >
       <app-ui-icon name="scan" size="2xl" />

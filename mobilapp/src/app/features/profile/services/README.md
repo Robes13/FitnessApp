@@ -56,12 +56,6 @@ først når en gyldig målvægt gemmes, skrives mål og målvægt samlet med
 `applyGoalWithGoalWeight()`. Lukkes arket, beholdes det gamle mål. "Holde vægten" gemmes
 altid straks og skjuler Målvægt og Tempo.
 
-## Adgangskode
-
-Adgangskoden er ikke en del af `UserProfile`. "Ny adgangskode" sendes derfor til
-`AuthApi.resetPassword()` – backenden er det eneste sted, en adgangskode kan ændres – og
-arket viser spinner og fejltekst fra det kald.
-
 ## Præstationer
 
 `AchievementsService` regner de tolv badges ud af brugerens egne data: madloggen, vejningerne,

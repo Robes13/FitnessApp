@@ -1,4 +1,3 @@
-import { MealDefinition } from '../models/meal';
 import {
   MealReminderId,
   ReminderDefinition,
@@ -7,8 +6,8 @@ import {
 } from '../models/reminder';
 import { MEALS } from './meals';
 
-function mealLabel(id: MealReminderId): MealDefinition['label'] {
-  return MEALS.find((meal) => meal.id === id)?.label ?? id;
+function mealLabelKey(id: MealReminderId): string {
+  return MEALS.find((meal) => meal.id === id)?.labelKey ?? id;
 }
 
 /**
@@ -18,46 +17,46 @@ function mealLabel(id: MealReminderId): MealDefinition['label'] {
 export const REMINDER_DEFINITIONS: readonly ReminderDefinition[] = [
   {
     id: 'morgen',
-    label: mealLabel('morgen'),
+    labelKey: mealLabelKey('morgen'),
     notificationId: 1001,
-    title: 'Tid til morgenmad',
-    body: 'Husk at logge din morgenmad.',
+    titleKey: 'core.reminders.breakfast.title',
+    bodyKey: 'core.reminders.breakfast.body',
     allowsWeekday: false,
     defaults: { enabled: false, time: { hour: 8, minute: 0 }, weekday: null },
   },
   {
     id: 'frokost',
-    label: mealLabel('frokost'),
+    labelKey: mealLabelKey('frokost'),
     notificationId: 1002,
-    title: 'Tid til frokost',
-    body: 'Husk at logge din frokost.',
+    titleKey: 'core.reminders.lunch.title',
+    bodyKey: 'core.reminders.lunch.body',
     allowsWeekday: false,
     defaults: { enabled: false, time: { hour: 12, minute: 0 }, weekday: null },
   },
   {
     id: 'aften',
-    label: mealLabel('aften'),
+    labelKey: mealLabelKey('aften'),
     notificationId: 1003,
-    title: 'Tid til aftensmad',
-    body: 'Husk at logge din aftensmad.',
+    titleKey: 'core.reminders.dinner.title',
+    bodyKey: 'core.reminders.dinner.body',
     allowsWeekday: false,
     defaults: { enabled: false, time: { hour: 18, minute: 30 }, weekday: null },
   },
   {
     id: 'weigh-in',
-    label: 'Vejning',
+    labelKey: 'core.reminders.weighIn.label',
     notificationId: 1004,
-    title: 'Tid til at veje dig',
-    body: 'Træd op på vægten og log din vægt.',
+    titleKey: 'core.reminders.weighIn.title',
+    bodyKey: 'core.reminders.weighIn.body',
     allowsWeekday: true,
     defaults: { enabled: false, time: { hour: 7, minute: 30 }, weekday: null },
   },
   {
     id: 'daily-log',
-    label: 'Dagens madlog',
+    labelKey: 'core.reminders.dailyLog.label',
     notificationId: 1005,
-    title: 'Husk at logge dagens mad',
-    body: 'Få dagens måltider med, før du går i seng.',
+    titleKey: 'core.reminders.dailyLog.title',
+    bodyKey: 'core.reminders.dailyLog.body',
     allowsWeekday: false,
     defaults: { enabled: true, time: { hour: 21, minute: 0 }, weekday: null },
   },
@@ -80,10 +79,10 @@ export const DEFAULT_REMINDER_SETTINGS: ReminderSettings = {
   'daily-log': definitionFor('daily-log').defaults,
 };
 
-/** Shown to the user when scheduling on the device fails. */
-export const REMINDER_ERROR = {
-  SCHEDULE: 'Påmindelserne kunne ikke planlægges på telefonen. Prøv igen senere.',
-  PERMISSION: 'Vi kunne ikke spørge om lov til notifikationer. Prøv igen senere.',
+/** Translation keys of what the user sees when scheduling on the device fails. */
+export const REMINDER_ERROR_KEY = {
+  SCHEDULE: 'core.reminders.error.schedule',
+  PERMISSION: 'core.reminders.error.permission',
 } as const;
 
 export function definitionFor(id: ReminderId): ReminderDefinition {

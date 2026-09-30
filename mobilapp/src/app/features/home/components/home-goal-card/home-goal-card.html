@@ -1,13 +1,14 @@
 <app-ui-card tone="accent" padding="lg">
   <div class="home-goal-card__row">
     <div>
-      <div class="home-goal-card__caption">Til mål</div>
+      <div class="home-goal-card__caption">{{ 'home.goalCard.toGoal' | translate }}</div>
       <div class="home-goal-card__number">{{ summary().toGoalText }}</div>
     </div>
     <div class="home-goal-card__end">
-      <div class="home-goal-card__caption">Mål</div>
+      <div class="home-goal-card__caption">{{ 'home.goalCard.goal' | translate }}</div>
       <div class="home-goal-card__number">
-        {{ summary().goalWeightText }}<span class="home-goal-card__unit">kg</span>
+        {{ summary().goalWeightText
+        }}<span class="home-goal-card__unit">{{ 'common.unit.kg' | translate }}</span>
       </div>
     </div>
   </div>

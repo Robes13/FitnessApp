@@ -5,12 +5,13 @@ import {
   computed,
   input,
 } from '@angular/core';
+import { injectTranslate } from '../../../core/services/language/translate';
 import { FigureBandTone, FigureBody, FigureExpression } from './figure-body';
 import { animatedFigure } from './figure-motion';
 import { computeFigureGeometry } from './figure-geometry';
 
 /** The design's default aria-label for the figure. */
-const DEFAULT_ARIA_LABEL = 'Figur';
+const DEFAULT_ARIA_LABEL_KEY = 'shared.figure.ariaLabel';
 const LAMP_X = 140;
 
 /**
@@ -42,7 +43,12 @@ export class Figure {
   readonly showCeiling = input(false, { transform: booleanAttribute });
   readonly animated = input(true, { transform: booleanAttribute });
   readonly expression = input<Partial<FigureExpression>>({});
-  readonly ariaLabel = input(DEFAULT_ARIA_LABEL);
+  readonly ariaLabel = input<string>();
+
+  private readonly t = injectTranslate();
+  protected readonly ariaLabelText = computed(
+    () => this.ariaLabel() ?? this.t(DEFAULT_ARIA_LABEL_KEY),
+  );
 
   readonly geometry = animatedFigure(
     () => computeFigureGeometry(this.weightKg(), this.heightCm(), this.mood()),

@@ -156,24 +156,6 @@ describe('ProfileEditSheet', () => {
     expect(result.closed).toBe(1);
   });
 
-  it('keeps Gem disabled until the two passwords match and are long enough', async () => {
-    const { fixture, host } = await open('password');
-    const fields = host.querySelectorAll<HTMLInputElement>('input[type="password"]');
-    const save = button(host, 'Gem');
-
-    expect(fields.length).toBe(2);
-    expect(save.disabled).toBe(true);
-
-    setValue(at(fields, 0), 'langnokkode');
-    setValue(at(fields, 1), 'ikke-ens');
-    await fixture.whenStable();
-    expect(save.disabled).toBe(true);
-
-    setValue(at(fields, 1), 'langnokkode');
-    await fixture.whenStable();
-    expect(save.disabled).toBe(false);
-  });
-
   it('keeps Gem disabled for an invalid e-mail', async () => {
     const { fixture, host } = await open('email');
     const field = host.querySelector<HTMLInputElement>('input');

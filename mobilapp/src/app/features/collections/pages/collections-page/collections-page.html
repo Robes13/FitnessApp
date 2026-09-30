@@ -1,22 +1,28 @@
 <div class="collections-page__scroll">
   <header class="collections-page__header">
     <div class="collections-page__intro">
-      <h1 class="collections-page__title">Samlinger</h1>
-      <p class="collections-page__subtitle">Dine varer og retter – log dem direkte som spist.</p>
+      <h1 class="collections-page__title">{{ 'collections.page.title' | translate }}</h1>
+      <p class="collections-page__subtitle">
+        {{ 'collections.page.subtitle' | translate }}
+      </p>
     </div>
     <button
       app-ui-icon-button
       size="sm"
       tone="accent"
       type="button"
-      aria-label="Opret samling"
+      [attr.aria-label]="'collections.page.create' | translate"
       (click)="sheetOpen.set(true)"
     >
       <app-ui-icon name="plus" size="xl" [strokeWidth]="1.9" />
     </button>
   </header>
 
-  <div class="collections-page__chips" role="group" aria-label="Filtrér efter samling">
+  <div
+    class="collections-page__chips"
+    role="group"
+    [attr.aria-label]="'collections.page.filter' | translate"
+  >
     @for (chip of chips(); track chip.id) {
       <button
         app-ui-chip
@@ -33,7 +39,7 @@
   </div>
 
   @if (entries().length === 0) {
-    <app-ui-empty-state class="collections-page__empty" [message]="emptyMessage" />
+    <app-ui-empty-state class="collections-page__empty" [message]="emptyMessageKey | translate" />
   } @else {
     <ul class="collections-page__list">
       @for (entry of entries(); track entry.id) {

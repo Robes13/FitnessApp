@@ -9,7 +9,11 @@
         }
       </h1>
     </div>
-    <a class="home-page__avatar" [routerLink]="profilePath" aria-label="Profil">
+    <a
+      class="home-page__avatar"
+      [routerLink]="profilePath"
+      [attr.aria-label]="'home.page.profileAriaLabel' | translate"
+    >
       <app-profile-avatar size="sm" [photo]="summary.photo()" [initial]="summary.initial()" />
     </a>
   </header>

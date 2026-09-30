@@ -1,9 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { DEFAULT_PROFILE } from '../../constants/profile-defaults';
-import { REMINDER_ERROR } from '../../constants/reminders';
+import { REMINDER_ERROR_KEY } from '../../constants/reminders';
 import { STORAGE_KEY } from '../../constants/storage-key';
 import { ReminderNotifier, ReminderPermission, ScheduledReminder } from '../../models/reminder';
 import { FakeStorage, createFakeStorage } from '../../testing/fake-document';
+import { injectTranslate } from '../language/translate';
 import { provideCoreTestEnvironment } from '../../testing/test-providers';
 import { REMINDER_NOTIFIER } from './reminder-notifier';
 import { ReminderService } from './reminders';
@@ -55,6 +56,10 @@ class FakeNotifier implements ReminderNotifier {
   pendingIds(): number[] {
     return [...this.pending.keys()].sort();
   }
+}
+
+function translate(key: string): string {
+  return TestBed.runInInjectionContext(() => injectTranslate())(key);
 }
 
 const LOGGED_IN = { isLoggedIn: true, isEmailVerified: true };
@@ -224,7 +229,7 @@ describe('ReminderService', () => {
     const service = setup();
     await settle(service);
 
-    expect(service.error()).toBe(REMINDER_ERROR.SCHEDULE);
+    expect(service.error()).toBe(translate(REMINDER_ERROR_KEY.SCHEDULE));
     expect(consoleError).toHaveBeenCalled();
 
     notifier.failSchedule = false;
@@ -244,7 +249,7 @@ describe('ReminderService', () => {
     await settle(service);
     await service.sync();
 
-    expect(service.error()).toBe(REMINDER_ERROR.PERMISSION);
+    expect(service.error()).toBe(translate(REMINDER_ERROR_KEY.PERMISSION));
 
     notifier.permission = 'granted';
     await service.sync();

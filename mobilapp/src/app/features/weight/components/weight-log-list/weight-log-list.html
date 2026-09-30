@@ -1,4 +1,4 @@
-<h2 class="weight-log-list__title">Seneste vejninger</h2>
+<h2 class="weight-log-list__title">{{ 'weight.logList.title' | translate }}</h2>
 
 @if (rows().length > 0) {
   <ul class="weight-log-list__items">
@@ -19,7 +19,8 @@
               {{ row.delta }}
             </span>
             <span class="weight-log-list__kg">
-              {{ row.kg }}<span class="weight-log-list__unit">kg</span>
+              {{ row.kg
+              }}<span class="weight-log-list__unit">{{ 'common.unit.kg' | translate }}</span>
             </span>
           </span>
         </button>

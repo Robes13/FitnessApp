@@ -1,11 +1,12 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { newId } from '../../utils/id';
 import { STORAGE_KEY } from '../../constants/storage-key';
-import { WEIGHT_RANGE_DAYS, WEIGHT_RANGE_LABEL } from '../../constants/weight';
+import { WEIGHT_RANGE_DAYS, WEIGHT_RANGE_LABEL_KEY } from '../../constants/weight';
 import { WeighEntry, WeightPoint, WeightRange } from '../../models/weight';
 import { addDays, isSameDay } from '../../utils/date-format';
 import { roundTo } from '../../utils/math';
 import { NOW } from '../../utils/now';
+import { injectTranslate } from '../language/translate';
 import { StorageService } from '../storage/storage';
 import { UserProfileService } from '../user-profile/user-profile';
 
@@ -23,6 +24,7 @@ export class WeightLogService {
   private readonly storage = inject(StorageService);
   private readonly now = inject(NOW);
   private readonly profile = inject(UserProfileService);
+  private readonly t = injectTranslate();
   private readonly entriesState = signal<readonly WeighEntry[]>(this.restore());
 
   readonly entries: Signal<readonly WeighEntry[]> = this.entriesState.asReadonly();
@@ -88,7 +90,7 @@ export class WeightLogService {
   }
 
   rangeLabel(range: WeightRange): string {
-    return WEIGHT_RANGE_LABEL[range];
+    return this.t(WEIGHT_RANGE_LABEL_KEY[range]);
   }
 
   /** Persists the entries and syncs the profile's weight to the latest one (if any). */

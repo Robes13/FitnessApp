@@ -12,11 +12,12 @@ import {
   viewChildren,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { newId } from '../../../../core/utils/id';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import {
-  COLLECTION_ICON_LABELS,
+  COLLECTION_ICON_LABEL_KEYS,
   COLLECTION_ICON_NAMES,
   COLLECTION_ICON_PREVIEW_COUNT,
   CollectionIconName,
@@ -28,6 +29,7 @@ import {
   DuplicateCustomFoodNameError,
   FoodLogService,
 } from '../../../../core/services/food-log/food-log';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import {
   FoodPicker,
@@ -46,21 +48,27 @@ const DEFAULT_ICON: CollectionIconName = 'star';
 const DEFAULT_MEAL: MealId = 'morgen';
 const DRAFT_ID_PREFIX = 'item';
 const HIDDEN_ICON_COUNT = COLLECTION_ICON_NAMES.length - COLLECTION_ICON_PREVIEW_COUNT;
-const MORE_ICONS_LABEL = {
-  collapsed: `Vis flere (${HIDDEN_ICON_COUNT})`,
-  expanded: 'Vis færre',
+const MORE_ICONS_LABEL_KEY = {
+  collapsed: 'collections.newCollectionSheet.showMoreIcons',
+  expanded: 'collections.newCollectionSheet.showFewerIcons',
 } as const;
-const DUPLICATE_NAME_MESSAGE = 'Du har allerede en samling med det navn.';
-/** A new custom food clashed with an existing one's name – it's still put in the draft. */
-const DUPLICATE_CUSTOM_FOOD_MESSAGE = (name: string): string =>
-  `Du har allerede en egen vare med navnet "${name}", så den blev ikke gemt igen under Mine varer.`;
+const DUPLICATE_NAME_MESSAGE_KEY = 'collections.newCollectionSheet.duplicateName';
+/** A new custom food clashed with an existing one's name – it's still put in the draft. Param `foodName`. */
+const DUPLICATE_CUSTOM_FOOD_MESSAGE_KEY = 'collections.newCollectionSheet.duplicateCustomFood';
+const REMOVE_ITEM_LABEL_KEY = 'collections.newCollectionSheet.removeItem';
 /** Heading and primary button – "Ny samling" when creating, "Rediger samling" when editing. */
-const SHEET_TEXT = {
-  create: { title: 'Ny', submit: 'Opret samling' },
-  edit: { title: 'Rediger', submit: 'Gem ændringer' },
+const SHEET_TEXT_KEY = {
+  create: {
+    title: 'collections.newCollectionSheet.titleNew',
+    submit: 'collections.newCollectionSheet.submitCreate',
+  },
+  edit: {
+    title: 'collections.newCollectionSheet.titleEdit',
+    submit: 'collections.newCollectionSheet.submitEdit',
+  },
 } as const;
 /** The food picker's primary button when the food lands in a collection instead of today's log. */
-const SAVE_AND_ADD_LABEL = 'Gem og føj til samlingen';
+const SAVE_AND_ADD_LABEL_KEY = 'collections.newCollectionSheet.saveAndAdd';
 /** The icon grid has six columns, so up/down jumps a whole row. */
 const ICON_KEY_DELTAS: Readonly<Record<string, number>> = {
   ArrowLeft: -1,
@@ -94,6 +102,7 @@ interface NewCollectionForm {
     FoodPicker,
     MealPicker,
     ReactiveFormsModule,
+    TranslatePipe,
     UiButton,
     UiEmptyState,
     UiFormError,
@@ -118,6 +127,7 @@ export class NewCollectionSheet {
   readonly updated = output<NewCollectionInput>();
   private readonly foodLog = inject(FoodLogService);
   private readonly collections = inject(CollectionsService);
+  private readonly t = injectTranslate();
 
   protected readonly form = new FormGroup<NewCollectionForm>({
     name: new FormControl('', { nonNullable: true }),
@@ -131,17 +141,25 @@ export class NewCollectionSheet {
     const name = this.name();
     return name !== '' && this.collections.isNameTaken(name, this.collection()?.id);
   });
-  protected readonly nameError = computed(() => (this.nameTaken() ? DUPLICATE_NAME_MESSAGE : null));
-  protected readonly canSave = computed(() => this.name() !== '' && !this.nameTaken());
-  protected readonly text = computed(() =>
-    this.collection() ? SHEET_TEXT.edit : SHEET_TEXT.create,
+  protected readonly nameError = computed(() =>
+    this.nameTaken() ? this.t(DUPLICATE_NAME_MESSAGE_KEY) : null,
   );
+  protected readonly canSave = computed(() => this.name() !== '' && !this.nameTaken());
+  protected readonly text = computed(() => {
+    const keys = this.collection() ? SHEET_TEXT_KEY.edit : SHEET_TEXT_KEY.create;
+    return { title: this.t(keys.title), submit: this.t(keys.submit) };
+  });
 
   protected readonly meal = signal<MealId>(DEFAULT_MEAL);
   protected readonly icon = signal<CollectionIconName>(DEFAULT_ICON);
   protected readonly draft = signal<readonly FoodItem[]>([]);
-  /** Feedback when a custom food couldn't be saved under "My foods"; cleared on reset. */
-  protected readonly customFoodError = signal<string | null>(null);
+  /** The custom food whose name was already taken under "My foods"; cleared on reset. */
+  private readonly duplicateCustomFoodName = signal<string | null>(null);
+  /** Feedback when a custom food couldn't be saved under "My foods". */
+  protected readonly customFoodError = computed(() => {
+    const foodName = this.duplicateCustomFoodName();
+    return foodName === null ? null : this.t(DUPLICATE_CUSTOM_FOOD_MESSAGE_KEY, { foodName });
+  });
 
   private readonly showAllIcons = signal(false);
   protected readonly icons = computed<readonly CollectionIconName[]>(() =>
@@ -150,7 +168,9 @@ export class NewCollectionSheet {
       : COLLECTION_ICON_NAMES.slice(0, COLLECTION_ICON_PREVIEW_COUNT),
   );
   protected readonly moreIconsLabel = computed(() =>
-    this.showAllIcons() ? MORE_ICONS_LABEL.expanded : MORE_ICONS_LABEL.collapsed,
+    this.showAllIcons()
+      ? this.t(MORE_ICONS_LABEL_KEY.expanded)
+      : this.t(MORE_ICONS_LABEL_KEY.collapsed, { count: HIDDEN_ICON_COUNT }),
   );
 
   protected readonly pickerOpen = signal(false);
@@ -161,7 +181,7 @@ export class NewCollectionSheet {
     const index = this.editIndex();
     return index === null ? null : (this.draft()[index] ?? null);
   });
-  protected readonly saveAndAddLabel = SAVE_AND_ADD_LABEL;
+  protected readonly saveAndAddLabelKey = SAVE_AND_ADD_LABEL_KEY;
 
   private readonly iconOptions = viewChildren<ElementRef<HTMLButtonElement>>('iconOption');
   /** Index of the selected icon in the grid actually shown – −1 when it's folded away. */
@@ -186,7 +206,11 @@ export class NewCollectionSheet {
   }
 
   protected iconLabel(icon: CollectionIconName): string {
-    return COLLECTION_ICON_LABELS[icon];
+    return this.t(COLLECTION_ICON_LABEL_KEYS[icon]);
+  }
+
+  protected removeLabel(item: FoodItem): string {
+    return this.t(REMOVE_ITEM_LABEL_KEY, { foodName: item.name });
   }
 
   /**
@@ -303,14 +327,14 @@ export class NewCollectionSheet {
    * check it) shows a message instead of failing; the draft is unaffected either way.
    */
   private saveCustomFood(item: FoodItem): void {
-    this.customFoodError.set(null);
+    this.duplicateCustomFoodName.set(null);
     try {
       this.foodLog.addCustomFood(item, item.id);
     } catch (error) {
       if (!(error instanceof DuplicateCustomFoodNameError)) {
         throw error;
       }
-      this.customFoodError.set(DUPLICATE_CUSTOM_FOOD_MESSAGE(item.name));
+      this.duplicateCustomFoodName.set(item.name);
     }
   }
 
@@ -336,7 +360,7 @@ export class NewCollectionSheet {
     this.meal.set(collection?.meal ?? this.defaultMeal());
     this.icon.set(icon);
     this.draft.set(collection?.items ?? []);
-    this.customFoodError.set(null);
+    this.duplicateCustomFoodName.set(null);
     // An edited collection's icon may sit among the folded-away ones – show them all then.
     this.showAllIcons.set(COLLECTION_ICON_NAMES.indexOf(icon) >= COLLECTION_ICON_PREVIEW_COUNT);
     this.pickerOpen.set(false);

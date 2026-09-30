@@ -9,6 +9,7 @@ import {
   untracked,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { QUERY_PARAM } from '../../../../core/constants/app-route';
 import { MEAL_IDS } from '../../../../core/constants/meals';
 import { CustomFoodInput, FoodItem, LoggedFood } from '../../../../core/models/food';
@@ -17,6 +18,7 @@ import {
   DuplicateCustomFoodNameError,
   FoodLogService,
 } from '../../../../core/services/food-log/food-log';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import { FoodPickerStartStep } from '../../../../shared/components/food-picker/food-picker';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
@@ -44,9 +46,8 @@ const ADD_MEAL_PARAM: 'tilfoej' = QUERY_PARAM.ADD_MEAL;
 const KCAL_RING_DIAMETER = 84;
 const KCAL_RING_STROKE_WIDTH = 8.4;
 
-/** Shown when a new custom food clashes with an existing one's name (e.g. from the scanner). */
-const DUPLICATE_CUSTOM_FOOD_NOTICE = (name: string): string =>
-  `Du har allerede en egen vare med navnet "${name}", så den blev ikke gemt igen.`;
+/** Shown when a new custom food clashes with an existing one's name (e.g. from the scanner). Param `foodName`. */
+const DUPLICATE_CUSTOM_FOOD_NOTICE_KEY = 'food.page.duplicateCustomFood';
 
 /**
  * The Mad screen: today's calories and macros, the four meal groups and the ways into the log –
@@ -65,6 +66,7 @@ const DUPLICATE_CUSTOM_FOOD_NOTICE = (name: string): string =>
     BarcodeScanner,
     FoodAddSheet,
     FoodMealGroup,
+    TranslatePipe,
     UiButton,
     UiFormError,
     UiIcon,
@@ -85,6 +87,7 @@ export class FoodPage {
   private readonly foodLog = inject(FoodLogService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly t = injectTranslate();
 
   protected readonly ringDiameter = KCAL_RING_DIAMETER;
   protected readonly ringStrokeWidth = KCAL_RING_STROKE_WIDTH;
@@ -94,8 +97,13 @@ export class FoodPage {
   protected readonly editEntry = signal<LoggedFood | null>(null);
   protected readonly pickerStartStep = signal<FoodPickerStartStep>('search');
   protected readonly scannerOpen = signal(false);
-  /** Feedback after a custom food couldn't be saved; cleared when the sheet or scanner opens. */
-  protected readonly notice = signal<string | null>(null);
+  /** The custom food whose name was already taken; cleared when the sheet or scanner opens. */
+  private readonly duplicateCustomFoodName = signal<string | null>(null);
+  /** Feedback after a custom food couldn't be saved – translated live from the stored name. */
+  protected readonly notice = computed(() => {
+    const foodName = this.duplicateCustomFoodName();
+    return foodName === null ? null : this.t(DUPLICATE_CUSTOM_FOOD_NOTICE_KEY, { foodName });
+  });
 
   /** The meal the scanner saves under – the text belongs to the scanner's CTA. */
   protected readonly scannerMealLabel = computed(() => this.view.mealLabel(this.addMeal()));
@@ -130,7 +138,7 @@ export class FoodPage {
   }
 
   protected openEdit(entry: LoggedFood): void {
-    this.notice.set(null);
+    this.duplicateCustomFoodName.set(null);
     this.editEntry.set(entry);
     this.addMeal.set(entry.meal);
     this.pickerStartStep.set('search');
@@ -174,7 +182,7 @@ export class FoodPage {
    * leads back to the sheet – as in the design, where `openScan` doesn't touch `addOpen`.
    */
   protected openScanner(): void {
-    this.notice.set(null);
+    this.duplicateCustomFoodName.set(null);
     this.scannerOpen.set(true);
   }
 
@@ -205,7 +213,7 @@ export class FoodPage {
   }
 
   private startAdd(meal: MealId, step: FoodPickerStartStep): void {
-    this.notice.set(null);
+    this.duplicateCustomFoodName.set(null);
     this.editEntry.set(null);
     this.addMeal.set(meal);
     this.pickerStartStep.set(step);
@@ -220,7 +228,7 @@ export class FoodPage {
       if (!(error instanceof DuplicateCustomFoodNameError)) {
         throw error;
       }
-      this.notice.set(DUPLICATE_CUSTOM_FOOD_NOTICE(item.name));
+      this.duplicateCustomFoodName.set(item.name);
       return null;
     }
   }

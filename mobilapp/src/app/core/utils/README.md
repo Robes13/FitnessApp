@@ -4,14 +4,15 @@ Rene, sideeffektfrie hjælpefunktioner.
 
 ## `date-format.ts`
 
-Dansk dato- og talformatering som i designet:
+Dato- og talformatering som i designet (eksemplerne er på dansk). Funktionerne, der giver
+tekst, tager en `t: Translate` fra `injectTranslate()` som første parameter:
 
 | Funktion                                            | Eksempel                                   |
 | --------------------------------------------------- | ------------------------------------------ |
-| `formatRelativeDay(date, today)`                    | `'I dag'` · `'I går'` · `'3 dage siden'`   |
-| `formatDayLabel(date)`                              | `'Mandag 21. sep'`                         |
-| `formatDayMonth(date)`                              | `'21. sep'`                                |
-| `formatWeekdayAbbreviated(date)`                    | `'Tir.'`                                   |
+| `formatRelativeDay(t, date, today)`                 | `'I dag'` · `'I går'` · `'3 dage siden'`   |
+| `formatDayLabel(t, date)`                           | `'Mandag 21. sep'`                         |
+| `formatDayMonth(t, date)`                           | `'21. sep'`                                |
+| `formatWeekdayAbbreviated(t, date)`                 | `'Tir.'`                                   |
 | `formatTime(date)`                                  | `'07:45'`                                  |
 | `formatDecimal(74.5)`                               | `'74,5'`                                   |
 | `formatWeightKg(74.5)` / `formatWeightKg(75)`       | `'74,5'` · `'75'` (designets `weightText`) |
@@ -22,12 +23,18 @@ Dansk dato- og talformatering som i designet:
 | `fromIsoDate('2026-09-21')`                         | lokal midnat den dag (omvendt `toIsoDate`) |
 | `startOfDay`, `addDays`, `isSameDay`, `daysBetween` | dato-aritmetik på kalenderdage             |
 
-Navnelister: `DAY_NAMES_SHORT`, `DAY_NAMES_LONG`, `DAY_LETTERS`, `MONTH_NAMES_LONG`,
-`MONTH_NAMES_SHORT`.
+Navnelister (oversættelsesnøgler, mandag/januar først): `DAY_NAME_SHORT_KEYS`,
+`DAY_NAME_LONG_KEYS`, `DAY_LETTER_KEYS`, `MONTH_NAME_LONG_KEYS`, `MONTH_NAME_SHORT_KEYS`.
 
-Talformateringen er `Number.prototype.toLocaleString('da-DK', …)` — ikke håndlavede
-separatorer. Kun det typografiske minus i `formatSignedDecimal` sættes bagefter, fordi
-`Intl` bruger en almindelig bindestreg.
+Talformateringen er `Number.prototype.toLocaleString(…)` — ikke håndlavede separatorer. Locale
+følger appens sprog via signalet `numberLocale`, som `LanguageService` sætter med
+`setNumberLocale()` (`'74,5'` på dansk, `'74.5'` på engelsk), så en `computed()`, der formaterer et
+tal, genberegnes ved sprogskift. Kun det typografiske minus i `formatSignedDecimal` sættes
+bagefter, fordi `Intl` bruger en almindelig bindestreg. Eksemplerne ovenfor er på dansk.
+
+## `language.ts`
+
+`isLanguage(value)` – type guard for `Language`, bruges på gemte værdier og i oversættelses-loaderen.
 
 ## `clock-time.ts`
 

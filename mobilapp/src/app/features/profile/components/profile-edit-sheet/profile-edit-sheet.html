@@ -34,7 +34,7 @@
           type="button"
           size="lg"
           tone="outline"
-          aria-label="Mindre"
+          [attr.aria-label]="'profile.editSheet.decrease' | translate"
           (click)="stepNumber(-1)"
         >
           <app-ui-icon name="minus" size="lg" />
@@ -45,7 +45,7 @@
             type="number"
             inputmode="numeric"
             formControlName="value"
-            aria-label="Værdi"
+            [attr.aria-label]="'profile.editSheet.value' | translate"
             [attr.min]="number.min"
             [attr.max]="number.max"
             [attr.step]="number.step"
@@ -57,14 +57,16 @@
           type="button"
           size="lg"
           tone="outline"
-          aria-label="Mere"
+          [attr.aria-label]="'profile.editSheet.increase' | translate"
           (click)="stepNumber(1)"
         >
           <app-ui-icon name="plus" size="lg" />
         </button>
       </div>
       <app-ui-form-error tone="negative" [message]="numberError()" />
-      <button app-ui-button type="submit" block [disabled]="!canSaveNumber()">Gem</button>
+      <button app-ui-button type="submit" block [disabled]="!canSaveNumber()">
+        {{ 'common.save' | translate }}
+      </button>
     </form>
   }
 
@@ -73,41 +75,12 @@
       <app-ui-text-input
         type="email"
         autocomplete="email"
-        ariaLabel="E-mail"
+        [ariaLabel]="'profile.editSheet.email' | translate"
         formControlName="value"
         [placeholder]="text.placeholder"
       />
-      <button app-ui-button type="submit" block [disabled]="!canSaveText()">Gem</button>
-    </form>
-  }
-
-  @if (isPassword()) {
-    <form class="profile-edit-sheet__form" [formGroup]="passwordForm" (ngSubmit)="savePassword()">
-      <app-ui-text-input
-        type="password"
-        autocomplete="new-password"
-        placeholder="Ny adgangskode"
-        ariaLabel="Ny adgangskode"
-        formControlName="password"
-        [revealable]="false"
-      />
-      <app-ui-text-input
-        type="password"
-        autocomplete="new-password"
-        placeholder="Gentag adgangskode"
-        ariaLabel="Gentag adgangskode"
-        formControlName="repeat"
-        [revealable]="false"
-      />
-      <app-ui-form-error tone="negative" [message]="errorMessage()" />
-      <button
-        app-ui-button
-        type="submit"
-        block
-        [loading]="saving()"
-        [disabled]="!canSavePassword()"
-      >
-        Gem
+      <button app-ui-button type="submit" block [disabled]="!canSaveText()">
+        {{ 'common.save' | translate }}
       </button>
     </form>
   }

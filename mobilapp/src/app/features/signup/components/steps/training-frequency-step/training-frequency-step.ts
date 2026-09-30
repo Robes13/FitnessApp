@@ -1,6 +1,8 @@
 import { FigureTempo } from '../../../../../shared/components/figure';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { DAY_LETTERS, DAY_NAMES_LONG } from '../../../../../core/utils/date-format';
+import { TranslatePipe } from '@ngx-translate/core';
+import { DAY_LETTER_KEYS, DAY_NAME_LONG_KEYS } from '../../../../../core/utils/date-format';
+import { injectTranslate } from '../../../../../core/services/language/translate';
 import {
   FigureBody,
   animatedFigure,
@@ -16,16 +18,16 @@ const HIGH_MAX_DAYS = 6;
 /** From six training sessions a week, the figure sweats. */
 const SWEAT_MIN_DAYS = 6;
 
-const LABEL_NONE = 'Ingen faste træninger';
-const LABEL_LIGHT = 'Let rytme';
-const LABEL_GOOD = 'God rytme';
-const LABEL_HIGH = 'Høj frekvens';
-const LABEL_DAILY = 'Hver dag';
+const LABEL_NONE_KEY = 'signup.trainingFrequencyStep.labelNone';
+const LABEL_LIGHT_KEY = 'signup.trainingFrequencyStep.labelLight';
+const LABEL_GOOD_KEY = 'signup.trainingFrequencyStep.labelGood';
+const LABEL_HIGH_KEY = 'signup.trainingFrequencyStep.labelHigh';
+const LABEL_DAILY_KEY = 'signup.trainingFrequencyStep.labelDaily';
 
-const SUBTITLE_NONE = 'Så regner vi kun med dine skridt. Du kan altid ændre det senere.';
-const SUBTITLE_LIGHT = 'En eller to gange om ugen holder maskinen i gang.';
-const SUBTITLE_GOOD = 'Det niveau de fleste kan holde året rundt.';
-const SUBTITLE_HIGH = 'Mange pas om ugen. Husk en hviledag imellem.';
+const SUBTITLE_NONE_KEY = 'signup.trainingFrequencyStep.subtitleNone';
+const SUBTITLE_LIGHT_KEY = 'signup.trainingFrequencyStep.subtitleLight';
+const SUBTITLE_GOOD_KEY = 'signup.trainingFrequencyStep.subtitleGood';
+const SUBTITLE_HIGH_KEY = 'signup.trainingFrequencyStep.subtitleHigh';
 
 /** The curl tempo (the design's `curlDur`): slower the fewer training sessions there are. */
 const CURL_IDLE_DURATION_S = 1.6;
@@ -64,7 +66,7 @@ function dropPath(x: number, y: number): string {
  */
 @Component({
   selector: 'app-training-frequency-step',
-  imports: [FigureTempo, FigureBody],
+  imports: [FigureTempo, FigureBody, TranslatePipe],
   templateUrl: './training-frequency-step.html',
   styleUrl: './training-frequency-step.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,41 +74,46 @@ function dropPath(x: number, y: number): string {
 })
 export class TrainingFrequencyStep {
   protected readonly state = inject(SignupStateService);
+  private readonly t = injectTranslate();
 
   protected readonly frequency = computed(() => this.state.trainingDays().filter(Boolean).length);
   protected readonly frequencyText = computed(() => String(this.frequency()));
 
-  protected readonly label = computed(() => {
+  protected readonly label = computed(() => this.t(this.labelKey()));
+
+  private readonly labelKey = computed(() => {
     const days = this.frequency();
     if (days === 0) {
-      return LABEL_NONE;
+      return LABEL_NONE_KEY;
     }
     if (days <= LIGHT_MAX_DAYS) {
-      return LABEL_LIGHT;
+      return LABEL_LIGHT_KEY;
     }
     if (days <= GOOD_MAX_DAYS) {
-      return LABEL_GOOD;
+      return LABEL_GOOD_KEY;
     }
-    return days <= HIGH_MAX_DAYS ? LABEL_HIGH : LABEL_DAILY;
+    return days <= HIGH_MAX_DAYS ? LABEL_HIGH_KEY : LABEL_DAILY_KEY;
   });
 
-  protected readonly subtitle = computed(() => {
+  protected readonly subtitle = computed(() => this.t(this.subtitleKey()));
+
+  private readonly subtitleKey = computed(() => {
     const days = this.frequency();
     if (days === 0) {
-      return SUBTITLE_NONE;
+      return SUBTITLE_NONE_KEY;
     }
     if (days <= LIGHT_MAX_DAYS) {
-      return SUBTITLE_LIGHT;
+      return SUBTITLE_LIGHT_KEY;
     }
-    return days <= GOOD_MAX_DAYS ? SUBTITLE_GOOD : SUBTITLE_HIGH;
+    return days <= GOOD_MAX_DAYS ? SUBTITLE_GOOD_KEY : SUBTITLE_HIGH_KEY;
   });
 
   protected readonly days = computed<readonly DayToggle[]>(() => {
     const selected = this.state.trainingDays();
-    return DAY_LETTERS.map((letter, index) => ({
+    return DAY_LETTER_KEYS.map((letterKey, index) => ({
       index,
-      label: letter,
-      name: DAY_NAMES_LONG[index] ?? letter,
+      label: this.t(letterKey),
+      name: this.t(DAY_NAME_LONG_KEYS[index] ?? letterKey),
       selected: selected[index] === true,
     }));
   });

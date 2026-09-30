@@ -5,6 +5,7 @@ import { DailyFoodTotals } from '../../models/food';
 import { PaceDefinition, UserProfile } from '../../models/profile';
 import { WeighEntry } from '../../models/weight';
 import { TEST_NOW } from '../../testing/test-providers';
+import { Translate, injectTranslate } from '../language/translate';
 import { NutritionCalculator } from './nutrition-calculator';
 
 /** Test profile: the default profile with training on Monday, Wednesday and Friday. */
@@ -94,18 +95,24 @@ describe('NutritionCalculator', () => {
   });
 
   describe('activityLevelFor', () => {
+    let t: Translate;
+
+    beforeEach(() => {
+      t = TestBed.runInInjectionContext(() => injectTranslate());
+    });
+
     it('picks the first level whose upper bound is above the steps', () => {
-      expect(calculator.activityLevelFor(0).label).toBe('Stillesiddende');
-      expect(calculator.activityLevelFor(2499).label).toBe('Stillesiddende');
-      expect(calculator.activityLevelFor(2500).label).toBe('Let aktiv');
-      expect(calculator.activityLevelFor(6000).label).toBe('Aktiv');
+      expect(t(calculator.activityLevelFor(0).labelKey)).toBe('Stillesiddende');
+      expect(t(calculator.activityLevelFor(2499).labelKey)).toBe('Stillesiddende');
+      expect(t(calculator.activityLevelFor(2500).labelKey)).toBe('Let aktiv');
+      expect(t(calculator.activityLevelFor(6000).labelKey)).toBe('Aktiv');
       expect(calculator.activityLevelFor(6000).pal).toBe(1.55);
-      expect(calculator.activityLevelFor(20000).label).toBe('Maratonklar');
+      expect(t(calculator.activityLevelFor(20000).labelKey)).toBe('Maratonklar');
     });
 
     it('clamps steps to the allowed range', () => {
-      expect(calculator.activityLevelFor(-50).label).toBe('Stillesiddende');
-      expect(calculator.activityLevelFor(999999).label).toBe('Maratonklar');
+      expect(t(calculator.activityLevelFor(-50).labelKey)).toBe('Stillesiddende');
+      expect(t(calculator.activityLevelFor(999999).labelKey)).toBe('Maratonklar');
     });
   });
 
