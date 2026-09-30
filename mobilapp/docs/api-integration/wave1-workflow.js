@@ -1,3 +1,5 @@
+// Superseded by plan-v2.md: kept as history, do not run. The waves, domains and tasks now live in
+// plan-v2.md §4 and tasks/*.md.
 export const meta = {
   name: 'wave1-domains',
   description:

@@ -3,7 +3,7 @@
 Kilde: produktrapporten "PRØVE-SVENDEPRØVE – Nutrify" (Robert Orlander Pedersen, Janick Kofoed
 Larsen, Nicklas Lindegaard Martlev Gustavsen). Her står use cases, ikke-funktionelle krav,
 acceptkriterier og kodestandarder, så app og API kan holdes op imod dem. Rapporten er stadig en
-kladde; hvor den er selvmodsigende eller urealistisk, gælder beslutningerne i `plan.md`.
+kladde; hvor den er selvmodsigende eller urealistisk, gælder beslutningerne i `plan-v2.md`.
 
 Nutrify er en fitness- og ernæringsapp, der gør det nemt at registrere og holde overblik over
 kalorieindtag, vægt og personlige mål ét sted.

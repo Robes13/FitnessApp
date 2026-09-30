@@ -318,6 +318,25 @@
             "description": "OK"
           }
         }
+      },
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
       }
     },
     "/api/v1/auth/email/resend-verification": {
@@ -383,25 +402,56 @@
       }
     },
     "/api/v1/auth/password/reset": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
       "post": {
         "tags": [
           "Auth"
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/ResetPasswordRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResetPasswordRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResetPasswordRequest"
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "newPassword": {
+                    "type": "string"
+                  },
+                  "newPasswordConfirmation": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "token": {
+                  "style": "form"
+                },
+                "newPassword": {
+                  "style": "form"
+                },
+                "newPasswordConfirmation": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -1782,6 +1832,78 @@
             "Bearer": [ ]
           }
         ]
+      }
+    },
+    "/api/v1/me/data-export/token": {
+      "post": {
+        "tags": [
+          "Me"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportTokenDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportTokenDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportTokenDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/data-export": {
+      "get": {
+        "tags": [
+          "Me"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDataExportDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDataExportDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDataExportDto"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/me": {
@@ -3669,6 +3791,9 @@
           "consumedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "mealType": {
+            "$ref": "#/components/schemas/MealType"
           }
         },
         "additionalProperties": false
@@ -3793,6 +3918,16 @@
         },
         "additionalProperties": false
       },
+      "DataExportTokenDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "FoodDto": {
         "type": "object",
         "properties": {
@@ -3903,6 +4038,9 @@
           "consumedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "mealType": {
+            "$ref": "#/components/schemas/MealType"
           }
         },
         "additionalProperties": false
@@ -3947,7 +4085,7 @@
       "ForgotPasswordRequest": {
         "type": "object",
         "properties": {
-          "email": {
+          "emailOrUsername": {
             "type": "string",
             "nullable": true
           }
@@ -3998,6 +4136,15 @@
           "referenceId": {
             "type": "integer",
             "format": "int32"
+          },
+          "foodLog": {
+            "$ref": "#/components/schemas/FoodLogDto"
+          },
+          "weightLog": {
+            "$ref": "#/components/schemas/WeightLogDto"
+          },
+          "goal": {
+            "$ref": "#/components/schemas/UserGoalDto"
           }
         },
         "additionalProperties": false
@@ -4061,6 +4208,9 @@
             "type": "string",
             "format": "date-time"
           },
+          "mealType": {
+            "$ref": "#/components/schemas/MealType"
+          },
           "multiplier": {
             "type": "number",
             "format": "double"
@@ -4070,16 +4220,15 @@
       },
       "LoginRequest": {
         "required": [
-          "email",
+          "emailOrUsername",
           "password"
         ],
         "type": "object",
         "properties": {
-          "email": {
+          "emailOrUsername": {
             "maxLength": 320,
             "minLength": 1,
-            "type": "string",
-            "format": "email"
+            "type": "string"
           },
           "password": {
             "maxLength": 200,
@@ -4161,6 +4310,15 @@
           }
         },
         "additionalProperties": false
+      },
+      "MealType": {
+        "enum": [
+          "Breakfast",
+          "Lunch",
+          "Dinner",
+          "Snack"
+        ],
+        "type": "string"
       },
       "MetadataDto": {
         "type": "object",
@@ -4420,6 +4578,7 @@
           "username": {
             "maxLength": 50,
             "minLength": 3,
+            "pattern": "^[^@]+$",
             "type": "string"
           },
           "password": {
@@ -4518,25 +4677,7 @@
       "ResendVerificationRequest": {
         "type": "object",
         "properties": {
-          "email": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "ResetPasswordRequest": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "nullable": true
-          },
-          "newPassword": {
-            "type": "string",
-            "nullable": true
-          },
-          "newPasswordConfirmation": {
+          "emailOrUsername": {
             "type": "string",
             "nullable": true
           }
