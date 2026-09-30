@@ -20,9 +20,11 @@
           [label]="option.label"
           [description]="option.description"
           [selected]="option.id === options.selectedId"
+          [disabled]="saving()"
           (click)="pickOption(option.id)"
         ></button>
       }
+      <app-ui-form-error tone="negative" [message]="formError()" />
     </div>
   }
 
@@ -63,25 +65,50 @@
           <app-ui-icon name="plus" size="lg" />
         </button>
       </div>
-      <app-ui-form-error tone="negative" [message]="numberError()" />
-      <button app-ui-button type="submit" block [disabled]="!canSaveNumber()">
+      <app-ui-form-error tone="negative" [message]="formError()" />
+      <button app-ui-button type="submit" block [loading]="saving()" [disabled]="!canSaveNumber()">
+        {{ 'common.save' | translate }}
+      </button>
+    </form>
+  }
+
+  @if (dateDefinition(); as date) {
+    <form class="profile-edit-sheet__form" [formGroup]="dateForm" (ngSubmit)="saveDate()">
+      <app-ui-text-input
+        type="date"
+        autocomplete="bday"
+        [ariaLabel]="date.title"
+        formControlName="value"
+      />
+      <app-ui-form-error tone="negative" [message]="formError()" />
+      <button app-ui-button type="submit" block [loading]="saving()" [disabled]="!canSaveDate()">
         {{ 'common.save' | translate }}
       </button>
     </form>
   }
 
   @if (textDefinition(); as text) {
-    <form class="profile-edit-sheet__form" [formGroup]="textForm" (ngSubmit)="saveText()">
-      <app-ui-text-input
-        type="email"
-        autocomplete="email"
-        [ariaLabel]="'profile.editSheet.email' | translate"
-        formControlName="value"
-        [placeholder]="text.placeholder"
-      />
-      <button app-ui-button type="submit" block [disabled]="!canSaveText()">
-        {{ 'common.save' | translate }}
-      </button>
-    </form>
+    @if (emailSentText(); as sent) {
+      <div class="profile-edit-sheet__form">
+        <p class="profile-edit-sheet__hint">{{ sent }}</p>
+        <button app-ui-button type="button" block (click)="onClose()">
+          {{ 'common.close' | translate }}
+        </button>
+      </div>
+    } @else {
+      <form class="profile-edit-sheet__form" [formGroup]="textForm" (ngSubmit)="saveText()">
+        <app-ui-text-input
+          type="email"
+          autocomplete="email"
+          [ariaLabel]="'profile.editSheet.email' | translate"
+          formControlName="value"
+          [placeholder]="text.placeholder"
+        />
+        <app-ui-form-error tone="negative" [message]="formError()" />
+        <button app-ui-button type="submit" block [loading]="saving()" [disabled]="!canSaveText()">
+          {{ 'common.save' | translate }}
+        </button>
+      </form>
+    }
   }
 </app-ui-sheet>

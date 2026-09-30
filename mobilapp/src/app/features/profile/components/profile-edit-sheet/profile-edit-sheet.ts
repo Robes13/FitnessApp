@@ -1,14 +1,17 @@
+import { HttpStatusCode } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   linkedSignal,
   output,
+  signal,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormControl,
@@ -18,9 +21,13 @@ import {
   Validators,
 } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { map } from 'rxjs';
+import { Observable, finalize, map } from 'rxjs';
+import { MAX_AGE, MIN_AGE } from '../../../../core/constants/nutrition';
+import { ApiError } from '../../../../core/models/api-error';
 import { GoalId } from '../../../../core/models/profile';
+import { injectTranslate } from '../../../../core/services/language/translate';
 import { NutritionCalculator } from '../../../../core/services/nutrition-calculator/nutrition-calculator';
+import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
@@ -29,6 +36,7 @@ import { UiOptionCard } from '../../../../shared/components/ui-option-card/ui-op
 import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
 import { UiTextInput } from '../../../../shared/components/ui-text-input/ui-text-input';
 import {
+  DateEditDefinition,
   NumberEditDefinition,
   OptionsEditDefinition,
   ProfileEditRowId,
@@ -45,12 +53,23 @@ interface TextForm {
   value: FormControl<string>;
 }
 
+const SAVE_FAILED_KEY = 'profile.edit.saveFailed';
+const BIRTHDAY_INVALID_KEY = 'profile.edit.birthdayInvalid';
+const EMAIL_SENT_KEY = 'profile.edit.emailSent';
+/** `birthdayInvalid` interpolates the API's age range; the other keys ignore it. */
+const AGE_RANGE = { min: MIN_AGE, max: MAX_AGE } as const;
+
 /**
  * The "Rediger profil" sheet. One component covers all of the design's `editDefs` variants:
  *
  * - **options** – pick between cards; the choice is saved immediately and the sheet closes.
  * - **number** – −/+ around a number field, saved with "Gem".
- * - **text** – e-mail.
+ * - **date** – the birthday in a native date field, saved with "Gem".
+ * - **text** – e-mail; a successful change says where the confirmation link went.
+ *
+ * Every save goes to the API (pessimistic): while it runs, "Gem" shows a spinner and the options
+ * are disabled, so nothing is sent twice. On an error the sheet stays open with a message; on
+ * success it closes. Closing without saving changes nothing.
  *
  * The parent owns which row is open (`row`); `null` means closed.
  *
@@ -83,6 +102,24 @@ export class ProfileEditSheet {
 
   private readonly editor = inject(ProfileEditService);
   private readonly calculator = inject(NutritionCalculator);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly t = injectTranslate();
+
+  protected readonly saving = signal(false);
+  /** A key, so a shown error follows a language switch. Cleared when another row opens. */
+  private readonly errorKey = linkedSignal<ProfileEditRowId | null, string | null>({
+    source: this.row,
+    computation: () => null,
+  });
+  /** The new address after a successful e-mail change. Cleared when another row opens. */
+  private readonly emailSentTo = linkedSignal<ProfileEditRowId | null, string | null>({
+    source: this.row,
+    computation: () => null,
+  });
+  protected readonly emailSentText = computed(() => {
+    const email = this.emailSentTo();
+    return email === null ? null : this.t(EMAIL_SENT_KEY, { email });
+  });
 
   /** A goal waiting for a new goal weight. Reset whenever another row is opened. */
   private readonly pendingGoal = linkedSignal<ProfileEditRowId | null, GoalId | null>({
@@ -114,6 +151,10 @@ export class ProfileEditSheet {
     const definition = this.definition();
     return definition?.kind === 'text' ? definition : null;
   });
+  protected readonly dateDefinition = computed<DateEditDefinition | null>(() => {
+    const definition = this.definition();
+    return definition?.kind === 'date' ? definition : null;
+  });
 
   protected readonly numberForm = new FormGroup<NumberForm>({
     value: new FormControl<number | null>(null),
@@ -121,13 +162,26 @@ export class ProfileEditSheet {
   protected readonly textForm = new FormGroup<TextForm>({
     value: new FormControl('', { nonNullable: true }),
   });
+  protected readonly dateForm = new FormGroup<TextForm>({
+    value: new FormControl('', { nonNullable: true }),
+  });
   private readonly numberValue = toSignal(this.numberForm.controls.value.valueChanges, {
     initialValue: null,
   });
-  /** The goal weight rule that the current value breaks, shown under the field. */
-  protected readonly numberError = computed(() => {
-    const value = this.numberValue();
-    return value === null ? null : this.goalWeightErrorFor(value);
+  private readonly dateValue = toSignal(this.dateForm.controls.value.valueChanges, {
+    initialValue: '',
+  });
+  /** The rule the current value breaks (goal weight, birthday), else the failed save's error. */
+  protected readonly formError = computed(() => {
+    const number = this.numberValue();
+    const numberError = number === null ? null : this.goalWeightErrorFor(number);
+    const date = this.dateValue();
+    const dateError =
+      this.dateDefinition() !== null && date !== '' && !this.editor.isBirthdayValid(date)
+        ? this.t(BIRTHDAY_INVALID_KEY, AGE_RANGE)
+        : null;
+    const key = this.errorKey();
+    return numberError ?? dateError ?? (key === null ? null : this.t(key, AGE_RANGE));
   });
 
   private readonly numberStatus = toSignal(
@@ -138,9 +192,14 @@ export class ProfileEditSheet {
     this.textForm.statusChanges.pipe(map(() => this.textForm.valid)),
     { initialValue: false },
   );
+  private readonly dateStatus = toSignal(
+    this.dateForm.statusChanges.pipe(map(() => this.dateForm.valid)),
+    { initialValue: false },
+  );
 
   protected readonly canSaveNumber = this.numberStatus;
   protected readonly canSaveText = this.textStatus;
+  protected readonly canSaveDate = this.dateStatus;
 
   constructor() {
     // Every time the sheet opens on a new row, the right field is filled with the current value.
@@ -168,6 +227,15 @@ export class ProfileEditSheet {
           this.textForm.controls.value.setValue(definition.value);
           this.textForm.controls.value.updateValueAndValidity();
           return;
+        case 'date':
+          this.dateForm.controls.value.setValidators([
+            Validators.required,
+            (control) =>
+              this.editor.isBirthdayValid(String(control.value)) ? null : { birthday: true },
+          ]);
+          this.dateForm.controls.value.setValue(definition.value);
+          this.dateForm.controls.value.updateValueAndValidity();
+          return;
         default:
           return;
       }
@@ -180,15 +248,16 @@ export class ProfileEditSheet {
 
   protected pickOption(optionId: string): void {
     const row = this.row();
-    if (row === null) {
+    if (row === null || this.saving()) {
       return;
     }
-    const result = this.editor.applyOption(row, optionId);
-    if (result.kind === 'needs-goal-weight') {
-      this.pendingGoal.set(result.goal);
-      return;
-    }
-    this.closed.emit();
+    this.submit(this.editor.applyOption(row, optionId), (result) => {
+      if (result.kind === 'needs-goal-weight') {
+        this.pendingGoal.set(result.goal);
+        return;
+      }
+      this.closed.emit();
+    });
   }
 
   /** −/+ moves one step at a time and clamps within the field's bounds (the design's `editMinus`). */
@@ -205,25 +274,50 @@ export class ProfileEditSheet {
   protected saveNumber(): void {
     const row = this.row();
     const value = this.numberForm.controls.value.value;
-    if (row === null || value === null || !this.numberForm.valid) {
+    if (row === null || value === null || !this.numberForm.valid || this.saving()) {
       return;
     }
     const pendingGoal = this.pendingGoal();
-    const saved =
+    this.submit(
       pendingGoal === null
         ? this.editor.applyNumber(row, value)
-        : this.editor.applyGoalWithGoalWeight(pendingGoal, value);
-    if (saved) {
-      this.closed.emit();
-    }
+        : this.editor.applyGoalWithGoalWeight(pendingGoal, value),
+      () => this.closed.emit(),
+    );
   }
 
-  protected saveText(): void {
-    if (!this.textForm.valid) {
+  protected saveDate(): void {
+    if (!this.dateForm.valid || this.saving()) {
       return;
     }
-    this.editor.applyEmail(this.textForm.controls.value.value);
-    this.closed.emit();
+    this.submit(this.editor.applyBirthday(this.dateForm.controls.value.value), () =>
+      this.closed.emit(),
+    );
+  }
+
+  /** The profile keeps the old address until the link is tapped – the sheet says so. */
+  protected saveText(): void {
+    if (!this.textForm.valid || this.saving()) {
+      return;
+    }
+    const email = this.textForm.controls.value.value.trim();
+    this.submit(this.editor.applyEmail(email), () => this.emailSentTo.set(email));
+  }
+
+  /** Runs a save; `done` gets its result. An error keeps the sheet open with a message. */
+  private submit<T>(save: Observable<T>, done: (result: T) => void): void {
+    const row = this.row();
+    this.saving.set(true);
+    this.errorKey.set(null);
+    save
+      .pipe(
+        finalize(() => this.saving.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: done,
+        error: (error: unknown) => this.errorKey.set(errorKeyFor(row, toApiError(error))),
+      });
   }
 
   private validGoalWeight(control: AbstractControl): ValidationErrors | null {
@@ -242,4 +336,18 @@ export class ProfileEditSheet {
   private validEmail(control: AbstractControl): ValidationErrors | null {
     return this.calculator.isValidEmail(String(control.value ?? '')) ? null : { email: true };
   }
+}
+
+/** The birthday's 400 is the API's age rule; the e-mail's 409/400 are "taken"/"invalid". */
+function errorKeyFor(row: ProfileEditRowId | null, error: ApiError): string {
+  if (row === 'birthday' && error.status === HttpStatusCode.BadRequest) {
+    return BIRTHDAY_INVALID_KEY;
+  }
+  if (
+    row === 'email' &&
+    (error.status === HttpStatusCode.Conflict || error.status === HttpStatusCode.BadRequest)
+  ) {
+    return error.messageKey;
+  }
+  return SAVE_FAILED_KEY;
 }

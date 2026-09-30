@@ -17,13 +17,13 @@ describe('StorageService', () => {
   });
 
   it('round-trips JSON values', () => {
-    service.write(STORAGE_KEY.PROFILE, { username: 'mads', weightKg: 75 });
+    service.write(STORAGE_KEY.REMINDERS, { username: 'mads', weightKg: 75 });
 
-    expect(service.read<{ username: string }>(STORAGE_KEY.PROFILE)).toEqual({
+    expect(service.read<{ username: string }>(STORAGE_KEY.REMINDERS)).toEqual({
       username: 'mads',
       weightKg: 75,
     });
-    expect(storage.getItem(STORAGE_KEY.PROFILE)).toBe('{"username":"mads","weightKg":75}');
+    expect(storage.getItem(STORAGE_KEY.REMINDERS)).toBe('{"username":"mads","weightKg":75}');
   });
 
   it('returns null for missing keys and after remove', () => {

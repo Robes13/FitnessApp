@@ -5,10 +5,10 @@ import { Router, Routes, provideRouter, withComponentInputBinding } from '@angul
 import { RouterTestingHarness } from '@angular/router/testing';
 import { APP_PATH, APP_ROUTE, QUERY_PARAM } from '../../../../core/constants/app-route';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
-import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import { FOOD_ROUTES } from '../../food.routes';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
+import { TEST_GOAL, flushTestGoal } from '../../../../core/testing/fixtures';
 import {
   TEST_NOW,
   provideComponentTestEnvironment,
@@ -23,8 +23,14 @@ const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
 const ROUTES: Routes = [{ path: APP_ROUTE.FOOD, children: FOOD_ROUTES }];
 
-/** Fixed daily target, so the macro percentages are the same on every run. */
-const KCAL_TARGET = 2000;
+/** Fixed daily target from the API, so the macro percentages are the same on every run. */
+const GOAL = {
+  ...TEST_GOAL,
+  targetDailyCalories: 2000,
+  targetProtein: 150,
+  targetCarbohydrates: 225,
+  targetFat: 56,
+};
 
 function normalize(value: string | null | undefined): string {
   return (value ?? '').replace(/\s+/g, ' ').trim();
@@ -70,7 +76,7 @@ describe('FoodPage', () => {
     TestBed.configureTestingModule({
       providers: [...TEST_PROVIDERS, provideRouter(ROUTES, withComponentInputBinding())],
     });
-    TestBed.inject(UserProfileService).update({ kcalOverride: KCAL_TARGET });
+    flushTestGoal(GOAL);
     const harness = await RouterTestingHarness.create(url);
     const page = harness.routeNativeElement as HTMLElement;
 

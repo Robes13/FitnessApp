@@ -1,6 +1,5 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { DEFAULT_PROFILE } from '../../constants/profile-defaults';
 import { REMINDER_ERROR_KEY } from '../../constants/reminders';
 import { STORAGE_KEY } from '../../constants/storage-key';
 import { ReminderNotifier, ReminderPermission, ScheduledReminder } from '../../models/reminder';
@@ -283,7 +282,6 @@ describe('ReminderService', () => {
   });
 
   it('counts the enabled reminders', () => {
-    storage.setItem(STORAGE_KEY.PROFILE, JSON.stringify(DEFAULT_PROFILE));
     const service = setup();
 
     expect(service.enabledCount()).toBe(1);

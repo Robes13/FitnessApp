@@ -7,24 +7,43 @@
 | ----- | -------------------------- | -------------------------------------- |
 | `row` | `ProfileEditRowId \| null` | Rækken, der redigeres. `null` = lukket |
 
-| Output   | Beskrivelse                                                          |
-| -------- | -------------------------------------------------------------------- |
-| `closed` | Arket skal lukkes – efter luk-knap, scrim, Escape eller et gemt valg |
+| Output   | Beskrivelse                                                             |
+| -------- | ----------------------------------------------------------------------- |
+| `closed` | Arket skal lukkes – efter luk-knap, scrim, Escape eller en gemt ændring |
 
 Forælderen ejer, hvad der er åbent. Komponenten slår selv definitionen op i
 `ProfileEditService`, så profilsiden kun skal kende rækkens id.
 
-## De tre varianter
+## De fire varianter
 
-| Variant   | Felt                             | Gemmes          |
-| --------- | -------------------------------- | --------------- |
-| `options` | Liste af `app-ui-option-card`    | Straks ved valg |
-| `number`  | −/+ omkring et talfelt med enhed | Med "Gem"       |
-| `text`    | E-mail i `app-ui-text-input`     | Med "Gem"       |
+| Variant   | Felt                                                   | Gemmes          |
+| --------- | ------------------------------------------------------ | --------------- |
+| `options` | Liste af `app-ui-option-card`                          | Straks ved valg |
+| `number`  | −/+ omkring et talfelt med enhed                       | Med "Gem"       |
+| `date`    | Fødselsdato i `app-ui-text-input type="date"` (native) | Med "Gem"       |
+| `text`    | E-mail i `app-ui-text-input`                           | Med "Gem"       |
 
 Alle felter er typede reactive forms. Grænser (`min`/`max`) kommer fra definitionen og sættes
 som validators, når arket åbner, så "Gem" er slået fra, indtil tallet er gyldigt – præcis som
 designets `editSaveDisabled`.
+
+## Gem, fejl og fortryd
+
+Alt gemmes i API'et gennem `ProfileEditService` (pessimistisk). Mens et kald kører, er
+`saving` sand: "Gem" viser `UiButton`s spinner (`loading`), valgkortene er slået fra, og et
+nyt tryk sender intet – så der aldrig går to kald af sted. Lykkes det, lukker arket. Fejler
+det, bliver arket åbent med en `UiFormError`:
+
+| Fejl                     | Tekst                                                    |
+| ------------------------ | -------------------------------------------------------- |
+| Fødselsdato, 400 (alder) | `profile.edit.birthdayInvalid` ("… mellem 13 og 100 år") |
+| E-mail, 409 / 400        | `core.auth.error.emailTaken` / `invalidEmail`            |
+| Alt andet                | `profile.edit.saveFailed`                                |
+
+Fødselsdatoen har samme regel lokalt (`isBirthdayValid`), så "Gem" er slået fra og teksten
+vises, før noget sendes. En gemt e-mail lukker ikke arket, men viser `profile.edit.emailSent`
+("Vi har sendt et bekræftelseslink til …") og en "Luk"-knap – adressen skifter først, når linket
+er trykket. At lukke arket uden at gemme er fortryd: intet er ændret.
 
 ## Målvægt og skift af mål
 

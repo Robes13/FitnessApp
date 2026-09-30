@@ -20,10 +20,12 @@ import { ThemeService } from '../../../../core/services/theme/theme';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiPageHeader } from '../../../../shared/components/ui-page-header/ui-page-header';
 import { UiRowButton } from '../../../../shared/components/ui-row-button/ui-row-button';
 import { UiSegmentedControl } from '../../../../shared/components/ui-segmented-control/ui-segmented-control';
+import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
 import { UiSwitch } from '../../../../shared/components/ui-switch/ui-switch';
 import { Achievements } from '../../components/achievements/achievements';
 import { ProfileAvatar } from '../../../../shared/components/profile-avatar/profile-avatar';
@@ -34,7 +36,7 @@ import { ProfilePhotoSheet } from '../../components/profile-photo-sheet/profile-
 import { ProfileRemindersSheet } from '../../components/profile-reminders-sheet/profile-reminders-sheet';
 import { AchievementsService } from '../../services/achievements';
 import { ProfileEditRowId } from '../../services/profile-edit';
-import { ProfileRowsService } from '../../services/profile-rows';
+import { ProfileRow, ProfileRowsService } from '../../services/profile-rows';
 
 const REMINDERS_VALUE_KEY = {
   OFF: 'profile.page.remindersOff',
@@ -45,7 +47,11 @@ const REMINDERS_VALUE_KEY = {
 
 /**
  * The profile screen: avatar and key figures at the top, then "Min plan", "Konto", the
- * achievements, "Log ud" and "Slet konto". All rows open the same edit sheet, which knows its own variant.
+ * achievements, "Log ud" and "Slet konto". All rows open the same edit sheet, which knows its own
+ * variant – except the calorie target, which is the API's and can't be edited.
+ *
+ * While the profile loads, a spinner replaces the profile's own data; if it fails, a message and
+ * "Prøv igen" do. The device settings, log out and account deletion stay usable either way.
  *
  * The page sits outside the tab shell (it's opened from the avatar on Home), so it doesn't
  * reserve space for the tab bar and navigates back to Home instead.
@@ -62,10 +68,12 @@ const REMINDERS_VALUE_KEY = {
     ProfileRemindersSheet,
     TranslatePipe,
     UiButton,
+    UiEmptyState,
     UiIcon,
     UiPageHeader,
     UiRowButton,
     UiSegmentedControl,
+    UiSpinner,
     UiSwitch,
   ],
   templateUrl: './profile-page.html',
@@ -85,6 +93,11 @@ export class ProfilePage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly t = injectTranslate();
 
+  protected readonly status = this.profiles.status;
+  /** The profile's own data is hidden while it loads or after it failed to load. */
+  protected readonly profileShown = computed(
+    () => this.status() !== 'loading' && this.status() !== 'error',
+  );
   protected readonly displayName = this.profiles.displayName;
   protected readonly initial = this.profiles.initial;
   protected readonly photo = computed(() => this.profiles.profile().photo);
@@ -131,8 +144,15 @@ export class ProfilePage {
     void this.router.navigateByUrl(APP_PATH.HOME);
   }
 
-  protected openEdit(row: ProfileEditRowId): void {
-    this.editRow.set(row);
+  protected openEdit(row: ProfileRow): void {
+    if (row.editable !== false) {
+      this.editRow.set(row.id);
+    }
+  }
+
+  /** Never fails – a new failure shows the error again. */
+  protected retryLoad(): void {
+    this.profiles.load().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 
   protected closeEdit(): void {

@@ -1,9 +1,7 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { STORAGE_KEY } from '../../../core/constants/storage-key';
-import { LoggedFood } from '../../../core/models/food';
-import { createFakeStorage } from '../../../core/testing/fake-document';
-import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
-import { addDays, toIsoDate } from '../../../core/utils/date-format';
+import { TEST_GOAL, flushTestGoal } from '../../../core/testing/fixtures';
+import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { ProfileRow, ProfileRowsService } from './profile-rows';
 
@@ -24,12 +22,15 @@ describe('ProfileRowsService', () => {
     };
   }
 
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
   it('shows an en dash for everything the user has not chosen yet', () => {
     const { rows } = setup();
 
     expect(valueOf(rows.planRows(), 'Mål')).toBe('–');
     expect(valueOf(rows.planRows(), 'Tempo')).toBe('–');
     expect(valueOf(rows.planRows(), 'Køn')).toBe('–');
+    expect(valueOf(rows.planRows(), 'Fødselsdato')).toBe('–');
   });
 
   it('formats the plan from the profile', () => {
@@ -40,45 +41,31 @@ describe('ProfileRowsService', () => {
     expect(valueOf(rows.planRows(), 'Aktivitet')).toBe('6.000 skridt · Aktiv');
     expect(valueOf(rows.planRows(), 'Træningsdage')).toBe('3 / uge');
     expect(valueOf(rows.planRows(), 'Længde')).toBe('45 min');
-    // 2530 kcal by BMR × PAL + ~96 kcal/day for three moderate 45-minute sessions.
-    expect(valueOf(rows.planRows(), 'Dagligt kaloriemål')).toBe('2.630 kcal');
+    expect(valueOf(rows.planRows(), 'Dagligt kaloriemål')).toBe('0 kcal');
   });
 
-  it('says when the target is adapted to the weight trend', () => {
-    const days: Record<string, readonly LoggedFood[]> = {};
-    for (let offset = 1; offset <= 12; offset += 1) {
-      const day = addDays(TEST_NOW, -offset);
-      days[toIsoDate(day)] = [
-        {
-          id: 'food-test',
-          name: 'Test',
-          quantity: '1 portion',
-          kcal: 2410,
-          protein: 0,
-          carbs: 0,
-          fat: 0,
-          logId: `log-${offset}`,
-          meal: 'frokost',
-          loggedAt: day.toISOString(),
-        },
-      ];
-    }
-    const weighIns = [1, 20].map((daysAgo) => ({
-      id: `w${daysAgo}`,
-      kg: 75,
-      at: addDays(TEST_NOW, -daysAgo).toISOString(),
-    }));
-    TestBed.configureTestingModule({
-      providers: provideCoreTestEnvironment({
-        storage: createFakeStorage({
-          [STORAGE_KEY.FOOD_LOG]: { days },
-          [STORAGE_KEY.WEIGHT_LOG]: weighIns,
-        }),
-      }),
-    });
-    const rows = TestBed.inject(ProfileRowsService);
+  it('shows the birthday with the age', () => {
+    const { rows, profiles } = setup();
+    profiles.update({ birthday: '1998-05-16' });
 
-    expect(valueOf(rows.planRows(), 'Dagligt kaloriemål')).toBe('2.410 kcal · tilpasset −120');
+    expect(valueOf(rows.planRows(), 'Fødselsdato')).toBe('16. maj 1998 · 28 år');
+  });
+
+  it("shows the API's calorie target as a row that can't be edited", () => {
+    const { rows } = setup();
+    flushTestGoal();
+
+    const kcal = rows.planRows().find((row) => row.id === 'kcal');
+    expect(kcal).toMatchObject({ value: '2.500 kcal', editable: false });
+    expect(rows.planRows().filter((row) => row.editable === false)).toHaveLength(1);
+  });
+
+  it('says when the API lifted the target to the safe minimum', () => {
+    const { rows, profiles } = setup();
+    profiles.update({ gender: 'kvinde' });
+    flushTestGoal({ ...TEST_GOAL, targetDailyCalories: 1200 });
+
+    expect(valueOf(rows.planRows(), 'Dagligt kaloriemål')).toBe('1.200 kcal · sikkert minimum');
   });
 
   it('hides Målvægt until a goal other than "hold" is chosen', () => {
@@ -128,13 +115,11 @@ describe('ProfileRowsService', () => {
   it('falls back to the placeholder e-mail', () => {
     const { rows, profiles } = setup();
 
-    expect(labels(rows.accountRows())).toEqual(['E-mail', 'Enheder']);
+    expect(labels(rows.accountRows())).toEqual(['E-mail']);
     expect(valueOf(rows.accountRows(), 'E-mail')).toBe('dig@mail.dk');
-    expect(valueOf(rows.accountRows(), 'Enheder')).toBe('kg · cm');
 
-    profiles.update({ email: 'mads@mail.dk', units: 'imperial' });
+    profiles.update({ email: 'mads@mail.dk' });
     expect(valueOf(rows.accountRows(), 'E-mail')).toBe('mads@mail.dk');
-    expect(valueOf(rows.accountRows(), 'Enheder')).toBe('lb · in');
   });
 
   it('formats the three key figures like the design', () => {

@@ -1,35 +1,104 @@
+import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  concat,
+  defer,
+  forkJoin,
+  map,
+  of,
+  switchMap,
+  throwError,
+  toArray,
+} from 'rxjs';
+import { ME_ENDPOINT } from '../../constants/auth';
+import { CALORIE_FLOOR_KCAL, GOALS, PACES } from '../../constants/nutrition';
+import { PROFILE_ENDPOINT } from '../../constants/profile';
 import { DEFAULT_PROFILE } from '../../constants/profile-defaults';
-import { GOALS } from '../../constants/nutrition';
-import { STORAGE_KEY } from '../../constants/storage-key';
+import { StoreStatus } from '../../models/api';
+import { UserDto } from '../../models/auth';
+import { Macros } from '../../models/food';
 import {
   ActivityLevel,
   GoalDefinition,
+  GoalId,
   IntensityDefinition,
   PaceDefinition,
+  PaceId,
   UserProfile,
 } from '../../models/profile';
+import {
+  CreateUserGoalRequest,
+  LatestWeightDto,
+  PatchUserProfileRequest,
+  UpsertUserSettingRequest,
+  UserGoalDto,
+  UserProfileDto,
+  UserSettingDto,
+} from '../../models/profile-api';
+import { injectApiUrl, mapApiError, toApiError } from '../../utils/api';
 import { NOW } from '../../utils/now';
+import {
+  GENDER_TO_API,
+  GOAL_TO_API,
+  INTENSITY_TO_API,
+  registerErrorKey,
+} from '../auth-api/auth-mapping';
 import { NutritionCalculator } from '../nutrition-calculator/nutrition-calculator';
 import { SessionDataStore } from '../session-data/session-data';
-import { StorageService } from '../storage/storage';
+import { toGoalFields, toProfileFields, toUserProfile } from './profile-mapping';
+
+const NO_TARGETS: Macros = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+const MAINTAIN_GOAL: GoalId = 'hold';
+/** A new "lose"/"gain" goal without a chosen pace gets the recommended one. */
+const DEFAULT_PACE: PaceId = 'moderat';
 
 /**
- * The user's profile as one signal plus derived values (age, BMI, activity level …). The
- * calorie target lives in `AdaptiveGoalService`, which also accounts for the logged intake
- * and weight trend.
- * Saved to storage on every change. Missing fields in a saved profile are filled in from
- * `DEFAULT_PROFILE`, so older data can still be read.
+ * The signed-in user's profile from the API, as one signal plus derived values (age, BMI,
+ * activity level …), the current goal and its targets.
+ *
+ * `load()` fetches everything in parallel and replaces the whole profile. Its
+ * `POST me/goals/recalculate` is the spec's "on the 1st of every month": the API only stores a
+ * new goal when the numbers have moved. `save()` is pessimistic – memory changes only after the
+ * API has answered. `update()`, `replace()` and `resetToDefaults()` only change memory (the
+ * sign-up draft, the weight store, an account switch); nothing is written to storage.
+ *
+ * Never injects `SessionService` (it injects this service): `SessionDataService` calls `load()`
+ * once the session is authenticated and `reset()` when it becomes a guest.
  */
 @Injectable({ providedIn: 'root' })
 export class UserProfileService implements SessionDataStore {
-  private readonly storage = inject(StorageService);
+  private readonly http = inject(HttpClient);
+  private readonly url = injectApiUrl();
   private readonly calculator = inject(NutritionCalculator);
   private readonly now = inject(NOW);
-  private readonly state = signal<UserProfile>(this.restore());
+  private readonly state = signal<UserProfile>({ ...DEFAULT_PROFILE });
+  private readonly statusState = signal<StoreStatus>('idle');
+  private readonly goalState = signal<UserGoalDto | null>(null);
 
   readonly profile: Signal<UserProfile> = this.state.asReadonly();
+  readonly status: Signal<StoreStatus> = this.statusState.asReadonly();
+  /** The API's current goal; `null` until loaded. */
+  readonly goal: Signal<UserGoalDto | null> = this.goalState.asReadonly();
+  /** The daily calorie and macro targets, rounded – the API's, never the app's. 0 until loaded. */
+  readonly targets: Signal<Macros> = computed(() => {
+    const goal = this.goalState();
+    return goal === null
+      ? NO_TARGETS
+      : {
+          kcal: Math.round(goal.targetDailyCalories),
+          protein: Math.round(goal.targetProtein),
+          carbs: Math.round(goal.targetCarbohydrates),
+          fat: Math.round(goal.targetFat),
+        };
+  });
+  /** The API lifted the target to its safe minimum – it lifts to exactly `CALORIE_FLOOR_KCAL`. */
+  readonly calorieFloorApplied: Signal<boolean> = computed(() => {
+    const goal = this.goalState();
+    const floor = CALORIE_FLOOR_KCAL[this.state().gender ?? 'andet'];
+    return goal !== null && goal.targetDailyCalories === floor;
+  });
   /** The user's own name. Empty until the user has signed up or logged in. */
   readonly displayName = computed(() => this.state().username.trim());
   readonly initial = computed(() => this.displayName().charAt(0).toUpperCase());
@@ -49,38 +118,174 @@ export class UserProfileService implements SessionDataStore {
     this.calculator.paceFor(this.state().pace),
   );
 
-  // Stub - replaced by the API-backed store in the profile commit (plan-v2 4).
+  /**
+   * Fetches the whole profile: account, profile, (recalculated) goal, settings and latest weight.
+   * Never errors – a failure sets `status` to `'error'`, and screens offer "Prøv igen", which
+   * calls this again. A failed recalculation falls back to the current goal.
+   */
   load(): Observable<void> {
-    return of(undefined);
+    return defer(() => {
+      this.statusState.set('loading');
+      return forkJoin({
+        user: this.http.get<UserDto>(this.url(ME_ENDPOINT)),
+        profile: this.http.get<UserProfileDto>(this.url(PROFILE_ENDPOINT.PROFILE)),
+        goal: this.http
+          .post<UserGoalDto>(this.url(PROFILE_ENDPOINT.RECALCULATE_GOAL), null)
+          .pipe(catchError(() => this.fetchCurrentGoal())),
+        settings: this.http.get<UserSettingDto[]>(this.url(PROFILE_ENDPOINT.SETTINGS)),
+        latest: this.http.get<LatestWeightDto>(this.url(PROFILE_ENDPOINT.LATEST_WEIGHT)),
+      });
+    }).pipe(
+      map((parts) => {
+        this.goalState.set(parts.goal);
+        this.state.set(toUserProfile(parts));
+        this.statusState.set('ready');
+      }),
+      catchError(() => {
+        this.statusState.set('error');
+        return of(undefined);
+      }),
+    );
   }
 
-  reset(): void {}
+  /** Forgets the account's profile – memory only. */
+  reset(): void {
+    this.resetToDefaults();
+    this.statusState.set('idle');
+  }
 
+  /**
+   * Saves a change in the API and then applies the API's answer. Routed per field:
+   * profile fields → `PATCH me/profile`, then `reloadGoal()` (the API recalculated it) ·
+   * goal, pace, goal weight → `POST me/goals` (409 = the goal already matches = success) ·
+   * notifications → `PUT me/settings/Notifications` · e-mail → `PATCH me`, and the local e-mail
+   * stays: the API keeps the old address until the link in the mail to the new one is tapped.
+   * Fails with an `ApiError` (e-mail: `registerErrorKey`); nothing changes then.
+   */
+  save(patch: Partial<UserProfile>): Observable<void> {
+    const saves: Observable<void>[] = [];
+    const profileRequest = this.toPatchRequest(patch);
+    if (Object.values(profileRequest).some((value) => value !== undefined)) {
+      saves.push(this.saveProfile(profileRequest));
+    }
+    if (patch.goal !== undefined || patch.pace !== undefined || patch.goalWeightKg !== undefined) {
+      saves.push(defer(() => this.saveGoal(this.toGoalRequest({ ...this.state(), ...patch }))));
+    }
+    if (patch.notificationsEnabled !== undefined) {
+      saves.push(this.saveNotifications(patch.notificationsEnabled));
+    }
+    if (patch.email !== undefined) {
+      saves.push(this.saveEmail(patch.email));
+    }
+    return concat(...saves).pipe(
+      toArray(),
+      map(() => undefined),
+    );
+  }
+
+  /** The current goal (`GET me/goals/current`) – after the API has recalculated it. */
+  reloadGoal(): Observable<void> {
+    return this.fetchCurrentGoal().pipe(
+      map((goal) => this.applyGoal(goal)),
+      mapApiError(),
+    );
+  }
+
+  /** Memory only – e.g. the weight store keeps `weightKg` equal to the latest weigh-in. */
   update(patch: Partial<UserProfile>): void {
-    this.replace({ ...this.state(), ...patch });
+    this.state.update((profile) => ({ ...profile, ...patch }));
   }
 
+  /** Memory only – the sign-up draft once the account exists. */
   replace(profile: UserProfile): void {
     this.state.set(profile);
-    this.storage.write(STORAGE_KEY.PROFILE, profile);
   }
 
-  /** Applies a change only after it has been persisted successfully. */
-  updatePersisted(patch: Partial<UserProfile>): boolean {
-    const profile = { ...this.state(), ...patch };
-    if (!this.storage.write(STORAGE_KEY.PROFILE, profile)) {
-      return false;
-    }
-    this.state.set(profile);
-    return true;
-  }
-
+  /** Memory only – another account signs in on this device. */
   resetToDefaults(): void {
-    this.replace({ ...DEFAULT_PROFILE });
+    this.state.set({ ...DEFAULT_PROFILE });
+    this.goalState.set(null);
   }
 
-  private restore(): UserProfile {
-    const stored = this.storage.read<Partial<UserProfile>>(STORAGE_KEY.PROFILE);
-    return stored ? { ...DEFAULT_PROFILE, ...stored } : { ...DEFAULT_PROFILE };
+  private fetchCurrentGoal(): Observable<UserGoalDto> {
+    return this.http.get<UserGoalDto>(this.url(PROFILE_ENDPOINT.CURRENT_GOAL));
+  }
+
+  private saveProfile(request: PatchUserProfileRequest): Observable<void> {
+    return this.http.patch<UserProfileDto>(this.url(PROFILE_ENDPOINT.PROFILE), request).pipe(
+      map((dto) => this.update(toProfileFields(dto))),
+      mapApiError(),
+      switchMap(() => this.reloadGoal()),
+    );
+  }
+
+  private saveGoal(request: CreateUserGoalRequest): Observable<void> {
+    return this.http.post<UserGoalDto>(this.url(PROFILE_ENDPOINT.GOALS), request).pipe(
+      map((goal) => this.applyGoal(goal)),
+      catchError((error: unknown) =>
+        // 409: the current goal already is this one – only the profile's fields follow.
+        error instanceof HttpErrorResponse && error.status === HttpStatusCode.Conflict
+          ? of(this.update(toGoalFields(request)))
+          : throwError(() => toApiError(error)),
+      ),
+    );
+  }
+
+  private saveNotifications(enabled: boolean): Observable<void> {
+    const request: UpsertUserSettingRequest = { value: String(enabled) };
+    return this.http
+      .put<UserSettingDto>(this.url(PROFILE_ENDPOINT.NOTIFICATIONS_SETTING), request)
+      .pipe(
+        map(() => this.update({ notificationsEnabled: enabled })),
+        mapApiError(),
+      );
+  }
+
+  private saveEmail(email: string): Observable<void> {
+    return this.http.patch<UserDto>(this.url(ME_ENDPOINT), { email }).pipe(
+      map(() => undefined),
+      mapApiError(registerErrorKey),
+    );
+  }
+
+  private applyGoal(goal: UserGoalDto): void {
+    this.goalState.set(goal);
+    this.update(toGoalFields(goal));
+  }
+
+  /** The profile fields of `patch` in the API's shape; `undefined` = not sent. */
+  private toPatchRequest(patch: Partial<UserProfile>): PatchUserProfileRequest {
+    const intensity =
+      patch.trainingRpe === undefined ? null : this.calculator.intensityFor(patch.trainingRpe);
+    return {
+      birthDate: patch.birthday ?? undefined,
+      gender: patch.gender ? GENDER_TO_API[patch.gender] : undefined,
+      height: patch.heightCm,
+      dailySteps: patch.stepsPerDay,
+      trainingDaysPerWeek: patch.trainingDays?.filter(Boolean).length,
+      workoutDurationMinutes: patch.trainingMinutes,
+      trainingIntensity: intensity ? INTENSITY_TO_API[intensity.id] : undefined,
+    };
+  }
+
+  /**
+   * The goal as the API validates it: maintaining sends the current weight (the API's latest
+   * weigh-in, loaded into `weightKg`) and pace 0; losing or gaining the goal weight and a pace.
+   */
+  private toGoalRequest(profile: UserProfile): CreateUserGoalRequest {
+    const goal = profile.goal ?? MAINTAIN_GOAL;
+    if (goal === MAINTAIN_GOAL) {
+      return {
+        goalType: GOAL_TO_API[goal],
+        targetWeight: profile.weightKg,
+        weightChangePerWeek: 0,
+      };
+    }
+    const paceId = profile.pace ?? DEFAULT_PACE;
+    return {
+      goalType: GOAL_TO_API[goal],
+      targetWeight: profile.goalWeightKg,
+      weightChangePerWeek: PACES.find((pace) => pace.id === paceId)!.kgPerWeek,
+    };
   }
 }

@@ -14,12 +14,16 @@ import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,
 } from '../../../../core/testing/test-providers';
-import { AUTHENTICATED_SESSION } from '../../../../core/testing/fixtures';
+import {
+  AUTHENTICATED_SESSION,
+  TEST_AUTH_RESPONSE,
+  TEST_GOAL,
+} from '../../../../core/testing/fixtures';
 
 /**
  * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`, a
  * frozen `NOW`, and 0 ms artificial delays. The app has no demo profile, so the tests
- * put a filled-in profile in storage themselves.
+ * give the profile service a filled-in profile themselves.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
@@ -35,10 +39,7 @@ class Blank {}
 
 describe('ProfilePage', () => {
   beforeEach(() => {
-    resetComponentTestStorage({
-      [STORAGE_KEY.PROFILE]: STORED_PROFILE,
-      [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION,
-    });
+    resetComponentTestStorage({ [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION });
   });
 
   afterEach(() => {
@@ -61,9 +62,36 @@ describe('ProfilePage', () => {
         ]),
       ],
     });
+    TestBed.inject(UserProfileService).replace(STORED_PROFILE);
     const fixture = TestBed.createComponent(ProfilePage);
     await fixture.whenStable();
     return { fixture, host: fixture.nativeElement as HTMLElement, router: TestBed.inject(Router) };
+  }
+
+  /** Answers the five calls of the profile's `load()`; `fail` makes `GET me` fail. */
+  function flushProfileLoad(fail = false): void {
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/v1/me/profile').flush({
+      birthDate: '1998-05-16',
+      gender: 'Male',
+      height: 180,
+      dailySteps: 6000,
+      trainingDaysPerWeek: 0,
+      workoutDurationMinutes: 45,
+      trainingIntensity: 'Moderate',
+      profileImageUrl: null,
+    });
+    http.expectOne('/api/v1/me/goals/recalculate').flush(TEST_GOAL);
+    http.expectOne('/api/v1/me/settings').flush([]);
+    http
+      .expectOne('/api/v1/me/weight-logs/latest')
+      .flush({ weightLogId: null, weight: 80, recordedAt: '', isStartingWeight: true });
+    http
+      .expectOne('/api/v1/me')
+      .flush(
+        fail ? null : { ...TEST_AUTH_RESPONSE.user, username: 'Mads' },
+        fail ? { status: 500, statusText: 'Server Error' } : undefined,
+      );
   }
 
   function rowLabels(host: HTMLElement): readonly string[] {
@@ -89,6 +117,7 @@ describe('ProfilePage', () => {
     expect(rowLabels(host)).toEqual([
       'Mål',
       'Tempo',
+      'Fødselsdato',
       'Køn',
       'Højde',
       'Aktivitet',
@@ -97,9 +126,46 @@ describe('ProfilePage', () => {
       'Intensitet',
       'Dagligt kaloriemål',
       'E-mail',
-      'Enheder',
       'Påmindelser',
     ]);
+  });
+
+  it("shows the calorie target without a chevron and doesn't open the sheet for it", async () => {
+    const { fixture, host } = await setup();
+    const kcalRow = Array.from(host.querySelectorAll<HTMLButtonElement>('button')).find((element) =>
+      element.textContent?.includes('Dagligt kaloriemål'),
+    );
+
+    expect(kcalRow?.querySelector('.ui-row-button__chevron')).toBeNull();
+    kcalRow?.click();
+    await fixture.whenStable();
+
+    expect(host.querySelector('app-profile-edit-sheet [role="dialog"]')).toBeNull();
+  });
+
+  it('shows a spinner while the profile loads, and an error with "Prøv igen" when it fails', async () => {
+    const { fixture, host } = await setup();
+    const profiles = TestBed.inject(UserProfileService);
+
+    profiles.load().subscribe();
+    await fixture.whenStable();
+    expect(host.querySelector('.profile-page__status app-ui-spinner')).not.toBeNull();
+    expect(host.querySelector('.profile-page__stats')).toBeNull();
+
+    flushProfileLoad(true);
+    await fixture.whenStable();
+    expect(host.querySelector('.profile-page__status')?.textContent).toContain(
+      'Profilen kunne ikke hentes.',
+    );
+
+    Array.from(host.querySelectorAll<HTMLButtonElement>('button'))
+      .find((element) => element.textContent?.trim() === 'Prøv igen')
+      ?.click();
+    flushProfileLoad();
+    await fixture.whenStable();
+
+    expect(host.querySelector('.profile-page__status')).toBeNull();
+    expect(host.querySelector('.profile-page__stats')?.textContent).toContain('180');
   });
 
   it('renders the twelve achievements', async () => {

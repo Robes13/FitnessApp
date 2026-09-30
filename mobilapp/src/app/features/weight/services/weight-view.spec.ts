@@ -18,13 +18,13 @@ describe('WeightViewService', () => {
   let storage: FakeStorage;
 
   function setup(profile: Partial<typeof DEFAULT_PROFILE> = {}): WeightViewService {
-    storage.setItem(STORAGE_KEY.PROFILE, JSON.stringify({ ...DEFAULT_PROFILE, ...profile }));
     if (storage.getItem(STORAGE_KEY.WEIGHT_LOG) === null) {
       storage.setItem(STORAGE_KEY.WEIGHT_LOG, JSON.stringify(weighHistory(TEST_NOW)));
     }
     TestBed.configureTestingModule({
       providers: [provideCoreTestEnvironment({ storage }), WeightViewService],
     });
+    TestBed.inject(UserProfileService).update(profile);
     return TestBed.inject(WeightViewService);
   }
 

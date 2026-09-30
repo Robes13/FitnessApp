@@ -3,12 +3,12 @@
 Hjælpere til unit tests. Ingen af filerne bruges i produktion (de indeholder kun rene
 funktioner og providers, så de kan kompileres sammen med appen uden vitest-afhængigheder).
 
-| Fil                        | Indhold                                                                                                                                                                                                                                  |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fake-document.ts`         | `createFakeDocument()` / `createFakeStorage()` – et minimalt `DOCUMENT` med `documentElement`-attributter og en `localStorage` i hukommelsen.                                                                                            |
-| `test-providers.ts`        | `provideCoreTestEnvironment()` (service-specs), `provideComponentTestEnvironment()` + `resetComponentTestStorage()` (komponent-specs) og `TEST_NOW`.                                                                                     |
-| `fixtures.ts`              | Testdata, appen ikke selv leverer: `weighEntry()` / `weighHistory()` til en vejningshistorik, `TEST_FOOD` til en vare, der kan logges, og sessionerne `AUTHENTICATED_SESSION` / `PENDING_SESSION` + `TEST_AUTH_RESPONSE` / `TEST_EMAIL`. |
-| `global-test-providers.ts` | Providers, alle specs får (`providersFile` i `angular.json`): ngx-translate med dansk og `HttpClient` på Angulars testing-backend.                                                                                                       |
+| Fil                        | Indhold                                                                                                                                                                                                                                                                                                              |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fake-document.ts`         | `createFakeDocument()` / `createFakeStorage()` – et minimalt `DOCUMENT` med `documentElement`-attributter og en `localStorage` i hukommelsen (med `length`/`key()`, så `clearAll()` kan gennemløbe den).                                                                                                             |
+| `test-providers.ts`        | `provideCoreTestEnvironment()` (service-specs), `provideComponentTestEnvironment()` + `resetComponentTestStorage()` (komponent-specs) og `TEST_NOW`.                                                                                                                                                                 |
+| `fixtures.ts`              | Testdata, appen ikke selv leverer: `weighEntry()` / `weighHistory()` til en vejningshistorik, `TEST_FOOD` til en vare, der kan logges, sessionerne `AUTHENTICATED_SESSION` / `PENDING_SESSION` + `TEST_AUTH_RESPONSE` / `TEST_EMAIL` og `TEST_GOAL` + `flushTestGoal()` (giver profilen et mål og dermed `targets`). |
+| `global-test-providers.ts` | Providers, alle specs får (`providersFile` i `angular.json`): ngx-translate med dansk og `HttpClient` på Angulars testing-backend.                                                                                                                                                                                   |
 
 `TEST_NOW` er mandag 21. september 2026 kl. 10:30. Begge miljøer fryser `NOW` og sætter den
 kunstige forsinkelse (`FOOD_SEARCH_DELAY_MS`) til 0 ms.
@@ -61,6 +61,13 @@ Appen seeder ikke selv noget: alle stores starter tomme. En test, der har brug f
 vejningshistorik eller et logget måltid, lægger det selv i storage – `fixtures.ts` har
 byggestenene.
 
+## Profilen i specs
+
+Profilen ligger kun i hukommelsen (den hentes fra API'et), så en spec seeder den aldrig i storage.
+Profilfelter sættes med `TestBed.inject(UserProfileService).update({ … })`, og kalorie-/makromålet
+(`targets`) med `flushTestGoal()` – `reloadGoal()` besvaret med `TEST_GOAL` (2500 kcal, 188/250/83 g)
+eller et andet `UserGoalDto`. Det kræver `HttpTestingController`, som alle specs har.
+
 ## Komponent-specs
 
 Det falske dokument har ingen `querySelector`, så `TestBed.createComponent()` fejler med det.
@@ -71,7 +78,7 @@ Browserens `localStorage` deles mellem tests, så spec'en nulstiller den selv:
 
 ```ts
 beforeEach(() => {
-  resetComponentTestStorage({ [STORAGE_KEY.PROFILE]: { ...DEFAULT_PROFILE } });
+  resetComponentTestStorage({ [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION });
 });
 
 TestBed.configureTestingModule({

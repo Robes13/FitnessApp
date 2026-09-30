@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import {
   provideComponentTestEnvironment,
@@ -63,20 +62,5 @@ describe('ProfilePhotoSheet image persistence', () => {
     expect(TestBed.inject(UserProfileService).profile().photo?.dataUrl).toBe(
       'data:image/jpeg;base64,small',
     );
-    expect(window.localStorage.getItem(STORAGE_KEY.PROFILE)).toContain('base64,small');
-  });
-
-  it('shows storage failure and preserves the previous profile', async () => {
-    const profiles = TestBed.inject(UserProfileService);
-    profiles.update({ username: 'Before' });
-    const previous = profiles.profile();
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new DOMException('Full', 'QuotaExceededError');
-    });
-    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    const root = await selectPhoto();
-    expect(root.textContent).toContain('Billedet kunne ikke gemmes');
-    expect(profiles.profile()).toBe(previous);
-    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY.PROFILE)!)).toEqual(previous);
   });
 });

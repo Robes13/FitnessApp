@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { addDays } from '../../../core/utils/date-format';
-import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
+import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
+import { flushTestGoal } from '../../../core/testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { Achievement, AchievementsService } from './achievements';
 
@@ -17,14 +18,14 @@ function badge(list: readonly Achievement[], id: string): Achievement {
 describe('AchievementsService', () => {
   function setup(): {
     achievements: AchievementsService;
-    adaptiveGoal: AdaptiveGoalService;
+    profiles: UserProfileService;
     foodLog: FoodLogService;
     weightLog: WeightLogService;
   } {
     TestBed.configureTestingModule({ providers: provideCoreTestEnvironment() });
     return {
       achievements: TestBed.inject(AchievementsService),
-      adaptiveGoal: TestBed.inject(AdaptiveGoalService),
+      profiles: TestBed.inject(UserProfileService),
       foodLog: TestBed.inject(FoodLogService),
       weightLog: TestBed.inject(WeightLogService),
     };
@@ -95,7 +96,8 @@ describe('AchievementsService', () => {
   });
 
   it('completes the weekly badges once the day target is met', () => {
-    const { achievements, foodLog, adaptiveGoal } = setup();
+    const { achievements, foodLog, profiles } = setup();
+    flushTestGoal();
 
     expect(badge(achievements.achievements(), 'perfect-week').progressLabel).toBe('0/7 dage');
 
@@ -105,7 +107,7 @@ describe('AchievementsService', () => {
         id: 'y',
         name: 'Stor dag',
         quantity: '1 portion',
-        kcal: adaptiveGoal.kcalTarget(),
+        kcal: profiles.targets().kcal,
         protein: 300,
         carbs: 0,
         fat: 0,

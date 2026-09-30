@@ -17,7 +17,7 @@ Implementerer `ControlValueAccessor`, så feltet bruges med typed reactive forms
 
 | Input          | Standard     | Betydning                                                                                                                                                                       |
 | -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `type`         | `'text'`     | `text` · `password` · `email` · `number` · `time` (værdien er `'HH:MM'`)                                                                                                        |
+| `type`         | `'text'`     | `text` · `password` · `email` · `number` · `time` (værdien er `'HH:MM'`) · `date` (native datovælger, værdien er `'YYYY-MM-DD'`)                                                |
 | `placeholder`  | `''`         |                                                                                                                                                                                 |
 | `inputMode`    | `null`       | `numeric`, `decimal`, `email` … til det native tastatur                                                                                                                         |
 | `maxLength`    | `null`       | Fx `4` til bekræftelseskoden                                                                                                                                                    |

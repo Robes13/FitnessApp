@@ -28,30 +28,38 @@ profile/
 Siden ejer kun, hvad der er åbent (`editRow`, `photoOpen`, `remindersOpen`, `logoutOpen`, `deleteAccountOpen`). Alt andet er
 afledt af `core/`-stores, så en ændring et andet sted i appen slår igennem med det samme.
 
+Profilen kommer fra API'et (`UserProfileService`, se [`core/services/README.md`](../../core/services/README.md)).
+Mens den hentes, viser siden en spinner i stedet for profilens egne data (hoved, nøgletal, "Min
+plan", e-mail); fejler den, en besked og "Prøv igen" (`profiles.load()`). Tema, sprog,
+notifikationer, påmindelser, log ud og slet konto kan bruges hele tiden.
+
 ## Skærmens dele
 
 1. **Hoved** – avatar 72 px med en orange blyant i hjørnet, navn (30 px display, afkortes) og
    e-mail. Blyanten åbner fotoarket.
 2. **Nøgletal** – tre fliser: Vægt (orange), Højde og BMI.
-3. **Min plan** – Mål, [Tempo], Køn, Højde, [Målvægt], Aktivitet, Træningsdage, [Længde],
-   [Intensitet] og Dagligt kaloriemål. De fire i kantede parenteser er betingede; se
-   [`services/README.md`](services/README.md).
-4. **Konto** – E-mail, Enheder, kontakterne "Lys tilstand" og
+3. **Min plan** – Mål, [Tempo], Fødselsdato, Køn, Højde, [Målvægt], Aktivitet, Træningsdage,
+   [Længde], [Intensitet] og Dagligt kaloriemål (API'ets, kan ikke redigeres). De fire i kantede
+   parenteser er betingede; se [`services/README.md`](services/README.md).
+4. **Konto** – E-mail, kontakterne "Lys tilstand" og
    "Notifikationer" samt rækken "Påmindelser", der åbner påmindelses-arket.
 5. **Præstationer** – 12 badges i fire kolonner.
 6. **Log ud** – rød tekst i en omrids-pille, der åbner bekræftelsen.
 7. **Slet konto** – en diskret tekstknap under "Log ud", der åbner sin egen bekræftelse.
 
-Hver række åbner det samme redigeringsark; arket finder selv ud af, om rækken er en liste,
-et tal eller en tekst. Adgangskoden kan ikke ændres herfra – det sker via "Glemt
+Hver række – undtagen kaloriemålet, der hverken har chevron eller ark – åbner det samme
+redigeringsark; arket finder selv ud af, om rækken er en liste, et tal, en dato eller en tekst.
+Alt gemmes i API'et, og profilen ændres først, når API'et har svaret. Adgangskoden kan ikke ændres herfra – det sker via "Glemt
 adgangskode?" på login-siden.
 
 ## Tema, sprog og notifikationer
 
 "Lys tilstand" styrer `ThemeService` (ikke profilen): den sætter `data-theme` på `<html>` og
 husker valget. "Notifikationer" er **hovedkontakten** for påmindelser: den går gennem
-`ReminderService.setMasterEnabled()`, som skriver `notificationsEnabled` på profilen og – når
-den slås til – beder om lov til notifikationer. Begge er almindelige `app-ui-switch`.
+`ReminderService.setMasterEnabled()`, som sætter `notificationsEnabled` på profilen og – når
+den slås til – beder om lov til notifikationer. (Den skal gemme via
+`UserProfileService.save({ notificationsEnabled })` = `PUT me/settings/Notifications`; det kobler
+profile-extras på i bølge 3.) Begge er almindelige `app-ui-switch`.
 
 "Sprog" er en `app-ui-segmented-control` (compact) med Dansk/English. Valget går til
 `LanguageService.set()`, som gemmer det og genindlæser appen på det nye sprog.
@@ -69,9 +77,8 @@ og deres tidspunkt. Selve planlægningen af lokale notifikationer ligger i
 Bekræftelsen kalder `SessionService.logout()` (tilbagekalder refresh-tokenet i API'et med et
 friskt access-token) og navigerer til `APP_PATH.LOGIN`, når kaldet er færdigt. Imens viser
 "Ja, log mig ud" en spinner (`busy`). Log ud er _best effort_: kan API'et ikke nås, slutter
-sessionen alligevel lokalt, så der er ingen fejltilstand. Kun sessionen ryddes – profil,
-madlog, vejninger og samlinger bliver liggende på enheden, som designets tekst lover: "Dine
-data bliver gemt."
+sessionen alligevel lokalt, så der er ingen fejltilstand. Kun sessionen ryddes – brugerens data
+ligger i API'et, som designets tekst lover: "Dine data bliver gemt."
 
 ## Slet konto
 
@@ -81,7 +88,7 @@ derefter `SessionService.deleteAccount()`, som
 
 1. sletter kontoen i API'et (`DELETE /me` – anonymiserer brugeren og sletter alle data),
 2. **kun hvis det lykkes**: sletter alle appens nøgler i storage (`StorageService.clearAll()`,
-   der gennemløber `STORAGE_KEY`), og
+   der fjerner alle nøgler med `STORAGE_KEY_PREFIX`), og
 3. genindlæser appen på login-siden (`document.location.replace`).
 
 Mens kaldet kører, viser "Ja, slet min konto" en spinner, og "Annuller" er slået fra. Fejler
@@ -93,7 +100,8 @@ i hukommelsen inden, så ingen store når at reagere og skrive til storage igen.
 
 ## Profilbilledet
 
-Billedet gemmes på profilen som `ProfilePhoto` (data-URL, billedformat, zoom, x, y) og
+Billedet ligger på profilen som `ProfilePhoto` (data-URL eller API'ets `profileImageUrl`,
+billedformat, zoom, x, y – indtil upload kommer i bølge 3 kun i hukommelsen) og
 tegnes som `background-size` / `background-position` i **procent**. Derfor viser
 196 px-editoren, 132 px-forhåndsvisningen, 72 px-avataren og Hjems 44 px-avatar nøjagtig
 samme udsnit. Både komponenten og formlerne ligger i `shared/components/profile-avatar/`,

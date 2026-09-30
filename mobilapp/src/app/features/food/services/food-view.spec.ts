@@ -1,13 +1,20 @@
 import { TestBed } from '@angular/core/testing';
 import { FoodItem } from '../../../core/models/food';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
-import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
+import { TEST_GOAL, flushTestGoal } from '../../../core/testing/fixtures';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { FoodViewService } from './food-view';
 
-/** Fixed daily target, so the macro goals come out as round numbers (150 / 225 / 56 g). */
+/** Fixed daily target from the API, with round macro goals (150 / 225 / 56 g). */
 const KCAL_TARGET = 2000;
+const GOAL = {
+  ...TEST_GOAL,
+  targetDailyCalories: KCAL_TARGET,
+  targetProtein: 150,
+  targetCarbohydrates: 225,
+  targetFat: 56,
+};
 
 const SKYR: FoodItem = {
   id: 'food-skyr',
@@ -46,7 +53,7 @@ describe('FoodViewService', () => {
     TestBed.configureTestingModule({
       providers: [...provideCoreTestEnvironment({ storage }), FoodViewService],
     });
-    TestBed.inject(UserProfileService).update({ kcalOverride: KCAL_TARGET });
+    flushTestGoal(GOAL);
     const log = TestBed.inject(FoodLogService);
     log.add(SKYR, 'morgen');
     log.add(SALAT, 'frokost');
@@ -68,7 +75,7 @@ describe('FoodViewService', () => {
     expect(view.kcalProgress()).toBeCloseTo(0.415, 5);
   });
 
-  it('builds the three macro cards from the 30/45/25 split', () => {
+  it("builds the three macro cards from the API's macro targets", () => {
     const { view } = setup();
 
     expect(view.macroCards()).toEqual([

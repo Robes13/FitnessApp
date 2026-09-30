@@ -14,8 +14,8 @@ const NO_TRAINING_DAYS: readonly boolean[] = [false, false, false, false, false,
 
 /**
  * The profile before the user has filled anything in. Fields that can't be guessed are
- * `null` or empty; the rest are the neutral starting values above. Used both as the
- * starting point in the sign-up flow and to fill in fields missing from a saved profile.
+ * `null` or empty; the rest are the neutral starting values above. The starting point of the
+ * sign-up flow and the in-memory profile until the API's has been loaded.
  */
 export const DEFAULT_PROFILE: UserProfile = {
   username: '',
@@ -32,7 +32,5 @@ export const DEFAULT_PROFILE: UserProfile = {
   pace: null,
   goalWeightKg: GOAL_WEIGHT_START_KG,
   notificationsEnabled: true,
-  units: 'metrisk',
-  kcalOverride: null,
   photo: null,
 };
