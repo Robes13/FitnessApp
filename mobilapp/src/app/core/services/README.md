@@ -88,7 +88,9 @@ Ingen service kender til `shared/` eller `features/`.
   indtastede med små bogstaver, hvis den har `@`, ellers `null`). Identifikator og adgangskode holdes
   **kun i hukommelsen** (`pending`). `checkVerification()` logger ind med dem (API'et har intet
   status-endpoint): 200 = bekræftet og `authenticated` (`true`), 403 = ikke endnu (`false`); uden
-  noget ventende er svaret `false`. `resendVerification()` sender den ventende identifikator (ellers
+  noget ventende er svaret `false`. 401 betyder, at adgangskoden ikke virker mere (fx nulstillet
+  siden): så ender sessionen, og brugeren sendes til login (1.1-6a) – ellers ville hvert tjek tælle
+  som et mislykket forsøg, og appen selv låse kontoen (429). `resendVerification()` sender den ventende identifikator (ellers
   sessionens e-mail). En gemt `pending-verification` genskabes efter en genstart som **gæst**, der
   beholder e-mail og konto-id – adgangskoden er væk, så brugeren logger ind igen og får arket (1.1-6a).
 - **Token-fornyelse.** `accessToken()` fornyer 60 s før udløb (`TOKEN_REFRESH_MARGIN_MS`), og

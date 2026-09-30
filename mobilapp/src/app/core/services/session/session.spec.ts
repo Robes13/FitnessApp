@@ -235,6 +235,21 @@ describe('SessionService', () => {
       expect(session.status()).toBe('pending-verification');
     });
 
+    it('stops checking and goes to login once the password no longer works (401)', async () => {
+      const { session, http, navigate } = setup();
+      await register(http, session);
+
+      const check = firstValueFrom(session.checkVerification());
+      http.expectOne(LOGIN).flush(INVALID_CREDENTIALS, UNAUTHORIZED);
+
+      await expect(check).rejects.toMatchObject({ status: 401 });
+      expect(session.status()).toBe('guest');
+      expect(session.email()).toBe(TEST_EMAIL);
+      expect(navigate).toHaveBeenCalledWith('/login');
+      // `verify()` in afterEach proves the next check sends no login (no lockout by the app).
+      await expect(firstValueFrom(session.checkVerification())).resolves.toBe(false);
+    });
+
     it('has nothing to check without a pending login', async () => {
       const { session } = setup(SIGNED_OUT_SESSION);
 

@@ -21,7 +21,9 @@ import {
   fromEvent,
   merge,
   of,
+  Subscription,
   switchMap,
+  tap,
   timer,
 } from 'rxjs';
 import { APP_PATH } from '../../../../core/constants/app-route';
@@ -68,8 +70,10 @@ export class VerifyEmailSheet {
   protected readonly leaving = signal(false);
   /** The error's translation key, so a shown error follows a language switch. */
   private readonly errorKey = signal<string | null>(null);
+  /** The last check's error – kept apart, so the next check that works clears only this one. */
+  private readonly checkErrorKey = signal<string | null>(null);
   protected readonly errorMessage = computed(() => {
-    const key = this.errorKey();
+    const key = this.errorKey() ?? this.checkErrorKey();
     return key === null ? null : this.t(key);
   });
 
@@ -80,10 +84,12 @@ export class VerifyEmailSheet {
     this.t(this.resent() ? 'home.verifyEmail.resendHintSent' : 'home.verifyEmail.resendHint'),
   );
 
+  private readonly polling: Subscription;
+
   constructor() {
-    // A failed check (e.g. no network) is shown, and the polling goes on; `exhaustMap` skips a
-    // tick while a check is still running.
-    toObservable(this.open)
+    // A failed check (e.g. no network) is shown until a check works, and the polling goes on;
+    // `exhaustMap` skips a tick while a check is still running.
+    this.polling = toObservable(this.open)
       .pipe(
         switchMap((open) =>
           open
@@ -97,8 +103,9 @@ export class VerifyEmailSheet {
         ),
         exhaustMap(() =>
           this.session.checkVerification().pipe(
+            tap(() => this.checkErrorKey.set(null)),
             catchError((error: unknown) => {
-              this.errorKey.set(toApiError(error).messageKey);
+              this.checkErrorKey.set(toApiError(error).messageKey);
               return of(false);
             }),
           ),
@@ -115,6 +122,8 @@ export class VerifyEmailSheet {
 
   /** Ends the pending session – e.g. to sign up again with a corrected e-mail. */
   protected backToLogin(): void {
+    // First cancel a check in flight: its answer could revive the session just ended.
+    this.polling.unsubscribe();
     this.run(this.session.logout(), this.leaving, () => {
       void this.router.navigateByUrl(APP_PATH.LOGIN);
     });

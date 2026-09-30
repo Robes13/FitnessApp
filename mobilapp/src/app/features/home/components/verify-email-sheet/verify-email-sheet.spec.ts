@@ -137,18 +137,31 @@ describe('VerifyEmailSheet', () => {
     http.expectOne(LOGIN).flush(UNVERIFIED, FORBIDDEN);
   });
 
-  it('shows a failed check and keeps polling', async () => {
+  it('shows a failed check until a check works, and keeps polling', async () => {
     setup();
+    const formError = () => normalize(panel()?.querySelector('app-ui-form-error')?.textContent);
 
     await advance(VERIFICATION_POLL_MS);
     http.expectOne(LOGIN).error(new ProgressEvent('error'));
     fixture.detectChanges();
-    expect(normalize(panel()?.querySelector('app-ui-form-error')?.textContent)).toBe(
-      'Ingen forbindelse. Tjek dit internet, og prøv igen.',
-    );
+    expect(formError()).toBe('Ingen forbindelse. Tjek dit internet, og prøv igen.');
 
     await advance(VERIFICATION_POLL_MS);
     http.expectOne(LOGIN).flush(UNVERIFIED, FORBIDDEN);
+    fixture.detectChanges();
+    expect(formError()).toBe('');
+  });
+
+  it('never runs two checks at once (each login attempt counts towards the lockout)', async () => {
+    setup();
+
+    await advance(VERIFICATION_POLL_MS);
+    const running = http.expectOne(LOGIN);
+    await advance(2 * VERIFICATION_POLL_MS);
+    changeVisibility('visible');
+    expect(http.match(LOGIN)).toHaveLength(0);
+
+    running.flush(UNVERIFIED, FORBIDDEN);
   });
 
   it('sends a new link by the username a login used, which has no address to show', () => {
@@ -176,5 +189,17 @@ describe('VerifyEmailSheet', () => {
 
     expect(session.status()).toBe('guest');
     expect(TestBed.inject(Router).navigateByUrl).toHaveBeenCalledWith(APP_PATH.LOGIN);
+  });
+
+  it('cancels a check in flight when going back to login, so the session stays ended', async () => {
+    setup();
+    await advance(VERIFICATION_POLL_MS);
+    const running = http.expectOne(LOGIN);
+
+    buttonWithText('Til login')?.click();
+
+    expect(running.cancelled).toBe(true);
+    expect(session.status()).toBe('guest');
+    await advance(3 * VERIFICATION_POLL_MS);
   });
 });

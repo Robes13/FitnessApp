@@ -101,13 +101,22 @@ export class SessionService {
   /**
    * Whether the e-mail has been verified by now. The API has no status endpoint (it would allow
    * enumeration), so this logs in with the credentials in memory: 200 authenticates (`true`), 403
-   * keeps waiting (`false`). With nothing pending (the app has restarted) it is `false`.
+   * keeps waiting (`false`). With nothing pending (the app has restarted) it is `false`. A 401
+   * means the password no longer works (e.g. it was reset since): checking on with it would only
+   * lock the account (429), so the session ends and the user logs in again (spec 1.1-6a).
    */
   checkVerification(): Observable<boolean> {
     return this.pending === null
       ? of(false)
       : this.login(this.pending.identifier, this.pending.password).pipe(
           map(() => this.isAuthenticated()),
+          catchError((error: unknown) => {
+            if (toApiError(error).status === HttpStatusCode.Unauthorized) {
+              this.signOut();
+              void this.router.navigateByUrl(APP_PATH.LOGIN);
+            }
+            return throwError(() => error);
+          }),
         );
   }
 

@@ -326,7 +326,7 @@ export class SignupStateService {
 
   /**
    * Creates the account: `SessionService.register()` sends the draft to the API, which e-mails
-   * the verification code, and the session waits for it (`pending-verification`), so Home shows
+   * the verification link, and the session waits for it (`pending-verification`), so Home shows
    * the verification sheet. The draft is written as the local profile only once the API has
    * created the account.
    */

@@ -14,13 +14,15 @@ appen (spec 1.1). Arket kan:
   status-endpoint (det ville åbne for enumeration), så det er et login med adgangskoden i
   hukommelsen: 403 = ikke endnu, 200 = bekræftet og logget ind → sessionen bliver `authenticated`,
   og arket lukker. `exhaustMap` springer et tick over, mens et tjek kører, og pollingen stopper,
-  når arket lukker. En fejl (fx ingen forbindelse) vises i `app-ui-form-error`, og pollingen
-  fortsætter. `DOCUMENT` injiceres (ikke det globale `document`), så specs kan styre det.
+  når arket lukker. En fejl (fx ingen forbindelse) vises i `app-ui-form-error`, til et tjek lykkes
+  igen, og pollingen fortsætter. Virker adgangskoden ikke mere (401), sender sessionen brugeren til
+  login. `DOCUMENT` injiceres (ikke det globale `document`), så specs kan styre det.
 - **Send mail igen** – `SessionService.resendVerification()` med den identifikator, brugeren
   oprettede sig eller loggede ind med; hjælpeteksten skifter til "Ny mail sendt – det gamle link
   virker ikke længere." (API'et ugyldiggør ældre links). API'ets side for et ugyldigt link citerer
   præcis knapteksten "Send mail igen".
-- **Til login** – `SessionService.logout()` afslutter den ventende session og går til login.
+- **Til login** – stopper pollingen (et tjek undervejs annulleres, så svaret ikke genopliver
+  sessionen), og `SessionService.logout()` afslutter den ventende session og går til login.
 
 Er brugeren logget ind med et **brugernavn**, kender sessionen ingen adresse, og teksten siger "din
 mail" (`home.verifyEmail.emailFallback`). Ventetilstanden er kun i hukommelsen: efter en genstart er
