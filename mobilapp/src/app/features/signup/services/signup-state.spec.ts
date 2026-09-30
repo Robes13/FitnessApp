@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { APP_PATH } from '../../../core/constants/app-route';
+import { MAX_AGE, MIN_AGE } from '../../../core/constants/nutrition';
 import { SessionService } from '../../../core/services/session/session';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
@@ -12,7 +13,9 @@ import { SIGNUP_STEP_ORDER, SignupStateService, SignupStepId } from './signup-st
 
 /** The fixed "now" in tests is Monday, September 21, 2026 – see `provideCoreTestEnvironment`. */
 const BIRTHDAY_ADULT = '1998-05-16';
-const BIRTHDAY_CHILD = '2015-01-01';
+/** `MIN_AGE` today, and one day short of it. */
+const BIRTHDAY_MIN_AGE = `${2026 - MIN_AGE}-09-21`;
+const BIRTHDAY_CHILD = `${2026 - MIN_AGE}-09-22`;
 const NO_TRAINING_DAYS: readonly boolean[] = [false, false, false, false, false, false, false];
 /** Monday, Wednesday and Friday – the draft starts with no days selected, so tests set them themselves. */
 const TRAINING_DAYS: readonly boolean[] = [true, false, true, false, true, false, false];
@@ -207,9 +210,12 @@ describe('SignupStateService', () => {
       expect(state.canContinue()).toBe(false);
       state.username.set('m'.repeat(51));
       expect(state.canContinue()).toBe(false);
+      // Login tells an e-mail from a username by the `@`.
+      state.username.set('mads@nutrify.dk');
+      expect(state.canContinue()).toBe(false);
     });
 
-    it('requires an age between 16 and 100', () => {
+    it(`requires an age between ${MIN_AGE} and ${MAX_AGE}`, () => {
       const state = setup();
       at(state, 'birthday');
 
@@ -220,6 +226,10 @@ describe('SignupStateService', () => {
       state.birthday.set(BIRTHDAY_CHILD);
 
       expect(state.canContinue()).toBe(false);
+
+      state.birthday.set(BIRTHDAY_MIN_AGE);
+
+      expect(state.canContinue()).toBe(true);
 
       state.birthday.set(BIRTHDAY_ADULT);
 

@@ -7,7 +7,7 @@ Fødselsdagsscenen på signup-trinnet `birthday` (designets `sAlder`). Kun brugt
 
 - Figuren (`app-figure-body`) med højre arm slået fra — den erstattes af designets
   `cakeArm`, der strækker sig op mod kagen.
-- **Festhat** fra 16 år (`hatOpacity`), **tåre** under 16 år (`tearOpacity`,
+- **Festhat** fra `MIN_AGE` (13 år, `hatOpacity`), **tåre** under `MIN_AGE` (`tearOpacity`,
   `drip`-animationen).
 - **Kagen**: 1–3 lag efter alderen (< 20 → 1, < 50 → 2, ellers 3), hvert lag med
   bølget glasur (`cake-geometry.ts` bygger stien), tallerken, oval overflade og
@@ -16,7 +16,7 @@ Fødselsdagsscenen på signup-trinnet `birthday` (designets `sAlder`). Kun brugt
   (kapacitet 12 / 8 / 5). Hver flamme har `flicker` og et blødt `glow` med forskudt
   `animation-delay`, så de ikke blafrer i takt. Lysene sorteres på y, så de forreste
   tegnes sidst.
-- Kagen tones ned til 30 % under 16 år og 25 %, når ingen dato er valgt.
+- Kagen tones ned til 30 % under `MIN_AGE` og 25 %, når ingen dato er valgt.
 
 ## Beslutninger
 

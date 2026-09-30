@@ -30,34 +30,28 @@ er lyse, mens skærmen er åben. Se "Tema" i [`src/styles/README.md`](../../../s
    └──"Log ind" (SessionService) ─→ /hjem
 ```
 
-`Glemt adgangskode` er én rute med fire trin i et signal (designets `fp1 → fp2 → fp3 →
-fpDone`): e-mail → kode → ny adgangskode → kvittering. Trinnene har bevidst **ikke** hver sin
-URL – de er ét sammenhængende forløb, og en genindlæsning midt i det ville alligevel ikke have
-nogen kode at fortsætte med.
+Login tager **e-mail eller brugernavn** i ét felt (API'et skelner på `@`, og et brugernavn må
+derfor ikke indeholde `@`). Rigtig adgangskode til en konto, hvis e-mail ikke er bekræftet, giver
+403 uden tokens: det er ingen fejl – sessionen bliver `pending-verification`, siden går til Hjem,
+og bekræftelses-arket åbner (se `features/home/components/verify-email-sheet`).
 
-API'et logger ind med **e-mail** (ikke brugernavn). "Koden" i mails er et token på 64 tegn
-(0–9, A–F), som brugeren kopierer og indsætter; der er ingen kort kode og intet link.
+`Glemt adgangskode` er én formular: e-mail eller brugernavn → "Send link" → den neutrale besked
+("Hvis kontoen findes …") med "Send igen". Mailen linker til en side, som **API'et** hoster, hvor
+den nye adgangskode vælges to gange – appen ser aldrig tokenet og har derfor hverken kodefelt,
+adgangskodefelter eller login bagefter.
 
 ## Beslutninger
 
-- **Ingen forretningslogik i siderne.** Alle kald går gennem `AuthApi`, `SessionService`,
-  `UserProfileService` og `NutritionCalculator` i `core/`. Siderne holder kun trin, loading og
-  fejltekst. En fejl er altid en `ApiError`; siden gemmer `toApiError(error).messageKey`
-  (`core/utils/api.ts`) og oversætter nøglen, så teksten følger et sprogskift.
-- **Typede reactive forms.** Ét `FormGroup<T>` pr. trin, alle kontroller `nonNullable`.
-  Feltværdierne læses som signals med `toSignal(control.valueChanges)`, så hints og
-  disabled-tilstande er `computed()` og ikke logik i templaten.
-- **Fejl fra backenden slår designets hint.** Under feltet står enten designets orange hint
-  (`Skriv en gyldig e-mail.`, `Koden passer ikke. …`, `Mindst 10 tegn.`,
-  `Adgangskoderne er ikke ens.`) eller en rød fejltekst fra API'et – aldrig begge. Det
-  afgøres ét sted i `message()`.
-- **Ventetiden er en token.** Kvitteringstrinnet venter `FORGOT_PASSWORD_DONE_DELAY_MS`
-  (1400 ms som i designet), før der logges ind. Tokenet kan sættes til 0 i tests, og timeren
-  ryddes af `takeUntilDestroyed`, hvis brugeren forlader siden inden.
-- **E-mailen til det afsluttende login** er den fra trin 1. Fejler loginet (tokenet er brugt
-  nu), sendes brugeren til `/login` i stedet for tilbage til trin 3.
-- **E-mailen udfyldes** fra sessionen (`SessionService.email()`), som husker den efter log ud
-  og efter en bekræftelse, der ikke selv kunne logge ind.
+- **Ingen forretningslogik i siderne.** Alle kald går gennem `AuthApi` og `SessionService` i
+  `core/`. Siderne holder kun loading, tilstand og fejltekst. En fejl er altid en `ApiError`;
+  siden gemmer `toApiError(error).messageKey` (`core/utils/api.ts`) og oversætter nøglen, så
+  teksten følger et sprogskift.
+- **Typede reactive forms.** Ét `FormGroup<T>` pr. side, alle kontroller `nonNullable`.
+- **Fejllinjen findes kun, når der er en fejl** (`@if`), så den ikke lægger tom luft mellem felt
+  og knap. Login: 401/400 → `Forkert brugernavn, e-mail eller adgangskode.` (siger ikke hvad),
+  429 → `For mange mislykkede forsøg. …`.
+- **Feltet udfyldes** med `SessionService.email()`, som husker e-mailen efter log ud og efter en
+  genstart midt i en bekræftelse.
 
 ## Kendte afvigelser fra designet
 

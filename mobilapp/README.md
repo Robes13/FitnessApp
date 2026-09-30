@@ -96,8 +96,8 @@ npm start                           # http://localhost:4200 – /api går videre
   dev-build have `android:usesCleartextTraffic="true"` (eller en network-security-config for
   `10.0.2.2`). iOS tillader `localhost`; en LAN-IP kræver en ATS-undtagelse.
 - **Mails i dev:** API'et sender ingen rigtige mails i Development, men skriver dem som
-  `.txt`-filer i outbox-mappen (første linje `To: <e-mail>`). Bekræftelses- og nulstillingskoden
-  er 64 hex-tegn, som indsættes i appen.
+  `.txt`-filer i outbox-mappen (første linje `To: <e-mail>`). Bekræftelses- og nulstillingsmailen
+  har et link til en side på API'et, som åbnes i browseren.
 
 ---
 
@@ -333,7 +333,7 @@ prototypen findes, og de er koblet sammen gennem `core/`.
 
 | Feature       | Rute                           | Indhold                                                            |
 | ------------- | ------------------------------ | ------------------------------------------------------------------ |
-| `auth`        | `/login`, `/glemt-adgangskode` | Log ind og nulstil adgangskode i tre trin                          |
+| `auth`        | `/login`, `/glemt-adgangskode` | Log ind med e-mail eller brugernavn og glemt adgangskode (link)    |
 | `signup`      | `/opret`                       | 14-trins oprettelsesflow med figur-scener, linealer og opsummering |
 | `shell`       | –                              | Tab-rammen om de fem faner; skjuler tab baren på fuldskærmsruter   |
 | `home`        | `/hjem`                        | Ugeringe, dagens kort, gøremål, målkort og bekræftelses-ark        |
@@ -347,10 +347,10 @@ prototypen findes, og de er koblet sammen gennem `core/`.
 
 **Appen indeholder ingen data.** Der er hverken varedatabase, retter, faste
 samlinger, seedede logs eller demo-profil. **Konto og session** går mod FitnessApp-API'et:
-oprettelse, e-mailbekræftelse (koden fra mailen indsættes), login med e-mail, token-fornyelse,
-log ud, glemt adgangskode og slet konto. Tokens gemmes i `localStorage` (sikker lagring er
-opgraderingsstien). `SessionDataService` henter hvert domænes data, når brugeren er logget ind,
-og nulstiller dem ved log ud – domænerne kobles på én ad gangen.
+oprettelse, e-mailbekræftelse via link (arket opdager det selv), login med e-mail eller brugernavn,
+token-fornyelse, log ud, glemt adgangskode og slet konto. Tokens gemmes i `localStorage` (sikker
+lagring er opgraderingsstien). `SessionDataService` henter hvert domænes data, når brugeren er
+logget ind, og nulstiller dem ved log ud – domænerne kobles på én ad gangen.
 
 Det, brugeren selv registrerer, gemmes lokalt gennem `StorageService`
 (browserens `localStorage`): profil, madlog, egne varer, vejninger, egne samlinger,

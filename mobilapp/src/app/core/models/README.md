@@ -20,7 +20,7 @@ App-dækkende typer, én fil pr. domæne. Kun typer – ingen logik.
 | `barcode.ts`         | `BarcodeScanOutcome` (hvordan en kamerascanning endte), `CameraPermission`, `BarcodeScannerPlatform` (kameraet bag et interface), `ScannedProduct` (vare pr. 100 g + `servingGrams`) og `ProductLookupResult`                                                                  |
 | `open-food-facts.ts` | Open Food Facts' API-model: `OpenFoodFactsProductResponse`, `OpenFoodFactsProduct`, `OpenFoodFactsNutriments`. Mappes til `ScannedProduct` i `ProductLookupService`                                                                                                            |
 | `profile-api.ts`     | Profil-API'ets kontrakt: `UserProfileDto`, `PatchUserProfileRequest` (alle felter valgfri), `UserGoalDto` (API'ets kalorie- og makromål), `CreateUserGoalRequest`, `UserSettingDto`, `UpsertUserSettingRequest`, `LatestWeightDto`. Mappes i `user-profile/profile-mapping.ts` |
-| `auth.ts`            | Auth-API'ets kontrakt: `RegisterRequest` (fladt), `UserDto`, `LoginRequest`, `AuthResponse`, `RefreshRequest`, `VerifyEmailRequest`, `EmailRequest`, `ResetPasswordRequest` og enum-værdierne `ApiGender`, `ApiTrainingIntensity`, `ApiGoalType`                               |
+| `auth.ts`            | Auth-API'ets kontrakt: `RegisterRequest` (fladt), `UserDto`, `LoginRequest` (`emailOrUsername`), `AuthResponse`, `RefreshRequest`, `IdentifierRequest` (gensend og glemt adgangskode) og enum-værdierne `ApiGender`, `ApiTrainingIntensity`, `ApiGoalType`                     |
 
 ## Konventioner
 

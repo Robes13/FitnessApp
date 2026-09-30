@@ -14,17 +14,17 @@ import {
 } from 'rxjs';
 import { API_ERROR_MESSAGE_KEY } from '../../constants/api';
 import { APP_PATH, APP_ROUTE } from '../../constants/app-route';
-import { AUTH_ERROR_MESSAGE_KEY, TOKEN_REFRESH_MARGIN_MS } from '../../constants/auth';
+import { TOKEN_REFRESH_MARGIN_MS } from '../../constants/auth';
 import { DEVICE_STORAGE_KEYS, STORAGE_KEY } from '../../constants/storage-key';
 import { ApiError } from '../../models/api-error';
-import { AuthResponse, UserDto } from '../../models/auth';
+import { AuthResponse } from '../../models/auth';
 import { UserProfile } from '../../models/profile';
 import { AuthTokens, SessionState, SessionStatus } from '../../models/session';
 import { parseApiDateTime, toApiError } from '../../utils/api';
 import { currentTimeZoneId } from '../../utils/date-format';
 import { NOW } from '../../utils/now';
 import { AuthApi } from '../auth-api/auth-api';
-import { normalizeAuthToken, toRegisterRequest } from '../auth-api/auth-mapping';
+import { toRegisterRequest } from '../auth-api/auth-mapping';
 import { NutritionCalculator } from '../nutrition-calculator/nutrition-calculator';
 import { StorageService } from '../storage/storage';
 import { UserProfileService } from '../user-profile/user-profile';
@@ -34,15 +34,13 @@ const NO_SESSION: ApiError = {
   messageKey: API_ERROR_MESSAGE_KEY.REQUEST_FAILED,
   status: HttpStatusCode.Unauthorized,
 };
-const VERIFICATION_UNCHECKABLE: ApiError = {
-  messageKey: AUTH_ERROR_MESSAGE_KEY.VERIFICATION_UNCHECKABLE,
-};
 
 /**
- * The session against the API: `guest` → (register) `pending-verification` → (verify + login)
- * `authenticated`. Log out only ends the session – the local data stays on the device (the
- * design's "Your data is kept") – but when a *different* account registers or signs in here,
- * the previous account's local data is cleared first.
+ * The session against the API: `guest` → (register, or a login before the e-mail is verified)
+ * `pending-verification` → (the link in the mail, then a login) `authenticated`. Log out only
+ * ends the session – the local data stays on the device (the design's "Your data is kept") – but
+ * when a *different* account registers or signs in here, the previous account's local data is
+ * cleared first.
  *
  * ponytail: the tokens are persisted in `localStorage` (via `StorageService`) like the rest of
  * the app's state; secure storage (Keychain/Keystore) is the upgrade path.
@@ -59,14 +57,12 @@ export class SessionService {
   private readonly state = signal<SessionState>(this.restore());
 
   /**
-   * The sign-up password, kept **only in memory**: the API issues no tokens before the e-mail is
-   * verified, so this is what logs the user in afterwards. After an app restart it's gone, and
-   * the user logs in by hand.
+   * The identifier and password of the account waiting for its e-mail, kept **only in memory**:
+   * the API issues no tokens before the e-mail is verified, so `checkVerification()` logs in with
+   * them until it works. After an app restart they're gone, and the user logs in by hand (1.1-6a).
    */
-  private pendingPassword: string | null = null;
-  /** `email/verify` succeeded but the login after it failed – the token is used up by now. */
-  private verified = false;
-  /** The one refresh in progress – concurrent callers share it (the API rotates refresh tokens). */
+  private pending: { identifier: string; password: string } | null = null;
+  /** The one refresh in progress – concurrent callers share it (the API may rotate the token). */
   private refreshInFlight: Observable<string> | null = null;
 
   readonly status: Signal<SessionStatus> = computed(() => this.state().status);
@@ -91,8 +87,7 @@ export class SessionService {
     return this.authApi.register(request).pipe(
       map((user) => {
         this.forgetOtherAccount(user.userId);
-        this.pendingPassword = password;
-        this.verified = false;
+        this.pending = { identifier: user.email, password };
         this.set({
           status: 'pending-verification',
           email: user.email,
@@ -104,62 +99,61 @@ export class SessionService {
   }
 
   /**
-   * Verifies the pasted token and logs in with the sign-up password. Without it (the app has
-   * restarted since sign-up) the user becomes a guest and is sent to login with the e-mail filled
-   * in. If an earlier verify went through but its login failed, only the login is retried.
-   */
-  verifyEmail(token: string): Observable<void> {
-    const verify = this.verified
-      ? of(undefined)
-      : this.authApi.verifyEmail({ token: normalizeAuthToken(token) });
-    return verify.pipe(
-      switchMap(() => {
-        const email = this.state().email;
-        if (email !== null && this.pendingPassword !== null) {
-          this.verified = true;
-          return this.login(email, this.pendingPassword);
-        }
-        this.signOut();
-        void this.router.navigateByUrl(APP_PATH.LOGIN);
-        return of(undefined);
-      }),
-    );
-  }
-
-  /**
-   * "Check again". The API has no status endpoint, so this tries to log in with the sign-up
-   * password: 200 = verified (and logged in), 401 = not yet. Without the password (the app has
-   * restarted) nothing can be checked, so it fails with a hint to paste the code or log in.
+   * Whether the e-mail has been verified by now. The API has no status endpoint (it would allow
+   * enumeration), so this logs in with the credentials in memory: 200 authenticates (`true`), 403
+   * keeps waiting (`false`). With nothing pending (the app has restarted) it is `false`. A 401
+   * means the password no longer works (e.g. it was reset since): checking on with it would only
+   * lock the account (429), so the session ends and the user logs in again (spec 1.1-6a).
    */
   checkVerification(): Observable<boolean> {
-    const email = this.state().email;
-    if (email === null || this.pendingPassword === null) {
-      return throwError(() => VERIFICATION_UNCHECKABLE);
-    }
-    return this.login(email, this.pendingPassword).pipe(
-      map(() => true),
-      catchError((error: unknown) =>
-        toApiError(error).status === HttpStatusCode.Unauthorized
-          ? of(false)
-          : throwError(() => error),
-      ),
-    );
+    return this.pending === null
+      ? of(false)
+      : this.login(this.pending.identifier, this.pending.password).pipe(
+          map(() => this.isAuthenticated()),
+          catchError((error: unknown) => {
+            if (toApiError(error).status === HttpStatusCode.Unauthorized) {
+              this.signOut();
+              void this.router.navigateByUrl(APP_PATH.LOGIN);
+            }
+            return throwError(() => error);
+          }),
+        );
   }
 
+  /** A new link for the pending account, by the identifier it signed up or logged in with. */
   resendVerification(): Observable<void> {
-    return this.authApi.resendVerification({ email: this.state().email ?? '' });
+    return this.authApi.resendVerification({
+      emailOrUsername: this.pending?.identifier ?? this.state().email ?? '',
+    });
   }
 
   /**
-   * On success the user is authenticated. Another account than the last one on this device
-   * starts from a clean local profile; an empty profile name and e-mail are taken from the account.
+   * Logs in with an e-mail or a username. 200: authenticated – another account than the last one
+   * on this device starts from a clean local profile (the profile's load then fetches the account).
+   * 403 (right password, e-mail not verified): no tokens – the session waits for the verification
+   * with the credentials in memory and completes normally, so the login page goes to Home, where
+   * the verification sheet opens. Everything else fails with an `ApiError` (`loginErrorKey`).
    */
-  login(email: string, password: string): Observable<void> {
-    return this.authApi.login({ email: email.trim(), password }).pipe(
+  login(identifier: string, password: string): Observable<void> {
+    const emailOrUsername = identifier.trim();
+    return this.authApi.login({ emailOrUsername, password }).pipe(
       map((response) => {
         this.forgetOtherAccount(response.user.userId);
         this.authenticate(response);
-        this.fillProfileFrom(response.user);
+      }),
+      catchError((error: unknown) => {
+        if (toApiError(error).status !== HttpStatusCode.Forbidden) {
+          return throwError(() => error);
+        }
+        this.pending = { identifier: emailOrUsername, password };
+        this.set({
+          status: 'pending-verification',
+          // Like the API: an identifier with `@` is an e-mail; a username tells no address.
+          email: emailOrUsername.includes('@') ? emailOrUsername.toLowerCase() : null,
+          userId: this.state().userId,
+          tokens: null,
+        });
+        return of(undefined);
       }),
     );
   }
@@ -194,6 +188,19 @@ export class SessionService {
   }
 
   /**
+   * Spec 1.5: one refresh when the app opens with a restored session – the API keeps a refresh
+   * token issued today (UTC) and rotates an older one to 30 days from now. Called by an app
+   * initializer, before the stores load; their calls share this refresh if they need a token.
+   */
+  renewOnOpen(): void {
+    if (this.isAuthenticated()) {
+      // Nothing left to handle: a rejected refresh token has already ended the session (→ login),
+      // and a network or server error keeps it – the next call that needs a token refreshes again.
+      this.refresh().subscribe({ error: () => undefined });
+    }
+  }
+
+  /**
    * A valid access token – refreshed first when it expires within `TOKEN_REFRESH_MARGIN_MS` –
    * or `null` without tokens. The auth interceptor calls this for every API request.
    */
@@ -209,10 +216,11 @@ export class SessionService {
 
   /**
    * New tokens for the refresh token. Single-flight: concurrent callers share one request, as
-   * the API rotates the refresh token and a second parallel refresh would get a 401. It runs to
-   * the end even if every caller unsubscribes (no `refCount`), so the rotated tokens are never
-   * lost. If the API rejects the refresh token, the session ends and the user is sent to login.
-   * An answer that arrives after the session has ended or changed is not stored.
+   * the first refresh of a UTC day rotates the refresh token, and a second parallel refresh with
+   * the old one would get a 401. It runs to the end even if every caller unsubscribes (no
+   * `refCount`), so the rotated tokens are never lost. If the API rejects the refresh token, the
+   * session ends and the user is sent to login. An answer that arrives after the session has
+   * ended or changed is not stored.
    */
   refresh(): Observable<string> {
     const refreshToken = this.state().tokens?.refreshToken;
@@ -264,8 +272,7 @@ export class SessionService {
   }
 
   private authenticate({ user, ...tokens }: AuthResponse): void {
-    this.pendingPassword = null;
-    this.verified = false;
+    this.pending = null;
     this.set({ status: 'authenticated', email: user.email, userId: user.userId, tokens });
   }
 
@@ -283,20 +290,9 @@ export class SessionService {
     this.profile.resetToDefaults();
   }
 
-  private fillProfileFrom(user: UserDto): void {
-    const { username, email } = this.profile.profile();
-    if (!username.trim() || !email.trim()) {
-      this.profile.update({
-        username: username.trim() || user.username,
-        email: email.trim() || user.email,
-      });
-    }
-  }
-
   /** Back to guest. The e-mail stays, so the login form is filled in, and so does the account id. */
   private signOut(): void {
-    this.pendingPassword = null;
-    this.verified = false;
+    this.pending = null;
     const { email, userId } = this.state();
     this.set({ ...GUEST, email, userId });
   }
@@ -307,8 +303,9 @@ export class SessionService {
   }
 
   /**
-   * The stored session. Anything else – including the old `{ isLoggedIn, isEmailVerified }`
-   * shape from before the API, and a session whose refresh token has expired – is a guest.
+   * The stored session. Anything else – the old `{ isLoggedIn, isEmailVerified }` shape from
+   * before the API, a session whose refresh token has expired, and a pending one (its password was
+   * only in memory, spec 1.1-6a) – is a guest that keeps the e-mail and the account id.
    */
   private restore(): SessionState {
     const stored = this.storage.read<Partial<SessionState>>(STORAGE_KEY.SESSION);
@@ -322,9 +319,6 @@ export class SessionService {
       parseApiDateTime(stored.tokens.refreshTokenExpiresAt).getTime() > this.now().getTime()
     ) {
       return { status: 'authenticated', email, userId, tokens: stored.tokens };
-    }
-    if (stored?.status === 'pending-verification' && email !== null) {
-      return { status: 'pending-verification', email, userId, tokens: null };
     }
     return { ...GUEST, email, userId };
   }

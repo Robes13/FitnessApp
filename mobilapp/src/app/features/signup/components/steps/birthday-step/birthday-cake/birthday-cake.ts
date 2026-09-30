@@ -31,8 +31,8 @@ const EXPRESSION: Partial<FigureExpression> = { pupilOffsetX: 1 };
 
 /**
  * The birthday scene: the figure wearing a party hat reaches for a layer cake whose size and
- * number of candles follow the age. Under 16, the hat disappears, the figure gets a tear, and
- * the cake fades out.
+ * number of candles follow the age. Under `MIN_AGE`, the hat disappears, the figure gets a
+ * tear, and the cake fades out.
  *
  * The scene draws its own SVG and uses `FigureBody` for the body. The right arm is disabled,
  * because it's replaced by the arm pointing at the cake (the design's `cakeArm`).
@@ -54,7 +54,7 @@ export class BirthdayCake {
 
   protected readonly expression = EXPRESSION;
 
-  /** The design's `tooYoung`: a chosen date that yields an age under 16. */
+  /** The design's `tooYoung`: a chosen date that yields an age under `MIN_AGE`. */
   protected readonly tooYoung = computed(() => this.age() > 0 && this.age() < MIN_AGE);
 
   protected readonly geometry = animatedFigure(() => {

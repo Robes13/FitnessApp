@@ -7,7 +7,8 @@ Funktionelle `HttpInterceptorFn`'er, koblet på i `app.config.ts` med
 
 Gælder **kun** kald, hvis URL starter med `API_BASE_URL` – aldrig Open Food Facts eller andre
 værter – og aldrig de anonyme auth-endpoints (`ANONYMOUS_AUTH_ENDPOINTS`: register, login,
-refresh, email/verify, email/resend-verification, password/forgot, password/reset).
+refresh, email/resend-verification, password/forgot). Bekræftelses- og nulstillingslinks i mails
+åbner sider på API'et i browseren; appen kalder dem ikke.
 
 1. **Bearer.** Har sessionen tokens, sættes `Authorization: Bearer <accessToken>`. Uden session
    sendes kaldet uændret.
@@ -16,8 +17,9 @@ refresh, email/verify, email/resend-verification, password/forgot, password/rese
 3. **Reaktiv fornyelse.** En 401 med **tom body** er JWT-middlewaren, der afviser tokenet: kaldet
    sendes igen **én** gang med et nyt token. Er tokenet allerede fornyet, siden kaldet blev sendt
    (en 401, der lander efter en anden requests fornyelse), bruges det nye token direkte; ellers
-   fornyes én gang (single-flight – samtidige 401'ere deler ét `POST auth/refresh`). Så roterer
-   tokenet kun én gang, uanset hvornår 401'erne lander. En 401 **med** en ProblemDetails-body er
+   fornyes én gang (single-flight – samtidige 401'ere deler ét `POST auth/refresh`). Refresh-tokenet
+   roterer højst én gang pr. UTC-dag (API'et beholder et token, der er udstedt samme dag), men
+   dagens første fornyelse roterer det – derfor stadig single-flight. En 401 **med** en ProblemDetails-body er
    en forretningsfejl (fx "Current password is invalid.") og sendes videre uden fornyelse.
    **`auth/logout` gentages aldrig her** (`NO_RETRY_ENDPOINTS`): dens body har refresh-tokenet fra
    før fornyelsen, så en gentagelse ville revokere det brugte token og lade det nye være aktivt.
@@ -25,6 +27,10 @@ refresh, email/verify, email/resend-verification, password/forgot, password/rese
 4. **Afvist fornyelse.** Svarer `auth/refresh` med 4xx, afslutter `SessionService` sessionen
    (gæst) og sender brugeren til login. Ved netværks- eller serverfejl beholdes sessionen, og
    fejlen går videre til kalderen.
+
+**Ved app-start** kalder `SessionService.renewOnOpen()` `refresh()` én gang (spec 1.5), før storene
+indlæses; deres første `/me/**`-kald deler den samme single-flight-fornyelse, hvis tokenet er ved at
+udløbe.
 
 Der er ingen DI-cyklus: interceptoren injicerer `SessionService` først, når et kald køres, og
 `auth/refresh` er selv et anonymt endpoint, så fornyelsen går uden om interceptoren.

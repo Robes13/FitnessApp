@@ -1,5 +1,5 @@
 import { HttpStatusCode } from '@angular/common/http';
-import { AUTH_ERROR_MESSAGE_KEY, AUTH_TOKEN_PATTERN } from '../../constants/auth';
+import { AUTH_ERROR_MESSAGE_KEY } from '../../constants/auth';
 import { TRAINING_FALLBACK_INTENSITY } from '../../constants/nutrition';
 import { ApiGender, ApiGoalType, ApiTrainingIntensity, RegisterRequest } from '../../models/auth';
 import { Gender, GoalId, IntensityId, UserProfile } from '../../models/profile';
@@ -25,10 +25,7 @@ export const INTENSITY_TO_API: Readonly<Record<IntensityId, ApiTrainingIntensity
 };
 
 const MAINTAIN_GOAL: GoalId = 'hold';
-const WHITESPACE = /\s+/g;
 const USERNAME_DETAIL = /username/i;
-const TOKEN_DETAIL = /token/i;
-const PASSWORD_DETAIL = /password must/i;
 
 /**
  * The sign-up draft as the API's flat `RegisterRequest`, with the app's own rules from
@@ -72,16 +69,6 @@ export function toRegisterRequest(
   };
 }
 
-/** A pasted token as the API compares it: no whitespace, upper case. */
-export function normalizeAuthToken(value: string): string {
-  return value.replace(WHITESPACE, '').toUpperCase();
-}
-
-/** Whether a pasted value is a verification or reset token – checked before calling the API. */
-export function isAuthToken(value: string): boolean {
-  return AUTH_TOKEN_PATTERN.test(normalizeAuthToken(value));
-}
-
 /** Register: the two 409s differ only in their English `detail`. */
 export const registerErrorKey: ApiErrorResolver = ({ status, detail, fields }) => {
   if (status === HttpStatusCode.Conflict) {
@@ -101,35 +88,19 @@ export const registerErrorKey: ApiErrorResolver = ({ status, detail, fields }) =
 };
 
 /**
- * Login: a 401 is a wrong password **or** an unverified e-mail – the API doesn't say which. A
- * password the API rejects outright (empty, over 200 characters) is wrong as well.
+ * Login: 401 (wrong identifier or password – the API doesn't say which) and 400 (a value the API
+ * rejects outright, e.g. over 200 characters) are wrong credentials; 429 is the lockout. The 403
+ * of an unverified e-mail keeps the generic key: `SessionService.login()` turns it into the
+ * pending state instead of an error.
  */
-export const loginErrorKey: ApiErrorResolver = ({ status, fields }) => {
-  if (status === HttpStatusCode.Unauthorized) {
-    return AUTH_ERROR_MESSAGE_KEY.INVALID_CREDENTIALS;
+export const loginErrorKey: ApiErrorResolver = ({ status }) => {
+  switch (status) {
+    case HttpStatusCode.Unauthorized:
+    case HttpStatusCode.BadRequest:
+      return AUTH_ERROR_MESSAGE_KEY.INVALID_CREDENTIALS;
+    case HttpStatusCode.TooManyRequests:
+      return AUTH_ERROR_MESSAGE_KEY.TOO_MANY_ATTEMPTS;
+    default:
+      return null;
   }
-  if (status !== HttpStatusCode.BadRequest) {
-    return null;
-  }
-  if (fields.includes('email')) {
-    return AUTH_ERROR_MESSAGE_KEY.INVALID_EMAIL;
-  }
-  return fields.includes('password') ? AUTH_ERROR_MESSAGE_KEY.INVALID_CREDENTIALS : null;
-};
-
-/** Resend verification and forgot password: only a malformed e-mail fails (400). */
-export const emailErrorKey: ApiErrorResolver = ({ status }) =>
-  status === HttpStatusCode.BadRequest ? AUTH_ERROR_MESSAGE_KEY.INVALID_EMAIL : null;
-
-/** Verify e-mail and reset password: a used or expired token, or a too short new password. */
-export const tokenErrorKey: ApiErrorResolver = ({ status, detail, fields }) => {
-  if (status !== HttpStatusCode.BadRequest) {
-    return null;
-  }
-  if (TOKEN_DETAIL.test(detail ?? '') || fields.includes('token')) {
-    return AUTH_ERROR_MESSAGE_KEY.INVALID_CODE;
-  }
-  return fields.includes('newpassword') || PASSWORD_DETAIL.test(detail ?? '')
-    ? AUTH_ERROR_MESSAGE_KEY.PASSWORD_TOO_SHORT
-    : null;
 };

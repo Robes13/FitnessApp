@@ -2,7 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from '../../../../../core/constants/auth';
+import {
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+  USERNAME_PATTERN,
+} from '../../../../../core/constants/auth';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../../../../core/constants/nutrition';
 import { injectTranslate } from '../../../../../core/services/language/translate';
 import { UiFormError } from '../../../../../shared/components/ui-form-error/ui-form-error';
@@ -12,8 +16,9 @@ import { SignupStateService } from '../../../services/signup-state';
 /** Design's `pwHint` – both texts are verbatim from the prototype. */
 const MISMATCH_HINT_KEY = 'signup.accountStep.mismatchHint';
 const MIN_LENGTH_HINT_KEY = 'signup.accountStep.minLengthHint';
-/** Not in the design: the API requires 3–50 characters. */
+/** Not in the design: the API requires 3–50 characters and no `@` (login splits on it). */
 const USERNAME_LENGTH_HINT_KEY = 'signup.accountStep.usernameLengthHint';
+const USERNAME_NO_AT_HINT_KEY = 'signup.accountStep.usernameNoAt';
 
 interface AccountForm {
   username: FormControl<string>;
@@ -59,6 +64,9 @@ export class AccountStep {
 
   protected readonly hint = computed(() => {
     const username = this.state.username().trim();
+    if (username.length > 0 && !USERNAME_PATTERN.test(username)) {
+      return this.t(USERNAME_NO_AT_HINT_KEY);
+    }
     if (username.length > 0 && username.length < USERNAME_MIN_LENGTH) {
       return this.t(USERNAME_LENGTH_HINT_KEY);
     }

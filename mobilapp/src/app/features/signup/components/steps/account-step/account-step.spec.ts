@@ -73,4 +73,13 @@ describe('AccountStep', () => {
     expect(root().textContent).not.toContain('Brugernavnet skal være');
     expect(inputs().map((input) => input.maxLength)).toEqual([50, 200, 200]);
   });
+
+  it('hints that the username cannot contain @ and blocks "Next"', () => {
+    type(0, 'mads@nutrify.dk');
+    type(1, 'hemmelig1234');
+    type(2, 'hemmelig1234');
+
+    expect(root().textContent).toContain('Brugernavnet må ikke indeholde @.');
+    expect(state.canContinue()).toBe(false);
+  });
 });

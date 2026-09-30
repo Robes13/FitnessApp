@@ -48,12 +48,16 @@ export interface UserDto {
   createdAt: string;
 }
 
+/** Body of `login`. With an `@` it is an e-mail (the API lower-cases it), else a username. */
 export interface LoginRequest {
-  email: string;
+  emailOrUsername: string;
   password: string;
 }
 
-/** Response of `login` and `refresh`. Both tokens are rotated on every refresh. */
+/**
+ * Response of `login` and `refresh`. `refresh` always issues a new access token; the refresh
+ * token stays the same when it was issued the same UTC day, otherwise it is rotated (30 days).
+ */
 export interface AuthResponse {
   accessToken: string;
   /** UTC ISO; 15 minutes after issue. */
@@ -69,17 +73,7 @@ export interface RefreshRequest {
   refreshToken: string;
 }
 
-export interface VerifyEmailRequest {
-  token: string;
-}
-
-/** Body of `email/resend-verification` and `password/forgot`. */
-export interface EmailRequest {
-  email: string;
-}
-
-export interface ResetPasswordRequest {
-  token: string;
-  newPassword: string;
-  newPasswordConfirmation: string;
+/** Body of `email/resend-verification` and `password/forgot`: an e-mail or a username. */
+export interface IdentifierRequest {
+  emailOrUsername: string;
 }

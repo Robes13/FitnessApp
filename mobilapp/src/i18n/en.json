@@ -163,13 +163,12 @@
     "auth": {
       "error": {
         "invalidEmail": "Enter a valid email.",
-        "invalidCode": "That code doesn't work. Copy the whole code from the latest email.",
         "passwordTooShort": "At least 10 characters.",
-        "invalidCredentials": "Wrong email or password – or your email isn't confirmed yet.",
+        "invalidCredentials": "Wrong username, e-mail or password.",
+        "tooManyAttempts": "Too many failed attempts. Wait up to 15 minutes and try again.",
         "emailTaken": "An account with that email already exists.",
         "usernameTaken": "That username is taken. Pick another one.",
-        "registerFailed": "The account couldn't be created. Check your details and try again.",
-        "verificationUncheckable": "After a restart the app can't check by itself. Paste the code from the email – or go to login if you've already confirmed."
+        "registerFailed": "The account couldn't be created. Check your details and try again."
       }
     },
     "barcode": {
@@ -283,37 +282,20 @@
       "newHere": "New here?",
       "createAccount": "Create account",
       "forgotPassword": "Forgot password?",
-      "email": "Email"
+      "identifier": "E-mail or username"
     },
     "forgotPasswordPage": {
-      "stepOf": "Step {{step}} of {{total}}",
       "emailTitleStart": "Forgot your",
       "emailTitleAccent": "pass­word?",
-      "emailBody": "Enter the email your account was created with. We'll send you a code.",
-      "emailPlaceholder": "you@mail.com",
-      "emailLabel": "Email",
-      "sendCode": "Send code",
+      "emailBody": "Enter your e-mail or username. We'll send you a link to choose a new password.",
+      "identifierLabel": "E-mail or username",
+      "sendLink": "Send link",
+      "sentTitle": "Check your e-mail",
+      "sentBody": "If the account exists, we've sent an e-mail with a link to choose a new password. The link works for 1 hour.",
       "rememberIt": "Remember it?",
       "logIn": "Log in",
-      "codeTitleStart": "Check your",
-      "codeTitleAccent": "email",
-      "codeBodyStart": "The code was sent to",
-      "codeBodyEnd": "and is valid for 1 hour. Copy it and paste it here.",
-      "codeLabel": "Code from the email",
-      "confirmCode": "Confirm code",
-      "noEmail": "No email?",
-      "resend": "Resend",
-      "resent": "Sent again",
-      "passwordTitleStart": "Choose a new",
-      "passwordTitleAccent": "pass­word",
-      "passwordBody": "At least 10 characters. Numbers and capital letters are a good idea.",
-      "newPassword": "New password",
-      "repeatPassword": "Repeat password",
-      "savePassword": "Save password",
-      "loggingIn": "Logging in with new password…",
-      "passwordChanged": "Your password has been changed, but we couldn't log you in.",
-      "mismatch": "The passwords don't match.",
-      "codePlaceholder": "Paste the code"
+      "resend": "Send again",
+      "resent": "Sent again"
     }
   },
   "collections": {
@@ -500,21 +482,14 @@
       "caption": "Next step"
     },
     "verifyEmail": {
-      "checkAgain": "Check again",
-      "checking": "Checking…",
-      "copyEnd": ". Paste it here to unlock the app.",
-      "copyStart": "We've sent a code to",
+      "copyEnd": ". Tap the link in the e-mail – the app notices by itself.",
+      "copyStart": "We've sent a link to",
       "emailFallback": "your email",
-      "notVerified": "Not confirmed",
-      "resend": "Resend code",
+      "resend": "Send e-mail again",
       "resendHint": "Nothing received?",
-      "resendHintSent": "New code sent – check spam too.",
-      "resendSent": "Code sent ✓",
+      "resendHintSent": "New e-mail sent – the old link no longer works.",
       "titleAccent": "email",
       "titleStart": "Check your",
-      "tokenLabel": "Code from the email",
-      "tokenPlaceholder": "Paste the code",
-      "confirm": "Confirm",
       "backToLogin": "To login"
     },
     "weekCard": {
@@ -849,7 +824,8 @@
       "titleAccent": "account",
       "titleStart": "Create your",
       "username": "Username",
-      "usernameLengthHint": "The username must be 3–50 characters."
+      "usernameLengthHint": "The username must be 3–50 characters.",
+      "usernameNoAt": "The username can't contain @."
     },
     "activityStep": {
       "countCaption": "steps on a typical day",
@@ -873,7 +849,7 @@
       "ageUnit": "years",
       "hintNoDate": "Choose your date of birth above.",
       "hintTooOld": "Check the date again.",
-      "hintTooYoung": "You must be at least 16 to use Nutrify.",
+      "hintTooYoung": "You must be at least {{minAge}} to use Nutrify.",
       "labelNoDate": "No date selected yet",
       "monthLabel": "Month",
       "nextMonth": "Next month",
