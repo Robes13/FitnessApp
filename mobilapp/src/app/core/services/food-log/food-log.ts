@@ -1,4 +1,5 @@
 import { DOCUMENT, DestroyRef, Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { Observable, of } from 'rxjs';
 import { newId } from '../../utils/id';
 import { normalizeName } from '../../utils/name';
 import { MEAL_IDS } from '../../constants/meals';
@@ -7,6 +8,7 @@ import { CustomFoodInput, DailyFoodTotals, FoodItem, LoggedFood, Macros } from '
 import { MealId } from '../../models/meal';
 import { addDays, startOfDay, toIsoDate } from '../../utils/date-format';
 import { NOW } from '../../utils/now';
+import { SessionDataStore } from '../session-data/session-data';
 import { StorageService } from '../storage/storage';
 
 /** How many days (today included) the food log keeps. Older days are pruned. */
@@ -48,7 +50,7 @@ const NO_ENTRIES: readonly LoggedFood[] = [];
  * Custom foods (`customFoods`) are stored separately.
  */
 @Injectable({ providedIn: 'root' })
-export class FoodLogService {
+export class FoodLogService implements SessionDataStore {
   private readonly storage = inject(StorageService);
   private readonly now = inject(NOW);
   private readonly document = inject(DOCUMENT);
@@ -255,6 +257,13 @@ export class FoodLogService {
   private currentIsoDate(): string {
     return toIsoDate(this.now());
   }
+
+  // Stub - replaced by the API-backed store in wave 2/3 (plan-v2 4).
+  load(): Observable<void> {
+    return of(undefined);
+  }
+
+  reset(): void {}
 }
 
 function sumMacros(entries: readonly LoggedFood[]): Macros {

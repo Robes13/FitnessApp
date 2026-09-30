@@ -1,4 +1,5 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { Observable, of } from 'rxjs';
 import { DEFAULT_PROFILE } from '../../constants/profile-defaults';
 import { GOALS } from '../../constants/nutrition';
 import { STORAGE_KEY } from '../../constants/storage-key';
@@ -11,6 +12,7 @@ import {
 } from '../../models/profile';
 import { NOW } from '../../utils/now';
 import { NutritionCalculator } from '../nutrition-calculator/nutrition-calculator';
+import { SessionDataStore } from '../session-data/session-data';
 import { StorageService } from '../storage/storage';
 
 /**
@@ -21,7 +23,7 @@ import { StorageService } from '../storage/storage';
  * `DEFAULT_PROFILE`, so older data can still be read.
  */
 @Injectable({ providedIn: 'root' })
-export class UserProfileService {
+export class UserProfileService implements SessionDataStore {
   private readonly storage = inject(StorageService);
   private readonly calculator = inject(NutritionCalculator);
   private readonly now = inject(NOW);
@@ -46,6 +48,13 @@ export class UserProfileService {
   readonly paceDefinition: Signal<PaceDefinition | null> = computed(() =>
     this.calculator.paceFor(this.state().pace),
   );
+
+  // Stub - replaced by the API-backed store in the profile commit (plan-v2 4).
+  load(): Observable<void> {
+    return of(undefined);
+  }
+
+  reset(): void {}
 
   update(patch: Partial<UserProfile>): void {
     this.replace({ ...this.state(), ...patch });

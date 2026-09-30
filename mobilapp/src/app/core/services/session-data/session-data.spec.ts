@@ -7,7 +7,11 @@ import { SessionState } from '../../models/session';
 import { createFakeStorage } from '../../testing/fake-document';
 import { AUTHENTICATED_SESSION, PENDING_SESSION, TEST_AUTH_RESPONSE } from '../../testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../testing/test-providers';
+import { CollectionsService } from '../collections/collections';
+import { FoodLogService } from '../food-log/food-log';
 import { SessionService } from '../session/session';
+import { UserProfileService } from '../user-profile/user-profile';
+import { WeightLogService } from '../weight-log/weight-log';
 import { SESSION_DATA_STORES, SessionDataService, SessionDataStore } from './session-data';
 
 class FakeStore implements SessionDataStore {
@@ -105,5 +109,19 @@ describe('SessionDataService', () => {
     expect(store.resets).toBe(2);
     expect(store.loads).toBe(1);
     expect(store.cancelled).toBe(1);
+  });
+
+  it('registers the profile, weight, food and collections stores by default', () => {
+    TestBed.configureTestingModule({
+      providers: [...provideCoreTestEnvironment(), provideRouter([])],
+    });
+
+    const stores = TestBed.inject(SESSION_DATA_STORES);
+
+    expect(stores).toHaveLength(4);
+    expect(stores[0]).toBe(TestBed.inject(UserProfileService));
+    expect(stores[1]).toBe(TestBed.inject(WeightLogService));
+    expect(stores[2]).toBe(TestBed.inject(FoodLogService));
+    expect(stores[3]).toBe(TestBed.inject(CollectionsService));
   });
 });

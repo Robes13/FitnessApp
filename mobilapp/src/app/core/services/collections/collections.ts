@@ -1,8 +1,10 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { Observable, of } from 'rxjs';
 import { newId } from '../../utils/id';
 import { normalizeName } from '../../utils/name';
 import { STORAGE_KEY } from '../../constants/storage-key';
 import { FoodCollection, FoodItem, Macros, NewCollectionInput, Recipe } from '../../models/food';
+import { SessionDataStore } from '../session-data/session-data';
 import { StorageService } from '../storage/storage';
 
 export type CollectionTotals = Macros & { count: number };
@@ -28,7 +30,7 @@ interface StoredCollections {
  * (`remove()`); base collections are read-only.
  */
 @Injectable({ providedIn: 'root' })
-export class CollectionsService {
+export class CollectionsService implements SessionDataStore {
   private readonly storage = inject(StorageService);
   private readonly stored = signal<StoredCollections>(this.restore());
 
@@ -174,4 +176,11 @@ export class CollectionsService {
     const stored = this.storage.read<Partial<StoredCollections>>(STORAGE_KEY.COLLECTIONS);
     return { collections: stored?.collections ?? [] };
   }
+
+  // Stub - replaced by the API-backed store in wave 2/3 (plan-v2 4).
+  load(): Observable<void> {
+    return of(undefined);
+  }
+
+  reset(): void {}
 }

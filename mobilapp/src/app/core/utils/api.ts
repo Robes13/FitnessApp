@@ -93,9 +93,29 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/**
+ * The error body as a record, or `{}` for an empty or non-JSON body. Android's CapacitorHttp hands
+ * a problem body over as text, so a string is parsed as well. Unchecked JSON – every field still
+ * has to be checked before it is used.
+ */
+export function readProblemBody(error: HttpErrorResponse): Readonly<Record<string, unknown>> {
+  if (isRecord(error.error)) {
+    return error.error;
+  }
+  if (typeof error.error === 'string') {
+    try {
+      const parsed: unknown = JSON.parse(error.error);
+      return isRecord(parsed) ? parsed : {};
+    } catch {
+      // Not JSON (e.g. a proxy's HTML error page) – treated as an empty body.
+      return {};
+    }
+  }
+  return {};
+}
+
 function toApiProblem(error: HttpErrorResponse): ApiProblem {
-  // Unchecked JSON (or an empty body) – so every field is still checked before it is used.
-  const body = (isRecord(error.error) ? error.error : {}) as ProblemDetails;
+  const body = readProblemBody(error) as ProblemDetails;
   const detail = typeof body.detail === 'string' ? body.detail : null;
   const errors = isRecord(body.errors) ? Object.keys(body.errors) : [];
   return {

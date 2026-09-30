@@ -71,6 +71,17 @@ describe('StorageService', () => {
     ]);
   });
 
+  it('also clears app keys that STORAGE_KEY no longer lists', () => {
+    storage.setItem('nutrify.old', '"legacy"');
+    storage.setItem('other.x', '"foreign"');
+    service.write(STORAGE_KEY.THEME, 'light');
+    service.write(STORAGE_KEY.SESSION, 'x');
+
+    service.clearAll([STORAGE_KEY.THEME]);
+
+    expect([...storage.data.keys()].sort()).toEqual([STORAGE_KEY.THEME, 'other.x']);
+  });
+
   it('degrades to no-ops when storage is unavailable', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({

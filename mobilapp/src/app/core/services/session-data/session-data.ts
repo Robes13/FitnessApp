@@ -1,6 +1,10 @@
 import { Injectable, InjectionToken, effect, inject, untracked } from '@angular/core';
 import { Observable } from 'rxjs';
+import { CollectionsService } from '../collections/collections';
+import { FoodLogService } from '../food-log/food-log';
 import { SessionService } from '../session/session';
+import { UserProfileService } from '../user-profile/user-profile';
+import { WeightLogService } from '../weight-log/weight-log';
 
 /** A store holding the signed-in user's data from the API. */
 export interface SessionDataStore {
@@ -18,12 +22,20 @@ export interface SessionDataStore {
 }
 
 /**
- * The stores `SessionDataService` loads and resets. Add a domain's store by injecting it here,
- * e.g. `factory: () => [inject(WeightLogService), inject(FoodLogService)]`.
+ * The stores `SessionDataService` loads and resets. Add a domain's store by injecting it here.
+ * `ReminderService` is deliberately not one: it is created after the language initializer.
  */
 export const SESSION_DATA_STORES = new InjectionToken<readonly SessionDataStore[]>(
   'SESSION_DATA_STORES',
-  { providedIn: 'root', factory: () => [] },
+  {
+    providedIn: 'root',
+    factory: () => [
+      inject(UserProfileService),
+      inject(WeightLogService),
+      inject(FoodLogService),
+      inject(CollectionsService),
+    ],
+  },
 );
 
 /**

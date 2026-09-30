@@ -1,4 +1,5 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { Observable, of } from 'rxjs';
 import { newId } from '../../utils/id';
 import { STORAGE_KEY } from '../../constants/storage-key';
 import { WEIGHT_RANGE_DAYS, WEIGHT_RANGE_LABEL_KEY } from '../../constants/weight';
@@ -7,6 +8,7 @@ import { addDays, isSameDay } from '../../utils/date-format';
 import { roundTo } from '../../utils/math';
 import { NOW } from '../../utils/now';
 import { injectTranslate } from '../language/translate';
+import { SessionDataStore } from '../session-data/session-data';
 import { StorageService } from '../storage/storage';
 import { UserProfileService } from '../user-profile/user-profile';
 
@@ -20,7 +22,7 @@ import { UserProfileService } from '../user-profile/user-profile';
  * The log starts empty: there are no weigh-ins until the user records one themselves.
  */
 @Injectable({ providedIn: 'root' })
-export class WeightLogService {
+export class WeightLogService implements SessionDataStore {
   private readonly storage = inject(StorageService);
   private readonly now = inject(NOW);
   private readonly profile = inject(UserProfileService);
@@ -107,6 +109,13 @@ export class WeightLogService {
     const stored = this.storage.read<readonly WeighEntry[]>(STORAGE_KEY.WEIGHT_LOG);
     return stored ? sortNewestFirst(stored) : [];
   }
+
+  // Stub - replaced by the API-backed store in wave 2/3 (plan-v2 4).
+  load(): Observable<void> {
+    return of(undefined);
+  }
+
+  reset(): void {}
 }
 
 function sortNewestFirst(entries: readonly WeighEntry[]): readonly WeighEntry[] {

@@ -2,7 +2,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Observable, firstValueFrom, of } from 'rxjs';
 import { CursorPage } from '../models/api';
-import { ApiProblem, fetchAllPages, injectApiUrl, parseApiDateTime, toApiError } from './api';
+import {
+  ApiProblem,
+  fetchAllPages,
+  injectApiUrl,
+  parseApiDateTime,
+  readProblemBody,
+  toApiError,
+} from './api';
 
 const REQUEST_FAILED = 'common.error.requestFailed';
 
@@ -86,6 +93,42 @@ describe('toApiError', () => {
     expect(toApiError(bug)).toEqual({ messageKey: REQUEST_FAILED });
     expect(logged).toHaveBeenCalledWith('Unexpected non-HTTP error', bug);
     logged.mockRestore();
+  });
+});
+
+describe('readProblemBody', () => {
+  it('returns an object body as it is', () => {
+    const body = { title: 'Conflict', status: 409, detail: 'Taken.' };
+
+    expect(readProblemBody(httpError(409, body))).toBe(body);
+  });
+
+  it('parses a JSON string body (CapacitorHttp on Android)', () => {
+    const body = {
+      status: 409,
+      detail: 'A weight log already exists for this day.',
+      errors: { Weight: ['bad'] },
+      existingWeightLogId: 42,
+    };
+
+    expect(readProblemBody(httpError(409, JSON.stringify(body)))).toEqual(body);
+  });
+
+  it('gives an empty record for a non-JSON string, a JSON non-record and a null body', () => {
+    expect(readProblemBody(httpError(502, '<html>Bad gateway</html>'))).toEqual({});
+    expect(readProblemBody(httpError(400, '[1,2]'))).toEqual({});
+    expect(readProblemBody(httpError(401, null))).toEqual({});
+  });
+
+  it('lets toApiError read a string body', () => {
+    const resolve = vi.fn(() => null);
+
+    toApiError(
+      httpError(400, JSON.stringify({ status: 400, errors: { '$.mealType': ['bad'] } })),
+      resolve,
+    );
+
+    expect(resolve).toHaveBeenCalledWith({ status: 400, detail: null, fields: ['mealtype'] });
   });
 });
 
