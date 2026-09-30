@@ -1,7 +1,7 @@
 # UiRuler
 
 Designets lineal: et vandret spor af streger, der trækkes under en fast orange midterlinje.
-Bruges til vægt (30–300 kg), højde (55–250 cm), skridt (0–50.000), træningslængde (10–180 min)
+Bruges til vægt (30–300 kg), højde (100–250 cm), skridt (0–50.000), træningslængde (10–180 min)
 og målvægt i opret-flowet samt til ny vejning (0,1 kg-trin) på Vægt-siden.
 
 ## Filer

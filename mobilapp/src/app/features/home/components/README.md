@@ -2,7 +2,7 @@
 
 Feature-specifikke byggeklodser til Hjem. De er præsentations-komponenter: de modtager
 færdige værdier fra `HomeSummaryService` via inputs og melder tilbage med outputs. Eneste
-undtagelse er `VerifyEmailSheet`, der selv taler med `SessionService` og `UserProfileService`,
+undtagelse er `VerifyEmailSheet`, der selv taler med `SessionService`,
 fordi den ejer sit eget lille flow.
 
 | Komponent              | Selector                     | Rolle                                     |

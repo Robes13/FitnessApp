@@ -1,79 +1,85 @@
-import { Injectable, InjectionToken, inject } from '@angular/core';
-import { Observable, map, throwError, timer } from 'rxjs';
-import { AUTH_ENDPOINT, AUTH_ERROR_MESSAGE_KEY, AuthEndpoint } from '../../constants/auth';
-import { ApiError } from '../../models/api-error';
-import { RegisterRequest, VerificationStatusResponse } from '../../models/auth';
-import { UserProfile } from '../../models/profile';
-
-/** Placeholder for the backend's response time, so the UI shows its loading state. */
-const DEFAULT_DELAY_MS = 400;
-
-/** Response time of the stubbed sign-up calls. Set to 0 in tests. */
-export const AUTH_API_DELAY_MS = new InjectionToken<number>('AUTH_API_DELAY_MS', {
-  providedIn: 'root',
-  factory: () => DEFAULT_DELAY_MS,
-});
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { AUTH_ENDPOINT, ME_ENDPOINT } from '../../constants/auth';
+import {
+  AuthResponse,
+  EmailRequest,
+  LoginRequest,
+  RefreshRequest,
+  RegisterRequest,
+  ResetPasswordRequest,
+  UserDto,
+  VerifyEmailRequest,
+} from '../../models/auth';
+import { injectApiUrl, mapApiError } from '../../utils/api';
+import { emailErrorKey, loginErrorKey, registerErrorKey, tokenErrorKey } from './auth-mapping';
 
 /**
- * The client for the auth backend.
- *
- * There is no backend yet. The sign-up calls (`register`, `resendVerification`,
- * `checkVerification`) build their typed request and answer with a stubbed success, so the
- * flow can be clicked through. Once the backend exists, `stub()` is replaced by an
- * `HttpClient` call to the same endpoint with the same body – the callers don't change.
- * The remaining calls fail with an `ApiError` the user can read.
- *
- * All field validation lives in the forms, not here.
+ * The HTTP client for the API's account lifecycle: one method per endpoint, API-shaped
+ * bodies. Every call fails with an `ApiError` (`mapApiError`), so callers never see an
+ * `HttpErrorResponse`. Session state lives in `SessionService`, not here; `logout` and
+ * `deleteAccount` need a bearer, which the auth interceptor adds.
  */
 @Injectable({ providedIn: 'root' })
 export class AuthApi {
-  private readonly delayMs = inject(AUTH_API_DELAY_MS);
+  private readonly http = inject(HttpClient);
+  private readonly url = injectApiUrl();
 
-  login(_username: string, _password: string): Observable<never> {
-    return this.notImplemented();
+  /** 201 without tokens: the account can't log in until the e-mail is verified. */
+  register(request: RegisterRequest): Observable<UserDto> {
+    return this.http
+      .post<UserDto>(this.url(AUTH_ENDPOINT.REGISTER), request)
+      .pipe(mapApiError(registerErrorKey));
   }
 
-  register(profile: UserProfile, password: string): Observable<void> {
-    const { photo: _photo, ...rest } = profile;
-    const request: RegisterRequest = { password, profile: rest };
-    return this.stub(AUTH_ENDPOINT.REGISTER, request, undefined);
+  login(request: LoginRequest): Observable<AuthResponse> {
+    return this.http
+      .post<AuthResponse>(this.url(AUTH_ENDPOINT.LOGIN), request)
+      .pipe(mapApiError(loginErrorKey));
   }
 
-  requestPasswordReset(_email: string): Observable<never> {
-    return this.notImplemented();
+  /** Rotates both tokens; the old refresh token is dead afterwards. */
+  refresh(request: RefreshRequest): Observable<AuthResponse> {
+    return this.http
+      .post<AuthResponse>(this.url(AUTH_ENDPOINT.REFRESH), request)
+      .pipe(mapApiError());
   }
 
-  verifyResetCode(_code: string): Observable<never> {
-    return this.notImplemented();
+  /** Revokes the refresh token. Needs a valid access token. */
+  logout(request: RefreshRequest): Observable<void> {
+    return this.http.post<void>(this.url(AUTH_ENDPOINT.LOGOUT), request).pipe(mapApiError());
   }
 
-  resetPassword(_password: string): Observable<never> {
-    return this.notImplemented();
+  verifyEmail(request: VerifyEmailRequest): Observable<void> {
+    return this.http
+      .post<void>(this.url(AUTH_ENDPOINT.VERIFY_EMAIL), request)
+      .pipe(mapApiError(tokenErrorKey));
   }
 
-  resendVerification(): Observable<void> {
-    return this.stub(AUTH_ENDPOINT.RESEND_VERIFICATION, null, undefined);
+  /** Always 204. Invalidates every earlier verification token. */
+  resendVerification(request: EmailRequest): Observable<void> {
+    return this.http
+      .post<void>(this.url(AUTH_ENDPOINT.RESEND_VERIFICATION), request)
+      .pipe(mapApiError(emailErrorKey));
   }
 
-  /** The stub answers "verified", so "Tjek igen" unlocks Home. */
-  checkVerification(): Observable<boolean> {
-    const response: VerificationStatusResponse = { verified: true };
-    return this.stub(AUTH_ENDPOINT.VERIFICATION_STATUS, null, response).pipe(
-      map(({ verified }) => verified),
-    );
+  /** Always 204 – also for unknown and unverified e-mails, which get no mail. */
+  forgotPassword(request: EmailRequest): Observable<void> {
+    return this.http
+      .post<void>(this.url(AUTH_ENDPOINT.FORGOT_PASSWORD), request)
+      .pipe(mapApiError(emailErrorKey));
   }
 
-  /** Stand-in for `http.post<T>(endpoint, body)`: answers `response` after `AUTH_API_DELAY_MS`. */
-  private stub<T>(
-    _endpoint: AuthEndpoint,
-    _body: RegisterRequest | null,
-    response: T,
-  ): Observable<T> {
-    return timer(this.delayMs).pipe(map(() => response));
+  /** Validates the token and sets the password in one call; revokes every refresh token. */
+  resetPassword(request: ResetPasswordRequest): Observable<void> {
+    return this.http
+      .post<void>(this.url(AUTH_ENDPOINT.RESET_PASSWORD), request)
+      .pipe(mapApiError(tokenErrorKey));
   }
 
-  private notImplemented(): Observable<never> {
-    const error: ApiError = { messageKey: AUTH_ERROR_MESSAGE_KEY.NO_BACKEND };
-    return throwError(() => error);
+  /** Irreversibly anonymises the account and all its data. */
+  deleteAccount(): Observable<void> {
+    return this.http.delete<void>(this.url(ME_ENDPOINT)).pipe(mapApiError());
   }
 }

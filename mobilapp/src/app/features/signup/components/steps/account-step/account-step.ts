@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { PASSWORD_MIN_LENGTH } from '../../../../../core/constants/nutrition';
+import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from '../../../../../core/constants/auth';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../../../../core/constants/nutrition';
 import { injectTranslate } from '../../../../../core/services/language/translate';
 import { UiFormError } from '../../../../../shared/components/ui-form-error/ui-form-error';
 import { UiTextInput } from '../../../../../shared/components/ui-text-input/ui-text-input';
@@ -11,6 +12,8 @@ import { SignupStateService } from '../../../services/signup-state';
 /** Design's `pwHint` – both texts are verbatim from the prototype. */
 const MISMATCH_HINT_KEY = 'signup.accountStep.mismatchHint';
 const MIN_LENGTH_HINT_KEY = 'signup.accountStep.minLengthHint';
+/** Not in the design: the API requires 3–50 characters. */
+const USERNAME_LENGTH_HINT_KEY = 'signup.accountStep.usernameLengthHint';
 
 interface AccountForm {
   username: FormControl<string>;
@@ -21,7 +24,7 @@ interface AccountForm {
 /**
  * Step 1 (`s1`): username and password, entered twice. The repeat field is flagged as
  * soon as the two passwords don't match, and the hint line under the fields keeps its
- * height so the layout doesn't jump.
+ * height so the layout doesn't jump. The fields stop at the API's maximum lengths.
  *
  * The step has neither inputs nor outputs: it writes directly to `SignupStateService`,
  * which also decides when "Next" is active (`canContinue`).
@@ -38,6 +41,9 @@ export class AccountStep {
   private readonly state = inject(SignupStateService);
   private readonly t = injectTranslate();
 
+  protected readonly usernameMaxLength = USERNAME_MAX_LENGTH;
+  protected readonly passwordMaxLength = PASSWORD_MAX_LENGTH;
+
   protected readonly form = new FormGroup<AccountForm>({
     username: new FormControl(this.state.username(), { nonNullable: true }),
     password: new FormControl(this.state.password(), { nonNullable: true }),
@@ -52,6 +58,10 @@ export class AccountStep {
   );
 
   protected readonly hint = computed(() => {
+    const username = this.state.username().trim();
+    if (username.length > 0 && username.length < USERNAME_MIN_LENGTH) {
+      return this.t(USERNAME_LENGTH_HINT_KEY);
+    }
     if (this.mismatch()) {
       return this.t(MISMATCH_HINT_KEY);
     }

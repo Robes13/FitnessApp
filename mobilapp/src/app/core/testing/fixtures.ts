@@ -1,4 +1,6 @@
+import { AuthResponse } from '../models/auth';
 import { FoodItem } from '../models/food';
+import { SessionState } from '../models/session';
 import { WeighEntry } from '../models/weight';
 
 const MS_PER_DAY = 86_400_000;
@@ -30,4 +32,52 @@ export const TEST_FOOD: FoodItem = {
   protein: 20,
   carbs: 22,
   fat: 7,
+};
+
+/** The account of the auth fixtures below. */
+export const TEST_EMAIL = 'mads@nutrify.dk';
+
+/** A `login`/`refresh` response whose tokens are valid long after `TEST_NOW`. */
+export const TEST_AUTH_RESPONSE: AuthResponse = {
+  accessToken: 'test-access-token',
+  accessTokenExpiresAt: '2099-01-01T00:00:00Z',
+  refreshToken: 'test-refresh-token',
+  refreshTokenExpiresAt: '2099-01-31T00:00:00Z',
+  user: {
+    userId: 1,
+    email: TEST_EMAIL,
+    username: 'mads',
+    isActive: true,
+    emailVerifiedAt: '2026-09-01T08:00:00Z',
+    createdAt: '2026-09-01T07:55:00Z',
+  },
+};
+
+/** A signed-in session to seed as `STORAGE_KEY.SESSION`, with the tokens of `TEST_AUTH_RESPONSE`. */
+export const AUTHENTICATED_SESSION: SessionState = {
+  status: 'authenticated',
+  email: TEST_EMAIL,
+  userId: TEST_AUTH_RESPONSE.user.userId,
+  tokens: {
+    accessToken: TEST_AUTH_RESPONSE.accessToken,
+    accessTokenExpiresAt: TEST_AUTH_RESPONSE.accessTokenExpiresAt,
+    refreshToken: TEST_AUTH_RESPONSE.refreshToken,
+    refreshTokenExpiresAt: TEST_AUTH_RESPONSE.refreshTokenExpiresAt,
+  },
+};
+
+/** Registered, but the e-mail isn't verified yet – Home shows the verification sheet. */
+export const PENDING_SESSION: SessionState = {
+  status: 'pending-verification',
+  email: TEST_EMAIL,
+  userId: TEST_AUTH_RESPONSE.user.userId,
+  tokens: null,
+};
+
+/** Logged out after `AUTHENTICATED_SESSION`: the e-mail and the account id are remembered. */
+export const SIGNED_OUT_SESSION: SessionState = {
+  status: 'guest',
+  email: TEST_EMAIL,
+  userId: TEST_AUTH_RESPONSE.user.userId,
+  tokens: null,
 };

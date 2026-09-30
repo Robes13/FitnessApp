@@ -66,25 +66,30 @@ og deres tidspunkt. Selve planlægningen af lokale notifikationer ligger i
 
 ## Log ud
 
-Bekræftelsen kalder `SessionService.logout()` og navigerer til `APP_PATH.LOGIN`. Kun
-sessionen ryddes – profil, madlog, vejninger og samlinger bliver liggende, som designets
-tekst lover: "Dine data bliver gemt."
+Bekræftelsen kalder `SessionService.logout()` (tilbagekalder refresh-tokenet i API'et med et
+friskt access-token) og navigerer til `APP_PATH.LOGIN`, når kaldet er færdigt. Imens viser
+"Ja, log mig ud" en spinner (`busy`). Log ud er _best effort_: kan API'et ikke nås, slutter
+sessionen alligevel lokalt, så der er ingen fejltilstand. Kun sessionen ryddes – profil,
+madlog, vejninger og samlinger bliver liggende på enheden, som designets tekst lover: "Dine
+data bliver gemt."
 
 ## Slet konto
 
 Kravet kommer fra GDPR: brugeren skal selv kunne slette sine data. Bekræftelsen
-(`profile-delete-account-sheet`) forklarer, at **alle** data på enheden slettes, og kalder
+(`profile-delete-account-sheet`) forklarer, at kontoen og **alle** data slettes, og kalder
 derefter `SessionService.deleteAccount()`, som
 
-1. nulstiller session og profil i hukommelsen,
-2. sletter alle appens nøgler i storage (`StorageService.clearAll()`, der gennemløber
-   `STORAGE_KEY`), og
+1. sletter kontoen i API'et (`DELETE /me` – anonymiserer brugeren og sletter alle data),
+2. **kun hvis det lykkes**: sletter alle appens nøgler i storage (`StorageService.clearAll()`,
+   der gennemløber `STORAGE_KEY`), og
 3. genindlæser appen på login-siden (`document.location.replace`).
 
+Mens kaldet kører, viser "Ja, slet min konto" en spinner, og "Annuller" er slået fra. Fejler
+det, slettes intet lokalt, og arket viser fejlen i en `UiFormError`.
+
 Genindlæsningen er et bevidst valg: madlog, vejninger, samlinger, tema m.fl. ligger i hver
-sin root-store, og en fuld genindlæsning er den eneste måde at nulstille dem alle på én gang
-uden at give hver store sin egen reset-metode. Når backenden findes, skal dens
-slet-konto-kald ligge i `deleteAccount()`, før de lokale data ryddes.
+sin root-store, og en fuld genindlæsning nulstiller dem alle på én gang. Sessionen ændres ikke
+i hukommelsen inden, så ingen store når at reagere og skrive til storage igen.
 
 ## Profilbilledet
 

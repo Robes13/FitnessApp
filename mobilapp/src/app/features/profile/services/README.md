@@ -31,7 +31,7 @@ tilpasning, der faktisk slår igennem efter 1200 kcal-gulvet (`adjustmentKcal` /
 ## Grænser i redigeringsarket
 
 Højdefeltet bruger designets egne grænser (120–230 cm), som er snævrere end linealen i
-opret-flowet (`HEIGHT_MIN_CM`/`HEIGHT_MAX_CM` = 55–250). Det er bevidst: feltet skrives med
+opret-flowet (`HEIGHT_MIN_CM`/`HEIGHT_MAX_CM` = 100–250). Det er bevidst: feltet skrives med
 tastaturet, hvor et urealistisk tal ellers er nemt at ramme. Alle andre grænser kommer fra
 `core/constants/nutrition.ts`.
 

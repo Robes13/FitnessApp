@@ -6,15 +6,17 @@ Hver service har sin egen mappe med implementering og tests. Tilhørende adapter
 
 | Fil                                            | Klasse                                                 | Ansvar                                                                                                                                                                                                                                                                                                                                               |
 | ---------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `storage/storage.ts`                           | `StorageService`                                       | Fejlsikker JSON-indpakning af `localStorage`. Kaster aldrig; advarer i konsollen. `clearAll()` sletter alle `STORAGE_KEY`-nøgler.                                                                                                                                                                                                                    |
+| `storage/storage.ts`                           | `StorageService`                                       | Fejlsikker JSON-indpakning af `localStorage`. Kaster aldrig; advarer i konsollen. `clearAll(keep?)` sletter alle `STORAGE_KEY`-nøgler (undtagen `keep`).                                                                                                                                                                                             |
 | `theme/theme.ts`                               | `ThemeService`                                         | Mørk/lys tilstand på `<html data-theme>`, gemmes. Genskabes ved konstruktion; `initialize()` kan kaldes fra en app initializer. Styler også systembarerne via `SYSTEM_BARS_PLATFORM`, så ikonerne følger appens tema og ikke telefonens. `holdDarkSystemBars()` holder ikonerne lyse for en skærm, der er mørk i begge temaer (fotoskærmene).        |
 | `language/language.ts`                         | `LanguageService`                                      | Appens sprog (ngx-translate). `initialize()` genskaber det gemte sprog i en app initializer; `set()` skifter live uden reload og gemmer valget. `<html lang>` og talformatet følger med.                                                                                                                                                             |
 | `language/translate.ts`                        | `injectTranslate()`                                    | Giver `t(key, params)` til TypeScript. Læser det aktive sprog, så `computed()` genberegnes ved sprogskift.                                                                                                                                                                                                                                           |
 | `language/translation-loader.ts`               | `JsonTranslationLoader`                                | Leverer `src/i18n/<sprog>.json` fra bundlen (dansk statisk, andre sprog som lazy chunk) – virker offline.                                                                                                                                                                                                                                            |
 | `nutrition-calculator/nutrition-calculator.ts` | `NutritionCalculator`                                  | Rene beregninger: alder, BMR, træningsforbrug, kaloriemål (inkl. adaptiv tilpasning), makroer, målvægt, adgangskodestyrke, portioner.                                                                                                                                                                                                                |
 | `adaptive-goal/adaptive-goal.ts`               | `AdaptiveGoalService`                                  | Det daglige kaloriemål, appen viser og måler imod: formelmålet tilpasset madlog og vægtudvikling de sidste 21 dage (`kcalTarget`, `suggestedKcalTarget`, `adjustment`, `adjustmentKcal`, `suggestedAdjustmentKcal`). "I dag" er `FoodLogService.today`, så målet følger med over midnat.                                                             |
-| `auth-api/auth-api.ts`                         | `AuthApi` + `AUTH_API_DELAY_MS`                        | Klienten til auth-backenden. Signup-kaldene er stubs med typede requests; resten fejler med en `ApiError`.                                                                                                                                                                                                                                           |
-| `session/session.ts`                           | `SessionService`                                       | Login-tilstand og e-mail-bekræftelse. Log ud rører ikke data; `deleteAccount()` sletter alt og genindlæser på login.                                                                                                                                                                                                                                 |
+| `auth-api/auth-api.ts`                         | `AuthApi`                                              | HTTP-klienten til kontoens livscyklus: `register`, `login`, `refresh`, `logout`, `verifyEmail`, `resendVerification`, `forgotPassword`, `resetPassword` og `deleteAccount` (`DELETE /me`). API-formede bodies; fejler altid med en `ApiError`.                                                                                                       |
+| `auth-api/auth-mapping.ts`                     | –                                                      | Rene funktioner: `toRegisterRequest()` (signup-kladden → API'ets flade `RegisterRequest`), `normalizeAuthToken()` / `isAuthToken()` og fejl-resolverne `registerErrorKey`, `loginErrorKey`, `emailErrorKey`, `tokenErrorKey`.                                                                                                                        |
+| `session/session.ts`                           | `SessionService`                                       | Sessionen mod API'et: `status` (`guest` · `pending-verification` · `authenticated`), tokens, `register`, `verifyEmail`, `checkVerification`, `login`, `logout`, `deleteAccount`, `accessToken()` og single-flight `refresh()`. Log ud rører ikke lokale data.                                                                                        |
+| `session-data/session-data.ts`                 | `SessionDataService` + `SESSION_DATA_STORES`           | Kalder `load()` på alle registrerede stores, når sessionen bliver `authenticated`, og `reset()`, når den bliver `guest`. Se [`session-data/README.md`](session-data/README.md).                                                                                                                                                                      |
 | `user-profile/user-profile.ts`                 | `UserProfileService`                                   | Profilen som ét signal plus `displayName`, `age`, `bmi`, `activityLevel` m.fl. Kaloriemålet ligger i `AdaptiveGoalService`.                                                                                                                                                                                                                          |
 | `food-log/food-log.ts`                         | `FoodLogService`                                       | Madlog pr. dag i 90 dage: dagens dato som signal (`today`, skifter ved midnat), dagens (`entries`, `totals`, `byMeal`), tidligere dage (`entriesFor`, `totalsFor`, `dailyTotals`, `allEntries`) og egne varer (`addCustomFood`, `updateCustomFood`, `hasCustomFoodNamed`).                                                                           |
 | `food-search/food-search.ts`                   | `FoodSearchService` + `FOOD_SEARCH_DELAY_MS`           | Søgning i brugerens egne varer, max 6. Der findes ingen varedatabase endnu.                                                                                                                                                                                                                                                                          |
@@ -33,8 +35,9 @@ Hver service har sin egen mappe med implementering og tests. Tilhørende adapter
 ## Afhængigheder mellem services
 
 ```
-SessionService ──► AuthApi
+SessionService ──► AuthApi ──► HttpClient (+ authInterceptor ──► SessionService, ved kald)
       └──────────► UserProfileService ──► NutritionCalculator
+SessionDataService ► SessionService, SESSION_DATA_STORES
 WeightLogService ► UserProfileService
 AdaptiveGoalService ► UserProfileService, FoodLogService, WeightLogService, NutritionCalculator
 FoodSearchService ► FoodLogService
@@ -64,20 +67,42 @@ Ingen service kender til `shared/` eller `features/`.
   kan bestemme id'et én gang, og den loggede post peger på den gemte egne vare.
 - **Højst én vejning pr. dag.** `add` på en dag med vejninger genbruger den nyeste vejnings id
   og fjerner alle andre fra samme dag (ældre data kan have flere).
-- **`AuthApi` er klar til et API.** `register`, `resendVerification` og `checkVerification`
-  bygger deres typede request (`models/auth.ts`) mod et endpoint i `AUTH_ENDPOINT` og svarer
-  med en stubbet succes efter `AUTH_API_DELAY_MS` – `checkVerification` svarer "bekræftet".
-  Appen selv træffer ingen beslutninger; når backenden findes, erstattes `stub()` med et
-  `HttpClient`-kald til samme endpoint med samme body. Login og nulstilling af adgangskode
-  fejler stadig med `NO_BACKEND`.
-- **`completeSignup()`** markerer sessionen som logget ind men ubekræftet og "sender"
-  bekræftelsesmailen via backenden. `AuthApi.register(profile, password)` kaldes af
-  signup-flowet, der kender adgangskoden.
-- **`checkVerification()`** spørger backenden. Svarer den `true`, markeres mailen som
-  bekræftet; en feature kan også kalde `markEmailVerified()` direkte.
+- **`AuthApi` er en tynd HTTP-klient.** Én metode pr. endpoint i `AUTH_ENDPOINT`, bodies som
+  `models/auth.ts`, og `mapApiError(resolver)` gør alle fejl til en `ApiError` med en
+  oversættelsesnøgle (fx 409 → "brugernavn/e-mail optaget", skelnet på API'ets engelske
+  `detail`). Mapping og resolvere ligger som rene funktioner i `auth-mapping.ts`.
+- **Session og tokens.** `SessionService` gemmer `{ status, email, userId, tokens }` under
+  `STORAGE_KEY.SESSION` (ponytail: `localStorage`, sikker lagring er opgraderingsstien). Den gamle
+  form `{ isLoggedIn, isEmailVerified }` og en session med udløbet refresh-token genskabes som
+  gæst. `isLoggedIn` (= ikke gæst) bruges af guards; `isAuthenticated` (= har tokens, dvs. mailen
+  er bekræftet) er det, alle `/me/**`-kald og stores venter på, og det, Hjems bekræftelsesark
+  låser på.
+- **Flere konti på samme enhed.** `userId` er den konto, der sidst oprettede sig eller loggede
+  ind her, og huskes også som gæst. Opretter eller logger en _anden_ konto ind, ryddes den
+  forriges lokale data først: alle `STORAGE_KEY`-nøgler undtagen `DEVICE_STORAGE_KEYS` (tema og
+  sprog), og profilen nulstilles. Samme konto igen beholder sine lokale data. Tomt profilnavn og
+  tom e-mail udfyldes fra kontoen.
+- **Oprettelse og bekræftelse.** `register()` sender `POST auth/register` og sætter sessionen til
+  `pending-verification` – **intet** gensend-kald, da API'et selv har sendt mailen, og et
+  gensend ugyldiggør den første kode. Adgangskoden holdes kun i hukommelsen. `verifyEmail(token)`
+  bekræfter og logger ind med den; uden den (appen er genstartet) bliver sessionen gæst, og
+  brugeren sendes til login. Gik bekræftelsen igennem, men fejlede login bagefter, prøver det
+  næste `verifyEmail()` kun login igen (koden er brugt). `checkVerification()` er et login-forsøg
+  (200 = bekræftet, 401 = ikke endnu), fordi API'et intet status-endpoint har; uden adgangskoden
+  fejler den med `AUTH_ERROR_MESSAGE_KEY.VERIFICATION_UNCHECKABLE` (indsæt koden eller log ind) i
+  stedet for at svare "ikke bekræftet".
+- **Token-fornyelse.** `accessToken()` fornyer 60 s før udløb (`TOKEN_REFRESH_MARGIN_MS`), og
+  `refresh()` er single-flight (ét delt kald), fordi API'et roterer refresh-tokenet. Fornyelsen
+  gøres færdig og gemmes, selv om alle kaldere afmelder sig undervejs; et svar, der lander efter
+  log ud (eller et kontoskift), gemmes ikke. Afviser API'et fornyelsen (4xx), bliver sessionen
+  gæst, og brugeren sendes til login; ved netværks- eller serverfejl beholdes sessionen.
+- **Log ud** venter på en igangværende fornyelse, fornyer tokenet om nødvendigt, sender
+  `POST auth/logout` med det refresh-token, der er _aktuelt, når kaldet sendes_, og ender altid som
+  gæst (best effort). Afviser API'et bearer-tokenet alligevel, fornyes én gang, og det nye
+  refresh-token revokeres. E-mailen og konto-id'et huskes.
 - **`seriesFor(range)`** er brugerens egne vejninger inden for intervallet, ældste først.
   Uden vejninger er den tom, og grafen viser sin tomme tilstand.
-- **Forsinkelser** (`FOOD_SEARCH_DELAY_MS`, `AUTH_API_DELAY_MS`) er `InjectionToken`s med `providedIn: 'root'`-fabrik, så tests sætter dem til
+- **Forsinkelser** (`FOOD_SEARCH_DELAY_MS`) er `InjectionToken`s med `providedIn: 'root'`-fabrik, så tests sætter dem til
   0 uden at ændre produktionskoden.
 - **Stregkodescanning** bruger pluginets færdige `scan()`-UI. På Android er det Googles
   kodescanner (ingen kameratilladelse, men Googles stregkodemodul – mangler det, startes
@@ -126,11 +151,12 @@ Ingen service kender til `shared/` eller `features/`.
 `UserProfileService.updatePersisted()` bevarer den tidligere profil ved fejl;
 profilbilledets editor bruger dette til at vise lagringsfejl uden at miste data.
 
-`SessionService.deleteAccount()` (GDPR) nulstiller session og profil i hukommelsen, kalder
-`StorageService.clearAll()` og genindlæser appen på login med `document.location.replace`.
-Genindlæsningen nulstiller alle øvrige root-stores (madlog, vejninger, samlinger, tema) på
-én gang, så de ikke hver skal have en reset-metode. Backendens slet-konto-kald hører til i
-`deleteAccount()`, når API'et findes.
+`SessionService.deleteAccount()` (GDPR) sletter først kontoen i API'et (`DELETE /me`). **Kun
+efter et 204** kalder den `StorageService.clearAll()` og genindlæser appen på login med
+`document.location.replace`; ved en fejl slettes intet lokalt. Genindlæsningen starter alle
+root-stores forfra som gæst på én gang. Sessionen ændres bevidst ikke i hukommelsen først: så
+ville stores reagere på skiftet (`SessionDataService` → `reset()`) og kunne skrive til storage
+igen, før siden er væk.
 
 ### Påmindelser
 

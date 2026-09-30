@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { APP_PATH } from '../../../../core/constants/app-route';
@@ -10,6 +18,7 @@ import { ReminderService } from '../../../../core/services/reminders/reminders';
 import { SessionService } from '../../../../core/services/session/session';
 import { ThemeService } from '../../../../core/services/theme/theme';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
+import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiPageHeader } from '../../../../shared/components/ui-page-header/ui-page-header';
@@ -73,6 +82,7 @@ export class ProfilePage {
   private readonly rows = inject(ProfileRowsService);
   private readonly achievementsService = inject(AchievementsService);
   private readonly reminders = inject(ReminderService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly t = injectTranslate();
 
   protected readonly displayName = this.profiles.displayName;
@@ -108,6 +118,14 @@ export class ProfilePage {
   protected readonly logoutOpen = signal(false);
   protected readonly deleteAccountOpen = signal(false);
   protected readonly remindersOpen = signal(false);
+  protected readonly loggingOut = signal(false);
+  protected readonly deletingAccount = signal(false);
+  /** A key, so a shown error follows a language switch. */
+  private readonly deleteErrorKey = signal<string | null>(null);
+  protected readonly deleteError = computed(() => {
+    const key = this.deleteErrorKey();
+    return key === null ? null : this.t(key);
+  });
 
   protected goBack(): void {
     void this.router.navigateByUrl(APP_PATH.HOME);
@@ -151,12 +169,29 @@ export class ProfilePage {
 
   protected closeDeleteAccount(): void {
     this.deleteAccountOpen.set(false);
+    this.deleteErrorKey.set(null);
   }
 
-  /** Clears all local data and reloads the app at login – see `SessionService.deleteAccount()`. */
+  /**
+   * Deletes the account in the API. On success `SessionService.deleteAccount()` clears all local
+   * data and reloads the app at login, so the sheet stays busy until then. On an error nothing
+   * is deleted and the sheet shows why.
+   */
   protected deleteAccount(): void {
-    this.deleteAccountOpen.set(false);
-    this.session.deleteAccount();
+    if (this.deletingAccount()) {
+      return;
+    }
+    this.deletingAccount.set(true);
+    this.deleteErrorKey.set(null);
+    this.session
+      .deleteAccount()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        error: (error: unknown) => {
+          this.deletingAccount.set(false);
+          this.deleteErrorKey.set(toApiError(error).messageKey);
+        },
+      });
   }
 
   protected setLight(light: boolean): void {
@@ -173,9 +208,19 @@ export class ProfilePage {
     this.reminders.setMasterEnabled(enabled);
   }
 
+  /** Never fails: the session ends locally even if the API can't be reached. */
   protected logout(): void {
-    this.logoutOpen.set(false);
-    this.session.logout();
-    void this.router.navigateByUrl(APP_PATH.LOGIN);
+    if (this.loggingOut()) {
+      return;
+    }
+    this.loggingOut.set(true);
+    this.session
+      .logout()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.loggingOut.set(false);
+        this.logoutOpen.set(false);
+        void this.router.navigateByUrl(APP_PATH.LOGIN);
+      });
   }
 }

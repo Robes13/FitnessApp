@@ -32,6 +32,11 @@ const config: CapacitorConfig = {
     scrollEnabled: false,
   },
   plugins: {
+    // Routes fetch/XHR through the native HTTP stack, so the WebView's CORS rules don't apply –
+    // the API has no CORS policy. Only absolute URLs go native (see `API_BASE_URL`).
+    CapacitorHttp: {
+      enabled: true,
+    },
     Keyboard: {
       // WebView'et ændrer ikke størrelse; appen krymper sin egen rod med --keyboard-inset.
       resize: KeyboardResize.None,

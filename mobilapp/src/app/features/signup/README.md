@@ -50,13 +50,31 @@ med meget indhold kan scrolle uden at skubbe knapperne ud af skærmen.
 
 ## Oprettelsen
 
-`submit()` registrerer kontoen hos `AuthApi`, skriver kladden som profil via
-`UserProfileService.replace` og kalder `SessionService.completeSignup()`. Brugeren er derefter
-logget ind, men **ikke** bekræftet, så Hjem viser bekræftelses-arket. Profilen skrives først,
-når registreringen er gået godt, og siden viser fejlen fra backenden i en `UiFormError`.
-Indtil backenden findes, svarer `AuthApi.register` med en stubbet succes, så hele flowet kan
-klikkes igennem.
+`submit()` kalder `SessionService.register(profil, adgangskode, gentagelse)`. Den mapper kladden
+til API'ets flade `RegisterRequest` (`toRegisterRequest()` i `core/services/auth-api/auth-mapping.ts`)
+og sender `POST auth/register`. API'et opretter profil, første mål, notifikationsindstilling og
+vilkårssamtykke i ét kald og sender selv bekræftelsesmailen. Sessionen bliver derefter
+`pending-verification`, og Hjem viser bekræftelses-arket, hvor brugeren indsætter koden fra
+mailen (se `features/home/components/verify-email-sheet`). Adgangskoden holdes **kun i
+hukommelsen**, så brugeren logges ind automatisk, når koden er bekræftet.
+
+Kladden skrives som lokal profil via `UserProfileService.replace` først, når API'et har oprettet
+kontoen. Siden viser fejlen i en `UiFormError` – e-mail eller brugernavn optaget (409),
+for kort adgangskode eller "Kontoen kunne ikke oprettes" – via `toApiError(error).messageKey`.
 Selve navigationen til Hjem sker i `SignupPage`, fordi den også ejer spinner og fejltekst.
+
+### API'ets regler i trinnene
+
+- **Brugernavn** 3–50 tegn (`USERNAME_MIN_LENGTH`/`USERNAME_MAX_LENGTH`), **adgangskode**
+  10–200 tegn (`PASSWORD_MIN_LENGTH`/`PASSWORD_MAX_LENGTH`). Felterne stopper ved maksimum, og
+  `canContinue('account')` kræver begge intervaller.
+- **Højde** 100–250 cm (`HEIGHT_MIN_CM` = 100) og **alder** højst 100 år (`MAX_AGE`).
+- **Målvægt** skal ligge på målets side af vægten i dag (under ved "tabe", over ved "tage").
+  Skalaens grænser sikrer det ikke i yderpunkterne (vægt ≤ 36 kg ved "tabe", ≥ 200 kg ved
+  "tage"), så `canContinue('goal-weight')` kræver det også – ellers svarer register 400.
+- API'et gemmer kun antallet af træningsdage og én af tre intensiteter (`Low`/`Moderate`/`High`
+  via `INTENSITIES[].maxRpe`); uden træningsdage sendes `TRAINING_FALLBACK_INTENSITY`. Ugedagene
+  og RPE-tallet gemmes kun lokalt i profilen (gap i API'et).
 
 ## Bevidste afvigelser fra prototypen
 
@@ -65,6 +83,6 @@ Selve navigationen til Hjem sker i `SignupPage`, fordi den også ejer spinner og
   trinnet stadig tælles med i `visOrder`. Her går flowet til næste **synlige** trin, så
   notifikationer altid bliver spurgt om.
 - **Fejltekst ved oprettelse.** Prototypen har ingen fejltilstand på det sidste trin. Slår
-  registreringen fejl, viser siden backendens besked, ellers "Kontoen kunne ikke oprettes.
-  Prøv igen."
+  registreringen fejl, viser siden en oversat fejltekst (fx "Der findes allerede en konto med
+  den e-mail.").
 - **Alderen regnes ud fra `NOW`.** Prototypen har datoen 16. september 2026 hardkodet.

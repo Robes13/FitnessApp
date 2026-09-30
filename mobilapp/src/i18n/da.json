@@ -8,6 +8,11 @@
       "g": "g",
       "kcal": "kcal",
       "cm": "cm"
+    },
+    "error": {
+      "network": "Ingen forbindelse. Tjek dit internet, og prøv igen.",
+      "server": "Serveren svarer ikke lige nu. Prøv igen om lidt.",
+      "requestFailed": "Noget gik galt. Prøv igen."
     }
   },
   "core": {
@@ -167,10 +172,14 @@
     },
     "auth": {
       "error": {
-        "noBackend": "Der er ingen forbindelse til en server endnu.",
         "invalidEmail": "Skriv en gyldig e-mail.",
-        "invalidCode": "Koden er 4 cifre.",
-        "passwordTooShort": "Mindst 8 tegn."
+        "invalidCode": "Koden passer ikke. Kopiér hele koden fra den nyeste mail.",
+        "passwordTooShort": "Mindst 10 tegn.",
+        "invalidCredentials": "Forkert e-mail eller adgangskode – eller også er din mail ikke bekræftet endnu.",
+        "emailTaken": "Der findes allerede en konto med den e-mail.",
+        "usernameTaken": "Brugernavnet er taget. Vælg et andet.",
+        "registerFailed": "Kontoen kunne ikke oprettes. Tjek dine oplysninger, og prøv igen.",
+        "verificationUncheckable": "Efter en genstart kan appen ikke selv tjekke det. Indsæt koden fra mailen – eller gå til login, hvis du allerede har bekræftet."
       }
     },
     "barcode": {
@@ -276,24 +285,21 @@
     }
   },
   "auth": {
-    "error": {
-      "fallback": "Noget gik galt. Prøv igen."
-    },
     "loginPage": {
       "headingStart": "Spis klogt.",
       "headingAccent": "Træn stærkt.",
-      "username": "Brugernavn",
       "password": "Adgangskode",
       "submit": "Log ind",
       "newHere": "Ny her?",
       "createAccount": "Opret konto",
-      "forgotPassword": "Glemt adgangskode?"
+      "forgotPassword": "Glemt adgangskode?",
+      "email": "E-mail"
     },
     "forgotPasswordPage": {
       "stepOf": "Trin {{step}} af {{total}}",
       "emailTitleStart": "Glemt din",
       "emailTitleAccent": "adgangs­kode?",
-      "emailBody": "Skriv den e-mail, din konto er oprettet med. Vi sender en 4-cifret kode.",
+      "emailBody": "Skriv den e-mail, din konto er oprettet med. Vi sender dig en kode.",
       "emailPlaceholder": "dig@mail.dk",
       "emailLabel": "E-mail",
       "sendCode": "Send kode",
@@ -302,20 +308,22 @@
       "codeTitleStart": "Tjek din",
       "codeTitleAccent": "mail",
       "codeBodyStart": "Koden er sendt til",
-      "codeBodyEnd": "og gælder i 15 minutter.",
-      "codeLabel": "Firecifret kode",
+      "codeBodyEnd": "og gælder i 1 time. Kopiér den, og indsæt den her.",
+      "codeLabel": "Kode fra mailen",
       "confirmCode": "Bekræft kode",
       "noEmail": "Ingen mail?",
       "resend": "Send igen",
       "resent": "Sendt igen",
       "passwordTitleStart": "Vælg en ny",
       "passwordTitleAccent": "adgangs­kode",
-      "passwordBody": "Mindst 8 tegn. Brug gerne tal og store bogstaver.",
+      "passwordBody": "Mindst 10 tegn. Brug gerne tal og store bogstaver.",
       "newPassword": "Ny adgangskode",
       "repeatPassword": "Gentag adgangskode",
       "savePassword": "Gem adgangskode",
       "loggingIn": "Logger ind med ny kode…",
-      "mismatch": "Adgangskoderne er ikke ens."
+      "passwordChanged": "Din adgangskode er skiftet, men vi kunne ikke logge dig ind.",
+      "mismatch": "Adgangskoderne er ikke ens.",
+      "codePlaceholder": "Indsæt koden"
     }
   },
   "collections": {
@@ -502,22 +510,22 @@
       "caption": "Næste skridt"
     },
     "verifyEmail": {
-      "changeEmail": "Ændre mail",
       "checkAgain": "Tjek igen",
       "checking": "Tjekker…",
-      "copyEnd": ". Appen låses op, når du har bekræftet.",
-      "copyStart": "Vi har sendt en bekræftelseskode til",
-      "emailAriaLabel": "E-mail",
+      "copyEnd": ". Indsæt den her for at låse appen op.",
+      "copyStart": "Vi har sendt en kode til",
       "emailFallback": "din mail",
-      "invalidEmail": "Skriv en gyldig e-mail.",
       "notVerified": "Ikke bekræftet",
-      "requestFailed": "Noget gik galt. Prøv igen.",
       "resend": "Gensend kode",
       "resendHint": "Ikke modtaget noget?",
       "resendHintSent": "Ny kode sendt – tjek også spam.",
       "resendSent": "Kode sendt ✓",
       "titleAccent": "mail",
-      "titleStart": "Tjek din"
+      "titleStart": "Tjek din",
+      "tokenLabel": "Kode fra mailen",
+      "tokenPlaceholder": "Indsæt koden",
+      "confirm": "Bekræft",
+      "backToLogin": "Til login"
     },
     "weekCard": {
       "averageKcal": "kcal i snit",
@@ -700,7 +708,7 @@
     "deleteAccountSheet": {
       "titleStart": "Slet",
       "titleAccent": "konto?",
-      "body": "Alle dine data på denne enhed bliver slettet: profil, madlog, vejninger, egne varer og samlinger. Det kan ikke fortrydes.",
+      "body": "Din konto og alle dine data bliver slettet – også på denne enhed: profil, madlog, vejninger, egne varer og samlinger. Det kan ikke fortrydes.",
       "confirm": "Ja, slet min konto",
       "cancel": "Annuller"
     },
@@ -839,15 +847,16 @@
   },
   "signup": {
     "accountStep": {
-      "minLengthHint": "Mindst 8 tegn.",
+      "minLengthHint": "Mindst 10 tegn.",
       "mismatchHint": "Adgangskoderne er ikke ens.",
       "password": "Adgangskode",
-      "passwordPlaceholder": "Adgangskode (mindst 8 tegn)",
+      "passwordPlaceholder": "Adgangskode (mindst 10 tegn)",
       "passwordRepeat": "Gentag adgangskode",
       "subtitle": "Vælg et brugernavn og en adgangskode.",
       "titleAccent": "konto",
       "titleStart": "Opret din",
-      "username": "Brugernavn"
+      "username": "Brugernavn",
+      "usernameLengthHint": "Brugernavnet skal være 3–50 tegn."
     },
     "activityStep": {
       "countCaption": "skridt på en almindelig dag",
@@ -956,9 +965,6 @@
       "summaryLose": "{{pace}} · {{rate}} svarer til ca. {{kcal}} kcal mindre om dagen.",
       "titleAccent": "hurtigt?",
       "titleStart": "Hvor"
-    },
-    "page": {
-      "submitError": "Kontoen kunne ikke oprettes. Prøv igen."
     },
     "progress": {
       "editingCaption": "Tilbage til opsummering",

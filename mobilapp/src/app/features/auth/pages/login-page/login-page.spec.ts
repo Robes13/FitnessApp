@@ -1,17 +1,15 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
+import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import { SessionService } from '../../../../core/services/session/session';
 import { LoginPage } from './login-page';
-import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
-
-/** `AuthApi` responds via `timer(0)`; one macrotask tick is enough for the call to finish. */
-async function settle(fixture: ComponentFixture<LoginPage>): Promise<void> {
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, 0);
-  });
-  await fixture.whenStable();
-}
+import { TEST_AUTH_RESPONSE, TEST_EMAIL } from '../../../../core/testing/fixtures';
+import {
+  provideComponentTestEnvironment,
+  resetComponentTestStorage,
+} from '../../../../core/testing/test-providers';
 
 function requireElement<T extends Element>(root: HTMLElement, selector: string): T {
   const element = root.querySelector<T>(selector);
@@ -31,6 +29,10 @@ describe('LoginPage', () => {
   // Component specs need the right `DOCUMENT` to render, so
   beforeEach(() => {
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
   });
 
   async function setup() {
@@ -53,7 +55,10 @@ describe('LoginPage', () => {
       requireElement(root, '.login-page__heading').textContent?.replace(/\s+/g, ' ').trim(),
     ).toBe('Spis klogt.Træn stærkt.');
     expect(requireElement(root, '.login-page__heading-accent').textContent).toBe('Træn stærkt.');
-    expect(root.querySelector('input[aria-label="Brugernavn"]')).not.toBeNull();
+    const email = requireElement<HTMLInputElement>(root, 'input[aria-label="E-mail"]');
+    expect(email.type).toBe('email');
+    expect(email.getAttribute('autocomplete')).toBe('email');
+    expect(email.getAttribute('inputmode')).toBe('email');
     expect(requireElement<HTMLInputElement>(root, 'input[aria-label="Adgangskode"]').type).toBe(
       'password',
     );
@@ -81,20 +86,67 @@ describe('LoginPage', () => {
     expect(submit.classList.contains('ui-button--block')).toBe(true);
   });
 
-  it('cannot log in without a backend and stays on the page', async () => {
+  it('logs in with the e-mail and goes to Home', async () => {
     const { fixture, root, navigate } = await setup();
-    typeInto(root, 'Brugernavn', 'mads');
-    typeInto(root, 'Adgangskode', 'hemmelig1');
+    typeInto(root, 'E-mail', TEST_EMAIL);
+    typeInto(root, 'Adgangskode', 'hemmelig1234');
     await fixture.whenStable();
 
     requireElement<HTMLFormElement>(root, '.login-page__form').requestSubmit();
-    await settle(fixture);
+    await fixture.whenStable();
+    expect(root.querySelector('app-ui-spinner')).not.toBeNull();
+    const request = TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/login');
+    expect(request.request.body).toEqual({ email: TEST_EMAIL, password: 'hemmelig1234' });
+    request.flush(TEST_AUTH_RESPONSE);
+    await fixture.whenStable();
+
+    expect(TestBed.inject(SessionService).isAuthenticated()).toBe(true);
+    expect(navigate).toHaveBeenCalledWith(APP_PATH.HOME);
+  });
+
+  it('explains a rejected login and stays on the page', async () => {
+    const { fixture, root, navigate } = await setup();
+    typeInto(root, 'E-mail', TEST_EMAIL);
+    typeInto(root, 'Adgangskode', 'forkert-kode');
+    await fixture.whenStable();
+
+    requireElement<HTMLFormElement>(root, '.login-page__form').requestSubmit();
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/v1/auth/login')
+      .flush(
+        { title: 'Unauthorized', status: 401, detail: 'Invalid email or password.' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
+    await fixture.whenStable();
 
     expect(requireElement(root, 'app-ui-form-error').textContent?.trim()).toBe(
-      'Der er ingen forbindelse til en server endnu.',
+      'Forkert e-mail eller adgangskode – eller også er din mail ikke bekræftet endnu.',
     );
     expect(navigate).not.toHaveBeenCalled();
     expect(TestBed.inject(SessionService).isLoggedIn()).toBe(false);
     expect(root.querySelector('app-ui-spinner')).toBeNull();
+  });
+
+  it('sends nothing while a field is empty', async () => {
+    const { fixture, root } = await setup();
+    typeInto(root, 'E-mail', TEST_EMAIL);
+    await fixture.whenStable();
+
+    requireElement<HTMLFormElement>(root, '.login-page__form').requestSubmit();
+    await fixture.whenStable();
+
+    // `verify()` in afterEach proves no login was sent.
+    expect(root.querySelector('app-ui-spinner')).toBeNull();
+  });
+
+  it('fills in the e-mail the session remembers', async () => {
+    resetComponentTestStorage({
+      [STORAGE_KEY.SESSION]: { status: 'guest', email: TEST_EMAIL, userId: null, tokens: null },
+    });
+    const { root } = await setup();
+
+    expect(requireElement<HTMLInputElement>(root, 'input[aria-label="E-mail"]').value).toBe(
+      TEST_EMAIL,
+    );
   });
 });

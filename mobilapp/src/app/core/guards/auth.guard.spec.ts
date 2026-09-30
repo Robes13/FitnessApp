@@ -8,6 +8,7 @@ import {
 } from '@angular/router';
 import { STORAGE_KEY } from '../constants/storage-key';
 import { FakeStorage, createFakeStorage } from '../testing/fake-document';
+import { AUTHENTICATED_SESSION } from '../testing/fixtures';
 import { provideCoreTestEnvironment } from '../testing/test-providers';
 import { authGuard, guestGuard } from './auth.guard';
 
@@ -19,10 +20,7 @@ describe('route guards', () => {
 
   function setup(loggedIn: boolean): Router {
     storage = createFakeStorage();
-    storage.setItem(
-      STORAGE_KEY.SESSION,
-      JSON.stringify({ isLoggedIn: loggedIn, isEmailVerified: loggedIn }),
-    );
+    storage.setItem(STORAGE_KEY.SESSION, JSON.stringify(loggedIn ? AUTHENTICATED_SESSION : null));
     TestBed.configureTestingModule({
       providers: [provideRouter([]), ...provideCoreTestEnvironment({ storage })],
     });

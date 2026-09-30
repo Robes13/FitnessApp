@@ -47,21 +47,30 @@ describe('AccountStep', () => {
 
   it('writes the fields into the signup draft', () => {
     type(0, 'mads');
-    type(1, 'hemmelig1');
-    type(2, 'hemmelig1');
+    type(1, 'hemmelig1234');
+    type(2, 'hemmelig1234');
 
     expect(state.username()).toBe('mads');
-    expect(state.password()).toBe('hemmelig1');
-    expect(state.passwordRepeat()).toBe('hemmelig1');
+    expect(state.password()).toBe('hemmelig1234');
+    expect(state.passwordRepeat()).toBe('hemmelig1234');
     expect(state.canContinue()).toBe(true);
   });
 
   it('hints that the password is too short and that the two differ', () => {
     type(1, 'kort');
-    expect(root().textContent).toContain('Mindst 8 tegn.');
+    expect(root().textContent).toContain('Mindst 10 tegn.');
 
-    type(1, 'hemmelig1');
-    type(2, 'hemmelig2');
+    type(1, 'hemmelig1234');
+    type(2, 'hemmelig5678');
     expect(root().textContent).toContain('Adgangskoderne er ikke ens.');
+  });
+
+  it('hints that the username needs at least three characters and caps both lengths', () => {
+    type(0, 'ma');
+    expect(root().textContent).toContain('Brugernavnet skal være 3–50 tegn.');
+
+    type(0, 'mads');
+    expect(root().textContent).not.toContain('Brugernavnet skal være');
+    expect(inputs().map((input) => input.maxLength)).toEqual([50, 200, 200]);
   });
 });

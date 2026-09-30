@@ -8,6 +8,11 @@
       "g": "g",
       "kcal": "kcal",
       "cm": "cm"
+    },
+    "error": {
+      "network": "No connection. Check your internet and try again.",
+      "server": "The server isn't responding right now. Try again in a moment.",
+      "requestFailed": "Something went wrong. Try again."
     }
   },
   "core": {
@@ -167,10 +172,14 @@
     },
     "auth": {
       "error": {
-        "noBackend": "There is no connection to a server yet.",
         "invalidEmail": "Enter a valid email.",
-        "invalidCode": "The code is 4 digits.",
-        "passwordTooShort": "At least 8 characters."
+        "invalidCode": "That code doesn't work. Copy the whole code from the latest email.",
+        "passwordTooShort": "At least 10 characters.",
+        "invalidCredentials": "Wrong email or password – or your email isn't confirmed yet.",
+        "emailTaken": "An account with that email already exists.",
+        "usernameTaken": "That username is taken. Pick another one.",
+        "registerFailed": "The account couldn't be created. Check your details and try again.",
+        "verificationUncheckable": "After a restart the app can't check by itself. Paste the code from the email – or go to login if you've already confirmed."
       }
     },
     "barcode": {
@@ -276,24 +285,21 @@
     }
   },
   "auth": {
-    "error": {
-      "fallback": "Something went wrong. Try again."
-    },
     "loginPage": {
       "headingStart": "Eat smart.",
       "headingAccent": "Train hard.",
-      "username": "Username",
       "password": "Password",
       "submit": "Log in",
       "newHere": "New here?",
       "createAccount": "Create account",
-      "forgotPassword": "Forgot password?"
+      "forgotPassword": "Forgot password?",
+      "email": "Email"
     },
     "forgotPasswordPage": {
       "stepOf": "Step {{step}} of {{total}}",
       "emailTitleStart": "Forgot your",
       "emailTitleAccent": "pass­word?",
-      "emailBody": "Enter the email your account was created with. We'll send a 4-digit code.",
+      "emailBody": "Enter the email your account was created with. We'll send you a code.",
       "emailPlaceholder": "you@mail.com",
       "emailLabel": "Email",
       "sendCode": "Send code",
@@ -302,20 +308,22 @@
       "codeTitleStart": "Check your",
       "codeTitleAccent": "email",
       "codeBodyStart": "The code was sent to",
-      "codeBodyEnd": "and is valid for 15 minutes.",
-      "codeLabel": "Four-digit code",
+      "codeBodyEnd": "and is valid for 1 hour. Copy it and paste it here.",
+      "codeLabel": "Code from the email",
       "confirmCode": "Confirm code",
       "noEmail": "No email?",
       "resend": "Resend",
       "resent": "Sent again",
       "passwordTitleStart": "Choose a new",
       "passwordTitleAccent": "pass­word",
-      "passwordBody": "At least 8 characters. Numbers and capital letters are a good idea.",
+      "passwordBody": "At least 10 characters. Numbers and capital letters are a good idea.",
       "newPassword": "New password",
       "repeatPassword": "Repeat password",
       "savePassword": "Save password",
       "loggingIn": "Logging in with new password…",
-      "mismatch": "The passwords don't match."
+      "passwordChanged": "Your password has been changed, but we couldn't log you in.",
+      "mismatch": "The passwords don't match.",
+      "codePlaceholder": "Paste the code"
     }
   },
   "collections": {
@@ -502,22 +510,22 @@
       "caption": "Next step"
     },
     "verifyEmail": {
-      "changeEmail": "Change email",
       "checkAgain": "Check again",
       "checking": "Checking…",
-      "copyEnd": ". The app unlocks once you've confirmed.",
-      "copyStart": "We've sent a confirmation code to",
-      "emailAriaLabel": "Email",
+      "copyEnd": ". Paste it here to unlock the app.",
+      "copyStart": "We've sent a code to",
       "emailFallback": "your email",
-      "invalidEmail": "Enter a valid email.",
       "notVerified": "Not confirmed",
-      "requestFailed": "Something went wrong. Try again.",
       "resend": "Resend code",
       "resendHint": "Nothing received?",
       "resendHintSent": "New code sent – check spam too.",
       "resendSent": "Code sent ✓",
       "titleAccent": "email",
-      "titleStart": "Check your"
+      "titleStart": "Check your",
+      "tokenLabel": "Code from the email",
+      "tokenPlaceholder": "Paste the code",
+      "confirm": "Confirm",
+      "backToLogin": "To login"
     },
     "weekCard": {
       "averageKcal": "kcal avg.",
@@ -700,7 +708,7 @@
     "deleteAccountSheet": {
       "titleStart": "Delete",
       "titleAccent": "account?",
-      "body": "All your data on this device will be deleted: profile, food log, weigh-ins, custom items and collections. This can't be undone.",
+      "body": "Your account and all your data will be deleted – on this device too: profile, food log, weigh-ins, custom items and collections. This can't be undone.",
       "confirm": "Yes, delete my account",
       "cancel": "Cancel"
     },
@@ -839,15 +847,16 @@
   },
   "signup": {
     "accountStep": {
-      "minLengthHint": "At least 8 characters.",
+      "minLengthHint": "At least 10 characters.",
       "mismatchHint": "The passwords don't match.",
       "password": "Password",
-      "passwordPlaceholder": "Password (at least 8 characters)",
+      "passwordPlaceholder": "Password (at least 10 characters)",
       "passwordRepeat": "Repeat password",
       "subtitle": "Choose a username and a password.",
       "titleAccent": "account",
       "titleStart": "Create your",
-      "username": "Username"
+      "username": "Username",
+      "usernameLengthHint": "The username must be 3–50 characters."
     },
     "activityStep": {
       "countCaption": "steps on a typical day",
@@ -956,9 +965,6 @@
       "summaryLose": "{{pace}} · {{rate}} means about {{kcal}} kcal less per day.",
       "titleAccent": "fast?",
       "titleStart": "How"
-    },
-    "page": {
-      "submitError": "The account couldn't be created. Try again."
     },
     "progress": {
       "editingCaption": "Back to summary",

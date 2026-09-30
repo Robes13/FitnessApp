@@ -13,6 +13,7 @@ import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,
 } from '../../../../core/testing/test-providers';
+import { AUTHENTICATED_SESSION } from '../../../../core/testing/fixtures';
 import { ProfileRemindersSheet } from './profile-reminders-sheet';
 
 class FakeNotifier implements ReminderNotifier {
@@ -59,7 +60,7 @@ describe('ProfileRemindersSheet', () => {
     notifier = new FakeNotifier();
     resetComponentTestStorage({
       [STORAGE_KEY.PROFILE]: DEFAULT_PROFILE,
-      [STORAGE_KEY.SESSION]: { isLoggedIn: true, isEmailVerified: true },
+      [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION,
     });
   });
 
@@ -175,7 +176,7 @@ describe('ProfileRemindersSheet', () => {
   it('locks the switches while the master switch is off and can turn it back on', async () => {
     resetComponentTestStorage({
       [STORAGE_KEY.PROFILE]: { ...DEFAULT_PROFILE, notificationsEnabled: false },
-      [STORAGE_KEY.SESSION]: { isLoggedIn: true, isEmailVerified: true },
+      [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION,
     });
     const { fixture, host } = await setup();
 

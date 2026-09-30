@@ -382,19 +382,19 @@ describe('NutritionCalculator', () => {
 
     it('scores length, a capital letter and a digit', () => {
       expect(calculator.passwordStrength('abc')).toMatchObject({ score: 0, label: 'Svag' });
-      expect(calculator.passwordStrength('abcdefgh')).toMatchObject({
+      expect(calculator.passwordStrength('abcdefghij')).toMatchObject({
         score: 1,
         percent: 30,
         label: 'Svag',
         tone: 'negative',
       });
-      expect(calculator.passwordStrength('Abcdefgh')).toMatchObject({
+      expect(calculator.passwordStrength('Abcdefghij')).toMatchObject({
         score: 2,
         percent: 55,
         label: 'OK',
         tone: 'accent',
       });
-      expect(calculator.passwordStrength('Abcdefgh1')).toMatchObject({
+      expect(calculator.passwordStrength('Abcdefghi1')).toMatchObject({
         score: 3,
         percent: 80,
         label: 'God',

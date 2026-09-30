@@ -6,16 +6,16 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { PHOTO_SCREEN_THEME } from '../../../../core/constants/theme';
 import { SessionService } from '../../../../core/services/session/session';
+import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiTextInput } from '../../../../shared/components/ui-text-input/ui-text-input';
 import { AUTH_ASSET } from '../../auth-assets';
-import { authErrorKey } from '../../auth-error';
 import { AuthBackdrop } from '../../components/auth-backdrop/auth-backdrop';
 import { holdDarkSystemBarsWhileOpen } from '../../photo-screen';
 
 interface LoginForm {
-  username: FormControl<string>;
+  email: FormControl<string>;
   password: FormControl<string>;
 }
 
@@ -23,8 +23,10 @@ interface LoginForm {
  * The design's login screen (lines 88–110): photo background, logo and wordmark at the top, the
  * heading "Spis klogt. / Træn stærkt." and the glass fields at the bottom.
  *
- * The login itself goes through `SessionService`, which talks to `AuthApi`. The button shows a
- * spinner while the call is in progress, and the backend's error text is shown in `app-ui-form-error`.
+ * The API logs in with the e-mail (not the username). The login itself goes through
+ * `SessionService`; the button shows a spinner while the call is in progress, and the error is
+ * shown in `app-ui-form-error`. The e-mail is filled in from the session after a log out or a
+ * verification that couldn't log in by itself.
  */
 @Component({
   selector: 'app-login-page',
@@ -58,7 +60,10 @@ export class LoginPage {
   protected readonly errorKey = signal<string | null>(null);
 
   protected readonly form = new FormGroup<LoginForm>({
-    username: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    email: new FormControl(this.session.email() ?? '', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
@@ -67,14 +72,15 @@ export class LoginPage {
   }
 
   protected submit(): void {
-    if (this.loading()) {
+    // Both fields are required – an empty one would only get the API's generic 400 back.
+    if (this.loading() || this.form.invalid) {
       return;
     }
-    const { username, password } = this.form.getRawValue();
+    const { email, password } = this.form.getRawValue();
     this.loading.set(true);
     this.errorKey.set(null);
     this.session
-      .login(username, password)
+      .login(email, password)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -83,7 +89,7 @@ export class LoginPage {
         },
         error: (error: unknown) => {
           this.loading.set(false);
-          this.errorKey.set(authErrorKey(error));
+          this.errorKey.set(toApiError(error).messageKey);
         },
       });
   }

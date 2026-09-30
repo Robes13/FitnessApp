@@ -1,12 +1,85 @@
-import { UserProfile } from './profile';
+/** The API's enum values (C# member names; the API reads them case-insensitively). */
+export type ApiGender = 'Unspecified' | 'Male' | 'Female' | 'Other' | 'PreferNotToSay';
+export type ApiTrainingIntensity = 'Low' | 'Moderate' | 'High';
+export type ApiGoalType = 'LoseWeight' | 'MaintainWeight' | 'GainWeight';
 
-/** Body of `POST AUTH_ENDPOINT.REGISTER`. The photo is never part of a sign-up. */
+/**
+ * Body of `POST auth/register` – flat, exactly as the API expects. Registration creates the
+ * profile, the first goal, the `Notifications` setting and the terms consent in one go.
+ */
 export interface RegisterRequest {
+  email: string;
+  /** 3–50 characters, unique. */
+  username: string;
+  /** 10–200 characters. */
   password: string;
-  profile: Omit<UserProfile, 'photo'>;
+  passwordConfirmation: string;
+  /** `YYYY-MM-DD`; age 13–100. */
+  birthDate: string;
+  gender: ApiGender;
+  /** kg, 25–400. */
+  startingWeight: number;
+  /** cm, 100–250. */
+  height: number;
+  dailySteps: number;
+  trainingDaysPerWeek: number;
+  workoutDurationMinutes: number;
+  trainingIntensity: ApiTrainingIntensity;
+  goalType: ApiGoalType;
+  /** Below `startingWeight` to lose, above to gain; `null` (ignored) to maintain. */
+  targetWeight: number | null;
+  /** kg per week, 0 < x ≤ 1; `null` to maintain. */
+  weightChangePerWeek: number | null;
+  notificationsEnabled: boolean;
+  /** Must be `true`. */
+  acceptedTerms: boolean;
+  /** IANA id, e.g. `Europe/Copenhagen`. */
+  timeZoneId: string;
 }
 
-/** Response of `GET AUTH_ENDPOINT.VERIFICATION_STATUS`. */
-export interface VerificationStatusResponse {
-  verified: boolean;
+/** The account, as `register`, `login` and `GET me` return it. */
+export interface UserDto {
+  userId: number;
+  email: string;
+  username: string;
+  /** `false` until the e-mail is verified. */
+  isActive: boolean;
+  emailVerifiedAt: string | null;
+  createdAt: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+/** Response of `login` and `refresh`. Both tokens are rotated on every refresh. */
+export interface AuthResponse {
+  accessToken: string;
+  /** UTC ISO; 15 minutes after issue. */
+  accessTokenExpiresAt: string;
+  refreshToken: string;
+  /** UTC ISO; 30 days after issue. */
+  refreshTokenExpiresAt: string;
+  user: UserDto;
+}
+
+/** Body of `refresh` and `logout`. */
+export interface RefreshRequest {
+  refreshToken: string;
+}
+
+export interface VerifyEmailRequest {
+  token: string;
+}
+
+/** Body of `email/resend-verification` and `password/forgot`. */
+export interface EmailRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+  newPasswordConfirmation: string;
 }

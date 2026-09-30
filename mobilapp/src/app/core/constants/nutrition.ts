@@ -141,7 +141,8 @@ export const UNIT_SYSTEMS: readonly UnitSystemDefinition[] = [
 
 export const WEIGHT_MIN_KG = 30;
 export const WEIGHT_MAX_KG = 300;
-export const HEIGHT_MIN_CM = 55;
+/** The API accepts 100–250 cm. */
+export const HEIGHT_MIN_CM = 100;
 export const HEIGHT_MAX_CM = 250;
 export const STEPS_MIN = 0;
 export const STEPS_MAX = 50000;
@@ -154,10 +155,12 @@ export const RPE_MAX = 10;
 export const KCAL_MIN = 1200;
 export const KCAL_MAX = 5000;
 export const MIN_AGE = 16;
-export const MAX_AGE = 120;
-export const PASSWORD_MIN_LENGTH = 8;
+/** The API accepts ages 13–100. */
+export const MAX_AGE = 100;
+/** The API's password rule (register, reset, change): 10–200 characters, no complexity rules. */
+export const PASSWORD_MIN_LENGTH = 10;
+export const PASSWORD_MAX_LENGTH = 200;
 export const PASSWORD_STRONG_LENGTH = 12;
-export const RESET_CODE_LENGTH = 4;
 
 /** Share of daily calories per macro (the design's 30/45/25). */
 export const MACRO_SPLIT: Readonly<Omit<Macros, 'kcal'>> = { protein: 0.3, carbs: 0.45, fat: 0.25 };

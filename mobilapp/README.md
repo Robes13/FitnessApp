@@ -65,7 +65,39 @@ npm install
 npm start
 ```
 
-Appen kører nu på <http://localhost:4200>.
+Appen kører nu på <http://localhost:4200>. Konto og login kræver API'et – se næste afsnit.
+
+---
+
+## Kør med API'et (Docker)
+
+Appen taler med FitnessApp-API'et i `../API` (ASP.NET Core). `dotnet` er ikke nødvendigt:
+API'et køres i Docker på <http://localhost:5210> med `ASPNETCORE_ENVIRONMENT=Development`.
+Compose-filen ligger **uden for repoet** indtil videre. Den starter Postgres, kører
+migrationerne, bygger API'et fra `API/Dockerfile` og monterer API'ets `.dev-outbox` i en lokal
+mappe.
+
+```bash
+docker compose -f <sti-til>/compose.yml up -d --build
+curl http://localhost:5210/health   # → Healthy
+npm start                           # http://localhost:4200 – /api går videre til :5210
+```
+
+- **Browser:** API'et har ingen CORS-politik. `npm start` bruger derfor `proxy.conf.json`
+  (`angular.json` → `serve.options.proxyConfig`): appen kalder `/api/v1` relativt, og
+  dev-serveren sender kaldet videre til `http://localhost:5210`.
+- **Native:** `CapacitorHttp` er slået til i `capacitor.config.ts`, så kaldene går gennem den
+  native HTTP-stak, og WebView'ets CORS-regler gælder ikke. `API_BASE_URL`
+  (`src/app/core/constants/api.ts`) er `http://10.0.2.2:5210/api/v1` på Android-emulatoren og
+  `http://localhost:5210/api/v1` i iOS-simulatoren. En fysisk enhed skal bruge Mac'ens LAN-IP,
+  og en produktions-URL findes ikke endnu.
+- **Android og `http://`:** Android blokerer klartekst-HTTP som standard, og
+  `AndroidManifest.xml` er **ikke** ændret. For at ramme dev-API'et fra emulatoren skal en
+  dev-build have `android:usesCleartextTraffic="true"` (eller en network-security-config for
+  `10.0.2.2`). iOS tillader `localhost`; en LAN-IP kræver en ATS-undtagelse.
+- **Mails i dev:** API'et sender ingen rigtige mails i Development, men skriver dem som
+  `.txt`-filer i outbox-mappen (første linje `To: <e-mail>`). Bekræftelses- og nulstillingskoden
+  er 64 hex-tegn, som indsættes i appen.
 
 ---
 
@@ -261,7 +293,8 @@ mobilapp/
         │   ├── models/     Profile, Food, Meal, Session, Tone …
         │   ├── services/   Storage, Theme, AuthApi, Session, FoodLog, WeightLog …
         │   ├── guards/     authGuard, guestGuard
-        │   ├── utils/      Dato- og talformatering, NOW-token
+        │   ├── interceptors/ authInterceptor (Bearer + token-fornyelse)
+        │   ├── utils/      Dato- og talformatering, API-fejl og paginering, NOW-token
         │   └── testing/    Test-providers, fixtures og fake DOCUMENT
         ├── shared/
         │   └── components/ UiButton, UiSheet, UiRuler, Figure, FoodPicker,
@@ -313,16 +346,18 @@ prototypen findes, og de er koblet sammen gennem `core/`.
 ### Data og tilstand
 
 **Appen indeholder ingen data.** Der er hverken varedatabase, retter, faste
-samlinger, seedede logs eller demo-profil, og `AuthApi` har endnu ingen
-backend at kalde – hvert auth-kald fejler med "Der er ingen forbindelse til en
-server endnu." Login og oprettelse virker derfor først, når backenden findes.
+samlinger, seedede logs eller demo-profil. **Konto og session** går mod FitnessApp-API'et:
+oprettelse, e-mailbekræftelse (koden fra mailen indsættes), login med e-mail, token-fornyelse,
+log ud, glemt adgangskode og slet konto. Tokens gemmes i `localStorage` (sikker lagring er
+opgraderingsstien). `SessionDataService` henter hvert domænes data, når brugeren er logget ind,
+og nulstiller dem ved log ud – domænerne kobles på én ad gangen.
 
 Det, brugeren selv registrerer, gemmes lokalt gennem `StorageService`
 (browserens `localStorage`): profil, madlog, egne varer, vejninger, egne samlinger,
 tema, antal scanninger, påmindelser og opslåede stregkodevarer. Madloggen gemmes pr. dato
 i 90 dage, så Hjems ugeringe, ugens nøgletal og Historik viser tidligere dage. Dage uden
-data vises som `–` eller 0 i stedet for at gætte. Når et API kommer til, skal de lokale
-stores synkroniseres med det.
+data vises som `–` eller 0 i stedet for at gætte. Indtil et domæne er koblet på API'et, ligger
+dets data kun lokalt.
 
 ### Test og build
 
@@ -338,14 +373,15 @@ skal køres manuelt, før man committer. Se «Næste skridt».
 
 `src/app/app-integration.spec.ts` dækker sammenkoblingen mellem features:
 dybe links til Mad, tab barens synlighed, bekræftelses-arket på Hjem,
-omdirigering efter log ud og temaskiftet.
+omdirigering efter log ud og temaskiftet. HTTP i specs går til Angulars testing-backend
+(`HttpTestingController`) – se `src/app/core/testing/README.md`.
 
 ### Næste skridt
 
-- Rigtig backend: HTTP-lag (`provideHttpClient` + interceptor), base-URL i en
-  miljøkonfiguration, token i sessionen og en implementering af `AuthApi`
-- Data fra backenden: varedatabase, retter, faste samlinger og historik – samt
-  loading- og fejltilstande på de skærme, der i dag kun kender tom/udfyldt
+- Kobl de øvrige domæner på API'et (profil, mål, vægt, madlog, samlinger, påmindelser)
+  gennem `SessionDataService` – med loading- og fejltilstande på skærmene
+- Produktions-URL for API'et og en CORS-politik i API'et (i dag omgået med dev-proxy og
+  `CapacitorHttp`)
 - App-ikoner og splash screens (`@capacitor/assets`)
 - ESLint + Stylelint, så reglerne i `ARCHITECTURE.md` håndhæves automatisk
 - `"format": "prettier --write src"` og `"format:check": "prettier --check src"`

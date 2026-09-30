@@ -13,3 +13,6 @@ export const STORAGE_KEY = {
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEY)[keyof typeof STORAGE_KEY];
+
+/** Device settings rather than an account's data – kept when another account signs in here. */
+export const DEVICE_STORAGE_KEYS: readonly StorageKey[] = [STORAGE_KEY.THEME, STORAGE_KEY.LANGUAGE];

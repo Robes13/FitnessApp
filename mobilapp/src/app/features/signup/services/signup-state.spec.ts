@@ -1,3 +1,4 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -6,6 +7,7 @@ import { STORAGE_KEY } from '../../../core/constants/storage-key';
 import { SessionService } from '../../../core/services/session/session';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
+import { TEST_AUTH_RESPONSE } from '../../../core/testing/fixtures';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { SIGNUP_STEP_ORDER, SignupStateService, SignupStepId } from './signup-state';
 
@@ -29,8 +31,8 @@ describe('SignupStateService', () => {
   /** Fills in all fields so every step can be passed. */
   function fillDraft(state: SignupStateService): void {
     state.username.set('mads');
-    state.password.set('hemmelig1');
-    state.passwordRepeat.set('hemmelig1');
+    state.password.set('hemmelig1234');
+    state.passwordRepeat.set('hemmelig1234');
     state.birthday.set(BIRTHDAY_ADULT);
     state.gender.set('mand');
     state.trainingDays.set(TRAINING_DAYS);
@@ -61,6 +63,10 @@ describe('SignupStateService', () => {
 
   beforeEach(() => {
     storage = createFakeStorage();
+  });
+
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
   });
 
   it('starts on the first step with the design order', () => {
@@ -173,28 +179,38 @@ describe('SignupStateService', () => {
   });
 
   describe('canContinue', () => {
-    it('requires a username and two matching passwords of at least eight characters', () => {
+    it('requires a username of 3–50 characters and two matching passwords of 10–200', () => {
       const state = setup();
 
       expect(state.canContinue()).toBe(false);
 
       state.username.set('mads');
-      state.password.set('kort');
-      state.passwordRepeat.set('kort');
-
-      expect(state.canContinue()).toBe(false);
-
       state.password.set('hemmelig1');
-      state.passwordRepeat.set('hemmelig2');
-
-      expect(state.canContinue()).toBe(false);
-
       state.passwordRepeat.set('hemmelig1');
 
+      expect(state.canContinue()).toBe(false);
+
+      state.password.set('x'.repeat(201));
+      state.passwordRepeat.set('x'.repeat(201));
+
+      expect(state.canContinue()).toBe(false);
+
+      state.password.set('hemmelig1234');
+      state.passwordRepeat.set('hemmelig5678');
+
+      expect(state.canContinue()).toBe(false);
+
+      state.passwordRepeat.set('hemmelig1234');
+
       expect(state.canContinue()).toBe(true);
+
+      state.username.set(' ma ');
+      expect(state.canContinue()).toBe(false);
+      state.username.set('m'.repeat(51));
+      expect(state.canContinue()).toBe(false);
     });
 
-    it('requires an age between 16 and 120', () => {
+    it('requires an age between 16 and 100', () => {
       const state = setup();
       at(state, 'birthday');
 
@@ -263,6 +279,23 @@ describe('SignupStateService', () => {
 
       expect(state.canContinue()).toBe(true);
     });
+
+    it.each([
+      { goal: 'tabe', weightKg: 30, heightCm: 120 },
+      { goal: 'tage', weightKg: 250, heightCm: 250 },
+    ] as const)(
+      'blocks a goal weight the scale can only put on the wrong side: $goal at $weightKg kg',
+      ({ goal, weightKg, heightCm }) => {
+        const state = setup();
+        at(state, 'goal-weight');
+        state.goal.set(goal);
+        state.weightKg.set(weightKg);
+        state.heightCm.set(heightCm);
+        state.goalWeightKg.set(weightKg);
+
+        expect(state.canContinue()).toBe(false);
+      },
+    );
 
     it('requires an answer on notifications and a valid e-mail plus terms on the summary', () => {
       const state = setup();
@@ -447,20 +480,49 @@ describe('SignupStateService', () => {
   });
 
   describe('submit', () => {
-    it('registers, writes the trimmed draft as the profile and logs in unverified', async () => {
+    it('registers, writes the trimmed draft as the profile and waits for verification', async () => {
       const state = setup();
+      const http = TestBed.inject(HttpTestingController);
       fill(state, 'summary');
       state.username.set('  Mads  ');
       state.email.set('  mads@nutrify.dk  ');
 
-      await firstValueFrom(state.submit());
+      const done = firstValueFrom(state.submit());
+      const request = http.expectOne({ method: 'POST', url: '/api/v1/auth/register' });
+      expect(request.request.body).toMatchObject({
+        username: 'Mads',
+        email: 'mads@nutrify.dk',
+        password: 'hemmelig1234',
+        passwordConfirmation: 'hemmelig1234',
+        goalType: 'LoseWeight',
+      });
+      // Nothing is written before the API has created the account.
+      expect(storage.getItem(STORAGE_KEY.PROFILE)).toBeNull();
+      request.flush(TEST_AUTH_RESPONSE.user);
+      await done;
 
       const profile = TestBed.inject(UserProfileService).profile();
       expect(profile.username).toBe('Mads');
       expect(profile.email).toBe('mads@nutrify.dk');
-      expect(TestBed.inject(SessionService).isLoggedIn()).toBe(true);
-      expect(TestBed.inject(SessionService).isEmailVerified()).toBe(false);
+      expect(TestBed.inject(SessionService).status()).toBe('pending-verification');
       expect(storage.getItem(STORAGE_KEY.PROFILE)).not.toBeNull();
+    });
+
+    it('writes nothing when the API refuses the account', async () => {
+      const state = setup();
+      fill(state, 'summary');
+
+      const done = firstValueFrom(state.submit());
+      TestBed.inject(HttpTestingController)
+        .expectOne('/api/v1/auth/register')
+        .flush(
+          { title: 'Conflict', status: 409, detail: 'An account with that email already exists.' },
+          { status: 409, statusText: 'Conflict' },
+        );
+
+      await expect(done).rejects.toMatchObject({ messageKey: 'core.auth.error.emailTaken' });
+      expect(storage.getItem(STORAGE_KEY.PROFILE)).toBeNull();
+      expect(TestBed.inject(SessionService).status()).toBe('guest');
     });
   });
 });

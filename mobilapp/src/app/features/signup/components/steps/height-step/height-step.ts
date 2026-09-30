@@ -15,7 +15,7 @@ import { SignupStateService } from '../../../services/signup-state';
 const STEP_CM = 1;
 
 /**
- * Step 5 (`s3`): height as a large orange number with a ruler from 55 to 250 cm.
+ * Step 5 (`s3`): height as a large orange number with a ruler from 100 to 250 cm.
  * The BMI below the buttons updates immediately, and the figure approaches the ceiling
  * from 212 cm and ducks its head from 230 cm (both handled in `computeFigureGeometry`).
  */

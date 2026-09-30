@@ -6,13 +6,13 @@ Signup-trin 5 (`height`, designets `s3`): højden.
   og nævner den vægt, brugeren lige har valgt:
   `Sammen med dine 75 kg bruger vi den til dit kaloriebehov.`
 - Højden som 92 px orange display-tal med `cm`, og to knapper (`−` / `+`), der flytter
-  én centimeter ad gangen inden for `HEIGHT_MIN_CM` … `HEIGHT_MAX_CM` (55–250 cm).
+  én centimeter ad gangen inden for `HEIGHT_MIN_CM` … `HEIGHT_MAX_CM` (100–250 cm – API'ets grænser).
 - BMI-blokken under knapperne: `Højde og vægt giver` / tallet / `i BMI` /
   `Bruges til dit kaloriebehov`. Tallet kommer fra `NutritionCalculator.bmi()`.
 - `app-figure` med `showCeiling`: den stiplede loftslinje og lampen toner ind fra
   212 cm, og hovedet dukker fra 230 cm — begge tærskler ligger i
   `computeFigureGeometry` i `shared/components/figure`.
-- `app-ui-ruler` (55–250 cm) ud til begge skærmkanter, tovejsbundet til
+- `app-ui-ruler` (100–250 cm) ud til begge skærmkanter, tovejsbundet til
   `SignupStateService.heightCm`.
 
 ## Beslutninger

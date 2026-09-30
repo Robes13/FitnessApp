@@ -132,9 +132,16 @@
 <app-profile-edit-sheet [row]="editRow()" (closed)="closeEdit()" />
 <app-profile-photo-sheet [open]="photoOpen()" (closed)="closePhoto()" />
 <app-profile-reminders-sheet [open]="remindersOpen()" (closed)="closeReminders()" />
-<app-profile-logout-sheet [open]="logoutOpen()" (closed)="closeLogout()" (confirmed)="logout()" />
+<app-profile-logout-sheet
+  [open]="logoutOpen()"
+  [busy]="loggingOut()"
+  (closed)="closeLogout()"
+  (confirmed)="logout()"
+/>
 <app-profile-delete-account-sheet
   [open]="deleteAccountOpen()"
+  [busy]="deletingAccount()"
+  [errorMessage]="deleteError()"
   (closed)="closeDeleteAccount()"
   (confirmed)="deleteAccount()"
 />

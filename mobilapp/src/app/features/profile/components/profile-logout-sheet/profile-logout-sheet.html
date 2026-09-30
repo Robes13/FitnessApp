@@ -17,10 +17,24 @@
   </p>
 
   <div sheetFooter class="profile-logout-sheet__actions">
-    <button app-ui-button type="button" variant="danger" block (click)="confirmed.emit()">
+    <button
+      app-ui-button
+      type="button"
+      variant="danger"
+      block
+      [loading]="busy()"
+      (click)="confirmed.emit()"
+    >
       {{ 'profile.logoutSheet.confirm' | translate }}
     </button>
-    <button app-ui-button type="button" variant="outline" block (click)="closed.emit()">
+    <button
+      app-ui-button
+      type="button"
+      variant="outline"
+      block
+      [disabled]="busy()"
+      (click)="closed.emit()"
+    >
       {{ 'profile.logoutSheet.cancel' | translate }}
     </button>
   </div>

@@ -16,13 +16,15 @@ import { Observable, switchMap, timer } from 'rxjs';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { PHOTO_SCREEN_THEME } from '../../../../core/constants/theme';
 import { AUTH_ERROR_MESSAGE_KEY } from '../../../../core/constants/auth';
-import { PASSWORD_MIN_LENGTH, RESET_CODE_LENGTH } from '../../../../core/constants/nutrition';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../../../core/constants/nutrition';
 import { PasswordStrength } from '../../../../core/models/nutrition';
 import { AuthApi } from '../../../../core/services/auth-api/auth-api';
+import { isAuthToken, normalizeAuthToken } from '../../../../core/services/auth-api/auth-mapping';
 import { NutritionCalculator } from '../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { SessionService } from '../../../../core/services/session/session';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { injectTranslate } from '../../../../core/services/language/translate';
+import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import {
   FormErrorTone,
@@ -34,7 +36,6 @@ import { UiProgressBar } from '../../../../shared/components/ui-progress-bar/ui-
 import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
 import { UiTextInput } from '../../../../shared/components/ui-text-input/ui-text-input';
 import { AUTH_ASSET } from '../../auth-assets';
-import { authErrorKey } from '../../auth-error';
 import { AuthBackdrop } from '../../components/auth-backdrop/auth-backdrop';
 import { holdDarkSystemBarsWhileOpen } from '../../photo-screen';
 
@@ -56,7 +57,6 @@ const MISMATCH_MESSAGE_KEY = 'auth.forgotPasswordPage.mismatch';
 /** The flow's three input steps – shown as "Step n of 3". */
 const STEP_TOTAL = 3;
 const PERCENT_MAX = 100;
-const NON_DIGIT_PATTERN = /\D/g;
 
 interface EmailForm {
   email: FormControl<string>;
@@ -83,9 +83,12 @@ const EMPTY_MESSAGE: StepMessage = { text: '', tone: 'accent' };
  * The design's "Forgot password" (lines 113–182) as a single route component with four steps in
  * one signal: e-mail → code → new password → confirmation.
  *
- * Each step calls the backend through `AuthApi` and shows a spinner in the button meanwhile.
- * The confirmation step waits `FORGOT_PASSWORD_DONE_DELAY_MS` and then logs in via
- * `SessionService`; the wait is cleared by `takeUntilDestroyed` if the page is left first.
+ * The "code" is the 64-character token from the reset e-mail. The API has no endpoint to check
+ * it on its own, so the code step only checks its format; `password/reset` validates it together
+ * with the new password, and a used or expired token sends the user back to the code step.
+ * The confirmation step waits `FORGOT_PASSWORD_DONE_DELAY_MS` and then logs in with the e-mail
+ * from step 1 via `SessionService`; the wait is cleared by `takeUntilDestroyed` if the page is
+ * left first. If that login fails, the step says the password is changed and links to login.
  */
 @Component({
   selector: 'app-forgot-password-page',
@@ -121,17 +124,19 @@ export class ForgotPasswordPage {
   protected readonly photoTheme = PHOTO_SCREEN_THEME;
   protected readonly logoSrc = AUTH_ASSET.LOGO;
   protected readonly loginPath = APP_PATH.LOGIN;
-  protected readonly codeLength = RESET_CODE_LENGTH;
+  protected readonly passwordMaxLength = PASSWORD_MAX_LENGTH;
   protected readonly stepTotal = STEP_TOTAL;
 
   protected readonly step = signal<ForgotPasswordStep>('email');
   protected readonly loading = signal(false);
   protected readonly resent = signal(false);
+  /** The normalized token from the code step, sent with the new password. */
+  private readonly token = signal('');
   /** Translation key of the backend's error – translated in `message`, so it follows the language. */
   private readonly errorKey = signal<string | null>(null);
 
   protected readonly emailForm = new FormGroup<EmailForm>({
-    email: new FormControl(this.profile.profile().email, {
+    email: new FormControl(this.session.email() ?? this.profile.profile().email, {
       nonNullable: true,
       validators: [Validators.required],
     }),
@@ -166,7 +171,7 @@ export class ForgotPasswordPage {
   protected readonly emailInvalid = computed(
     () => !this.calculator.isValidEmail(this.emailValue()),
   );
-  protected readonly codeInvalid = computed(() => this.codeValue().length !== RESET_CODE_LENGTH);
+  protected readonly codeInvalid = computed(() => !isAuthToken(this.codeValue()));
   /** The design's `fpMismatch`: only once something has been typed in the repeat field. */
   protected readonly mismatch = computed(
     () => this.repeatValue().length > 0 && this.passwordValue() !== this.repeatValue(),
@@ -184,6 +189,11 @@ export class ForgotPasswordPage {
   protected readonly strengthLabelClass = computed(
     () =>
       `forgot-password-page__strength-label forgot-password-page__strength-label--${this.strength().tone}`,
+  );
+
+  /** The password is changed, but the login with it failed – the confirmation offers login instead. */
+  protected readonly loginFailed = computed(
+    () => this.step() === 'done' && this.errorKey() !== null,
   );
 
   /** One place to decide what's shown below the field: an error beats the design's hint. */
@@ -209,12 +219,11 @@ export class ForgotPasswordPage {
       ? this.t(AUTH_ERROR_MESSAGE_KEY.INVALID_EMAIL)
       : '',
   );
-  private readonly codeHint = computed(() => {
-    const length = this.codeValue().length;
-    return length > 0 && length < RESET_CODE_LENGTH
+  private readonly codeHint = computed(() =>
+    this.codeValue().trim().length > 0 && this.codeInvalid()
       ? this.t(AUTH_ERROR_MESSAGE_KEY.INVALID_CODE)
-      : '';
-  });
+      : '',
+  );
   private readonly passwordHint = computed(() => {
     if (this.mismatch()) {
       return this.t(MISMATCH_MESSAGE_KEY);
@@ -227,16 +236,6 @@ export class ForgotPasswordPage {
 
   constructor() {
     holdDarkSystemBarsWhileOpen();
-
-    // The design's `setFpCode`: digits only, at most four. The set re-emits so the signal keeps up.
-    this.codeForm.controls.code.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        const digits = value.replace(NON_DIGIT_PATTERN, '').slice(0, RESET_CODE_LENGTH);
-        if (digits !== value) {
-          this.codeForm.controls.code.setValue(digits);
-        }
-      });
   }
 
   /** Step back; from the first step (and from the confirmation) back to login. */
@@ -255,23 +254,32 @@ export class ForgotPasswordPage {
   }
 
   protected sendCode(): void {
-    this.run(this.authApi.requestPasswordReset(this.emailValue()), () => {
+    this.run(this.authApi.forgotPassword({ email: this.emailValue().trim() }), () => {
       this.resent.set(false);
       this.step.set('code');
     });
   }
 
   protected resend(): void {
-    this.run(this.authApi.requestPasswordReset(this.emailValue()), () => this.resent.set(true));
+    this.run(this.authApi.forgotPassword({ email: this.emailValue().trim() }), () =>
+      this.resent.set(true),
+    );
   }
 
+  /** Only the format is checked here – `password/reset` validates the token itself. */
   protected verifyCode(): void {
-    this.run(this.authApi.verifyResetCode(this.codeValue()), () => this.step.set('new-password'));
+    if (this.codeInvalid()) {
+      return;
+    }
+    this.token.set(normalizeAuthToken(this.codeValue()));
+    this.errorKey.set(null);
+    this.step.set('new-password');
   }
 
   protected savePassword(): void {
-    const password = this.passwordForm.getRawValue().password;
-    this.run(this.authApi.resetPassword(password), () => {
+    const { password, repeat } = this.passwordForm.getRawValue();
+    const request = { token: this.token(), newPassword: password, newPasswordConfirmation: repeat };
+    this.run(this.authApi.resetPassword(request), () => {
       this.step.set('done');
       this.logInWithNewPassword(password);
     });
@@ -290,37 +298,31 @@ export class ForgotPasswordPage {
       },
       error: (error: unknown) => {
         this.loading.set(false);
-        this.errorKey.set(authErrorKey(error));
+        const { messageKey } = toApiError(error);
+        // A used or expired token can only be replaced on the code step.
+        if (messageKey === AUTH_ERROR_MESSAGE_KEY.INVALID_CODE) {
+          this.step.set('code');
+        }
+        this.errorKey.set(messageKey);
       },
     });
   }
 
   /**
-   * The confirmation step: wait, log in with the profile's saved username and the new password, and
-   * proceed to Home. If the login fails, the user is sent back to step 3 with the error text.
-   *
-   * If the profile is empty, there's nothing to log in with, so the user is sent to login and
-   * types the username themselves.
+   * The confirmation step: wait, log in with the e-mail from step 1 and the new password, and
+   * proceed to Home. The token is used up by now, so a failed login can't go back to step 3 –
+   * the confirmation says that the password *is* changed, shows the error and links to login.
    */
   private logInWithNewPassword(password: string): void {
-    const username = this.profile.profile().username.trim();
-    if (username === '') {
-      timer(this.doneDelayMs)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(() => void this.router.navigateByUrl(APP_PATH.LOGIN));
-      return;
-    }
+    const email = this.emailValue().trim();
     timer(this.doneDelayMs)
       .pipe(
-        switchMap(() => this.session.login(username, password)),
+        switchMap(() => this.session.login(email, password)),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: () => void this.router.navigateByUrl(APP_PATH.HOME),
-        error: (error: unknown) => {
-          this.step.set('new-password');
-          this.errorKey.set(authErrorKey(error));
-        },
+        error: (error: unknown) => this.errorKey.set(toApiError(error).messageKey),
       });
   }
 }

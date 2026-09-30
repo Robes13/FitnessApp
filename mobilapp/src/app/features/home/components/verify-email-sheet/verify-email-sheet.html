@@ -15,36 +15,40 @@
     >{{ 'home.verifyEmail.copyEnd' | translate }}
   </p>
 
-  @if (editingEmail()) {
-    <form class="verify-email-sheet__form" [formGroup]="form" (ngSubmit)="saveEmail()">
-      <app-ui-text-input
-        class="verify-email-sheet__input"
-        formControlName="email"
-        type="email"
-        inputMode="email"
-        autocomplete="email"
-        [ariaLabel]="'home.verifyEmail.emailAriaLabel' | translate"
-        size="md"
-        [invalid]="emailInvalid()"
-      />
-      <button app-ui-button type="submit" size="md" [loading]="saving()">
-        {{ 'common.save' | translate }}
-      </button>
-    </form>
-  }
+  <form class="verify-email-sheet__form" [formGroup]="form" (ngSubmit)="confirm()">
+    <app-ui-text-input
+      class="verify-email-sheet__input"
+      formControlName="token"
+      autocomplete="one-time-code"
+      [placeholder]="'home.verifyEmail.tokenPlaceholder' | translate"
+      [ariaLabel]="'home.verifyEmail.tokenLabel' | translate"
+      size="md"
+      [invalid]="tokenInvalid()"
+    />
+    <button
+      app-ui-button
+      type="submit"
+      size="md"
+      [disabled]="!tokenValid()"
+      [loading]="confirming()"
+    >
+      {{ 'home.verifyEmail.confirm' | translate }}
+    </button>
+  </form>
 
   <app-ui-form-error tone="negative" [message]="errorMessage()" />
 
   <div class="verify-email-sheet__actions">
     <button
       app-ui-button
-      class="verify-email-sheet__change"
+      class="verify-email-sheet__leave"
       type="button"
       variant="outline"
       size="md"
-      (click)="toggleEmailEditor()"
+      [loading]="leaving()"
+      (click)="backToLogin()"
     >
-      {{ 'home.verifyEmail.changeEmail' | translate }}
+      {{ 'home.verifyEmail.backToLogin' | translate }}
     </button>
     <button app-ui-button type="button" size="md" [loading]="resending()" (click)="resend()">
       {{ resendLabel() }}

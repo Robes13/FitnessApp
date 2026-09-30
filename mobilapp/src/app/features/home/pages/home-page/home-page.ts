@@ -58,7 +58,8 @@ export class HomePage {
   private readonly session = inject(SessionService);
 
   protected readonly profilePath = APP_PATH.PROFILE;
-  protected readonly isEmailVerified = this.session.isEmailVerified;
+  /** Home stays locked behind the verification sheet until the session has tokens. */
+  protected readonly isAuthenticated = this.session.isAuthenticated;
   protected readonly celebrating = signal(false);
 
   /** `null` until the first run, so an already-reached ring isn't celebrated on open. */

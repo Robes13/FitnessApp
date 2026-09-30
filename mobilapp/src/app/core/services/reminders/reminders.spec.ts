@@ -1,9 +1,11 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { DEFAULT_PROFILE } from '../../constants/profile-defaults';
 import { REMINDER_ERROR_KEY } from '../../constants/reminders';
 import { STORAGE_KEY } from '../../constants/storage-key';
 import { ReminderNotifier, ReminderPermission, ScheduledReminder } from '../../models/reminder';
 import { FakeStorage, createFakeStorage } from '../../testing/fake-document';
+import { AUTHENTICATED_SESSION } from '../../testing/fixtures';
 import { injectTranslate } from '../language/translate';
 import { provideCoreTestEnvironment } from '../../testing/test-providers';
 import { REMINDER_NOTIFIER } from './reminder-notifier';
@@ -62,7 +64,6 @@ function translate(key: string): string {
   return TestBed.runInInjectionContext(() => injectTranslate())(key);
 }
 
-const LOGGED_IN = { isLoggedIn: true, isEmailVerified: true };
 const DAILY_LOG_ID = 1005;
 const BREAKFAST_ID = 1001;
 const WEIGH_IN_ID = 1004;
@@ -88,7 +89,7 @@ describe('ReminderService', () => {
   }
 
   beforeEach(() => {
-    storage = createFakeStorage({ [STORAGE_KEY.SESSION]: LOGGED_IN });
+    storage = createFakeStorage({ [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION });
     notifier = new FakeNotifier();
   });
 
@@ -156,7 +157,8 @@ describe('ReminderService', () => {
     const service = setup();
     await settle(service);
 
-    TestBed.inject(SessionService).logout();
+    TestBed.inject(SessionService).logout().subscribe();
+    TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/logout').flush(null);
     await settle(service);
 
     expect(notifier.pendingIds()).toEqual([]);

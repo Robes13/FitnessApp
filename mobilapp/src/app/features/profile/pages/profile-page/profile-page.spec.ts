@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, Provider } from '@angular/core';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { EMPTY, throwError } from 'rxjs';
 import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
 import { SessionService } from '../../../../core/services/session/session';
 import { ThemeService } from '../../../../core/services/theme/theme';
@@ -12,6 +14,7 @@ import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,
 } from '../../../../core/testing/test-providers';
+import { AUTHENTICATED_SESSION } from '../../../../core/testing/fixtures';
 
 /**
  * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`, a
@@ -34,11 +37,12 @@ describe('ProfilePage', () => {
   beforeEach(() => {
     resetComponentTestStorage({
       [STORAGE_KEY.PROFILE]: STORED_PROFILE,
-      [STORAGE_KEY.SESSION]: { isLoggedIn: true, isEmailVerified: true },
+      [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION,
     });
   });
 
   afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
   });
@@ -178,6 +182,11 @@ describe('ProfilePage', () => {
       .find((element) => element.textContent?.trim() === 'Ja, log mig ud')
       ?.click();
     await fixture.whenStable();
+    expect(sheet?.querySelector('app-ui-spinner')).not.toBeNull();
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/v1/auth/logout')
+      .flush(null, { status: 204, statusText: 'No Content' });
+    await fixture.whenStable();
 
     expect(session.isLoggedIn()).toBe(false);
     expect(router.url).toBe(APP_PATH.LOGIN);
@@ -186,7 +195,7 @@ describe('ProfilePage', () => {
   it('asks before deleting the account and then deletes it', async () => {
     const { fixture, host } = await setup();
     const session = TestBed.inject(SessionService);
-    const deleteAccount = vi.spyOn(session, 'deleteAccount').mockImplementation(() => undefined);
+    const deleteAccount = vi.spyOn(session, 'deleteAccount').mockReturnValue(EMPTY);
 
     Array.from(host.querySelectorAll<HTMLButtonElement>('button'))
       .find((element) => element.textContent?.trim() === 'Slet konto')
@@ -194,7 +203,7 @@ describe('ProfilePage', () => {
     await fixture.whenStable();
 
     const sheet = host.querySelector('app-profile-delete-account-sheet');
-    expect(sheet?.textContent).toContain('Alle dine data på denne enhed bliver slettet');
+    expect(sheet?.textContent).toContain('Din konto og alle dine data bliver slettet');
     expect(deleteAccount).not.toHaveBeenCalled();
 
     Array.from(sheet?.querySelectorAll<HTMLButtonElement>('button') ?? [])
@@ -203,5 +212,31 @@ describe('ProfilePage', () => {
     await fixture.whenStable();
 
     expect(deleteAccount).toHaveBeenCalledOnce();
+    // The app reloads at login on success, so the sheet stays busy until then.
+    expect(sheet?.querySelector('app-ui-spinner')).not.toBeNull();
+  });
+
+  it('shows why the account could not be deleted and keeps the sheet open', async () => {
+    const { fixture, host } = await setup();
+    const session = TestBed.inject(SessionService);
+    vi.spyOn(session, 'deleteAccount').mockReturnValue(
+      throwError(() => ({ messageKey: 'common.error.network', status: 0 })),
+    );
+
+    Array.from(host.querySelectorAll<HTMLButtonElement>('button'))
+      .find((element) => element.textContent?.trim() === 'Slet konto')
+      ?.click();
+    await fixture.whenStable();
+    const sheet = host.querySelector('app-profile-delete-account-sheet');
+    Array.from(sheet?.querySelectorAll<HTMLButtonElement>('button') ?? [])
+      .find((element) => element.textContent?.trim() === 'Ja, slet min konto')
+      ?.click();
+    await fixture.whenStable();
+
+    expect(sheet?.querySelector('app-ui-form-error')?.textContent?.trim()).toBe(
+      'Ingen forbindelse. Tjek dit internet, og prøv igen.',
+    );
+    expect(sheet?.querySelector('app-ui-spinner')).toBeNull();
+    expect(session.isAuthenticated()).toBe(true);
   });
 });

@@ -17,8 +17,9 @@ injicerer. Siden ejer kun det, der hører knappen til:
 
 - **Videre-knappen** kalder `next()` på alle trin undtagen `summary`. Dér kalder den
   `submit()`, viser spinner imens, og går til Hjem, når kontoen er oprettet.
-- **Fejl** fra oprettelsen vises i en `UiFormError` over knapperne. Backendens danske besked
-  bruges, hvis der er en; ellers en generel tekst.
+- **Fejl** fra oprettelsen vises i en `UiFormError` over knapperne som
+  `toApiError(error).messageKey` – fx e-mail/brugernavn optaget eller en generel tekst. Nøglen
+  gemmes, så teksten følger et sprogskift.
 - **Tilbage-cirklen** kalder `back()`. Fra første trin fører den ud af flowet til login –
   det står i servicen, fordi den kender trin-rækkefølgen.
 

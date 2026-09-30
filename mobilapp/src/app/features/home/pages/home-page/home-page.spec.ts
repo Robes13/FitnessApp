@@ -1,10 +1,13 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { firstValueFrom } from 'rxjs';
 import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
 import { SessionService } from '../../../../core/services/session/session';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
+import { TEST_AUTH_RESPONSE, TEST_EMAIL } from '../../../../core/testing/fixtures';
 import { HomePage } from './home-page';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 
@@ -17,6 +20,10 @@ const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 describe('HomePage', () => {
   beforeEach(() => {
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
   });
 
   async function setup(): Promise<{ settle: () => Promise<void>; page: HTMLElement }> {
@@ -74,7 +81,9 @@ describe('HomePage', () => {
 
     expect(page.querySelector('.ui-sheet__panel')).not.toBeNull();
 
-    TestBed.inject(SessionService).markEmailVerified();
+    const login = firstValueFrom(TestBed.inject(SessionService).login(TEST_EMAIL, 'hemmelig1234'));
+    TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/login').flush(TEST_AUTH_RESPONSE);
+    await login;
     await settle();
 
     expect(page.querySelector('.ui-sheet__panel')).toBeNull();

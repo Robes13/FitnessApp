@@ -1,3 +1,4 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -13,6 +14,10 @@ import { provideComponentTestEnvironment } from '../../../../core/testing/test-p
 describe('SignupPage', () => {
   beforeEach(() => {
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
   });
 
   async function setup(): Promise<{
@@ -67,8 +72,8 @@ describe('SignupPage', () => {
     expect(nextButton(page).disabled).toBe(true);
 
     state.username.set('mads');
-    state.password.set('hemmelig1');
-    state.passwordRepeat.set('hemmelig1');
+    state.password.set('hemmelig1234');
+    state.passwordRepeat.set('hemmelig1234');
     harness.detectChanges();
 
     expect(nextButton(page).disabled).toBe(false);
@@ -84,6 +89,37 @@ describe('SignupPage', () => {
     expect(page.textContent).toContain('Retter');
     expect(page.textContent).toContain('Tilbage til opsummering');
     expect(nextButton(page).textContent?.trim()).toBe('Gem');
+  });
+
+  it('creates the account only once on a double tap and shows why the API refused it', async () => {
+    const { harness, page, state } = await setup();
+    state.username.set('mads');
+    state.password.set('hemmelig1234');
+    state.passwordRepeat.set('hemmelig1234');
+    state.birthday.set('1998-05-16');
+    state.gender.set('mand');
+    state.goal.set('hold');
+    state.email.set('mads@nutrify.dk');
+    state.termsAccepted.set(true);
+    state.jumpTo('summary');
+    harness.detectChanges();
+
+    // Both taps land before the button re-renders as loading – the page itself must refuse the second.
+    nextButton(page).click();
+    nextButton(page).click();
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/v1/auth/register')
+      .flush(
+        { title: 'Conflict', status: 409, detail: 'That username is already in use.' },
+        { status: 409, statusText: 'Conflict' },
+      );
+    await harness.fixture.whenStable();
+
+    expect(page.querySelector('app-ui-form-error')?.textContent?.trim()).toBe(
+      'Brugernavnet er taget. Vælg et andet.',
+    );
+    expect(nextButton(page).querySelector('app-ui-spinner')).toBeNull();
+    expect(nextButton(page).disabled).toBe(false);
   });
 
   it('asks to create the account on the summary', async () => {

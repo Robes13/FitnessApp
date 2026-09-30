@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
@@ -7,7 +7,7 @@ import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
 /**
  * The confirmation before logging out. The sheet has no close button – as in the design
  * the choice is made with "Ja, log mig ud" or "Annuller", and an accidental tap on the
- * scrim doesn't log out.
+ * scrim doesn't log out. While `busy`, the confirm button shows a spinner and "Annuller" is off.
  */
 @Component({
   selector: 'app-profile-logout-sheet',
@@ -18,6 +18,8 @@ import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
 })
 export class ProfileLogoutSheet {
   readonly open = input.required<boolean>();
+  /** The log out is in progress. */
+  readonly busy = input(false, { transform: booleanAttribute });
 
   readonly closed = output<void>();
   readonly confirmed = output<void>();

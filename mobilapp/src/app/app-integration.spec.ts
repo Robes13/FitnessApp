@@ -1,3 +1,4 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -10,6 +11,7 @@ import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,
 } from './core/testing/test-providers';
+import { AUTHENTICATED_SESSION, PENDING_SESSION } from './core/testing/fixtures';
 
 /**
  * The connections between features. Each feature tests its own screens; here only the
@@ -38,8 +40,12 @@ async function navigateTo(url: string): Promise<Harness> {
 describe('sammenkobling mellem features', () => {
   beforeEach(() => {
     resetComponentTestStorage({
-      [STORAGE_KEY.SESSION]: { isLoggedIn: true, isEmailVerified: true },
+      [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION,
     });
+  });
+
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
   });
 
   it('åbner Mad-skærmens tilføj-ark på det måltid, Hjems gøremålskort peger på', async () => {
@@ -78,7 +84,7 @@ describe('sammenkobling mellem features', () => {
 
   it('viser bekræftelses-arket på Hjem, når mailen ikke er bekræftet', async () => {
     resetComponentTestStorage({
-      [STORAGE_KEY.SESSION]: { isLoggedIn: true, isEmailVerified: false },
+      [STORAGE_KEY.SESSION]: PENDING_SESSION,
     });
 
     const { root } = await navigateTo(APP_PATH.HOME);
@@ -94,7 +100,8 @@ describe('sammenkobling mellem features', () => {
 
   it('sender brugeren til login efter log ud', async () => {
     const { harness } = await navigateTo(APP_PATH.HOME);
-    TestBed.inject(SessionService).logout();
+    TestBed.inject(SessionService).logout().subscribe();
+    TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/logout').flush(null);
 
     await harness.navigateByUrl(APP_PATH.PROFILE);
 

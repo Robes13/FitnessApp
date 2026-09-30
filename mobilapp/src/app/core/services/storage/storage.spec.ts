@@ -58,6 +58,19 @@ describe('StorageService', () => {
     expect(storage.getItem('other-app.key')).toBe('"keep"');
   });
 
+  it('keeps the app keys it is told to keep', () => {
+    for (const key of Object.values(STORAGE_KEY)) {
+      service.write(key, 'x');
+    }
+
+    service.clearAll([STORAGE_KEY.THEME, STORAGE_KEY.LANGUAGE]);
+
+    expect(Object.values(STORAGE_KEY).filter((key) => storage.getItem(key) !== null)).toEqual([
+      STORAGE_KEY.THEME,
+      STORAGE_KEY.LANGUAGE,
+    ]);
+  });
+
   it('degrades to no-ops when storage is unavailable', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({

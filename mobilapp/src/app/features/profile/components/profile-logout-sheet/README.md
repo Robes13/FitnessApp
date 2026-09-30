@@ -2,9 +2,10 @@
 
 `app-profile-logout-sheet` – bekræftelsen, før brugeren logges ud.
 
-| Input  | Type      | Beskrivelse |
-| ------ | --------- | ----------- |
-| `open` | `boolean` | Påkrævet    |
+| Input  | Type      | Beskrivelse                                                  |
+| ------ | --------- | ------------------------------------------------------------ |
+| `open` | `boolean` | Påkrævet                                                     |
+| `busy` | `boolean` | Log ud kører: spinner på "Ja, log mig ud", "Annuller" er fra |
 
 | Output      | Beskrivelse      |
 | ----------- | ---------------- |
@@ -22,4 +23,5 @@ den, i arkets `[sheetHeaderExtra]`-plads, fordi `app-ui-sheet` altid tegner over
 Arket til "Slet konto" (`profile-delete-account-sheet`) følger samme mønster.
 
 Selve log ud-kaldet (`SessionService.logout()`) sker på profilsiden, ikke her – arket
-spørger kun.
+spørger kun og viser `busy`. Log ud er _best effort_ (sessionen slutter lokalt, selv om API'et
+ikke kan nås), så arket har ingen fejltilstand.

@@ -45,12 +45,14 @@ export class StorageService {
   }
 
   /**
-   * Removes every key the app owns (`STORAGE_KEY`). Keys from other origins/apps sharing
-   * the storage are left alone, so `localStorage.clear()` is deliberately not used.
+   * Removes every key the app owns (`STORAGE_KEY`) except `keep`. Keys from other origins/apps
+   * sharing the storage are left alone, so `localStorage.clear()` is deliberately not used.
    */
-  clearAll(): void {
+  clearAll(keep: readonly StorageKey[] = []): void {
     for (const key of Object.values(STORAGE_KEY)) {
-      this.remove(key);
+      if (!keep.includes(key)) {
+        this.remove(key);
+      }
     }
   }
 

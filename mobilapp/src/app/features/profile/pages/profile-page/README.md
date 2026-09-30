@@ -19,8 +19,12 @@ Sidehovedet er `app-ui-page-header` med en tilbage-knap, der går til Hjem.
 
 ## State
 
-Komponenten ejer kun, hvilket ark der er åbent: `editRow`, `photoOpen`, `remindersOpen`,
-`logoutOpen` og `deleteAccountOpen`. Alle værdier på
+Komponenten ejer, hvilket ark der er åbent: `editRow`, `photoOpen`, `remindersOpen`,
+`logoutOpen` og `deleteAccountOpen` – plus de to kald, arkene venter på: `loggingOut`,
+`deletingAccount` og `deleteErrorKey` (en oversættelsesnøgle, så fejlen følger et sprogskift).
+Log ud navigerer til login, når `SessionService.logout()` er færdig; slet konto lader arket
+stå med spinner, indtil appen genindlæses, og viser fejlen i arket, hvis API'et afviser.
+Alle værdier på
 skærmen er afledte signaler fra `ProfileRowsService`, `AchievementsService`,
 `UserProfileService`, `ReminderService` og `ThemeService`, så de opdaterer sig selv, når data ændrer sig et
 andet sted i appen – fx når en ny vejning gemmes på Vægt.

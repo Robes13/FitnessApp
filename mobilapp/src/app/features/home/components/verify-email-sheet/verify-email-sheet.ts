@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  WritableSignal,
   computed,
   inject,
   input,
@@ -9,11 +10,14 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { Observable } from 'rxjs';
+import { APP_PATH } from '../../../../core/constants/app-route';
+import { isAuthToken } from '../../../../core/services/auth-api/auth-mapping';
 import { injectTranslate } from '../../../../core/services/language/translate';
-import { NutritionCalculator } from '../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { SessionService } from '../../../../core/services/session/session';
-import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
+import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
@@ -21,21 +25,22 @@ import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
 import { UiTextInput } from '../../../../shared/components/ui-text-input/ui-text-input';
 
 interface VerifyEmailForm {
-  email: FormControl<string>;
+  token: FormControl<string>;
 }
 
-/** Shown in place of the address if the profile doesn't have an e-mail yet. */
+/** Shown in place of the address if the session doesn't know it. */
 const EMAIL_FALLBACK_KEY = 'home.verifyEmail.emailFallback';
-const INVALID_EMAIL_MESSAGE_KEY = 'home.verifyEmail.invalidEmail';
-const REQUEST_FAILED_MESSAGE_KEY = 'home.verifyEmail.requestFailed';
 /** One extra rotation per check, matching the design's `refreshRot`. */
 const ROTATION_PER_CHECK_DEG = 360;
+
 /**
- * "Tjek din mail" – the sheet that locks Home until the e-mail is verified. It cannot be
- * dismissed (`hideClose`): neither the scrim, Escape, nor a close button dismiss it.
+ * "Tjek din mail" – the sheet that locks Home while the session is `pending-verification`. It
+ * cannot be dismissed (`hideClose`): neither the scrim, Escape, nor a close button dismiss it.
  *
- * The user can correct their e-mail, request a new code, and press "Tjek igen". All three
- * actions go through `SessionService`; until a backend exists, `AuthApi` answers with stubs.
+ * The user pastes the code from the e-mail and confirms, requests a new code, or presses
+ * "Tjek igen" (which tries to log in, since the API has no status endpoint). The API can't
+ * change the e-mail of an unverified account, so instead of the design's "Ændre mail" the user
+ * can go back to login. All actions go through `SessionService`.
  */
 @Component({
   selector: 'app-verify-email-sheet',
@@ -56,24 +61,23 @@ export class VerifyEmailSheet {
   readonly open = input.required<boolean>();
 
   private readonly session = inject(SessionService);
-  private readonly profileService = inject(UserProfileService);
-  private readonly calculator = inject(NutritionCalculator);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly t = injectTranslate();
 
   protected readonly form = new FormGroup<VerifyEmailForm>({
-    email: new FormControl('', { nonNullable: true }),
+    token: new FormControl('', { nonNullable: true }),
   });
 
-  private readonly emailValue = toSignal(this.form.controls.email.valueChanges, {
+  private readonly tokenValue = toSignal(this.form.controls.token.valueChanges, {
     initialValue: '',
   });
 
-  protected readonly editingEmail = signal(false);
-  protected readonly saving = signal(false);
+  protected readonly confirming = signal(false);
   protected readonly resending = signal(false);
   protected readonly resent = signal(false);
   protected readonly checking = signal(false);
+  protected readonly leaving = signal(false);
   protected readonly failedChecks = signal(0);
   protected readonly rotationDeg = signal(0);
   /** The error's translation key, so a shown error follows a language switch. */
@@ -84,12 +88,13 @@ export class VerifyEmailSheet {
   });
 
   protected readonly emailLabel = computed(
-    () => this.profileService.profile().email.trim() || this.t(EMAIL_FALLBACK_KEY),
+    () => this.session.email() ?? this.t(EMAIL_FALLBACK_KEY),
   );
-  protected readonly emailInvalid = computed(() => {
-    const value = this.emailValue().trim();
-    return value.length > 3 && !this.calculator.isValidEmail(value);
-  });
+  protected readonly tokenValid = computed(() => isAuthToken(this.tokenValue()));
+  /** Flagged once something is pasted that can't be a code. */
+  protected readonly tokenInvalid = computed(
+    () => this.tokenValue().trim().length > 0 && !this.tokenValid(),
+  );
   protected readonly resendLabel = computed(() =>
     this.t(this.resent() ? 'home.verifyEmail.resendSent' : 'home.verifyEmail.resend'),
   );
@@ -106,82 +111,53 @@ export class VerifyEmailSheet {
   });
   protected readonly rotation = computed(() => `${this.rotationDeg()}deg`);
 
-  protected toggleEmailEditor(): void {
-    const opening = !this.editingEmail();
-    if (opening) {
-      this.form.controls.email.setValue(this.profileService.profile().email);
-    }
-    this.errorKey.set(null);
-    this.editingEmail.set(opening);
-  }
-
-  protected saveEmail(): void {
-    const email = this.form.controls.email.value.trim();
-    if (!this.calculator.isValidEmail(email)) {
-      this.errorKey.set(INVALID_EMAIL_MESSAGE_KEY);
+  /** Verifies the code; the session then logs in, and Home unlocks. */
+  protected confirm(): void {
+    if (!this.tokenValid() || this.confirming()) {
       return;
     }
-    this.profileService.update({ email });
-    this.editingEmail.set(false);
-    this.errorKey.set(null);
-    this.saving.set(true);
-    this.session
-      .resendVerification()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.saving.set(false);
-          this.resent.set(true);
-        },
-        error: () => {
-          this.saving.set(false);
-          this.errorKey.set(REQUEST_FAILED_MESSAGE_KEY);
-        },
-      });
+    this.run(this.session.verifyEmail(this.tokenValue()), this.confirming, () => undefined);
   }
 
   protected resend(): void {
-    this.errorKey.set(null);
-    this.resending.set(true);
-    this.session
-      .resendVerification()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.resending.set(false);
-          this.resent.set(true);
-          // TODO: remove once the auth API exists – without a backend no e-mail is sent, so
-          // "Gensend kode" unlocks Home directly. The real flow verifies via `check()`.
-          this.session.markEmailVerified();
-        },
-        error: () => {
-          this.resending.set(false);
-          this.errorKey.set(REQUEST_FAILED_MESSAGE_KEY);
-        },
-      });
+    this.run(this.session.resendVerification(), this.resending, () => this.resent.set(true));
   }
 
   protected check(): void {
     if (this.checking()) {
       return;
     }
-    this.errorKey.set(null);
-    this.checking.set(true);
     this.rotationDeg.update((degrees) => degrees + ROTATION_PER_CHECK_DEG);
-    this.session
-      .checkVerification()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (verified) => {
-          this.checking.set(false);
-          if (!verified) {
-            this.failedChecks.update((count) => count + 1);
-          }
-        },
-        error: () => {
-          this.checking.set(false);
-          this.errorKey.set(REQUEST_FAILED_MESSAGE_KEY);
-        },
-      });
+    this.run(this.session.checkVerification(), this.checking, (verified) => {
+      if (!verified) {
+        this.failedChecks.update((count) => count + 1);
+      }
+    });
+  }
+
+  /** Ends the pending session – e.g. to sign up again with a corrected e-mail. */
+  protected backToLogin(): void {
+    this.run(this.session.logout(), this.leaving, () => {
+      void this.router.navigateByUrl(APP_PATH.LOGIN);
+    });
+  }
+
+  private run<T>(
+    request: Observable<T>,
+    busy: WritableSignal<boolean>,
+    onSuccess: (value: T) => void,
+  ): void {
+    this.errorKey.set(null);
+    busy.set(true);
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (value) => {
+        busy.set(false);
+        onSuccess(value);
+      },
+      error: (error: unknown) => {
+        busy.set(false);
+        this.errorKey.set(toApiError(error).messageKey);
+      },
+    });
   }
 }
