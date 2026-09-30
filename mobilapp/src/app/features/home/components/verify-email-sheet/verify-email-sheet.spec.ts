@@ -2,26 +2,51 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
-import { STORAGE_KEY } from '../../../../core/constants/storage-key';
+import { VERIFICATION_POLL_MS } from '../../../../core/constants/auth';
 import { SessionService } from '../../../../core/services/session/session';
-import { PENDING_SESSION, TEST_EMAIL } from '../../../../core/testing/fixtures';
+import { TEST_AUTH_RESPONSE, TEST_EMAIL } from '../../../../core/testing/fixtures';
 import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,
 } from '../../../../core/testing/test-providers';
 import { VerifyEmailSheet } from './verify-email-sheet';
 
-const TOKEN = 'BEEF'.repeat(16);
+const LOGIN = '/api/v1/auth/login';
+const RESEND = '/api/v1/auth/email/resend-verification';
+const PASSWORD = 'hemmelig1234';
 const NO_CONTENT = { status: 204, statusText: 'No Content' };
+const UNVERIFIED = { title: 'Forbidden', status: 403, detail: 'Email is not verified.' };
+const FORBIDDEN = { status: 403, statusText: 'Forbidden' };
 
 function normalize(value: string | null | undefined): string {
   return (value ?? '').replace(/\s+/g, ' ').trim();
 }
 
-/** The sheet renders in the real (jsdom) DOM; the session is `pending-verification`. */
+/** The sheet renders in the real (jsdom) DOM, with fake timers for the polling. */
 describe('VerifyEmailSheet', () => {
   let fixture: ComponentFixture<VerifyEmailSheet>;
   let http: HttpTestingController;
+  let session: SessionService;
+
+  /** A login before the e-mail is verified (403): pending, with the password in memory. */
+  function setup(identifier = TEST_EMAIL, open = true): void {
+    TestBed.configureTestingModule({
+      providers: [...provideComponentTestEnvironment(), provideRouter([])],
+    });
+    http = TestBed.inject(HttpTestingController);
+    session = TestBed.inject(SessionService);
+    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    session.login(identifier, PASSWORD).subscribe();
+    http.expectOne(LOGIN).flush(UNVERIFIED, FORBIDDEN);
+    fixture = TestBed.createComponent(VerifyEmailSheet);
+    fixture.componentRef.setInput('open', open);
+    fixture.detectChanges();
+  }
+
+  async function advance(ms: number): Promise<void> {
+    await vi.advanceTimersByTimeAsync(ms);
+    fixture.detectChanges();
+  }
 
   function panel(): HTMLElement | null {
     return (fixture.nativeElement as HTMLElement).querySelector('.ui-sheet__panel');
@@ -33,110 +58,123 @@ describe('VerifyEmailSheet', () => {
     );
   }
 
-  function error(): string {
-    return normalize(panel()?.querySelector('app-ui-form-error')?.textContent);
+  function changeVisibility(state: DocumentVisibilityState): void {
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(state);
+    document.dispatchEvent(new Event('visibilitychange'));
   }
 
-  async function paste(value: string): Promise<void> {
-    const input = panel()?.querySelector<HTMLInputElement>('input[aria-label="Kode fra mailen"]');
-    if (!input) {
-      throw new Error('Kodefeltet mangler');
-    }
-    input.value = value;
-    input.dispatchEvent(new Event('input'));
-    await fixture.whenStable();
-  }
-
-  beforeEach(async () => {
-    resetComponentTestStorage({ [STORAGE_KEY.SESSION]: PENDING_SESSION });
-    TestBed.configureTestingModule({
-      providers: [...provideComponentTestEnvironment(), provideRouter([])],
-    });
-    http = TestBed.inject(HttpTestingController);
-    vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
-    fixture = TestBed.createComponent(VerifyEmailSheet);
-    fixture.componentRef.setInput('open', true);
-    await fixture.whenStable();
+  beforeEach(() => {
+    vi.useFakeTimers();
+    resetComponentTestStorage();
   });
 
   afterEach(() => {
+    fixture.destroy();
     http.verify();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  it('cannot be dismissed and asks for the code sent to the pending e-mail', () => {
-    expect(panel()).not.toBeNull();
+  it('cannot be dismissed and says a link was sent to the pending e-mail', () => {
+    setup();
+
     expect(panel()?.querySelector('.ui-sheet__close')).toBeNull();
     expect(normalize(panel()?.querySelector('.ui-sheet__title')?.textContent)).toBe(
       'Tjek din mail',
     );
     expect(normalize(panel()?.querySelector('.verify-email-sheet__copy')?.textContent)).toBe(
-      `Vi har sendt en kode til ${TEST_EMAIL}. Indsæt den her for at låse appen op.`,
+      `Vi har sendt et link til ${TEST_EMAIL}. Tryk på linket i mailen – appen opdager det selv.`,
     );
-    expect(buttonWithText('Ændre mail')).toBeUndefined();
-    expect(buttonWithText('Bekræft')?.disabled).toBe(true);
+    expect(panel()?.querySelector('input')).toBeNull();
+    expect(buttonWithText('Til login')).toBeDefined();
+    expect(buttonWithText('Send mail igen')).toBeDefined();
   });
 
-  it('verifies a pasted code and sends the user to login when the password is gone', async () => {
-    await paste(` ${TOKEN.toLowerCase()} `);
-    expect(buttonWithText('Bekræft')?.disabled).toBe(false);
+  it('logs in every 5 s while open and stops once authenticated', async () => {
+    setup();
 
-    buttonWithText('Bekræft')?.click();
-    const verify = http.expectOne({ method: 'POST', url: '/api/v1/auth/email/verify' });
-    expect(verify.request.body).toEqual({ token: TOKEN });
-    verify.flush(null, NO_CONTENT);
-    await fixture.whenStable();
+    await advance(VERIFICATION_POLL_MS - 1);
+    expect(http.match(LOGIN)).toHaveLength(0);
 
-    expect(TestBed.inject(SessionService).status()).toBe('guest');
-    expect(TestBed.inject(Router).navigateByUrl).toHaveBeenCalledWith(APP_PATH.LOGIN);
+    await advance(1);
+    const first = http.expectOne({ method: 'POST', url: LOGIN });
+    expect(first.request.body).toEqual({ emailOrUsername: TEST_EMAIL, password: PASSWORD });
+    first.flush(UNVERIFIED, FORBIDDEN);
+    expect(session.status()).toBe('pending-verification');
+
+    await advance(VERIFICATION_POLL_MS);
+    http.expectOne(LOGIN).flush(TEST_AUTH_RESPONSE);
+    expect(session.isAuthenticated()).toBe(true);
+
+    // Nothing is pending any more – `verify()` in afterEach proves there is no further login.
+    await advance(3 * VERIFICATION_POLL_MS);
   });
 
-  it('shows why a code was rejected', async () => {
-    await paste(TOKEN);
+  it('does not poll while closed', async () => {
+    setup(TEST_EMAIL, false);
 
-    buttonWithText('Bekræft')?.click();
-    http.expectOne('/api/v1/auth/email/verify').flush(
-      {
-        title: 'Validation failed',
-        status: 400,
-        detail: 'The verification token is invalid or expired.',
-      },
-      { status: 400, statusText: 'Bad Request' },
+    await advance(3 * VERIFICATION_POLL_MS);
+    changeVisibility('visible');
+    expect(http.match(LOGIN)).toHaveLength(0);
+
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    await advance(VERIFICATION_POLL_MS);
+    http.expectOne(LOGIN).flush(UNVERIFIED, FORBIDDEN);
+
+    fixture.componentRef.setInput('open', false);
+    fixture.detectChanges();
+    await advance(3 * VERIFICATION_POLL_MS);
+  });
+
+  it('checks at once when the app becomes visible again', () => {
+    setup();
+
+    changeVisibility('hidden');
+    expect(http.match(LOGIN)).toHaveLength(0);
+
+    changeVisibility('visible');
+    http.expectOne(LOGIN).flush(UNVERIFIED, FORBIDDEN);
+  });
+
+  it('shows a failed check and keeps polling', async () => {
+    setup();
+
+    await advance(VERIFICATION_POLL_MS);
+    http.expectOne(LOGIN).error(new ProgressEvent('error'));
+    fixture.detectChanges();
+    expect(normalize(panel()?.querySelector('app-ui-form-error')?.textContent)).toBe(
+      'Ingen forbindelse. Tjek dit internet, og prøv igen.',
     );
-    await fixture.whenStable();
 
-    expect(error()).toBe('Koden passer ikke. Kopiér hele koden fra den nyeste mail.');
-    expect(TestBed.inject(SessionService).status()).toBe('pending-verification');
+    await advance(VERIFICATION_POLL_MS);
+    http.expectOne(LOGIN).flush(UNVERIFIED, FORBIDDEN);
   });
 
-  it('confirms that a new code was sent', async () => {
-    buttonWithText('Gensend kode')?.click();
-    const resend = http.expectOne('/api/v1/auth/email/resend-verification');
-    expect(resend.request.body).toEqual({ email: TEST_EMAIL });
+  it('sends a new link by the username a login used, which has no address to show', () => {
+    setup('mads');
+    expect(normalize(panel()?.querySelector('.verify-email-sheet__email')?.textContent)).toBe(
+      'din mail',
+    );
+
+    buttonWithText('Send mail igen')?.click();
+    const resend = http.expectOne({ method: 'POST', url: RESEND });
+    expect(resend.request.body).toEqual({ emailOrUsername: 'mads' });
     resend.flush(null, NO_CONTENT);
-    await fixture.whenStable();
+    fixture.detectChanges();
 
-    expect(buttonWithText('Kode sendt ✓')).toBeDefined();
     expect(normalize(panel()?.querySelector('.verify-email-sheet__hint')?.textContent)).toBe(
-      'Ny kode sendt – tjek også spam.',
+      'Ny mail sendt – det gamle link virker ikke længere.',
     );
   });
 
-  it('explains that it cannot check after a restart instead of saying "not confirmed"', async () => {
-    buttonWithText('Tjek igen')?.click();
-    await fixture.whenStable();
+  it('goes back to login and ends the pending session', () => {
+    setup();
 
-    expect(buttonWithText('Tjek igen')).toBeDefined();
-    expect(buttonWithText('Ikke bekræftet')).toBeUndefined();
-    expect(error()).toBe(
-      'Efter en genstart kan appen ikke selv tjekke det. Indsæt koden fra mailen – eller gå til login, hvis du allerede har bekræftet.',
-    );
-  });
-
-  it('goes back to login and ends the pending session', async () => {
     buttonWithText('Til login')?.click();
-    await fixture.whenStable();
+    fixture.detectChanges();
 
-    expect(TestBed.inject(SessionService).status()).toBe('guest');
+    expect(session.status()).toBe('guest');
     expect(TestBed.inject(Router).navigateByUrl).toHaveBeenCalledWith(APP_PATH.LOGIN);
   });
 });

@@ -16,12 +16,10 @@
 
   <form class="login-page__form" [formGroup]="form" (ngSubmit)="submit()">
     <app-ui-text-input
-      formControlName="email"
-      type="email"
-      inputMode="email"
-      [placeholder]="'auth.loginPage.email' | translate"
-      [ariaLabel]="'auth.loginPage.email' | translate"
-      autocomplete="email"
+      formControlName="identifier"
+      [placeholder]="'auth.loginPage.identifier' | translate"
+      [ariaLabel]="'auth.loginPage.identifier' | translate"
+      autocomplete="username"
       translucent
     />
     <app-ui-text-input

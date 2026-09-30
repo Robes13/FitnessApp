@@ -70,7 +70,7 @@ export const AUTHENTICATED_SESSION: SessionState = {
   },
 };
 
-/** Registered, but the e-mail isn't verified yet – Home shows the verification sheet. */
+/** Stored by `register` (e-mail not verified yet). Restored after a restart, it is a guest. */
 export const PENDING_SESSION: SessionState = {
   status: 'pending-verification',
   email: TEST_EMAIL,

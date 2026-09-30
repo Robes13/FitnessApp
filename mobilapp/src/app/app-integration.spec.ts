@@ -11,7 +11,7 @@ import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,
 } from './core/testing/test-providers';
-import { AUTHENTICATED_SESSION, PENDING_SESSION } from './core/testing/fixtures';
+import { AUTHENTICATED_SESSION, TEST_EMAIL } from './core/testing/fixtures';
 
 /**
  * The connections between features. Each feature tests its own screens; here only the
@@ -83,11 +83,16 @@ describe('sammenkobling mellem features', () => {
   });
 
   it('viser bekræftelses-arket på Hjem, når mailen ikke er bekræftet', async () => {
-    resetComponentTestStorage({
-      [STORAGE_KEY.SESSION]: PENDING_SESSION,
-    });
+    resetComponentTestStorage();
+    const { harness, root } = await navigateTo(APP_PATH.LOGIN);
+    // Right password, unverified e-mail: 403 without tokens → pending (only in memory).
+    TestBed.inject(SessionService).login(TEST_EMAIL, 'hemmelig1234').subscribe();
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/v1/auth/login')
+      .flush({ title: 'Forbidden', status: 403 }, { status: 403, statusText: 'Forbidden' });
 
-    const { root } = await navigateTo(APP_PATH.HOME);
+    await harness.navigateByUrl(APP_PATH.HOME);
+    await harness.fixture.whenStable();
 
     expect(root.querySelector('.verify-email-sheet__badge')).not.toBeNull();
   });

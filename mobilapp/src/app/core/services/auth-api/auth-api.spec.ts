@@ -52,23 +52,21 @@ describe('AuthApi', () => {
     const cases: [Observable<unknown>, string, unknown][] = [
       [api.register(REGISTER_REQUEST), 'auth/register', REGISTER_REQUEST],
       [
-        api.login({ email: 'a@b.dk', password: 'p' }),
+        api.login({ emailOrUsername: 'mads', password: 'p' }),
         'auth/login',
-        { email: 'a@b.dk', password: 'p' },
+        { emailOrUsername: 'mads', password: 'p' },
       ],
       [api.refresh({ refreshToken: 'r' }), 'auth/refresh', { refreshToken: 'r' }],
       [api.logout({ refreshToken: 'r' }), 'auth/logout', { refreshToken: 'r' }],
-      [api.verifyEmail({ token: 'T' }), 'auth/email/verify', { token: 'T' }],
       [
-        api.resendVerification({ email: 'a@b.dk' }),
+        api.resendVerification({ emailOrUsername: 'a@b.dk' }),
         'auth/email/resend-verification',
-        { email: 'a@b.dk' },
+        { emailOrUsername: 'a@b.dk' },
       ],
-      [api.forgotPassword({ email: 'a@b.dk' }), 'auth/password/forgot', { email: 'a@b.dk' }],
       [
-        api.resetPassword({ token: 'T', newPassword: 'n', newPasswordConfirmation: 'n' }),
-        'auth/password/reset',
-        { token: 'T', newPassword: 'n', newPasswordConfirmation: 'n' },
+        api.forgotPassword({ emailOrUsername: 'mads' }),
+        'auth/password/forgot',
+        { emailOrUsername: 'mads' },
       ],
     ];
     for (const [request, endpoint, body] of cases) {
@@ -81,7 +79,7 @@ describe('AuthApi', () => {
 
   it('returns the API response of login', async () => {
     const { result, pending } = call(
-      api.login({ email: 'a@b.dk', password: 'p' }),
+      api.login({ emailOrUsername: 'a@b.dk', password: 'p' }),
       'POST',
       '/api/v1/auth/login',
     );
@@ -99,12 +97,12 @@ describe('AuthApi', () => {
 
   it('fails with an ApiError the user can read', async () => {
     const { result, pending } = call(
-      api.login({ email: 'a@b.dk', password: 'p' }),
+      api.login({ emailOrUsername: 'a@b.dk', password: 'p' }),
       'POST',
       '/api/v1/auth/login',
     );
     pending.flush(
-      { title: 'Unauthorized', status: 401, detail: 'Invalid email or password.' },
+      { title: 'Unauthorized', status: 401, detail: 'Invalid credentials.' },
       { status: 401, statusText: 'Unauthorized' },
     );
 

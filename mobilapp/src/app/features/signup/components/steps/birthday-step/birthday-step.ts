@@ -113,7 +113,7 @@ export class BirthdayStep {
     }
     const age = this.age();
     if (age < MIN_AGE) {
-      return this.t(HINT_TOO_YOUNG_KEY);
+      return this.t(HINT_TOO_YOUNG_KEY, { minAge: MIN_AGE });
     }
     return age > MAX_AGE ? this.t(HINT_TOO_OLD_KEY) : '';
   });

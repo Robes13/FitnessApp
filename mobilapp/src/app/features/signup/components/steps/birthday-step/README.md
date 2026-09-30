@@ -12,7 +12,8 @@ Signup-trin 2 (`birthday`, designets `sAlder`): fødselsdatoen.
   nedtonet, og fremtidige datoer kan ikke vælges.
 - Under gitteret: `Valgt: 16. maj 1998` i orange, eller `Ingen dato valgt endnu`.
 - Nederst alderen som 64 px orange tal med `år` og designets `ageHint`
-  (`Vælg din fødselsdato ovenfor.` / `Du skal være mindst 16 år for at bruge Nutrify.`
+  (`Vælg din fødselsdato ovenfor.` / `Du skal være mindst {{minAge}} år for at bruge Nutrify.` med
+  `MIN_AGE`
   / `Tjek datoen igen.`), ved siden af kagescenen `app-birthday-cake`.
 
 ## Filer

@@ -54,9 +54,9 @@ med meget indhold kan scrolle uden at skubbe knapperne ud af skærmen.
 til API'ets flade `RegisterRequest` (`toRegisterRequest()` i `core/services/auth-api/auth-mapping.ts`)
 og sender `POST auth/register`. API'et opretter profil, første mål, notifikationsindstilling og
 vilkårssamtykke i ét kald og sender selv bekræftelsesmailen. Sessionen bliver derefter
-`pending-verification`, og Hjem viser bekræftelses-arket, hvor brugeren indsætter koden fra
+`pending-verification`, og Hjem viser bekræftelses-arket, mens brugeren trykker på linket i
 mailen (se `features/home/components/verify-email-sheet`). Adgangskoden holdes **kun i
-hukommelsen**, så brugeren logges ind automatisk, når koden er bekræftet.
+hukommelsen**, så arket kan logge brugeren ind automatisk, når e-mailen er bekræftet.
 
 Kladden skrives som lokal profil via `UserProfileService.replace` først, når API'et har oprettet
 kontoen. Siden viser fejlen i en `UiFormError` – e-mail eller brugernavn optaget (409),
@@ -65,10 +65,12 @@ Selve navigationen til Hjem sker i `SignupPage`, fordi den også ejer spinner og
 
 ### API'ets regler i trinnene
 
-- **Brugernavn** 3–50 tegn (`USERNAME_MIN_LENGTH`/`USERNAME_MAX_LENGTH`), **adgangskode**
-  10–200 tegn (`PASSWORD_MIN_LENGTH`/`PASSWORD_MAX_LENGTH`). Felterne stopper ved maksimum, og
-  `canContinue('account')` kræver begge intervaller.
-- **Højde** 100–250 cm (`HEIGHT_MIN_CM` = 100) og **alder** højst 100 år (`MAX_AGE`).
+- **Brugernavn** 3–50 tegn (`USERNAME_MIN_LENGTH`/`USERNAME_MAX_LENGTH`) og uden `@`
+  (`USERNAME_PATTERN` – login skelner e-mail fra brugernavn på `@`), **adgangskode** 10–200 tegn
+  (`PASSWORD_MIN_LENGTH`/`PASSWORD_MAX_LENGTH`). Felterne stopper ved maksimum, og
+  `canContinue('account')` kræver alle tre regler.
+- **Højde** 100–250 cm (`HEIGHT_MIN_CM` = 100) og **alder** `MIN_AGE`–`MAX_AGE` (13–100 år, API'ets
+  regel). "For ung"-teksten interpolerer `MIN_AGE` (`{{minAge}}`).
 - **Målvægt** skal ligge på målets side af vægten i dag (under ved "tabe", over ved "tage").
   Skalaens grænser sikrer det ikke i yderpunkterne (vægt ≤ 36 kg ved "tabe", ≥ 200 kg ved
   "tage"), så `canContinue('goal-weight')` kræver det også – ellers svarer register 400.

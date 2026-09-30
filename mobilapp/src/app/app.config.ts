@@ -14,6 +14,7 @@ import { BackButtonService } from './core/services/back-button/back-button';
 import { KeyboardService } from './core/services/keyboard/keyboard';
 import { ReminderService } from './core/services/reminders/reminders';
 import { SessionDataService } from './core/services/session-data/session-data';
+import { SessionService } from './core/services/session/session';
 import { ThemeService } from './core/services/theme/theme';
 import { LanguageService } from './core/services/language/language';
 import { JsonTranslationLoader } from './core/services/language/translation-loader';
@@ -41,8 +42,10 @@ export const appConfig: ApplicationConfig = {
     // HttpClient on the Fetch API (our API and Open Food Facts). The interceptor adds the bearer
     // and refreshes the token – for our API only.
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
-    // Loads the signed-in user's data from the API, and forgets it on log out.
+    // Renews a restored session once (spec 1.5), then loads the signed-in user's data from the
+    // API – the loads share that refresh if they need a token – and forgets it on log out.
     provideAppInitializer(() => {
+      inject(SessionService).renewOnOpen();
       inject(SessionDataService);
     }),
     // Component input binding: route and query parameters are bound directly to `input()` on pages.

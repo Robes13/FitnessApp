@@ -5,7 +5,7 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { STORAGE_KEY } from '../../constants/storage-key';
 import { SessionState } from '../../models/session';
 import { createFakeStorage } from '../../testing/fake-document';
-import { AUTHENTICATED_SESSION, PENDING_SESSION, TEST_AUTH_RESPONSE } from '../../testing/fixtures';
+import { AUTHENTICATED_SESSION, TEST_AUTH_RESPONSE } from '../../testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../testing/test-providers';
 import { CollectionsService } from '../collections/collections';
 import { FoodLogService } from '../food-log/food-log';
@@ -60,11 +60,21 @@ describe('SessionDataService', () => {
     TestBed.inject(HttpTestingController).verify();
   });
 
-  it('neither loads nor resets while the e-mail is unverified', () => {
-    const { store } = setup(PENDING_SESSION);
+  it('neither loads nor resets while the e-mail is unverified', async () => {
+    const { store, session } = setup(null);
+    // Once for the guest at start-up.
+    expect(store.resets).toBe(1);
 
+    const login = firstValueFrom(session.login('mads', 'hemmelig1234'));
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/v1/auth/login')
+      .flush({ title: 'Forbidden', status: 403 }, { status: 403, statusText: 'Forbidden' });
+    await login;
+    TestBed.tick();
+
+    expect(session.status()).toBe('pending-verification');
     expect(store.loads).toBe(0);
-    expect(store.resets).toBe(0);
+    expect(store.resets).toBe(1);
   });
 
   it('neither cancels nor restarts the loads when the tokens are refreshed', async () => {

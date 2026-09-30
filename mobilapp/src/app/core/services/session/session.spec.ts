@@ -28,16 +28,19 @@ import { UserProfileService } from '../user-profile/user-profile';
 import { SessionService } from './session';
 
 const PASSWORD = 'hemmelig1234';
-const TOKEN = 'AB12'.repeat(16);
 const REFRESH = '/api/v1/auth/refresh';
 const LOGOUT = '/api/v1/auth/logout';
 const NO_CONTENT = { status: 204, statusText: 'No Content' };
 const UNAUTHORIZED = { status: 401, statusText: 'Unauthorized' };
+const LOGIN = '/api/v1/auth/login';
 const INVALID_CREDENTIALS = {
   title: 'Unauthorized',
   status: 401,
-  detail: 'Invalid email or password.',
+  detail: 'Invalid credentials.',
 };
+/** Right password, e-mail not verified: no tokens. */
+const UNVERIFIED = { title: 'Forbidden', status: 403, detail: 'Email is not verified.' };
+const FORBIDDEN = { status: 403, statusText: 'Forbidden' };
 
 const SIGNUP_PROFILE: UserProfile = {
   ...DEFAULT_PROFILE,
@@ -142,12 +145,11 @@ describe('SessionService', () => {
       expect(session.isAuthenticated()).toBe(true);
     });
 
-    it('restores a pending session', () => {
+    it('restores a pending session as a guest with the e-mail (1.1-6a)', () => {
       const { session } = setup(PENDING_SESSION);
 
-      expect(session.status()).toBe('pending-verification');
-      expect(session.isLoggedIn()).toBe(true);
-      expect(session.isAuthenticated()).toBe(false);
+      expect(session.status()).toBe('guest');
+      expect(session.isLoggedIn()).toBe(false);
       expect(session.email()).toBe(TEST_EMAIL);
     });
 
@@ -204,113 +206,118 @@ describe('SessionService', () => {
       expect(storage.getItem(STORAGE_KEY.SESSION)).not.toContain(PASSWORD);
     });
 
-    it('verifies the pasted token and logs in with the sign-up password', async () => {
-      const { session, http } = setup();
-      await register(http, session);
-
-      const done = firstValueFrom(session.verifyEmail(` ${TOKEN.toLowerCase()} `));
-      const verify = http.expectOne({ method: 'POST', url: '/api/v1/auth/email/verify' });
-      expect(verify.request.body).toEqual({ token: TOKEN });
-      verify.flush(null, NO_CONTENT);
-      const login = http.expectOne({ method: 'POST', url: '/api/v1/auth/login' });
-      expect(login.request.body).toEqual({ email: TEST_EMAIL, password: PASSWORD });
-      login.flush(TEST_AUTH_RESPONSE);
-      await done;
-
-      expect(session.isAuthenticated()).toBe(true);
-      expect(stored()).toEqual(AUTHENTICATED_SESSION);
-    });
-
-    it('only logs in again when the login after a successful verify failed', async () => {
-      const { session, http } = setup();
-      await register(http, session);
-
-      const first = firstValueFrom(session.verifyEmail(TOKEN));
-      http.expectOne('/api/v1/auth/email/verify').flush(null, NO_CONTENT);
-      http.expectOne('/api/v1/auth/login').error(new ProgressEvent('error'));
-      await expect(first).rejects.toMatchObject({ messageKey: 'common.error.network' });
-      expect(session.status()).toBe('pending-verification');
-
-      // The token is used up now – sending it again would say "invalid code".
-      const second = firstValueFrom(session.verifyEmail(TOKEN));
-      http.expectOne('/api/v1/auth/login').flush(TEST_AUTH_RESPONSE);
-      await second;
-
-      expect(session.isAuthenticated()).toBe(true);
-    });
-
-    it('sends the user to login after verifying when the password is no longer known', async () => {
-      const { session, http, navigate } = setup(PENDING_SESSION);
-
-      const done = firstValueFrom(session.verifyEmail(TOKEN));
-      http.expectOne('/api/v1/auth/email/verify').flush(null, NO_CONTENT);
-      await done;
-
-      expect(session.status()).toBe('guest');
-      expect(session.email()).toBe(TEST_EMAIL);
-      expect(navigate).toHaveBeenCalledWith('/login');
-    });
-
-    it('checks the verification by trying to log in: 401 means not yet', async () => {
+    it('checks the verification by logging in: 403 means not yet', async () => {
       const { session, http } = setup();
       await register(http, session);
 
       const first = firstValueFrom(session.checkVerification());
-      http.expectOne('/api/v1/auth/login').flush(INVALID_CREDENTIALS, UNAUTHORIZED);
+      const login = http.expectOne({ method: 'POST', url: LOGIN });
+      expect(login.request.body).toEqual({ emailOrUsername: TEST_EMAIL, password: PASSWORD });
+      login.flush(UNVERIFIED, FORBIDDEN);
       await expect(first).resolves.toBe(false);
       expect(session.status()).toBe('pending-verification');
 
       const second = firstValueFrom(session.checkVerification());
-      http.expectOne('/api/v1/auth/login').flush(TEST_AUTH_RESPONSE);
+      http.expectOne(LOGIN).flush(TEST_AUTH_RESPONSE);
       await expect(second).resolves.toBe(true);
       expect(session.isAuthenticated()).toBe(true);
+      expect(stored()).toEqual(AUTHENTICATED_SESSION);
     });
 
-    it('explains that it cannot check without the sign-up password instead of saying "no"', async () => {
-      const { session } = setup(PENDING_SESSION);
+    it('fails a check that could not reach the API, and stays pending', async () => {
+      const { session, http } = setup();
+      await register(http, session);
 
-      await expect(firstValueFrom(session.checkVerification())).rejects.toEqual({
-        messageKey: 'core.auth.error.verificationUncheckable',
-      });
+      const check = firstValueFrom(session.checkVerification());
+      http.expectOne(LOGIN).error(new ProgressEvent('error'));
+
+      await expect(check).rejects.toMatchObject({ messageKey: 'common.error.network' });
       expect(session.status()).toBe('pending-verification');
     });
 
-    it('resends the verification e-mail to the pending address', async () => {
-      const { session, http } = setup(PENDING_SESSION);
+    it('has nothing to check without a pending login', async () => {
+      const { session } = setup(SIGNED_OUT_SESSION);
+
+      // `verify()` in afterEach proves there was no login.
+      await expect(firstValueFrom(session.checkVerification())).resolves.toBe(false);
+    });
+
+    it('resends the verification e-mail to the registered address', async () => {
+      const { session, http } = setup();
+      await register(http, session);
 
       const done = firstValueFrom(session.resendVerification());
       const request = http.expectOne('/api/v1/auth/email/resend-verification');
-      expect(request.request.body).toEqual({ email: TEST_EMAIL });
+      expect(request.request.body).toEqual({ emailOrUsername: TEST_EMAIL });
+      request.flush(null, NO_CONTENT);
+      await done;
+    });
+
+    it('resends by the username a pending login used', async () => {
+      const { session, http } = setup();
+      const login = firstValueFrom(session.login(' mads ', PASSWORD));
+      http.expectOne(LOGIN).flush(UNVERIFIED, FORBIDDEN);
+      await login;
+
+      const done = firstValueFrom(session.resendVerification());
+      const request = http.expectOne('/api/v1/auth/email/resend-verification');
+      expect(request.request.body).toEqual({ emailOrUsername: 'mads' });
       request.flush(null, NO_CONTENT);
       await done;
     });
   });
 
   describe('login', () => {
-    it('authenticates and names an empty profile after the account', async () => {
+    it.each([TEST_EMAIL, 'mads'])('authenticates with %s', async (identifier) => {
       const { session, http } = setup();
 
-      const done = firstValueFrom(session.login(` ${TEST_EMAIL} `, PASSWORD));
-      http.expectOne('/api/v1/auth/login').flush(TEST_AUTH_RESPONSE);
+      const done = firstValueFrom(session.login(` ${identifier} `, PASSWORD));
+      const request = http.expectOne({ method: 'POST', url: LOGIN });
+      expect(request.request.body).toEqual({ emailOrUsername: identifier, password: PASSWORD });
+      request.flush(TEST_AUTH_RESPONSE);
       await done;
 
       expect(session.isAuthenticated()).toBe(true);
-      expect(TestBed.inject(UserProfileService).profile()).toMatchObject({
-        username: 'mads',
-        email: TEST_EMAIL,
-      });
+      expect(stored()).toEqual(AUTHENTICATED_SESSION);
     });
 
-    it('stays a guest when the credentials are wrong', async () => {
+    it.each([
+      [' Mads@Nutrify.DK ', TEST_EMAIL],
+      ['mads', null],
+    ])(
+      'waits for the verification without tokens when %j is unverified',
+      async (identifier, email) => {
+        const { session, http } = setup(SIGNED_OUT_SESSION);
+
+        const done = firstValueFrom(session.login(identifier, PASSWORD));
+        http.expectOne(LOGIN).flush(UNVERIFIED, FORBIDDEN);
+
+        // Completes normally – the login page goes to Home, where the verification sheet opens.
+        await expect(done).resolves.toBeUndefined();
+        expect(stored()).toEqual({
+          status: 'pending-verification',
+          email,
+          userId: SIGNED_OUT_SESSION.userId,
+          tokens: null,
+        });
+        expect(storage.getItem(STORAGE_KEY.SESSION)).not.toContain(PASSWORD);
+      },
+    );
+
+    it.each([
+      [INVALID_CREDENTIALS, UNAUTHORIZED, 'core.auth.error.invalidCredentials'],
+      [
+        { title: 'Too Many Requests', status: 429, detail: 'Too many requests' },
+        { status: 429, statusText: 'Too Many Requests' },
+        'core.auth.error.tooManyAttempts',
+      ],
+    ])('stays a guest on a %j', async (body, status, messageKey) => {
       const { session, http } = setup();
 
       const done = firstValueFrom(session.login(TEST_EMAIL, 'forkert'));
-      http.expectOne('/api/v1/auth/login').flush(INVALID_CREDENTIALS, UNAUTHORIZED);
+      http.expectOne(LOGIN).flush(body, status);
 
-      await expect(done).rejects.toEqual({
-        messageKey: 'core.auth.error.invalidCredentials',
-        status: 401,
-      });
+      await expect(done).rejects.toEqual({ messageKey, status: status.status });
       expect(session.status()).toBe('guest');
     });
   });
@@ -337,11 +344,8 @@ describe('SessionService', () => {
       http.expectOne('/api/v1/auth/login').flush(OTHER_ACCOUNT);
       await done;
 
-      expect(TestBed.inject(UserProfileService).profile()).toEqual({
-        ...DEFAULT_PROFILE,
-        username: 'sara',
-        email: 'sara@nutrify.dk',
-      });
+      // The profile's load (on `authenticated`) fetches the new account's name and e-mail.
+      expect(TestBed.inject(UserProfileService).profile()).toEqual(DEFAULT_PROFILE);
       expect(storage.getItem(STORAGE_KEY.FOOD_LOG)).toBeNull();
       // Device settings stay.
       expect(storage.getItem(STORAGE_KEY.THEME)).toBe('"dark"');
@@ -463,11 +467,16 @@ describe('SessionService', () => {
     });
 
     it('needs no API call while the e-mail is unverified', async () => {
-      const { session } = setup(PENDING_SESSION);
+      const { session, http } = setup();
+      const login = firstValueFrom(session.login('mads', PASSWORD));
+      http.expectOne(LOGIN).flush(UNVERIFIED, FORBIDDEN);
+      await login;
 
       await firstValueFrom(session.logout());
 
       expect(session.status()).toBe('guest');
+      // The pending password is gone with it.
+      await expect(firstValueFrom(session.checkVerification())).resolves.toBe(false);
     });
   });
 
@@ -612,6 +621,44 @@ describe('SessionService', () => {
       await expect(done).rejects.toMatchObject({ status: 0 });
       expect(session.isAuthenticated()).toBe(true);
       expect(navigate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('renewOnOpen', () => {
+    it('refreshes once when the app opens, and the first calls share it', async () => {
+      const { session, http } = setup(EXPIRING_SESSION);
+
+      session.renewOnOpen();
+      const token = firstValueFrom(session.accessToken());
+      const request = http.expectOne({ method: 'POST', url: REFRESH });
+      expect(request.request.body).toEqual({ refreshToken: 'test-refresh-token' });
+      // Issued today (UTC): the API answers with the same refresh token and a new access token.
+      request.flush({ ...TEST_AUTH_RESPONSE, accessToken: 'renewed-access-token' });
+
+      await expect(token).resolves.toBe('renewed-access-token');
+      expect(stored()?.tokens).toMatchObject({
+        accessToken: 'renewed-access-token',
+        refreshToken: 'test-refresh-token',
+      });
+    });
+
+    it('ends the session and goes to login when the refresh token is rejected', () => {
+      const { session, http, navigate } = setup(AUTHENTICATED_SESSION);
+
+      session.renewOnOpen();
+      http.expectOne(REFRESH).flush(null, UNAUTHORIZED);
+
+      expect(session.status()).toBe('guest');
+      expect(navigate).toHaveBeenCalledWith('/login');
+    });
+
+    it('needs no call without a session', () => {
+      const { session } = setup(SIGNED_OUT_SESSION);
+
+      // `verify()` in afterEach proves there was no refresh.
+      session.renewOnOpen();
+
+      expect(session.status()).toBe('guest');
     });
   });
 });

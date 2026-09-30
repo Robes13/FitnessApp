@@ -3,16 +3,7 @@ import { DEFAULT_PROFILE } from '../../constants/profile-defaults';
 import { UserProfile } from '../../models/profile';
 import { ApiProblem } from '../../utils/api';
 import { NutritionCalculator } from '../nutrition-calculator/nutrition-calculator';
-import {
-  isAuthToken,
-  loginErrorKey,
-  normalizeAuthToken,
-  registerErrorKey,
-  toRegisterRequest,
-  tokenErrorKey,
-} from './auth-mapping';
-
-const TOKEN = '3F9A'.repeat(16);
+import { loginErrorKey, registerErrorKey, toRegisterRequest } from './auth-mapping';
 
 const PROFILE: UserProfile = {
   ...DEFAULT_PROFILE,
@@ -117,17 +108,6 @@ describe('toRegisterRequest', () => {
   });
 });
 
-describe('auth tokens', () => {
-  it('normalizes a pasted token and checks its format', () => {
-    const pasted = ` ${TOKEN.slice(0, 32).toLowerCase()}\n${TOKEN.slice(32)} `;
-
-    expect(normalizeAuthToken(pasted)).toBe(TOKEN);
-    expect(isAuthToken(pasted)).toBe(true);
-    expect(isAuthToken('1234')).toBe(false);
-    expect(isAuthToken(`${TOKEN.slice(1)}G`)).toBe(false);
-  });
-});
-
 describe('auth error resolvers', () => {
   it('tells the two register conflicts apart by their detail', () => {
     expect(registerErrorKey(problem(409, 'That username is already in use.'))).toBe(
@@ -145,32 +125,18 @@ describe('auth error resolvers', () => {
     expect(registerErrorKey(problem(500))).toBeNull();
   });
 
-  it('maps a login 401 to invalid credentials and a malformed e-mail to its hint', () => {
-    expect(loginErrorKey(problem(401, 'Invalid email or password.'))).toBe(
+  it('maps a login 401 and 400 to invalid credentials and a 429 to the lockout', () => {
+    expect(loginErrorKey(problem(401, 'Invalid credentials.'))).toBe(
       'core.auth.error.invalidCredentials',
     );
-    expect(loginErrorKey(problem(400, null, ['email']))).toBe('core.auth.error.invalidEmail');
     expect(loginErrorKey(problem(400, null, ['password']))).toBe(
       'core.auth.error.invalidCredentials',
     );
-    expect(loginErrorKey(problem(400, 'Something else.'))).toBeNull();
+    expect(loginErrorKey(problem(429, 'Too many requests'))).toBe(
+      'core.auth.error.tooManyAttempts',
+    );
+    // 403 (unverified) is handled by the session; the rest gets the generic text.
+    expect(loginErrorKey(problem(403))).toBeNull();
     expect(loginErrorKey(problem(0))).toBeNull();
-  });
-
-  it('maps an invalid token and a too short new password', () => {
-    expect(tokenErrorKey(problem(400, 'The password reset token is invalid or expired.'))).toBe(
-      'core.auth.error.invalidCode',
-    );
-    expect(tokenErrorKey(problem(400, 'The verification token is invalid or expired.'))).toBe(
-      'core.auth.error.invalidCode',
-    );
-    expect(tokenErrorKey(problem(400, null, ['newpassword']))).toBe(
-      'core.auth.error.passwordTooShort',
-    );
-    expect(
-      tokenErrorKey(
-        problem(400, 'Password must be at least 10 characters and match confirmation.'),
-      ),
-    ).toBe('core.auth.error.passwordTooShort');
   });
 });

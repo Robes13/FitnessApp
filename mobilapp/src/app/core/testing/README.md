@@ -37,8 +37,9 @@ egne providers. Importér ikke app-kode i `global-test-providers.ts` – det bry
 En logget ind bruger seedes med `AUTHENTICATED_SESSION` (tokens gyldige til 2099):
 `createFakeStorage({ [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION })` eller
 `resetComponentTestStorage({ [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION })`. `PENDING_SESSION`
-er en oprettet, ubekræftet konto, og `SIGNED_OUT_SESSION` er samme konto efter log ud (e-mail og
-`userId` huskes). Den gamle form `{ isLoggedIn, isEmailVerified }` genskabes som gæst.
+er det, `register` gemmer for en ubekræftet konto – genskabt efter en genstart er den en gæst, så en
+spec, der skal bruge ventetilstanden, laver den med et login, der får 403. `SIGNED_OUT_SESSION` er
+samme konto efter log ud (e-mail og `userId` huskes). Den gamle form `{ isLoggedIn, isEmailVerified }` genskabes som gæst.
 
 Specs, der laver HTTP-kald, afslutter med `TestBed.inject(HttpTestingController).verify()` i
 `afterEach`, så et ekstra kald (fx et gensend, der ugyldiggør den første kode) får testen til at

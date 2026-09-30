@@ -15,27 +15,6 @@
     >{{ 'home.verifyEmail.copyEnd' | translate }}
   </p>
 
-  <form class="verify-email-sheet__form" [formGroup]="form" (ngSubmit)="confirm()">
-    <app-ui-text-input
-      class="verify-email-sheet__input"
-      formControlName="token"
-      autocomplete="one-time-code"
-      [placeholder]="'home.verifyEmail.tokenPlaceholder' | translate"
-      [ariaLabel]="'home.verifyEmail.tokenLabel' | translate"
-      size="md"
-      [invalid]="tokenInvalid()"
-    />
-    <button
-      app-ui-button
-      type="submit"
-      size="md"
-      [disabled]="!tokenValid()"
-      [loading]="confirming()"
-    >
-      {{ 'home.verifyEmail.confirm' | translate }}
-    </button>
-  </form>
-
   <app-ui-form-error tone="negative" [message]="errorMessage()" />
 
   <div class="verify-email-sheet__actions">
@@ -51,21 +30,9 @@
       {{ 'home.verifyEmail.backToLogin' | translate }}
     </button>
     <button app-ui-button type="button" size="md" [loading]="resending()" (click)="resend()">
-      {{ resendLabel() }}
+      {{ 'home.verifyEmail.resend' | translate }}
     </button>
   </div>
 
-  <div class="verify-email-sheet__footer">
-    <span class="verify-email-sheet__hint">{{ resendHint() }}</span>
-    <button type="button" class="verify-email-sheet__check" (click)="check()">
-      <app-ui-icon
-        class="verify-email-sheet__check-icon"
-        name="refresh"
-        size="xs"
-        [strokeWidth]="2.5"
-        [style.--verify-email-sheet-rotation]="rotation()"
-      />
-      {{ checkLabel() }}
-    </button>
-  </div>
+  <p class="verify-email-sheet__hint">{{ resendHint() }}</p>
 </app-ui-sheet>

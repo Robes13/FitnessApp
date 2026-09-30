@@ -163,13 +163,12 @@
     "auth": {
       "error": {
         "invalidEmail": "Skriv en gyldig e-mail.",
-        "invalidCode": "Koden passer ikke. Kopiér hele koden fra den nyeste mail.",
         "passwordTooShort": "Mindst 10 tegn.",
-        "invalidCredentials": "Forkert e-mail eller adgangskode – eller også er din mail ikke bekræftet endnu.",
+        "invalidCredentials": "Forkert brugernavn, e-mail eller adgangskode.",
+        "tooManyAttempts": "For mange mislykkede forsøg. Vent op til 15 minutter, og prøv igen.",
         "emailTaken": "Der findes allerede en konto med den e-mail.",
         "usernameTaken": "Brugernavnet er taget. Vælg et andet.",
-        "registerFailed": "Kontoen kunne ikke oprettes. Tjek dine oplysninger, og prøv igen.",
-        "verificationUncheckable": "Efter en genstart kan appen ikke selv tjekke det. Indsæt koden fra mailen – eller gå til login, hvis du allerede har bekræftet."
+        "registerFailed": "Kontoen kunne ikke oprettes. Tjek dine oplysninger, og prøv igen."
       }
     },
     "barcode": {
@@ -283,37 +282,20 @@
       "newHere": "Ny her?",
       "createAccount": "Opret konto",
       "forgotPassword": "Glemt adgangskode?",
-      "email": "E-mail"
+      "identifier": "E-mail eller brugernavn"
     },
     "forgotPasswordPage": {
-      "stepOf": "Trin {{step}} af {{total}}",
       "emailTitleStart": "Glemt din",
       "emailTitleAccent": "adgangs­kode?",
-      "emailBody": "Skriv den e-mail, din konto er oprettet med. Vi sender dig en kode.",
-      "emailPlaceholder": "dig@mail.dk",
-      "emailLabel": "E-mail",
-      "sendCode": "Send kode",
+      "emailBody": "Skriv din e-mail eller dit brugernavn. Vi sender dig et link til at vælge en ny adgangskode.",
+      "identifierLabel": "E-mail eller brugernavn",
+      "sendLink": "Send link",
+      "sentTitle": "Tjek din mail",
+      "sentBody": "Hvis kontoen findes, har vi sendt en mail med et link til at vælge en ny adgangskode. Linket virker i 1 time.",
       "rememberIt": "Husker du den?",
       "logIn": "Log ind",
-      "codeTitleStart": "Tjek din",
-      "codeTitleAccent": "mail",
-      "codeBodyStart": "Koden er sendt til",
-      "codeBodyEnd": "og gælder i 1 time. Kopiér den, og indsæt den her.",
-      "codeLabel": "Kode fra mailen",
-      "confirmCode": "Bekræft kode",
-      "noEmail": "Ingen mail?",
       "resend": "Send igen",
-      "resent": "Sendt igen",
-      "passwordTitleStart": "Vælg en ny",
-      "passwordTitleAccent": "adgangs­kode",
-      "passwordBody": "Mindst 10 tegn. Brug gerne tal og store bogstaver.",
-      "newPassword": "Ny adgangskode",
-      "repeatPassword": "Gentag adgangskode",
-      "savePassword": "Gem adgangskode",
-      "loggingIn": "Logger ind med ny kode…",
-      "passwordChanged": "Din adgangskode er skiftet, men vi kunne ikke logge dig ind.",
-      "mismatch": "Adgangskoderne er ikke ens.",
-      "codePlaceholder": "Indsæt koden"
+      "resent": "Sendt igen"
     }
   },
   "collections": {
@@ -500,21 +482,14 @@
       "caption": "Næste skridt"
     },
     "verifyEmail": {
-      "checkAgain": "Tjek igen",
-      "checking": "Tjekker…",
-      "copyEnd": ". Indsæt den her for at låse appen op.",
-      "copyStart": "Vi har sendt en kode til",
+      "copyEnd": ". Tryk på linket i mailen – appen opdager det selv.",
+      "copyStart": "Vi har sendt et link til",
       "emailFallback": "din mail",
-      "notVerified": "Ikke bekræftet",
-      "resend": "Gensend kode",
+      "resend": "Send mail igen",
       "resendHint": "Ikke modtaget noget?",
-      "resendHintSent": "Ny kode sendt – tjek også spam.",
-      "resendSent": "Kode sendt ✓",
+      "resendHintSent": "Ny mail sendt – det gamle link virker ikke længere.",
       "titleAccent": "mail",
       "titleStart": "Tjek din",
-      "tokenLabel": "Kode fra mailen",
-      "tokenPlaceholder": "Indsæt koden",
-      "confirm": "Bekræft",
       "backToLogin": "Til login"
     },
     "weekCard": {
@@ -849,7 +824,8 @@
       "titleAccent": "konto",
       "titleStart": "Opret din",
       "username": "Brugernavn",
-      "usernameLengthHint": "Brugernavnet skal være 3–50 tegn."
+      "usernameLengthHint": "Brugernavnet skal være 3–50 tegn.",
+      "usernameNoAt": "Brugernavnet må ikke indeholde @."
     },
     "activityStep": {
       "countCaption": "skridt på en almindelig dag",
@@ -873,7 +849,7 @@
       "ageUnit": "år",
       "hintNoDate": "Vælg din fødselsdato ovenfor.",
       "hintTooOld": "Tjek datoen igen.",
-      "hintTooYoung": "Du skal være mindst 16 år for at bruge Nutrify.",
+      "hintTooYoung": "Du skal være mindst {{minAge}} år for at bruge Nutrify.",
       "labelNoDate": "Ingen dato valgt endnu",
       "monthLabel": "Måned",
       "nextMonth": "Næste måned",

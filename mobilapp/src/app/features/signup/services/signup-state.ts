@@ -2,7 +2,11 @@ import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { APP_PATH } from '../../../core/constants/app-route';
-import { USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from '../../../core/constants/auth';
+import {
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+  USERNAME_PATTERN,
+} from '../../../core/constants/auth';
 import { DEFAULT_PROFILE } from '../../../core/constants/profile-defaults';
 import {
   MAX_AGE,
@@ -201,11 +205,12 @@ export class SignupStateService {
   readonly canContinue = computed(() => {
     switch (this.stepState()) {
       case 'account': {
-        const username = this.username().trim().length;
+        const username = this.username().trim();
         const password = this.password().length;
         return (
-          username >= USERNAME_MIN_LENGTH &&
-          username <= USERNAME_MAX_LENGTH &&
+          username.length >= USERNAME_MIN_LENGTH &&
+          username.length <= USERNAME_MAX_LENGTH &&
+          USERNAME_PATTERN.test(username) &&
           password >= PASSWORD_MIN_LENGTH &&
           password <= PASSWORD_MAX_LENGTH &&
           this.password() === this.passwordRepeat()

@@ -12,9 +12,9 @@ Hver service har sin egen mappe med implementering og tests. Tilhørende adapter
 | `language/translate.ts`                        | `injectTranslate()`                                    | Giver `t(key, params)` til TypeScript. Læser det aktive sprog, så `computed()` genberegnes ved sprogskift.                                                                                                                                                                                                                                                                                         |
 | `language/translation-loader.ts`               | `JsonTranslationLoader`                                | Leverer `src/i18n/<sprog>.json` fra bundlen (dansk statisk, andre sprog som lazy chunk) – virker offline.                                                                                                                                                                                                                                                                                          |
 | `nutrition-calculator/nutrition-calculator.ts` | `NutritionCalculator`                                  | Rene beregninger: alder, BMI, aktivitetsniveau, træning, tempo, målvægt, adgangskodestyrke, portioner. Ingen kalorie- eller makroformel – målene er API'ets.                                                                                                                                                                                                                                       |
-| `auth-api/auth-api.ts`                         | `AuthApi`                                              | HTTP-klienten til kontoens livscyklus: `register`, `login`, `refresh`, `logout`, `verifyEmail`, `resendVerification`, `forgotPassword`, `resetPassword` og `deleteAccount` (`DELETE /me`). API-formede bodies; fejler altid med en `ApiError`.                                                                                                                                                     |
-| `auth-api/auth-mapping.ts`                     | –                                                      | Rene funktioner: `toRegisterRequest()` (signup-kladden → API'ets flade `RegisterRequest`), `normalizeAuthToken()` / `isAuthToken()` og fejl-resolverne `registerErrorKey`, `loginErrorKey`, `emailErrorKey`, `tokenErrorKey`.                                                                                                                                                                      |
-| `session/session.ts`                           | `SessionService`                                       | Sessionen mod API'et: `status` (`guest` · `pending-verification` · `authenticated`), tokens, `register`, `verifyEmail`, `checkVerification`, `login`, `logout`, `deleteAccount`, `accessToken()` og single-flight `refresh()`. Log ud rører ikke lokale data.                                                                                                                                      |
+| `auth-api/auth-api.ts`                         | `AuthApi`                                              | HTTP-klienten til kontoens livscyklus: `register`, `login` (`{ emailOrUsername, password }`), `refresh`, `logout`, `resendVerification`, `forgotPassword` (begge `{ emailOrUsername }`) og `deleteAccount` (`DELETE /me`). API-formede bodies; fejler altid med en `ApiError`.                                                                                                                     |
+| `auth-api/auth-mapping.ts`                     | –                                                      | Rene funktioner: `toRegisterRequest()` (signup-kladden → API'ets flade `RegisterRequest`) og fejl-resolverne `registerErrorKey` (409 skelnes på `detail`) og `loginErrorKey` (401/400 → forkerte oplysninger, 429 → for mange forsøg).                                                                                                                                                             |
+| `session/session.ts`                           | `SessionService`                                       | Sessionen mod API'et: `status` (`guest` · `pending-verification` · `authenticated`), tokens, `register`, `login` (e-mail eller brugernavn; 403 → `pending-verification`), `checkVerification`, `resendVerification`, `logout`, `deleteAccount`, `accessToken()`, single-flight `refresh()` og `renewOnOpen()`. Log ud rører ikke lokale data.                                                      |
 | `session-data/session-data.ts`                 | `SessionDataService` + `SESSION_DATA_STORES`           | Kalder `load()` på alle registrerede stores (profil, vægt, mad, samlinger), når sessionen bliver `authenticated`, og `reset()`, når den bliver `guest`. Se [`session-data/README.md`](session-data/README.md).                                                                                                                                                                                     |
 | `user-profile/user-profile.ts`                 | `UserProfileService`                                   | API-baseret `SessionDataStore`: profilen som ét signal plus `status`, `goal`, `targets` (API'ets kalorie- og makromål, afrundet), `calorieFloorApplied`, `displayName`, `age`, `bmi`, `activityLevel` m.fl. `load()`, `save(patch)` (routes pr. felt), `reloadGoal()`; `update`/`replace`/`resetToDefaults` kun i hukommelsen. Mapningen ligger i `profile-mapping.ts`. Se "Profil og kaloriemål". |
 | `food-log/food-log.ts`                         | `FoodLogService`                                       | Madlog pr. dag i 90 dage: dagens dato som signal (`today`, skifter ved midnat), dagens (`entries`, `totals`, `byMeal`), tidligere dage (`entriesFor`, `totalsFor`, `dailyTotals`, `allEntries`) og egne varer (`addCustomFood`, `updateCustomFood`, `hasCustomFoodNamed`).                                                                                                                         |
@@ -78,22 +78,30 @@ Ingen service kender til `shared/` eller `features/`.
 - **Flere konti på samme enhed.** `userId` er den konto, der sidst oprettede sig eller loggede
   ind her, og huskes også som gæst. Opretter eller logger en _anden_ konto ind, ryddes den
   forriges lokale data først: alle `STORAGE_KEY`-nøgler undtagen `DEVICE_STORAGE_KEYS` (tema og
-  sprog), og profilen nulstilles. Samme konto igen beholder sine lokale data. Tomt profilnavn og
-  tom e-mail udfyldes fra kontoen.
-- **Oprettelse og bekræftelse.** `register()` sender `POST auth/register` og sætter sessionen til
-  `pending-verification` – **intet** gensend-kald, da API'et selv har sendt mailen, og et
-  gensend ugyldiggør den første kode. Adgangskoden holdes kun i hukommelsen. `verifyEmail(token)`
-  bekræfter og logger ind med den; uden den (appen er genstartet) bliver sessionen gæst, og
-  brugeren sendes til login. Gik bekræftelsen igennem, men fejlede login bagefter, prøver det
-  næste `verifyEmail()` kun login igen (koden er brugt). `checkVerification()` er et login-forsøg
-  (200 = bekræftet, 401 = ikke endnu), fordi API'et intet status-endpoint har; uden adgangskoden
-  fejler den med `AUTH_ERROR_MESSAGE_KEY.VERIFICATION_UNCHECKABLE` (indsæt koden eller log ind) i
-  stedet for at svare "ikke bekræftet".
+  sprog), og profilen nulstilles. Samme konto igen beholder sine lokale data. Navn og e-mail
+  kommer fra profilens `load()` (`GET me`), når sessionen bliver `authenticated`.
+- **Oprettelse, login og bekræftelse.** `register()` sender `POST auth/register` og sætter
+  sessionen til `pending-verification` – **intet** gensend-kald, da API'et selv har sendt mailen, og
+  et gensend ugyldiggør det første link. `login(identifier, password)` sender
+  `{ emailOrUsername, password }` (trimmet). Svarer API'et 403 (rigtig adgangskode, e-mailen er ikke
+  bekræftet), completer det normalt og sætter `pending-verification` uden tokens (e-mail = den
+  indtastede med små bogstaver, hvis den har `@`, ellers `null`). Identifikator og adgangskode holdes
+  **kun i hukommelsen** (`pending`). `checkVerification()` logger ind med dem (API'et har intet
+  status-endpoint): 200 = bekræftet og `authenticated` (`true`), 403 = ikke endnu (`false`); uden
+  noget ventende er svaret `false`. `resendVerification()` sender den ventende identifikator (ellers
+  sessionens e-mail). En gemt `pending-verification` genskabes efter en genstart som **gæst**, der
+  beholder e-mail og konto-id – adgangskoden er væk, så brugeren logger ind igen og får arket (1.1-6a).
 - **Token-fornyelse.** `accessToken()` fornyer 60 s før udløb (`TOKEN_REFRESH_MARGIN_MS`), og
-  `refresh()` er single-flight (ét delt kald), fordi API'et roterer refresh-tokenet. Fornyelsen
-  gøres færdig og gemmes, selv om alle kaldere afmelder sig undervejs; et svar, der lander efter
-  log ud (eller et kontoskift), gemmes ikke. Afviser API'et fornyelsen (4xx), bliver sessionen
-  gæst, og brugeren sendes til login; ved netværks- eller serverfejl beholdes sessionen.
+  `refresh()` er single-flight (ét delt kald): dagens første fornyelse roterer refresh-tokenet
+  (API'et beholder et token, der er udstedt samme UTC-dag), og et parallelt kald med det gamle ville
+  få 401. Fornyelsen gøres færdig og gemmes, selv om alle kaldere afmelder sig undervejs; et svar,
+  der lander efter log ud (eller et kontoskift), gemmes ikke. Afviser API'et fornyelsen (4xx), bliver
+  sessionen gæst, og brugeren sendes til login; ved netværks- eller serverfejl beholdes sessionen.
+- **Fornyelse ved app-start (spec 1.5).** `renewOnOpen()` kaldes af app-initializeren i
+  `app.config.ts` før `SessionDataService`: er den gendannede session `authenticated`, fornyes den én
+  gang (`refresh()`), og storenes første kald deler fornyelsen, hvis de skal bruge et token. Fejlen
+  håndteres ikke yderligere: en afvist fornyelse har allerede sendt brugeren til login, og en
+  netværksfejl beholder sessionen.
 - **Log ud** venter på en igangværende fornyelse, fornyer tokenet om nødvendigt, sender
   `POST auth/logout` med det refresh-token, der er _aktuelt, når kaldet sendes_, og ender altid som
   gæst (best effort). Afviser API'et bearer-tokenet alligevel, fornyes én gang, og det nye

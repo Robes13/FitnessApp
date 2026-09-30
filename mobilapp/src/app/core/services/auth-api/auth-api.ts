@@ -4,16 +4,14 @@ import { Observable } from 'rxjs';
 import { AUTH_ENDPOINT, ME_ENDPOINT } from '../../constants/auth';
 import {
   AuthResponse,
-  EmailRequest,
+  IdentifierRequest,
   LoginRequest,
   RefreshRequest,
   RegisterRequest,
-  ResetPasswordRequest,
   UserDto,
-  VerifyEmailRequest,
 } from '../../models/auth';
 import { injectApiUrl, mapApiError } from '../../utils/api';
-import { emailErrorKey, loginErrorKey, registerErrorKey, tokenErrorKey } from './auth-mapping';
+import { loginErrorKey, registerErrorKey } from './auth-mapping';
 
 /**
  * The HTTP client for the API's account lifecycle: one method per endpoint, API-shaped
@@ -33,13 +31,14 @@ export class AuthApi {
       .pipe(mapApiError(registerErrorKey));
   }
 
+  /** 403 without tokens while the e-mail is unverified; 429 once the account is locked out. */
   login(request: LoginRequest): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(this.url(AUTH_ENDPOINT.LOGIN), request)
       .pipe(mapApiError(loginErrorKey));
   }
 
-  /** Rotates both tokens; the old refresh token is dead afterwards. */
+  /** A new access token; the refresh token is rotated only if it wasn't issued today (UTC). */
   refresh(request: RefreshRequest): Observable<AuthResponse> {
     return this.http
       .post<AuthResponse>(this.url(AUTH_ENDPOINT.REFRESH), request)
@@ -51,31 +50,21 @@ export class AuthApi {
     return this.http.post<void>(this.url(AUTH_ENDPOINT.LOGOUT), request).pipe(mapApiError());
   }
 
-  verifyEmail(request: VerifyEmailRequest): Observable<void> {
-    return this.http
-      .post<void>(this.url(AUTH_ENDPOINT.VERIFY_EMAIL), request)
-      .pipe(mapApiError(tokenErrorKey));
-  }
-
-  /** Always 204. Invalidates every earlier verification token. */
-  resendVerification(request: EmailRequest): Observable<void> {
+  /** Always 204. Invalidates every earlier verification link. */
+  resendVerification(request: IdentifierRequest): Observable<void> {
     return this.http
       .post<void>(this.url(AUTH_ENDPOINT.RESEND_VERIFICATION), request)
-      .pipe(mapApiError(emailErrorKey));
+      .pipe(mapApiError());
   }
 
-  /** Always 204 – also for unknown and unverified e-mails, which get no mail. */
-  forgotPassword(request: EmailRequest): Observable<void> {
+  /**
+   * Always 204 – also for unknown accounts, which get no mail. The mail links to a page hosted by
+   * the API, where the new password is set; the app never sees the token.
+   */
+  forgotPassword(request: IdentifierRequest): Observable<void> {
     return this.http
       .post<void>(this.url(AUTH_ENDPOINT.FORGOT_PASSWORD), request)
-      .pipe(mapApiError(emailErrorKey));
-  }
-
-  /** Validates the token and sets the password in one call; revokes every refresh token. */
-  resetPassword(request: ResetPasswordRequest): Observable<void> {
-    return this.http
-      .post<void>(this.url(AUTH_ENDPOINT.RESET_PASSWORD), request)
-      .pipe(mapApiError(tokenErrorKey));
+      .pipe(mapApiError());
   }
 
   /** Irreversibly anonymises the account and all its data. */
