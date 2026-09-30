@@ -36,7 +36,6 @@ const PERCENT = 100;
 /** These texts don't exist in the design – the file selection can't fail in the prototype. */
 const PHOTO_MAX_DIMENSION = 768;
 const PHOTO_JPEG_QUALITY = 0.8;
-const SAVE_ERROR_KEY = 'profile.photoSheet.saveError';
 const READ_ERROR_KEY = 'profile.photoSheet.readError';
 
 interface KeyDirection {
@@ -182,9 +181,10 @@ export class ProfilePhotoSheet {
     this.savePhoto(null);
   }
 
+  // ponytail: memory only until profile-extras uploads the photo (plan-v2 P10, wave 3).
   private savePhoto(photo: ProfilePhoto | null): void {
-    const saved = this.profiles.updatePersisted({ photo });
-    this.errorKey.set(saved ? null : SAVE_ERROR_KEY);
+    this.profiles.update({ photo });
+    this.errorKey.set(null);
   }
 
   private setPhoto(dataUrl: string, aspectRatio: number): void {

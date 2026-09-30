@@ -4,7 +4,6 @@ import { MEALS } from '../../../core/constants/meals';
 import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../core/constants/nutrition';
 import { Macros } from '../../../core/models/food';
 import { ProfilePhoto } from '../../../core/models/profile';
-import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
@@ -145,7 +144,7 @@ export class HomeSummaryService {
 
   readonly displayName = this.profileService.displayName;
   readonly initial = this.profileService.initial;
-  readonly kcalTarget = inject(AdaptiveGoalService).kcalTarget;
+  readonly kcalTarget = computed(() => this.profileService.targets().kcal);
   readonly todayLabel = computed(() => formatDayLabel(this.t, this.now()));
   readonly weekProgressLabel = computed(() =>
     this.t('home.summary.weekProgress', { dayNumber: this.todayIndex() + 1 }),
@@ -222,9 +221,7 @@ export class HomeSummaryService {
     };
   });
 
-  private readonly proteinGoalPerDay = computed(
-    () => this.calculator.macroGoals(this.kcalTarget()).protein,
-  );
+  private readonly proteinGoalPerDay = computed(() => this.profileService.targets().protein);
 
   /** Only days with data count. Without data the average is `null`, not zero. */
   private readonly weekStats = computed(() => {
@@ -242,7 +239,8 @@ export class HomeSummaryService {
     const proteinHit = this.dayTotals()
       .slice(0, today + 1)
       .filter(
-        (totals) => totals !== null && totals.protein >= proteinGoal * WEEK_HIT_THRESHOLD,
+        (totals) =>
+          totals !== null && proteinGoal > 0 && totals.protein >= proteinGoal * WEEK_HIT_THRESHOLD,
       ).length;
 
     let streak = 0;
@@ -351,7 +349,7 @@ export class HomeSummaryService {
 
   /** Macros follow the same rule as calories: a day without data shows `–`, not 0. */
   private macrosForDay(index: number): readonly DayMacro[] {
-    const goals = this.calculator.macroGoals(this.kcalTarget());
+    const goals = this.profileService.targets();
     const logged = this.dayTotals()[index] ?? null;
     return MACRO_DEFINITIONS.map((macro) => {
       const goal = goals[macro.key];

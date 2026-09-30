@@ -2,12 +2,12 @@
 
 `app-profile-page` – profilskærmen på `/profil`.
 
-| Fil                    | Indhold                                                                      |
-| ---------------------- | ---------------------------------------------------------------------------- |
-| `profile-page.ts`      | Komponenten. Holder kun styr på, hvilket ark der er åbent.                   |
-| `profile-page.html`    | Hoved, nøgletal, "Min plan", "Konto", præstationer, "Log ud" og de tre ark.  |
-| `profile-page.scss`    | Sidens eget layout. Rækker, kort og ark kommer fra `shared/`.                |
-| `profile-page.spec.ts` | Dækker rækkerne, kontakterne, påmindelses-arket, redigeringsarket og log ud. |
+| Fil                    | Indhold                                                                                                        |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `profile-page.ts`      | Komponenten. Holder kun styr på, hvilket ark der er åbent.                                                     |
+| `profile-page.html`    | Status (spinner / fejl + "Prøv igen"), hoved, nøgletal, "Min plan", "Konto", præstationer, "Log ud" og arkene. |
+| `profile-page.scss`    | Sidens eget layout. Rækker, kort og ark kommer fra `shared/`.                                                  |
+| `profile-page.spec.ts` | Dækker rækkerne, kontakterne, påmindelses-arket, redigeringsarket og log ud.                                   |
 
 ## Layout
 
@@ -28,6 +28,13 @@ Alle værdier på
 skærmen er afledte signaler fra `ProfileRowsService`, `AchievementsService`,
 `UserProfileService`, `ReminderService` og `ThemeService`, så de opdaterer sig selv, når data ændrer sig et
 andet sted i appen – fx når en ny vejning gemmes på Vægt.
+
+## Indlæsning og fejl
+
+`profiles.status()` styrer toppen af siden: `loading` → `app-ui-spinner`, `error` →
+`app-ui-empty-state` + "Prøv igen" (`profiles.load()`), ellers profilens data. E-mail-rækken
+følger med (`profileShown`). Kaloriemålet er API'ets: rækken har ingen chevron, og `openEdit`
+springer den over.
 
 ## Log ud-knappen
 

@@ -12,6 +12,18 @@
     padding: 0 var(--layout-page-padding-x) calc(var(--safe-area-bottom) + var(--space-6));
   }
 
+  &__status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3-5);
+    padding: var(--space-6) 0;
+  }
+
+  &__status-message {
+    align-self: stretch;
+  }
+
   &__identity {
     display: flex;
     align-items: center;

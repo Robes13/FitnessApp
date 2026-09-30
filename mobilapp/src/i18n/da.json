@@ -92,16 +92,6 @@
           "label": "Andet",
           "description": "Gennemsnit af de to formler"
         }
-      },
-      "unitSystems": {
-        "metric": {
-          "label": "Metrisk",
-          "description": "kg · cm"
-        },
-        "imperial": {
-          "label": "Imperial",
-          "description": "lb · in"
-        }
       }
     },
     "meals": {
@@ -620,6 +610,8 @@
       "achievements": "Præstationer",
       "logout": "Log ud",
       "deleteAccount": "Slet konto",
+      "loadFailed": "Profilen kunne ikke hentes.",
+      "retry": "Prøv igen",
       "remindersOff": "Fra",
       "remindersNone": "Ingen",
       "remindersActiveOne": "{{count}} aktiv",
@@ -628,6 +620,8 @@
     "rows": {
       "goal": "Mål",
       "pace": "Tempo",
+      "birthday": "Fødselsdato",
+      "birthdayValue": "{{date}} {{year}} · {{age}} år",
       "gender": "Køn",
       "height": "Højde",
       "heightValue": "{{heightCm}} cm",
@@ -643,16 +637,16 @@
       "trainInt": "Intensitet",
       "kcal": "Dagligt kaloriemål",
       "kcalValue": "{{kcal}} kcal",
-      "kcalValueAdjusted": "{{kcal}} kcal · tilpasset {{adjustment}}",
+      "kcalValueFloor": "{{kcal}} kcal · sikkert minimum",
       "email": "E-mail",
-      "units": "Enheder",
       "emailPlaceholder": "dig@mail.dk"
     },
     "edit": {
       "goalTitle": "Dit mål",
       "paceTitle": "Tempo",
+      "birthdayTitle": "Fødselsdato",
+      "birthdayInvalid": "Du skal være mellem {{min}} og {{max}} år.",
       "genderTitle": "Køn",
-      "unitsTitle": "Enheder",
       "intensityTitle": "Intensitet",
       "heightTitle": "Højde",
       "stepsTitle": "Skridt om dagen",
@@ -663,11 +657,9 @@
       "trainFreqUnit": "/ uge",
       "trainDurTitle": "Længde pr. træning",
       "trainDurUnit": "min",
-      "kcalTitle": "Dagligt kaloriemål",
-      "kcalHint": "Beregnet forslag: {{kcal}} kcal",
-      "kcalHintAdjusted": "Beregnet forslag: {{kcal}} kcal (tilpasset {{adjustment}} kcal ud fra din vægtudvikling)",
       "emailTitle": "E-mail",
       "emailPlaceholder": "dig@mail.dk",
+      "emailSent": "Vi har sendt et bekræftelseslink til {{email}}. Din e-mail skifter, når du trykker på linket.",
       "goalWeightTitle": "Målvægt",
       "goalWeightHint": "Nu: {{currentKg}} kg",
       "goalWeightHintPending": "Din målvægt passer ikke til målet \"{{goal}}\" (nu: {{currentKg}} kg). Vælg en ny målvægt – målet skiftes, når du gemmer.",
@@ -675,7 +667,8 @@
       "goalWeightTooHigh": "Det mål er meget højt for din højde.",
       "goalWeightBelowCurrent": "Målvægten skal være under din nuværende vægt ({{currentKg}} kg).",
       "goalWeightAboveCurrent": "Målvægten skal være over din nuværende vægt ({{currentKg}} kg).",
-      "goalWeightRange": "Vælg en målvægt mellem {{min}} og {{max}} kg."
+      "goalWeightRange": "Vælg en målvægt mellem {{min}} og {{max}} kg.",
+      "saveFailed": "Ændringen kunne ikke gemmes. Prøv igen."
     },
     "editSheet": {
       "decrease": "Mindre",

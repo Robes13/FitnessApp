@@ -13,7 +13,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { IconName } from '../ui-icon/icon-registry';
 import { UiIcon } from '../ui-icon/ui-icon';
 
-export type TextInputType = 'text' | 'password' | 'email' | 'number' | 'time';
+export type TextInputType = 'text' | 'password' | 'email' | 'number' | 'time' | 'date';
 export type TextInputMode = 'text' | 'numeric' | 'decimal' | 'email' | 'tel' | 'search' | 'url';
 /** 52 / 48 px – `--size-control-lg` / `-md`. */
 export type TextInputSize = 'lg' | 'md';
@@ -76,6 +76,9 @@ export class UiTextInput implements ControlValueAccessor {
   readonly placeholder = input('');
   readonly inputMode = input<TextInputMode | null>(null);
   readonly maxLength = input<number | null>(null);
+  /** Native `min`/`max`, e.g. `'YYYY-MM-DD'` bounds for the date picker. */
+  readonly min = input<string | null>(null);
+  readonly max = input<string | null>(null);
   readonly autocomplete = input<string | null>(null);
   readonly ariaLabel = input<string | null>(null);
   /** Error state: colored border. The text is shown separately with `app-ui-form-error`. */

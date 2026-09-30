@@ -1,3 +1,6 @@
+/** The load state of an API-backed store (`SessionDataStore`). */
+export type StoreStatus = 'idle' | 'loading' | 'ready' | 'error';
+
 /** A page of a keyset-paginated list (`?limit=&cursor=`), newest first. */
 export interface CursorPage<T> {
   items: T[];

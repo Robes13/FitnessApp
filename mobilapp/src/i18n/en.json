@@ -92,16 +92,6 @@
           "label": "Other",
           "description": "Average of the two formulas"
         }
-      },
-      "unitSystems": {
-        "metric": {
-          "label": "Metric",
-          "description": "kg · cm"
-        },
-        "imperial": {
-          "label": "Imperial",
-          "description": "lb · in"
-        }
       }
     },
     "meals": {
@@ -620,6 +610,8 @@
       "achievements": "Achievements",
       "logout": "Log out",
       "deleteAccount": "Delete account",
+      "loadFailed": "Your profile couldn't be loaded.",
+      "retry": "Try again",
       "remindersOff": "Off",
       "remindersNone": "None",
       "remindersActiveOne": "{{count}} active",
@@ -628,6 +620,8 @@
     "rows": {
       "goal": "Goal",
       "pace": "Pace",
+      "birthday": "Date of birth",
+      "birthdayValue": "{{date}} {{year}} · {{age}} years",
       "gender": "Sex",
       "height": "Height",
       "heightValue": "{{heightCm}} cm",
@@ -643,16 +637,16 @@
       "trainInt": "Intensity",
       "kcal": "Daily calorie goal",
       "kcalValue": "{{kcal}} kcal",
-      "kcalValueAdjusted": "{{kcal}} kcal · adjusted {{adjustment}}",
+      "kcalValueFloor": "{{kcal}} kcal · safe minimum",
       "email": "Email",
-      "units": "Units",
       "emailPlaceholder": "you@mail.com"
     },
     "edit": {
       "goalTitle": "Your goal",
       "paceTitle": "Pace",
+      "birthdayTitle": "Date of birth",
+      "birthdayInvalid": "You must be between {{min}} and {{max}} years old.",
       "genderTitle": "Sex",
-      "unitsTitle": "Units",
       "intensityTitle": "Intensity",
       "heightTitle": "Height",
       "stepsTitle": "Steps per day",
@@ -663,11 +657,9 @@
       "trainFreqUnit": "/ week",
       "trainDurTitle": "Length per workout",
       "trainDurUnit": "min",
-      "kcalTitle": "Daily calorie goal",
-      "kcalHint": "Suggested: {{kcal}} kcal",
-      "kcalHintAdjusted": "Suggested: {{kcal}} kcal (adjusted {{adjustment}} kcal based on your weight trend)",
       "emailTitle": "Email",
       "emailPlaceholder": "you@mail.com",
+      "emailSent": "We've sent a confirmation link to {{email}}. Your e-mail changes when you tap the link.",
       "goalWeightTitle": "Goal weight",
       "goalWeightHint": "Now: {{currentKg}} kg",
       "goalWeightHintPending": "Your goal weight doesn't match the goal \"{{goal}}\" (now: {{currentKg}} kg). Choose a new goal weight – the goal changes when you save.",
@@ -675,7 +667,8 @@
       "goalWeightTooHigh": "That goal is very high for your height.",
       "goalWeightBelowCurrent": "Goal weight must be below your current weight ({{currentKg}} kg).",
       "goalWeightAboveCurrent": "Goal weight must be above your current weight ({{currentKg}} kg).",
-      "goalWeightRange": "Choose a goal weight between {{min}} and {{max}} kg."
+      "goalWeightRange": "Choose a goal weight between {{min}} and {{max}} kg.",
+      "saveFailed": "The change couldn't be saved. Try again."
     },
     "editSheet": {
       "decrease": "Less",

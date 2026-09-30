@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DEFAULT_PROFILE } from '../../../../core/constants/profile-defaults';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { WeightLogService } from '../../../../core/services/weight-log/weight-log';
@@ -22,6 +21,7 @@ describe('WeightPage', () => {
     TestBed.configureTestingModule({
       providers: provideComponentTestEnvironment(),
     });
+    TestBed.inject(UserProfileService).update({ goal: 'tabe' });
     fixture = TestBed.createComponent(WeightPage);
     await fixture.whenStable();
     return fixture.nativeElement as HTMLElement;
@@ -29,7 +29,6 @@ describe('WeightPage', () => {
 
   beforeEach(() => {
     resetComponentTestStorage({
-      [STORAGE_KEY.PROFILE]: { ...DEFAULT_PROFILE, goal: 'tabe' },
       [STORAGE_KEY.WEIGHT_LOG]: weighHistory(TEST_NOW),
     });
   });

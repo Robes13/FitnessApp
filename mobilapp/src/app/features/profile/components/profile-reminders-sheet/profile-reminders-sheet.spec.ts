@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DEFAULT_PROFILE } from '../../../../core/constants/profile-defaults';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import {
   ReminderNotifier,
@@ -9,6 +8,7 @@ import {
 } from '../../../../core/models/reminder';
 import { REMINDER_NOTIFIER } from '../../../../core/services/reminders/reminder-notifier';
 import { ReminderService } from '../../../../core/services/reminders/reminders';
+import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,
@@ -58,10 +58,7 @@ describe('ProfileRemindersSheet', () => {
 
   beforeEach(() => {
     notifier = new FakeNotifier();
-    resetComponentTestStorage({
-      [STORAGE_KEY.PROFILE]: DEFAULT_PROFILE,
-      [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION,
-    });
+    resetComponentTestStorage({ [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION });
   });
 
   afterEach(() => {
@@ -174,11 +171,9 @@ describe('ProfileRemindersSheet', () => {
   });
 
   it('locks the switches while the master switch is off and can turn it back on', async () => {
-    resetComponentTestStorage({
-      [STORAGE_KEY.PROFILE]: { ...DEFAULT_PROFILE, notificationsEnabled: false },
-      [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION,
-    });
     const { fixture, host } = await setup();
+    TestBed.inject(UserProfileService).update({ notificationsEnabled: false });
+    await settle(fixture);
 
     expect(host.textContent).toContain('Notifikationer er slået fra');
     expect(switchFor(host, 'Påmindelse om frokost')?.disabled).toBe(true);

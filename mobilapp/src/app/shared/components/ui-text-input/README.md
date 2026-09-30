@@ -17,10 +17,11 @@ Implementerer `ControlValueAccessor`, så feltet bruges med typed reactive forms
 
 | Input          | Standard     | Betydning                                                                                                                                                                       |
 | -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `type`         | `'text'`     | `text` · `password` · `email` · `number` · `time` (værdien er `'HH:MM'`)                                                                                                        |
+| `type`         | `'text'`     | `text` · `password` · `email` · `number` · `time` (værdien er `'HH:MM'`) · `date` (native datovælger, værdien er `'YYYY-MM-DD'`)                                                |
 | `placeholder`  | `''`         |                                                                                                                                                                                 |
 | `inputMode`    | `null`       | `numeric`, `decimal`, `email` … til det native tastatur                                                                                                                         |
 | `maxLength`    | `null`       | Fx `4` til bekræftelseskoden                                                                                                                                                    |
+| `min` / `max`  | `null`       | Native `min`/`max`, fx `'YYYY-MM-DD'`-grænser til datovælgeren (profilens fødselsdato)                                                                                          |
 | `autocomplete` | `null`       | Native `autocomplete`-værdi. `username`, `email`, adgangskoder og koder (samt `type="email"`/`"password"`) får intet stort begyndelsesbogstav, autokorrektur eller stavekontrol |
 | `ariaLabel`    | `null`       | Tilgængeligt navn, når der ikke er en synlig label                                                                                                                              |
 | `invalid`      | `false`      | Farvet kant + `aria-invalid`                                                                                                                                                    |

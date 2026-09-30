@@ -17,13 +17,13 @@ describe('StorageService', () => {
   });
 
   it('round-trips JSON values', () => {
-    service.write(STORAGE_KEY.PROFILE, { username: 'mads', weightKg: 75 });
+    service.write(STORAGE_KEY.REMINDERS, { username: 'mads', weightKg: 75 });
 
-    expect(service.read<{ username: string }>(STORAGE_KEY.PROFILE)).toEqual({
+    expect(service.read<{ username: string }>(STORAGE_KEY.REMINDERS)).toEqual({
       username: 'mads',
       weightKg: 75,
     });
-    expect(storage.getItem(STORAGE_KEY.PROFILE)).toBe('{"username":"mads","weightKg":75}');
+    expect(storage.getItem(STORAGE_KEY.REMINDERS)).toBe('{"username":"mads","weightKg":75}');
   });
 
   it('returns null for missing keys and after remove', () => {
@@ -69,6 +69,17 @@ describe('StorageService', () => {
       STORAGE_KEY.THEME,
       STORAGE_KEY.LANGUAGE,
     ]);
+  });
+
+  it('also clears app keys that STORAGE_KEY no longer lists', () => {
+    storage.setItem('nutrify.old', '"legacy"');
+    storage.setItem('other.x', '"foreign"');
+    service.write(STORAGE_KEY.THEME, 'light');
+    service.write(STORAGE_KEY.SESSION, 'x');
+
+    service.clearAll([STORAGE_KEY.THEME]);
+
+    expect([...storage.data.keys()].sort()).toEqual([STORAGE_KEY.THEME, 'other.x']);
   });
 
   it('degrades to no-ops when storage is unavailable', () => {

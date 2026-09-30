@@ -48,5 +48,6 @@ tekst findes ikke i designet – prototypen har ingen fejltilstand – men UI'et
 håndtere det.
 
 Billeder nedskaleres til højst 768 pixels på længste led og gemmes som JPEG med
-kvalitet 0,8. Både valg, beskæring og fjernelse opdaterer kun profilen, når
-lagringen lykkes. Ved pladsmangel vises en fejl, og den tidligere profil bevares.
+kvalitet 0,8. Profilen ligger nu kun i hukommelsen (den hentes fra API'et), så valg,
+beskæring og fjernelse gælder, til appen genindlæses – upload til API'et kommer i bølge 3
+(profile-extras, plan-v2 P10).

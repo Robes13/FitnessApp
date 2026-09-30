@@ -1,7 +1,11 @@
+import { HttpTestingController } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 import { AuthResponse } from '../models/auth';
 import { FoodItem } from '../models/food';
+import { UserGoalDto } from '../models/profile-api';
 import { SessionState } from '../models/session';
 import { WeighEntry } from '../models/weight';
+import { UserProfileService } from '../services/user-profile/user-profile';
 
 const MS_PER_DAY = 86_400_000;
 
@@ -81,3 +85,25 @@ export const SIGNED_OUT_SESSION: SessionState = {
   userId: TEST_AUTH_RESPONSE.user.userId,
   tokens: null,
 };
+
+/** A goal as the API answers it: 2500 kcal, 30/40/30 → targets 2500 kcal, 188 / 250 / 83 g. */
+export const TEST_GOAL: UserGoalDto = {
+  userGoalId: 7,
+  goalType: 'LoseWeight',
+  targetWeight: 70,
+  weightChangePerWeek: 0.5,
+  targetDailyCalories: 2500,
+  targetProtein: 187.5,
+  targetCarbohydrates: 250,
+  targetFat: 83.33,
+  createdAt: '2026-09-01T07:55:00Z',
+};
+
+/**
+ * Gives `UserProfileService` a goal (and so its `targets`) the way the API does: `reloadGoal()`
+ * answered with `goal`. Needs `HttpTestingController` (every spec has it).
+ */
+export function flushTestGoal(goal: UserGoalDto = TEST_GOAL): void {
+  TestBed.inject(UserProfileService).reloadGoal().subscribe();
+  TestBed.inject(HttpTestingController).expectOne('/api/v1/me/goals/current').flush(goal);
+}

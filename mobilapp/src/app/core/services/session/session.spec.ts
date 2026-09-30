@@ -321,11 +321,9 @@ describe('SessionService', () => {
       username: 'mads',
       email: TEST_EMAIL,
       weightKg: 90,
-      kcalOverride: 1800,
     };
 
     beforeEach(() => {
-      seed(STORAGE_KEY.PROFILE, LOCAL_PROFILE);
       seed(STORAGE_KEY.FOOD_LOG, { '2026-09-21': [] });
       seed(STORAGE_KEY.THEME, 'dark');
       seed(STORAGE_KEY.LANGUAGE, 'en');
@@ -333,6 +331,7 @@ describe('SessionService', () => {
 
     it("clears the previous account's local data when another one logs in", async () => {
       const { session, http } = setup(SIGNED_OUT_SESSION);
+      TestBed.inject(UserProfileService).replace(LOCAL_PROFILE);
 
       const done = firstValueFrom(session.login('sara@nutrify.dk', PASSWORD));
       http.expectOne('/api/v1/auth/login').flush(OTHER_ACCOUNT);
@@ -352,6 +351,7 @@ describe('SessionService', () => {
 
     it('keeps the local data when the same account logs in again', async () => {
       const { session, http } = setup(SIGNED_OUT_SESSION);
+      TestBed.inject(UserProfileService).replace(LOCAL_PROFILE);
 
       const done = firstValueFrom(session.login(TEST_EMAIL, PASSWORD));
       http.expectOne('/api/v1/auth/login').flush(TEST_AUTH_RESPONSE);
@@ -363,12 +363,13 @@ describe('SessionService', () => {
 
     it("clears the previous account's local data before a new account is created", async () => {
       const { session, http } = setup(SIGNED_OUT_SESSION);
+      TestBed.inject(UserProfileService).replace(LOCAL_PROFILE);
 
       const done = firstValueFrom(session.register(SIGNUP_PROFILE, PASSWORD, PASSWORD));
       http.expectOne('/api/v1/auth/register').flush(OTHER_ACCOUNT.user);
       await done;
 
-      expect(TestBed.inject(UserProfileService).profile().kcalOverride).toBeNull();
+      expect(TestBed.inject(UserProfileService).profile().weightKg).toBe(DEFAULT_PROFILE.weightKg);
       expect(storage.getItem(STORAGE_KEY.FOOD_LOG)).toBeNull();
       expect(storage.getItem(STORAGE_KEY.THEME)).toBe('"dark"');
       expect(stored()).toMatchObject({ status: 'pending-verification', userId: 2 });
@@ -377,8 +378,8 @@ describe('SessionService', () => {
 
   describe('logout', () => {
     it('revokes the refresh token with the bearer and becomes a guest', async () => {
-      seed(STORAGE_KEY.PROFILE, { ...DEFAULT_PROFILE, username: 'mads' });
       const { session, http } = setup(AUTHENTICATED_SESSION);
+      TestBed.inject(UserProfileService).update({ username: 'mads' });
 
       const done = firstValueFrom(session.logout());
       const request = http.expectOne({ method: 'POST', url: LOGOUT });

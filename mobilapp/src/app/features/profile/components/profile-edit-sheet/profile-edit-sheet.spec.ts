@@ -1,22 +1,37 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { Provider } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DEFAULT_PROFILE } from '../../../../core/constants/profile-defaults';
-import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
+import { TEST_GOAL } from '../../../../core/testing/fixtures';
 import { ProfileEditRowId } from '../../services/profile-edit';
 import { ProfileEditSheet } from './profile-edit-sheet';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 
 /**
  * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`, a
- * frozen `NOW`, and 0 ms mock delays. Browser storage is cleared per test.
+ * frozen `NOW`, and 0 ms mock delays. Saves are answered with `HttpTestingController`.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
+const PROFILE_URL = '/api/v1/me/profile';
+const GOALS_URL = '/api/v1/me/goals';
+const CURRENT_GOAL_URL = '/api/v1/me/goals/current';
+const PROFILE_DTO = {
+  birthDate: '1998-05-16',
+  gender: 'Male',
+  height: 179,
+  dailySteps: 6000,
+  trainingDaysPerWeek: 0,
+  workoutDurationMinutes: 45,
+  trainingIntensity: 'Moderate',
+  profileImageUrl: null,
+};
+
 describe('ProfileEditSheet', () => {
   let profiles: UserProfileService;
+  let http: HttpTestingController;
 
-  afterEach(() => localStorage.clear());
+  afterEach(() => http.verify());
 
   async function open(row: ProfileEditRowId | null): Promise<{
     fixture: ComponentFixture<ProfileEditSheet>;
@@ -25,6 +40,7 @@ describe('ProfileEditSheet', () => {
   }> {
     TestBed.configureTestingModule({ providers: TEST_PROVIDERS });
     profiles = TestBed.inject(UserProfileService);
+    http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(ProfileEditSheet);
     const state = { closed: 0 };
     fixture.componentInstance.closed.subscribe(() => state.closed++);
@@ -50,6 +66,10 @@ describe('ProfileEditSheet', () => {
     return found;
   }
 
+  function submit(host: HTMLElement): void {
+    host.querySelector('form')?.dispatchEvent(new Event('submit'));
+  }
+
   it('renders nothing while no row is being edited', async () => {
     const { host } = await open(null);
 
@@ -65,18 +85,43 @@ describe('ProfileEditSheet', () => {
     expect(host.textContent).toContain('cm');
   });
 
-  it('steps the value and saves it to the profile', async () => {
+  it('steps the value, saves it in the API and closes once it is saved', async () => {
     const result = await open('height');
 
     button(result.host, 'Mere').click();
     await result.fixture.whenStable();
     expect(result.host.querySelector<HTMLInputElement>('input[type="number"]')?.value).toBe('179');
 
-    result.host.querySelector('form')?.dispatchEvent(new Event('submit'));
+    submit(result.host);
+    await result.fixture.whenStable();
+    const request = http.expectOne({ method: 'PATCH', url: PROFILE_URL });
+    expect(request.request.body).toEqual({ height: 179 });
+    expect(button(result.host, 'Gem').getAttribute('aria-busy')).toBe('true');
+    // A running save can't be closed away (no close button, Escape ignored).
+    expect(result.host.querySelector('[aria-label="Luk"]')).toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(result.closed).toBe(0);
+
+    request.flush(PROFILE_DTO);
+    http.expectOne(CURRENT_GOAL_URL).flush(TEST_GOAL);
     await result.fixture.whenStable();
 
     expect(profiles.profile().heightCm).toBe(179);
     expect(result.closed).toBe(1);
+  });
+
+  it('stays open with a message when the save fails', async () => {
+    const result = await open('height');
+
+    submit(result.host);
+    http
+      .expectOne(PROFILE_URL)
+      .flush({ title: 'Server error', status: 500 }, { status: 500, statusText: 'Server Error' });
+    await result.fixture.whenStable();
+
+    expect(result.closed).toBe(0);
+    expect(result.host.textContent).toContain('Ændringen kunne ikke gemmes. Prøv igen.');
+    expect(profiles.profile().heightCm).toBe(178);
   });
 
   it('never steps past the bounds of the row', async () => {
@@ -91,18 +136,21 @@ describe('ProfileEditSheet', () => {
     expect(host.querySelector<HTMLInputElement>('input[type="number"]')?.value).toBe('0');
   });
 
-  it('shows the calculated suggestion as a hint on the calorie row', async () => {
-    const { host } = await open('kcal');
-
-    expect(host.textContent).toContain('Beregnet forslag: 2.530 kcal');
-  });
-
-  it('applies an option immediately and closes', async () => {
+  it('saves an option, disables the options meanwhile and closes', async () => {
     const result = await open('goal');
     const options = result.host.querySelectorAll<HTMLButtonElement>('button[app-ui-option-card]');
 
     expect(options.length).toBe(3);
     at(options, 0).click();
+    await result.fixture.whenStable();
+    expect(Array.from(options).every((option) => option.disabled)).toBe(true);
+    // A second tap while saving sends nothing.
+    at(options, 1).click();
+
+    http.expectOne({ method: 'POST', url: GOALS_URL }).flush(TEST_GOAL, {
+      status: 201,
+      statusText: 'Created',
+    });
     await result.fixture.whenStable();
 
     expect(profiles.profile().goal).toBe('tabe');
@@ -110,11 +158,9 @@ describe('ProfileEditSheet', () => {
   });
 
   it('shows why a goal weight breaks the goal and keeps Gem disabled', async () => {
-    localStorage.setItem(
-      STORAGE_KEY.PROFILE,
-      JSON.stringify({ ...DEFAULT_PROFILE, goal: 'tabe', weightKg: 75, goalWeightKg: 70 }),
-    );
     const { fixture, host } = await open('goalWeight');
+    profiles.update({ goal: 'tabe', weightKg: 75, goalWeightKg: 70 });
+    await fixture.whenStable();
     const field = host.querySelector<HTMLInputElement>('input[type="number"]');
     const save = button(host, 'Gem');
 
@@ -132,11 +178,9 @@ describe('ProfileEditSheet', () => {
   });
 
   it('asks for a new goal weight before switching to a goal it no longer fits', async () => {
-    localStorage.setItem(
-      STORAGE_KEY.PROFILE,
-      JSON.stringify({ ...DEFAULT_PROFILE, goal: 'tabe', weightKg: 75, goalWeightKg: 70 }),
-    );
     const result = await open('goal');
+    profiles.update({ goal: 'tabe', weightKg: 75, goalWeightKg: 70 });
+    await result.fixture.whenStable();
 
     at(result.host.querySelectorAll<HTMLButtonElement>('button[app-ui-option-card]'), 2).click();
     await result.fixture.whenStable();
@@ -149,11 +193,63 @@ describe('ProfileEditSheet', () => {
 
     setValue(result.host.querySelector<HTMLInputElement>('input[type="number"]'), '80');
     await result.fixture.whenStable();
-    result.host.querySelector('form')?.dispatchEvent(new Event('submit'));
+    submit(result.host);
+    const request = http.expectOne({ method: 'POST', url: GOALS_URL });
+    expect(request.request.body).toMatchObject({ goalType: 'GainWeight', targetWeight: 80 });
+    request.flush(
+      { ...TEST_GOAL, goalType: 'GainWeight', targetWeight: 80 },
+      { status: 201, statusText: 'Created' },
+    );
     await result.fixture.whenStable();
 
     expect(profiles.profile()).toMatchObject({ goal: 'tage', goalWeightKg: 80 });
     expect(result.closed).toBe(1);
+  });
+
+  it('edits the birthday in a date field and blocks an age under 13', async () => {
+    const { fixture, host } = await open('birthday');
+    const field = host.querySelector<HTMLInputElement>('input[type="date"]');
+    const save = button(host, 'Gem');
+
+    expect(host.querySelector('h2')?.textContent?.trim()).toBe('Fødselsdato');
+    expect(save.disabled).toBe(true);
+    // The native picker gets the API's age rule (13–100 years on the frozen 21 Sep 2026).
+    expect([field?.min, field?.max]).toEqual(['1925-09-22', '2013-09-21']);
+
+    setValue(field, '2015-06-01');
+    await fixture.whenStable();
+    expect(save.disabled).toBe(true);
+    expect(host.textContent).toContain('Du skal være mellem 13 og 100 år.');
+
+    setValue(field, '1990-02-03');
+    await fixture.whenStable();
+    expect(save.disabled).toBe(false);
+    submit(host);
+    const request = http.expectOne({ method: 'PATCH', url: PROFILE_URL });
+    expect(request.request.body).toEqual({ birthDate: '1990-02-03' });
+    request.flush({ ...PROFILE_DTO, birthDate: '1990-02-03' });
+    http.expectOne(CURRENT_GOAL_URL).flush(TEST_GOAL);
+    await fixture.whenStable();
+
+    expect(profiles.profile().birthday).toBe('1990-02-03');
+  });
+
+  it('shows the age rule when the API rejects the birthday', async () => {
+    const result = await open('birthday');
+
+    setValue(result.host.querySelector<HTMLInputElement>('input[type="date"]'), '2013-09-21');
+    await result.fixture.whenStable();
+    submit(result.host);
+    http
+      .expectOne(PROFILE_URL)
+      .flush(
+        { status: 400, detail: 'Age must be between 13 and 100 years.' },
+        { status: 400, statusText: 'Bad Request' },
+      );
+    await result.fixture.whenStable();
+
+    expect(result.closed).toBe(0);
+    expect(result.host.textContent).toContain('Du skal være mellem 13 og 100 år.');
   });
 
   it('keeps Gem disabled for an invalid e-mail', async () => {
@@ -170,6 +266,57 @@ describe('ProfileEditSheet', () => {
     setValue(field, 'mads@mail.dk');
     await fixture.whenStable();
     expect(save.disabled).toBe(false);
+  });
+
+  it('says where the confirmation link went after an e-mail change', async () => {
+    const result = await open('email');
+
+    setValue(result.host.querySelector<HTMLInputElement>('input'), ' ny@mail.dk ');
+    await result.fixture.whenStable();
+    submit(result.host);
+    const request = http.expectOne({ method: 'PATCH', url: '/api/v1/me' });
+    expect(request.request.body).toEqual({ email: 'ny@mail.dk' });
+    request.flush({});
+    await result.fixture.whenStable();
+
+    expect(result.closed).toBe(0);
+    expect(result.host.textContent).toContain(
+      'Vi har sendt et bekræftelseslink til ny@mail.dk. Din e-mail skifter, når du trykker på linket.',
+    );
+    expect(profiles.profile().email).toBe('');
+
+    button(result.host, 'Luk').click();
+    expect(result.closed).toBeGreaterThan(0);
+  });
+
+  it('closes without a request when the e-mail is the current one', async () => {
+    const result = await open('email');
+    profiles.update({ email: 'mads@mail.dk' });
+    await result.fixture.whenStable();
+
+    setValue(result.host.querySelector<HTMLInputElement>('input'), ' MADS@mail.dk ');
+    await result.fixture.whenStable();
+    submit(result.host);
+
+    expect(result.closed).toBe(1);
+  });
+
+  it('says so when the new e-mail is taken', async () => {
+    const result = await open('email');
+
+    setValue(result.host.querySelector<HTMLInputElement>('input'), 'taget@mail.dk');
+    await result.fixture.whenStable();
+    submit(result.host);
+    http
+      .expectOne('/api/v1/me')
+      .flush(
+        { status: 409, detail: 'An account with that email already exists.' },
+        { status: 409, statusText: 'Conflict' },
+      );
+    await result.fixture.whenStable();
+
+    expect(result.closed).toBe(0);
+    expect(result.host.textContent).toContain('Der findes allerede en konto med den e-mail.');
   });
 });
 

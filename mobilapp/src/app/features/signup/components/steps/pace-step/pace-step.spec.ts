@@ -62,7 +62,7 @@ describe('PaceStep', () => {
     fixture.detectChanges();
 
     expect(state.pace()).toBe('moderat');
-    expect(summary()).toBe('Moderat · 0,5 kg/uge svarer til ca. 500 kcal mindre om dagen.');
+    expect(summary()).toBe('Moderat · 0,5 kg/uge svarer til ca. 550 kcal mindre om dagen.');
   });
 
   it('skriver "ekstra" i stedet for "mindre", når man vil tage på', () => {
@@ -70,6 +70,6 @@ describe('PaceStep', () => {
     cards()[2]?.click();
     fixture.detectChanges();
 
-    expect(summary()).toBe('Hurtigt · 1 kg/uge svarer til ca. 1000 kcal ekstra om dagen.');
+    expect(summary()).toBe('Hurtigt · 1 kg/uge svarer til ca. 1100 kcal ekstra om dagen.');
   });
 });

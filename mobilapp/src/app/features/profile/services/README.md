@@ -17,16 +17,25 @@ disse services har egen state.
 - **Tempo** ikke, når målet er `hold` (som i opret-flowet, hvor tempo ikke ændrer målet), og
 - **Længde** + **Intensitet** kun, når brugeren har mindst én træningsdag.
 
-Derudover ligger **Dagligt kaloriemål** sidst i listen. Rækken findes ikke i designets
-`profileRows`, men designets `editDefs.kcal` gør – den skriver `kcalOverride`, så brugeren kan
-overstyre det beregnede mål.
+Derudover ligger **Dagligt kaloriemål** sidst i listen. Det er API'ets mål
+(`UserProfileService.targets().kcal`, plan-v2 P7) og kan ikke redigeres: rækken har
+`editable: false`, og siden viser hverken chevron eller ark. Har API'et løftet målet til sin
+sikre minimumsgrænse (`calorieFloorApplied`), står der fx `1.200 kcal · sikkert minimum`.
+**Fødselsdato** viser dato og alder (`16. maj 1998 · 28 år`).
 
-Værdien er det tilpassede mål fra `AdaptiveGoalService.kcalTarget`. Flytter vægtudviklingen
-målet, viser rækken også hvor meget, fx `2.410 kcal · tilpasset −120`; uden tilpasning (for lidt
-data eller et manuelt mål) står kun kcal. Redigeringsarkets hint skriver det fulde
-`Beregnet forslag: … kcal (tilpasset −120 kcal ud fra din vægtudvikling)`. Begge viser den
-tilpasning, der faktisk slår igennem efter 1200 kcal-gulvet (`adjustmentKcal` /
-`suggestedAdjustmentKcal`), og skjuler den, når den er 0.
+## Gem
+
+`applyOption`, `applyNumber`, `applyGoalWithGoalWeight`, `applyBirthday` og `applyEmail` gemmer
+gennem `UserProfileService.save()` og returnerer en `Observable` (pessimistisk: profilen ændres,
+når API'et har svaret). En værdi, der bryder rækkens regler, sendes aldrig – observablen
+completer så uden at emitte. Fejl er API'ets `ApiError`; arket vælger teksten.
+
+- **Fødselsdato** er en `date`-definition med `min`/`max` fra `MIN_AGE`/`MAX_AGE` (API'ets 13–100
+  år); `isBirthdayValid()` bruges både af arket og af `applyBirthday`.
+- **E-mail** sendes trimmet til `PATCH me`; profilen beholder den gamle adresse, til linket i
+  mailen er trykket.
+- **Træningsdage** sendes som antal; profilen viser dem som de første N ugedage
+  (`trainingDaysFor`).
 
 ## Grænser i redigeringsarket
 
@@ -47,14 +56,14 @@ genbruges direkte:
   advarsel som i opret-flowet.
 
 `goalWeightError(kg, goal?)` returnerer den fejltekst, arket viser under feltet, eller
-`null`. `applyNumber('goalWeight', …)` afviser (returnerer `false`) en ugyldig værdi.
+`null`. `applyNumber('goalWeight', …)` sender intet for en ugyldig værdi.
 
 **Skift af mål:** Vælger brugeren "Tabe mig"/"Tage på", og passer den gemte målvægt ikke til
 det nye mål, gemmes målet **ikke**. `applyOption` returnerer
 `{ kind: 'needs-goal-weight', goal }`, arket skifter til målvægtsfeltet med en forklaring, og
 først når en gyldig målvægt gemmes, skrives mål og målvægt samlet med
 `applyGoalWithGoalWeight()`. Lukkes arket, beholdes det gamle mål. "Holde vægten" gemmes
-altid straks og skjuler Målvægt og Tempo.
+altid straks (med den nuværende vægt og tempo 0, som API'et kræver) og skjuler Målvægt og Tempo.
 
 ## Præstationer
 

@@ -374,8 +374,6 @@ export class SignupStateService {
       pace: this.pace(),
       goalWeightKg: this.boundedGoalWeightKg(),
       notificationsEnabled: this.notifications() === true,
-      units: 'metrisk',
-      kcalOverride: null,
       photo: null,
     };
   }

@@ -2,9 +2,8 @@ import { Injectable, Signal, computed, inject } from '@angular/core';
 import { MEALS } from '../../../core/constants/meals';
 import { LoggedFood } from '../../../core/models/food';
 import { MealId } from '../../../core/models/meal';
-import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
-import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
+import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { formatDayLabel, formatGrams } from '../../../core/utils/date-format';
 import { NOW } from '../../../core/utils/now';
 import { injectTranslate } from '../../../core/services/language/translate';
@@ -56,21 +55,21 @@ export interface MealGroupView {
 /**
  * The derived values on the Mad screen (the design's `kcalRing`, `macros` and `meals`).
  *
- * The service owns no state – it reads `FoodLogService` and `AdaptiveGoalService` and computes
+ * The service owns no state – it reads `FoodLogService` and `UserProfileService` and computes
  * further with `computed()`, so the page only contains presentation. It's provided on the route
  * (`FOOD_ROUTES`), because the values are only used by this feature.
  */
 @Injectable()
 export class FoodViewService {
   private readonly foodLog = inject(FoodLogService);
-  private readonly calculator = inject(NutritionCalculator);
+  private readonly targets = inject(UserProfileService).targets;
   private readonly now = inject(NOW);
   private readonly t = injectTranslate();
 
   /** The design's `todayLabel`, e.g. `'Mandag 21. sep'`. The day doesn't change while the screen is open. */
   readonly todayLabel = computed(() => formatDayLabel(this.t, this.now()));
 
-  readonly kcalTarget: Signal<number> = inject(AdaptiveGoalService).kcalTarget;
+  readonly kcalTarget: Signal<number> = computed(() => this.targets().kcal);
   readonly kcalEaten = computed(() => this.foodLog.totals().kcal);
   /** Target − eaten. Can be negative: the scanner's verdict computes further on it. */
   readonly kcalRemaining = computed(() => this.kcalTarget() - this.kcalEaten());
@@ -80,7 +79,7 @@ export class FoodViewService {
   readonly kcalProgress = computed(() => fraction(this.kcalEaten(), this.kcalTarget()));
 
   readonly macroCards = computed<readonly MacroCardView[]>(() => {
-    const goals = this.calculator.macroGoals(this.kcalTarget());
+    const goals = this.targets();
     const totals = this.foodLog.totals();
     return MACRO_DEFINITIONS.map(({ key, labelKey, tone }) => {
       const value = totals[key];

@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { APP_PATH } from '../../../core/constants/app-route';
-import { STORAGE_KEY } from '../../../core/constants/storage-key';
 import { SessionService } from '../../../core/services/session/session';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
@@ -496,8 +495,6 @@ describe('SignupStateService', () => {
         passwordConfirmation: 'hemmelig1234',
         goalType: 'LoseWeight',
       });
-      // Nothing is written before the API has created the account.
-      expect(storage.getItem(STORAGE_KEY.PROFILE)).toBeNull();
       request.flush(TEST_AUTH_RESPONSE.user);
       await done;
 
@@ -505,7 +502,6 @@ describe('SignupStateService', () => {
       expect(profile.username).toBe('Mads');
       expect(profile.email).toBe('mads@nutrify.dk');
       expect(TestBed.inject(SessionService).status()).toBe('pending-verification');
-      expect(storage.getItem(STORAGE_KEY.PROFILE)).not.toBeNull();
     });
 
     it('writes nothing when the API refuses the account', async () => {
@@ -521,7 +517,6 @@ describe('SignupStateService', () => {
         );
 
       await expect(done).rejects.toMatchObject({ messageKey: 'core.auth.error.emailTaken' });
-      expect(storage.getItem(STORAGE_KEY.PROFILE)).toBeNull();
       expect(TestBed.inject(SessionService).status()).toBe('guest');
     });
   });

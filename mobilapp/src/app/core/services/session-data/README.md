@@ -11,11 +11,25 @@
 Det sker også ved opstart med en genskabt session. Skifter status igen, mens en `load()` kører,
 afbrydes den. Servicen oprettes af en app initializer i `app.config.ts`.
 
+## Registrerede stores
+
+`SESSION_DATA_STORES` indeholder som standard:
+
+| Store                | Status                                                            |
+| -------------------- | ----------------------------------------------------------------- |
+| `UserProfileService` | API-baseret (profil, mål, indstillinger, seneste vægt)            |
+| `WeightLogService`   | No-op-stub (`load()` = `of(undefined)`) – API-baseret fra bølge 2 |
+| `FoodLogService`     | No-op-stub – API-baseret fra bølge 2                              |
+| `CollectionsService` | No-op-stub – API-baseret fra bølge 3                              |
+
+`ReminderService` er bevidst **ikke** med: den oprettes efter sprogets app initializer.
+
 ## Tilføj en store
 
 1. Lad storen implementere `SessionDataStore`:
-   - `load(): Observable<unknown>` henter brugerens data. Storen håndterer selv sine fejl (fx et
-     `status`-signal `'idle' | 'loading' | 'ready' | 'error'`), så observablen fejler ikke.
+   - `load(): Observable<unknown>` henter brugerens data. Storen håndterer selv sine fejl (et
+     `status: Signal<StoreStatus>` fra `models/api.ts`: `'idle' | 'loading' | 'ready' | 'error'`),
+     så observablen fejler ikke.
    - `reset(): void` glemmer dataene igen – **kun i hukommelsen, aldrig i storage**. Log ud
      bevarer enhedens data, og efter en kontosletning er storage lige blevet ryddet. Lokale
      data, som API'et ikke kan gemme (gaps), læses derfor i `load()`, ikke i konstruktøren.
@@ -24,7 +38,7 @@ afbrydes den. Servicen oprettes af en app initializer i `app.config.ts`.
 2. Tilføj den i fabrikken i `session-data.ts`:
 
    ```ts
-   factory: () => [inject(WeightLogService), inject(FoodLogService)],
+   factory: () => [inject(UserProfileService), inject(WeightLogService), /* … */],
    ```
 
 Stores henter **aldrig** selv ved konstruktion – kun når `load()` kaldes herfra (eller efter

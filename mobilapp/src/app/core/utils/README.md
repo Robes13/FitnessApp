@@ -44,6 +44,7 @@ Det fælles HTTP-lag for alle domæner:
 | `mapApiError(resolve?)`       | `catchError`, der kaster `toApiError(...)` videre – sidste led i en services HTTP-pipe.                                                                        |
 | `fetchAllPages(fetchPage)`    | Følger `nextCursor`, til `hasMore` er `false`, og giver alle `items` i API'ets rækkefølge (nyeste først). `fetchPage(null)` er første side.                    |
 | `parseApiDateTime(value)`     | Et API-tidsstempel (UTC med `Z`, 0–7 decimaler) som `Date`; decimalerne kortes til 3, så også ældre WebViews kan læse det.                                     |
+| `readProblemBody(error)`      | Fejlens body som record – også når CapacitorHttp (Android) giver den som tekst (JSON parses i `try/catch`); tom, ikke-JSON eller `null` → `{}`.                |
 
 `ApiProblem` er det, en resolver får: `{ status, detail, fields }` – `detail` er API'ets engelske
 tekst (matches med et regex), `fields` er nøglerne i en valideringsfejl med små bogstaver og
@@ -63,6 +64,24 @@ return this.http
     ),
   );
 ```
+
+Skal en service bruge et felt ud over `detail`/`errors` (fx vægt-409'ens `existingWeightLogId`),
+læser den bodyen med `readProblemBody`, så streng-bodies fra CapacitorHttp også virker:
+
+```ts
+catchError((error: unknown) => {
+  if (error instanceof HttpErrorResponse && error.status === HttpStatusCode.Conflict) {
+    const id = readProblemBody(error)['existingWeightLogId'];
+    if (typeof id === 'number') {
+      return of({ kind: 'exists', id: String(id) });
+    }
+  }
+  return throwError(() => toApiError(error));
+});
+```
+
+API'et sender ingen fejlkoder (plan-v2 P6); statuskoden, felterne og – for de to 409'ere med
+samme status – `detail`-teksten er det, der skelnes på.
 
 En fejl, der ikke er en `HttpErrorResponse` (en bug, fx i en mapping), bliver den generiske
 nøgle og logges med `console.error`, så den ikke forsvinder.

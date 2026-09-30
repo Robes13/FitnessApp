@@ -6,6 +6,8 @@
  */
 export interface FakeStorage {
   readonly data: Map<string, string>;
+  readonly length: number;
+  key(index: number): string | null;
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
   removeItem(key: string): void;
@@ -28,6 +30,10 @@ export function createFakeStorage(seed: Readonly<Record<string, unknown>> = {}):
   );
   return {
     data,
+    get length() {
+      return data.size;
+    },
+    key: (index) => [...data.keys()][index] ?? null,
     getItem: (key) => data.get(key) ?? null,
     setItem: (key, value) => {
       data.set(key, value);

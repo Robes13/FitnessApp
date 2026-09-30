@@ -1,3 +1,6 @@
+/** Every key the app writes starts with this – `StorageService.clearAll()` removes them by it. */
+export const STORAGE_KEY_PREFIX = 'nutrify.';
+
 export const STORAGE_KEY = {
   SESSION: 'nutrify.session',
   PROFILE: 'nutrify.profile',
