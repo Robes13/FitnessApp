@@ -1,328 +1,441 @@
-import { NOW } from '../../utils/now';
+import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { STORAGE_KEY } from '../../constants/storage-key';
-import { FoodItem, LoggedFood } from '../../models/food';
-import { FakeStorage, createFakeStorage } from '../../testing/fake-document';
+import { firstValueFrom, of } from 'rxjs';
+import { API_ERROR_MESSAGE_KEY } from '../../constants/api';
+import { CursorPage } from '../../models/api';
+import { ApiError } from '../../models/api-error';
+import { ProductLookupResult, ScannedProduct } from '../../models/barcode';
+import { FoodItem } from '../../models/food';
+import { FoodDto, FoodLogDto } from '../../models/food-api';
+import { testFood, testFoodLog } from '../../testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../testing/test-providers';
+import { addDays, startOfDay } from '../../utils/date-format';
+import { NOW } from '../../utils/now';
+import { ProductLookupService } from '../product-lookup/product-lookup';
 import { DuplicateCustomFoodNameError, FOOD_LOG_RETENTION_DAYS, FoodLogService } from './food-log';
-import { addDays, toIsoDate } from '../../utils/date-format';
 
-const HAVREGRYN: FoodItem = {
-  id: 'food-havregryn',
+const URL = {
+  FOODS: '/api/v1/foods',
+  FOOD_LOGS: '/api/v1/me/food-logs',
+} as const;
+
+const HAVREGRYN = testFood({
+  foodId: 12,
+  name: 'Havregryn',
+  caloriesPer100: 370,
+  proteinPer100: 13,
+  carbohydratesPer100: 60,
+  fatPer100: 7,
+});
+const SKYR = testFood({ foodId: 11, name: 'Skyr', caloriesPer100: 63, proteinPer100: 11 });
+
+/** Havregryn as the picker hands it over: 60 g of the catalogue food. */
+const HAVREGRYN_60_G: FoodItem = {
+  id: '12',
   name: 'Havregryn',
   quantity: '60 g',
   kcal: 222,
   protein: 8,
-  carbs: 38,
+  carbs: 36,
   fat: 4,
 };
 
-describe('FoodLogService', () => {
-  let storage: FakeStorage;
+const JUICE: ScannedProduct = {
+  barcode: '5701234567890',
+  unit: 'ml',
+  item: {
+    id: 'off-5701234567890',
+    name: 'Appelsinjuice',
+    brand: 'Rynkeby',
+    quantity: '100 ml',
+    kcal: 45,
+    protein: 0.7,
+    carbs: 10,
+    fat: 0,
+  },
+  servingGrams: null,
+};
 
-  function setup(): FoodLogService {
-    TestBed.configureTestingModule({ providers: provideCoreTestEnvironment({ storage }) });
+const CONFLICT = { status: 409, statusText: 'Conflict' } as const;
+
+function page<T>(items: T[], nextCursor: string | null = null): CursorPage<T> {
+  return { items, nextCursor, hasMore: nextCursor !== null };
+}
+
+/** The API's answer to a `POST me/food-logs` request for `food` (per 100 g). */
+function logged(request: TestRequest, foodLogId: number, food: FoodDto): FoodLogDto {
+  const body = request.request.body as Pick<
+    FoodLogDto,
+    'quantity' | 'unit' | 'consumedAt' | 'mealType'
+  >;
+  const factor = body.quantity / 100;
+  return {
+    ...body,
+    foodLogId,
+    foodId: food.foodId,
+    foodName: food.name,
+    caloriesConsumed: food.caloriesPer100 * factor,
+    proteinConsumed: food.proteinPer100 * factor,
+    carbohydratesConsumed: food.carbohydratesPer100 * factor,
+    fatConsumed: food.fatPer100 * factor,
+  };
+}
+
+describe('FoodLogService', () => {
+  let http: HttpTestingController;
+  let lookups: string[];
+
+  function setup(now: () => Date = () => new Date(TEST_NOW)): FoodLogService {
+    lookups = [];
+    TestBed.configureTestingModule({
+      providers: [
+        ...provideCoreTestEnvironment(),
+        { provide: NOW, useValue: now },
+        {
+          provide: ProductLookupService,
+          useValue: {
+            lookup: (barcode: string) => {
+              lookups.push(barcode);
+              return of<ProductLookupResult>({ status: 'found', product: JUICE });
+            },
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
     return TestBed.inject(FoodLogService);
   }
 
-  function storedDays(): Record<string, readonly LoggedFood[]> {
-    const raw = storage.getItem(STORAGE_KEY.FOOD_LOG) ?? '{"days":{}}';
-    return (JSON.parse(raw) as { days: Record<string, readonly LoggedFood[]> }).days;
+  /** Loads `foods` and `logs`, one page each. */
+  async function load(
+    service: FoodLogService,
+    foods: FoodDto[] = [],
+    logs: FoodLogDto[] = [],
+  ): Promise<void> {
+    const done = firstValueFrom(service.load());
+    http.expectOne(`${URL.FOODS}?limit=100`).flush(page(foods));
+    http.expectOne((request) => request.url === URL.FOOD_LOGS).flush(page(logs));
+    await done;
   }
 
-  function storedEntries(date = '2026-09-21'): readonly LoggedFood[] {
-    return storedDays()[date] ?? [];
-  }
+  afterEach(() => http.verify());
 
-  function logged(logId: string, food: FoodItem = HAVREGRYN): LoggedFood {
-    return { ...food, logId, meal: 'snack', loggedAt: TEST_NOW.toISOString() };
-  }
+  it('loads every page of the catalogue and of the last 90 days', async () => {
+    const service = setup();
+    const today = startOfDay(TEST_NOW);
+    const range = `from=${addDays(today, 1 - FOOD_LOG_RETENTION_DAYS).toISOString()}&to=${addDays(today, 1).toISOString()}`;
+    const breakfast = testFoodLog(HAVREGRYN_60_G, 'morgen', TEST_NOW, 12);
+    const yesterday = testFoodLog(HAVREGRYN_60_G, 'aften', addDays(TEST_NOW, -1), 12);
 
-  beforeEach(() => {
-    storage = createFakeStorage();
+    const done = firstValueFrom(service.load());
+    expect(service.status()).toBe('loading');
+    http.expectOne(`${URL.FOODS}?limit=100`).flush(page([HAVREGRYN], 'c1'));
+    http.expectOne(`${URL.FOODS}?limit=100&cursor=c1`).flush(page([SKYR]));
+    http.expectOne(`${URL.FOOD_LOGS}?${range}&limit=100`).flush(page([breakfast], 'c2'));
+    http.expectOne(`${URL.FOOD_LOGS}?${range}&limit=100&cursor=c2`).flush(page([yesterday]));
+    await done;
+
+    expect(service.status()).toBe('ready');
+    expect(service.foods()).toEqual([HAVREGRYN, SKYR]);
+    expect(service.customFoods().map((food) => [food.id, food.quantity, food.kcal])).toEqual([
+      ['12', '100 g', 370],
+      ['11', '100 g', 63],
+    ]);
+    expect(service.entries().map((entry) => entry.logId)).toEqual([String(breakfast.foodLogId)]);
+    expect(service.byMeal().get('morgen')).toHaveLength(1);
+    expect(service.allEntries().map((entry) => entry.meal)).toEqual(['morgen', 'aften']);
+    expect(service.dailyTotals(addDays(TEST_NOW, -1), TEST_NOW)).toEqual([
+      expect.objectContaining({ entryCount: 1, totals: expect.objectContaining({ kcal: 222 }) }),
+      expect.objectContaining({ entryCount: 1, totals: expect.objectContaining({ kcal: 222 }) }),
+    ]);
   });
 
-  it('starts a new day after midnight but keeps yesterday readable', () => {
-    let now = new Date(TEST_NOW);
-    TestBed.configureTestingModule({
-      providers: [
-        ...provideCoreTestEnvironment({ storage }),
-        { provide: NOW, useValue: () => new Date(now) },
-      ],
-    });
-    const service = TestBed.inject(FoodLogService);
-    const old = service.add(HAVREGRYN, 'snack');
-    now = new Date(2026, 8, 22, 1);
-    service.update(old.logId, { kcal: 999 });
+  it('never errors on a failed load – it sets the status to error', async () => {
+    const service = setup();
+
+    const done = firstValueFrom(service.load());
+    http.expectOne(`${URL.FOODS}?limit=100`).flush(null, { status: 500, statusText: 'Error' });
+    http.expectOne((request) => request.url === URL.FOOD_LOGS);
+
+    await expect(done).resolves.toBeUndefined();
+    expect(service.status()).toBe('error');
     expect(service.entries()).toEqual([]);
-    service.add(HAVREGRYN, 'morgen');
-    expect(service.totals().kcal).toBe(222);
-    // The stale update after midnight didn't touch yesterday's entry.
-    expect(storedEntries('2026-09-21')[0]?.kcal).toBe(222);
-    expect(storedEntries('2026-09-22')).toHaveLength(1);
-    expect(service.entriesFor(new Date(2026, 8, 21))).toHaveLength(1);
-    expect(service.allEntries()).toHaveLength(2);
   });
 
-  it('clears the visible log at midnight without user input', () => {
+  it('forgets everything on reset', async () => {
+    const service = setup();
+    await load(service, [HAVREGRYN], [testFoodLog(HAVREGRYN_60_G, 'morgen')]);
+
+    service.reset();
+
+    expect(service.status()).toBe('idle');
+    expect(service.foods()).toEqual([]);
+    expect(service.entries()).toEqual([]);
+  });
+
+  it('logs a catalogue food now with its meal type and puts the answer in state', async () => {
+    const service = setup();
+    await load(service, [HAVREGRYN]);
+
+    const done = firstValueFrom(service.add(HAVREGRYN_60_G, 'frokost'));
+    const request = http.expectOne({ method: 'POST', url: URL.FOOD_LOGS });
+    expect(request.request.body).toEqual({
+      foodId: 12,
+      quantity: 60,
+      unit: 'Gram',
+      consumedAt: TEST_NOW.toISOString(),
+      mealType: 'Lunch',
+    });
+    request.flush(logged(request, 90, HAVREGRYN));
+
+    await expect(done).resolves.toMatchObject({ logId: '90', meal: 'frokost', kcal: 222 });
+    expect(
+      service
+        .byMeal()
+        .get('frokost')
+        ?.map((entry) => entry.logId),
+    ).toEqual(['90']);
+  });
+
+  it('creates a scanned product, then its millilitre serving, then the log', async () => {
+    const service = setup();
+    await load(service);
+    const juice = testFood({
+      foodId: 30,
+      name: 'Appelsinjuice',
+      barcode: JUICE.barcode,
+      caloriesPer100: 45,
+      proteinPer100: 0.7,
+      carbohydratesPer100: 10,
+    });
+
+    const done = firstValueFrom(
+      service.add(
+        { ...JUICE.item, quantity: '250 ml', kcal: 113, protein: 2, carbs: 25 },
+        'morgen',
+      ),
+    );
+    const create = http.expectOne({ method: 'POST', url: URL.FOODS });
+    expect(create.request.body).toEqual({
+      name: 'Appelsinjuice',
+      barcode: JUICE.barcode,
+      caloriesPer100: 45,
+      proteinPer100: 0.7,
+      carbohydratesPer100: 10,
+      fatPer100: 0,
+    });
+    create.flush(juice);
+    const serving = http.expectOne({ method: 'PUT', url: `${URL.FOODS}/30/servings/Milliliter` });
+    expect(serving.request.body).toEqual({ gramsPerUnit: 1 });
+    serving.flush({ foodServingId: 4, unit: 'Milliliter', gramsPerUnit: 1 });
+    const log = http.expectOne({ method: 'POST', url: URL.FOOD_LOGS });
+    expect(log.request.body).toMatchObject({ foodId: 30, quantity: 250, unit: 'Milliliter' });
+    log.flush(logged(log, 91, juice));
+
+    await expect(done).resolves.toMatchObject({ quantity: '250 ml', kcal: 113 });
+    expect(lookups).toEqual([JUICE.barcode]);
+    expect(service.foods()[0]?.servings).toEqual([
+      { foodServingId: 4, unit: 'Milliliter', gramsPerUnit: 1 },
+    ]);
+  });
+
+  it('reuses the catalogue food with the scanned barcode', async () => {
+    const service = setup();
+    const juice = testFood({
+      foodId: 30,
+      name: 'Appelsinjuice',
+      barcode: JUICE.barcode,
+      servings: [{ foodServingId: 4, unit: 'Milliliter', gramsPerUnit: 1 }],
+    });
+    await load(service, [juice]);
+
+    await expect(
+      firstValueFrom(service.ensureFood({ ...JUICE.item, quantity: '250 ml' })),
+    ).resolves.toBe(juice);
+    expect(lookups).toEqual([]);
+  });
+
+  it('retries a taken product name once with the brand', async () => {
+    const service = setup();
+    await load(service);
+
+    const done = firstValueFrom(service.ensureFood({ ...JUICE.item, quantity: '100 g' }));
+    http.expectOne({ method: 'POST', url: URL.FOODS }).flush({ status: 409 }, CONFLICT);
+    const retry = http.expectOne({ method: 'POST', url: URL.FOODS });
+    expect(retry.request.body).toMatchObject({ name: 'Appelsinjuice (Rynkeby)' });
+    retry.flush(testFood({ foodId: 31, name: 'Appelsinjuice (Rynkeby)' }));
+
+    await expect(done).resolves.toMatchObject({ foodId: 31 });
+  });
+
+  it('creates an unsaved custom food per portion with its synthetic piece serving', async () => {
+    const service = setup();
+    await load(service);
+    const pancake: FoodItem = {
+      id: 'food-local',
+      name: ' Proteinpandekage ',
+      quantity: '2 stk',
+      kcal: 310,
+      protein: 24,
+      carbs: 30,
+      fat: 9,
+      isCustom: true,
+    };
+
+    const done = firstValueFrom(service.add(pancake, 'snack'));
+    const create = http.expectOne({ method: 'POST', url: URL.FOODS });
+    expect(create.request.body).toEqual({
+      name: 'Proteinpandekage',
+      caloriesPer100: 155,
+      proteinPer100: 12,
+      carbohydratesPer100: 15,
+      fatPer100: 4.5,
+    });
+    const food = testFood({ foodId: 40, name: 'Proteinpandekage', caloriesPer100: 155 });
+    create.flush(food);
+    http
+      .expectOne({ method: 'PUT', url: `${URL.FOODS}/40/servings/Piece` })
+      .flush({ foodServingId: 5, unit: 'Piece', gramsPerUnit: 100 });
+    const log = http.expectOne({ method: 'POST', url: URL.FOOD_LOGS });
+    expect(log.request.body).toMatchObject({ foodId: 40, quantity: 2, unit: 'Piece' });
+    log.flush({ ...logged(log, 92, food), caloriesConsumed: 310 });
+
+    await expect(done).resolves.toMatchObject({ quantity: '2 stk', kcal: 310, meal: 'snack' });
+    expect(service.customFoods()[0]).toMatchObject({ id: '40', quantity: '1 stk', kcal: 155 });
+  });
+
+  it('heals a catalogue food that lacks the serving of the logged unit', async () => {
+    const service = setup();
+    await load(service, [testFood({ foodId: 41, name: 'Proteinbar', caloriesPer100: 200 })]);
+
+    const done = firstValueFrom(
+      service.ensureFood({ ...HAVREGRYN_60_G, id: '41', quantity: '1 portion' }),
+    );
+    const serving = http.expectOne({ method: 'PUT', url: `${URL.FOODS}/41/servings/Serving` });
+    expect(serving.request.body).toEqual({ gramsPerUnit: 100 });
+    serving.flush({ foodServingId: 6, unit: 'Serving', gramsPerUnit: 100 });
+
+    await expect(done).resolves.toMatchObject({ foodId: 41, servings: [{ unit: 'Serving' }] });
+  });
+
+  it('reuses a catalogue food with the same name instead of creating it twice', async () => {
+    const service = setup();
+    await load(service, [HAVREGRYN]);
+
+    await expect(
+      firstValueFrom(
+        service.ensureFood({ ...HAVREGRYN_60_G, id: 'food-local', name: ' havregryn' }),
+      ),
+    ).resolves.toBe(HAVREGRYN);
+  });
+
+  it('saves a custom food and errors with DuplicateCustomFoodNameError on 409', async () => {
+    const service = setup();
+    await load(service);
+    const input = { name: 'Egen bar', quantity: '50 g', kcal: 200, protein: 10, carbs: 20, fat: 8 };
+
+    const saved = firstValueFrom(service.addCustomFood(input));
+    const create = http.expectOne({ method: 'POST', url: URL.FOODS });
+    expect(create.request.body).toEqual({
+      name: 'Egen bar',
+      caloriesPer100: 400,
+      proteinPer100: 20,
+      carbohydratesPer100: 40,
+      fatPer100: 16,
+    });
+    create.flush(testFood({ foodId: 50, name: 'Egen bar', caloriesPer100: 400 }));
+    await expect(saved).resolves.toMatchObject({ id: '50', quantity: '100 g', kcal: 400 });
+    expect(service.hasCustomFoodNamed(' EGEN bar')).toBe(true);
+
+    const duplicate = firstValueFrom(service.addCustomFood(input));
+    http.expectOne({ method: 'POST', url: URL.FOODS }).flush({ status: 409 }, CONFLICT);
+    await expect(duplicate).rejects.toBeInstanceOf(DuplicateCustomFoodNameError);
+    expect(service.foods()).toHaveLength(1);
+  });
+
+  it('changes only the amount of a log and puts the recalculated row in state', async () => {
+    const service = setup();
+    const row = testFoodLog(HAVREGRYN_60_G, 'morgen', TEST_NOW, 12);
+    await load(service, [HAVREGRYN], [row]);
+
+    const done = firstValueFrom(service.update(String(row.foodLogId), { quantity: '120 g' }));
+    const patch = http.expectOne({ method: 'PATCH', url: `${URL.FOOD_LOGS}/${row.foodLogId}` });
+    expect(patch.request.body).toEqual({ quantity: 120, unit: 'Gram' });
+    patch.flush({ ...row, quantity: 120, caloriesConsumed: 444 });
+    await done;
+
+    expect(service.entries()).toEqual([
+      expect.objectContaining({ quantity: '120 g', kcal: 444, meal: 'morgen' }),
+    ]);
+  });
+
+  it('removes a log once the API has deleted it', async () => {
+    const service = setup();
+    const row = testFoodLog(HAVREGRYN_60_G, 'morgen');
+    await load(service, [HAVREGRYN], [row]);
+
+    const done = firstValueFrom(service.remove(String(row.foodLogId)), { defaultValue: null });
+    expect(service.entries()).toHaveLength(1);
+    http
+      .expectOne({ method: 'DELETE', url: `${URL.FOOD_LOGS}/${row.foodLogId}` })
+      .flush(null, { status: 204, statusText: 'No Content' });
+    await done;
+
+    expect(service.entries()).toEqual([]);
+  });
+
+  it('drops a log that is already gone and says so', async () => {
+    const service = setup();
+    const row = testFoodLog(HAVREGRYN_60_G, 'morgen');
+    await load(service, [HAVREGRYN], [row]);
+
+    const done = firstValueFrom(service.remove(String(row.foodLogId)));
+    http
+      .expectOne({ method: 'DELETE', url: `${URL.FOOD_LOGS}/${row.foodLogId}` })
+      .flush(null, { status: 404, statusText: 'Not Found' });
+
+    const notFound: ApiError = { messageKey: 'food.page.notFound', status: 404 };
+    await expect(done).rejects.toEqual(notFound);
+    expect(service.entries()).toEqual([]);
+  });
+
+  it('leaves the state unchanged when a mutation fails', async () => {
+    const service = setup();
+    const row = testFoodLog(HAVREGRYN_60_G, 'morgen');
+    await load(service, [HAVREGRYN], [row]);
+
+    const add = firstValueFrom(service.add(HAVREGRYN_60_G, 'aften'));
+    http
+      .expectOne({ method: 'POST', url: URL.FOOD_LOGS })
+      .flush(null, { status: 500, statusText: 'Error' });
+    await expect(add).rejects.toMatchObject({ messageKey: API_ERROR_MESSAGE_KEY.SERVER });
+
+    const remove = firstValueFrom(service.remove(String(row.foodLogId)));
+    http
+      .expectOne({ method: 'DELETE', url: `${URL.FOOD_LOGS}/${row.foodLogId}` })
+      .error(new ProgressEvent('error'));
+    await expect(remove).rejects.toMatchObject({ messageKey: API_ERROR_MESSAGE_KEY.NETWORK });
+
+    expect(service.entries().map((entry) => entry.logId)).toEqual([String(row.foodLogId)]);
+  });
+
+  it('starts a new day at midnight but keeps yesterday readable', () => {
     vi.useFakeTimers();
     try {
-      const now = new Date(2026, 8, 21, 23, 59, 59);
-      TestBed.configureTestingModule({ providers: provideCoreTestEnvironment({ storage, now }) });
-      const service = TestBed.inject(FoodLogService);
-      service.add(HAVREGRYN, 'snack');
-      expect(service.today()).toBe('2026-09-21');
-      now.setDate(22);
-      now.setHours(0, 0, 0, 0);
-      vi.advanceTimersByTime(1000);
+      let now = new Date(TEST_NOW);
+      const service = setup(() => new Date(now));
+      service.addLogs([testFoodLog(HAVREGRYN_60_G, 'snack')]);
+
+      const midnight = new Date(2026, 8, 22);
+      now = midnight;
+      vi.advanceTimersByTime(midnight.getTime() - TEST_NOW.getTime());
+      service.addLogs([testFoodLog(HAVREGRYN_60_G, 'morgen', new Date(2026, 8, 22, 7))]);
+
       expect(service.today()).toBe('2026-09-22');
-      expect(service.entries()).toEqual([]);
-      expect(service.totals().kcal).toBe(0);
+      expect(service.entries().map((entry) => entry.meal)).toEqual(['morgen']);
+      expect(service.entriesFor(TEST_NOW).map((entry) => entry.meal)).toEqual(['snack']);
     } finally {
-      TestBed.resetTestingModule();
       vi.useRealTimers();
     }
-  });
-
-  it('starts empty on first run and writes nothing', () => {
-    const service = setup();
-
-    expect(service.entries()).toEqual([]);
-    expect(service.totals()).toEqual({ kcal: 0, protein: 0, carbs: 0, fat: 0 });
-    expect(storage.getItem(STORAGE_KEY.FOOD_LOG)).toBeNull();
-  });
-
-  it('migrates the old single-day format', () => {
-    storage.setItem(
-      STORAGE_KEY.FOOD_LOG,
-      JSON.stringify({
-        date: '2026-09-21',
-        entries: [
-          { ...HAVREGRYN, logId: 'log-1', meal: 'snack', loggedAt: TEST_NOW.toISOString() },
-        ],
-      }),
-    );
-
-    const service = setup();
-
-    expect(service.entries()).toHaveLength(1);
-    expect(service.entries()[0]?.name).toBe('Havregryn');
-  });
-
-  it('starts a new day empty and keeps the previous day as history', () => {
-    storage.setItem(
-      STORAGE_KEY.FOOD_LOG,
-      JSON.stringify({
-        date: '2026-09-20',
-        entries: [
-          { ...HAVREGRYN, logId: 'log-1', meal: 'snack', loggedAt: TEST_NOW.toISOString() },
-        ],
-      }),
-    );
-
-    const service = setup();
-
-    expect(service.entries()).toEqual([]);
-    expect(service.totals().kcal).toBe(0);
-    expect(service.totalsFor(new Date(2026, 8, 20)).kcal).toBe(222);
-  });
-
-  it('restores the multi-day format and prunes days outside the retention window', () => {
-    const oldest = toIsoDate(addDays(TEST_NOW, 1 - FOOD_LOG_RETENTION_DAYS));
-    const tooOld = toIsoDate(addDays(TEST_NOW, -FOOD_LOG_RETENTION_DAYS));
-    storage.setItem(
-      STORAGE_KEY.FOOD_LOG,
-      JSON.stringify({
-        days: { [tooOld]: [logged('log-old')], [oldest]: [logged('log-kept')] },
-      }),
-    );
-
-    const service = setup();
-
-    expect(service.allEntries().map((entry) => entry.logId)).toEqual(['log-kept']);
-    expect(Object.keys(storedDays())).toEqual([oldest]);
-  });
-
-  it('drops malformed days from storage instead of crashing', () => {
-    storage.setItem(
-      STORAGE_KEY.FOOD_LOG,
-      JSON.stringify({
-        days: { '2026-09-19': 'broken', '2026-09-20': null, '2026-09-21': [logged('log-ok')] },
-      }),
-    );
-
-    const service = setup();
-
-    expect(service.entries().map((entry) => entry.logId)).toEqual(['log-ok']);
-    expect(service.allEntries().map((entry) => entry.logId)).toEqual(['log-ok']);
-    expect(service.entriesFor(new Date(2026, 8, 19))).toEqual([]);
-  });
-
-  it('sums a daily series over a date range, including days without a log', () => {
-    storage.setItem(
-      STORAGE_KEY.FOOD_LOG,
-      JSON.stringify({
-        days: {
-          '2026-09-19': [logged('log-1'), logged('log-2')],
-          '2026-09-21': [logged('log-3')],
-        },
-      }),
-    );
-
-    const service = setup();
-    const series = service.dailyTotals(new Date(2026, 8, 19), new Date(2026, 8, 21, 23));
-
-    expect(series.map((day) => day.date)).toEqual(['2026-09-19', '2026-09-20', '2026-09-21']);
-    expect(series.map((day) => day.entryCount)).toEqual([2, 0, 1]);
-    expect(series[0]?.totals).toEqual({ kcal: 444, protein: 16, carbs: 76, fat: 8 });
-    expect(series[1]?.totals.kcal).toBe(0);
-    expect(service.allEntries().map((entry) => entry.logId)).toEqual(['log-3', 'log-1', 'log-2']);
-  });
-
-  it('adds an entry with log id, meal and timestamp', () => {
-    const service = setup();
-
-    const entry = service.add(HAVREGRYN, 'snack');
-
-    expect(entry.logId).toMatch(/^log-/);
-    expect(entry.meal).toBe('snack');
-    expect(entry.loggedAt).toBe(TEST_NOW.toISOString());
-    expect(service.entries()).toHaveLength(1);
-    expect(service.totals().kcal).toBe(222);
-    expect(storedEntries()).toHaveLength(1);
-  });
-
-  it('groups entries by meal with an entry for every meal', () => {
-    const service = setup();
-    service.add(HAVREGRYN, 'snack');
-
-    const byMeal = service.byMeal();
-
-    expect([...byMeal.keys()]).toEqual(['morgen', 'frokost', 'aften', 'snack']);
-    expect(byMeal.get('morgen')).toEqual([]);
-    expect(byMeal.get('aften')).toEqual([]);
-    expect(byMeal.get('snack')?.[0]?.name).toBe('Havregryn');
-  });
-
-  it('updates and removes entries by log id', () => {
-    const service = setup();
-    const entry = service.add(HAVREGRYN, 'snack');
-
-    service.update(entry.logId, { quantity: '120 g', kcal: 444, meal: 'aften' });
-    const updated = service.entries().find((candidate) => candidate.logId === entry.logId);
-    expect(updated).toMatchObject({ quantity: '120 g', kcal: 444, meal: 'aften' });
-
-    service.remove(entry.logId);
-    expect(service.entries().some((candidate) => candidate.logId === entry.logId)).toBe(false);
-    expect(storedEntries()).toHaveLength(0);
-  });
-
-  it('adds custom foods first, flagged as custom, and persists them separately', () => {
-    const service = setup();
-
-    const first = service.addCustomFood({
-      name: 'Egen bar',
-      quantity: '1 stk',
-      kcal: 150,
-      protein: 12,
-      carbs: 10,
-      fat: 5,
-    });
-    const second = service.addCustomFood({
-      name: 'Anden vare',
-      quantity: '100 g',
-      kcal: 90,
-      protein: 2,
-      carbs: 10,
-      fat: 1,
-    });
-
-    expect(first.isCustom).toBe(true);
-    expect(first.id).toMatch(/^food-/);
-    expect(service.customFoods().map((food) => food.id)).toEqual([second.id, first.id]);
-    expect(JSON.parse(storage.getItem(STORAGE_KEY.CUSTOM_FOODS) ?? '[]')).toHaveLength(2);
-  });
-
-  it('restores custom foods', () => {
-    storage.setItem(STORAGE_KEY.CUSTOM_FOODS, JSON.stringify([{ ...HAVREGRYN, isCustom: true }]));
-
-    const service = setup();
-
-    expect(service.customFoods()).toHaveLength(1);
-  });
-
-  it('updates a custom food and leaves logged entries untouched', () => {
-    const service = setup();
-    const food = service.addCustomFood({
-      name: 'Egen bar',
-      quantity: '1 stk',
-      kcal: 150,
-      protein: 12,
-      carbs: 10,
-      fat: 5,
-    });
-    service.add(food, 'snack');
-
-    const updated = service.updateCustomFood(food.id, {
-      name: 'Egen bar',
-      quantity: '1 stk',
-      kcal: 180,
-      protein: 15,
-      carbs: 12,
-      fat: 6,
-    });
-
-    expect(updated).toMatchObject({ id: food.id, kcal: 180, isCustom: true });
-    expect(service.customFoods()).toHaveLength(1);
-    expect(service.customFoods()[0]?.kcal).toBe(180);
-    expect(JSON.parse(storage.getItem(STORAGE_KEY.CUSTOM_FOODS) ?? '[]')[0].kcal).toBe(180);
-    expect(service.entries()[0]?.kcal).toBe(150);
-    expect(service.updateCustomFood('food-missing', food)).toBeNull();
-  });
-
-  it('finds custom foods by trimmed, case-insensitive name', () => {
-    const service = setup();
-    const food = service.addCustomFood({
-      name: 'Egen Bar',
-      quantity: '1 stk',
-      kcal: 150,
-      protein: 12,
-      carbs: 10,
-      fat: 5,
-    });
-
-    expect(service.hasCustomFoodNamed('  egen bar ')).toBe(true);
-    expect(service.hasCustomFoodNamed('Anden bar')).toBe(false);
-    expect(service.hasCustomFoodNamed('egen bar', food.id)).toBe(false);
-  });
-
-  it('keeps a caller-decided id for a new custom food', () => {
-    const service = setup();
-
-    const food = service.addCustomFood(
-      { name: 'Egen bar', quantity: '1 stk', kcal: 150, protein: 12, carbs: 10, fat: 5 },
-      'food-picked',
-    );
-
-    expect(food.id).toBe('food-picked');
-    expect(service.customFoods()[0]?.id).toBe('food-picked');
-  });
-
-  it('rejects a duplicate custom food name on add and update', () => {
-    const service = setup();
-    const input = { quantity: '1 stk', kcal: 150, protein: 12, carbs: 10, fat: 5 };
-    service.addCustomFood({ ...input, name: 'Egen Bar' });
-    const other = service.addCustomFood({ ...input, name: 'Anden bar' });
-
-    expect(() => service.addCustomFood({ ...input, name: ' egen bar ' })).toThrow(
-      DuplicateCustomFoodNameError,
-    );
-    expect(() => service.updateCustomFood(other.id, { ...input, name: 'EGEN BAR' })).toThrow(
-      DuplicateCustomFoodNameError,
-    );
-    expect(
-      service.updateCustomFood(other.id, { ...input, name: 'Anden bar', kcal: 99 })?.kcal,
-    ).toBe(99);
-    expect(service.customFoods()).toHaveLength(2);
   });
 });

@@ -1,0 +1,37 @@
+<app-ui-sheet
+  [open]="open()"
+  [title]="titleKey() | translate"
+  [titleAccent]="accentKey() | translate"
+  titleAccentTone="negative"
+  titleSize="sm"
+  hideClose
+  scrollable
+  layer="overlay"
+>
+  <p class="ui-confirm-sheet__body">
+    {{ bodyKey() | translate: bodyParams() }}
+  </p>
+
+  <div sheetFooter class="ui-confirm-sheet__actions">
+    <button
+      app-ui-button
+      type="button"
+      variant="danger"
+      block
+      [loading]="busy()"
+      (click)="confirm()"
+    >
+      {{ confirmKey() | translate }}
+    </button>
+    <button
+      app-ui-button
+      type="button"
+      variant="outline"
+      block
+      [disabled]="busy()"
+      (click)="closed.emit()"
+    >
+      {{ cancelKey() | translate }}
+    </button>
+  </div>
+</app-ui-sheet>

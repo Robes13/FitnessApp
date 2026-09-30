@@ -35,17 +35,20 @@
       />
     }
 
+    @if (error(); as message) {
+      <app-ui-form-error class="food-add-sheet__error" tone="negative" [message]="message" />
+    }
+
     <div class="food-add-sheet__scroll">
       @if (showPicker()) {
         <app-food-picker
           [startStep]="startStep()"
           [editItem]="editEntry()"
-          [editBaseItem]="editBaseItem()"
           [ctaVerb]="ctaVerb()"
           [saveAndLogLabel]="saveAndLogLabel()"
+          [busy]="busy()"
           (picked)="onPicked($event)"
           (customFoodCreated)="customFoodCreated.emit($event)"
-          (customFoodEdited)="customFoodEdited.emit($event)"
           (scanRequested)="scanRequested.emit()"
           (cancelled)="closed.emit()"
         />

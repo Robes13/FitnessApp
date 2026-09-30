@@ -36,18 +36,20 @@ samlingens navn, måltid, ikon og varer, knappen hedder "Gem ændringer", og ark
 - **To veje til en vare:** "Søg vare" åbner `app-food-picker` i et ark oven på dette
   (`layer="sheet-high"`), og "Scan" åbner `app-barcode-scanner`. Begge lægger varen i
   kladden. Et tryk på en kladde-række åbner vælgeren i portionstrinnet og erstatter varen.
-- **Egne varer** gemmes samtidig under "Mine varer" (`FoodLogService.addCustomFood` med
-  vælgerens/scannerens id), så de kan søges frem igen — vælgerens egen tekst lover det
-  ("Gemmes under Mine varer"). Er navnet allerede taget (`DuplicateCustomFoodNameError` —
-  scannerens formular tjekker det ikke), lægges varen stadig i kladden, og arket viser
-  "Du har allerede en egen vare med navnet …" under knapperne.
+- **Egne varer** gemmes samtidig under "Mine varer" i API'et (`FoodLogService.addCustomFood`,
+  både fra "Gem uden at logge" og fra "Gem og føj til samlingen", der kun udsender `picked`), så
+  de kan søges frem igen — vælgerens egen tekst lover det ("Gemmes under Mine varer"). Fejler
+  det (fx `DuplicateCustomFoodNameError`, når navnet er taget på en anden enhed), ligger varen
+  stadig i kladden, og arket viser beskeden under knapperne (og øverst i vælgeren, mens den er
+  åben). Imens gemningen kører, er vælgeren `busy`, så "Gem uden at logge" ikke sender to gange;
+  den bliver på formularen, til varen er gemt. Gemningen afbrydes ikke, når arket lukkes.
 - Vare-vælgerens primærknap hedder her **"Gem og føj til samlingen"**. Designet genbruger
   "Gem og log under <måltid>" fra Mad-skærmen, men varen havner i samlingen, ikke i dagens
   log, så teksten ville være forkert.
 - Kladdens varer får et nyt id (`newId()`), så den samme vare kan ligge i den flere gange, og
   id'et kan bruges som rute-id for varen i samlingen. Varen i samlingen er derfor en kopi, ikke
-  et link til den egne vare; samlinger logges som én samlet vare, så redigering af en logget
-  egen vare berøres ikke.
+  et link til den egne vare. Når samlingen logges, bliver hver vare til katalogvaren med samme
+  navn (`FoodLogService.ensureFood`).
 - **Ikongitteret er en rigtig radiogruppe:** kun det valgte ikon er i tab-rækkefølgen, og
   piletasterne flytter valget (venstre/højre ±1, op/ned ±6, fordi gitteret har seks
   kolonner) og wrapper rundt om det antal ikoner, der faktisk vises — 12 eller 30. Er det

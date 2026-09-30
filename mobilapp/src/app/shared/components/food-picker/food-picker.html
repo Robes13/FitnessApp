@@ -27,9 +27,7 @@
       </div>
 
       <div class="food-picker__results">
-        @if (isSearching()) {
-          <div class="food-picker__loading"><app-ui-spinner /></div>
-        } @else if (hasNoMatches()) {
+        @if (hasNoMatches()) {
           <app-ui-empty-state class="food-picker__empty" [message]="emptyMessage()" />
         } @else {
           @for (item of results(); track item.id) {
@@ -78,8 +76,8 @@
 
   @case ('new-food') {
     <form class="food-picker__step" [formGroup]="form" (ngSubmit)="saveNewFoodAndLog()">
-      @if (macroError()) {
-        <app-ui-form-error tone="negative" [message]="macroError()" />
+      @if (valueError()) {
+        <app-ui-form-error tone="negative" [message]="valueError()" />
       }
       <div class="food-picker__heading">
         <button
@@ -106,6 +104,7 @@
           <app-ui-text-input
             formControlName="name"
             autocomplete="off"
+            [maxLength]="nameMaxLength"
             [placeholder]="'shared.foodPicker.namePlaceholder' | translate"
             [invalid]="nameInvalid()"
           />
@@ -200,7 +199,7 @@
       </div>
 
       <div class="food-picker__actions">
-        <button app-ui-button type="submit" block [disabled]="!canSaveNewFood()">
+        <button app-ui-button type="submit" block [disabled]="!canSaveNewFood()" [loading]="busy()">
           {{ saveAndLogLabel() }}
         </button>
         <button
@@ -210,7 +209,7 @@
           size="sm"
           block
           class="food-picker__save-only"
-          [disabled]="!canSaveNewFood()"
+          [disabled]="!canSaveNewFood() || busy()"
           (click)="saveNewFood()"
         >
           {{ 'shared.foodPicker.saveWithoutLogging' | translate }}
@@ -314,37 +313,8 @@
         }
       </div>
 
-      @if (canEditMacros()) {
-        <div class="food-picker__edit-macros" [formGroup]="macroForm">
-          <div class="food-picker__label">{{ macroBaseLabel() }}</div>
-          <div class="food-picker__grid">
-            <label class="food-picker__field">
-              <span class="food-picker__label">{{
-                'shared.foodPicker.kcalLabel' | translate
-              }}</span>
-              <app-ui-text-input formControlName="kcal" type="number" inputMode="numeric" />
-            </label>
-            <label class="food-picker__field">
-              <span class="food-picker__label">{{
-                'shared.foodPicker.proteinLabel' | translate
-              }}</span>
-              <app-ui-text-input formControlName="protein" type="number" inputMode="numeric" />
-            </label>
-            <label class="food-picker__field">
-              <span class="food-picker__label">{{
-                'shared.foodPicker.carbsLabel' | translate
-              }}</span>
-              <app-ui-text-input formControlName="carbs" type="number" inputMode="numeric" />
-            </label>
-            <label class="food-picker__field">
-              <span class="food-picker__label">{{ 'shared.foodPicker.fatLabel' | translate }}</span>
-              <app-ui-text-input formControlName="fat" type="number" inputMode="numeric" />
-            </label>
-          </div>
-          @if (editMacroError()) {
-            <app-ui-form-error tone="negative" [message]="editMacroError()" />
-          }
-        </div>
+      @if (amountError()) {
+        <app-ui-form-error tone="negative" [message]="amountError()" />
       }
 
       <button
@@ -353,6 +323,7 @@
         block
         class="food-picker__confirm"
         [disabled]="!canConfirm()"
+        [loading]="busy()"
         (click)="confirm()"
       >
         {{ ctaLabel() }}

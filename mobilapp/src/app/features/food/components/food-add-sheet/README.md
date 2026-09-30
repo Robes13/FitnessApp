@@ -9,13 +9,14 @@ Varer/Samlinger og enten `app-food-picker` eller listen over samlinger.
   også bliver stående på portionstrinnet (designets `showMealPicks`). Begge dele skjules i
   "Ny egen vare" og under redigering.
 - Indholdet ligger bag `@if (open())`, så vælgeren starter forfra ved hver åbning.
-- En samling logges som **én** vare: navn, `n varer` og summen fra
-  `CollectionsService.collectionTotals`. Uden samlinger med indhold vises `app-ui-empty-state`.
+- En samling udsendes som sine varer (`collectionPicked`), og siden logger én række pr. vare.
+  Uden samlinger med varer vises `app-ui-empty-state`.
 
-- Under redigering slår arket den egne vare op, som posten blev logget fra
-  (`FoodLogService.customFoods`, samme `id`), og giver den til vælgeren som `editBaseItem`.
-  Så kan kcal og makroer også rettes. Systemvarer (uden `isCustom`) kan kun få ny mængde.
+- Under redigering kan kun mængden ændres (spec 3.3) – makroerne på en egen vare rettes ikke
+  her.
+- `busy` (siden gemmer) går videre til vælgeren, så dens knap viser spinner, og `error` (siden
+  har oversat fejlen) vises øverst med `app-ui-form-error`. Arket bliver stående ved en fejl,
+  så brugerens tal ikke går tabt.
 
 Arket ændrer ikke loggen. Det udsender `selected` (færdig vare), `customFoodCreated`,
-`customFoodEdited`, `scanRequested` og `closed`; `meal` er en `model`, så chipsene kan flytte
-måltidet.
+`scanRequested` og `closed`; `meal` er en `model`, så chipsene kan flytte måltidet.

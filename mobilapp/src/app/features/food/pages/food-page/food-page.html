@@ -7,76 +7,104 @@
     <p class="food-page__date">{{ view.todayLabel() }}</p>
   </header>
 
-  <section class="food-page__summary" [attr.aria-label]="'food.page.summaryLabel' | translate">
-    <app-ui-progress-ring
-      class="food-page__ring"
-      [value]="view.kcalProgress()"
-      [diameter]="ringDiameter"
-      [strokeWidth]="ringStrokeWidth"
-    />
-    <div class="food-page__summary-text">
-      <p class="food-page__summary-label">{{ 'food.page.leftToday' | translate }}</p>
-      <p class="food-page__summary-value">
-        {{ view.kcalLeft()
-        }}<span class="food-page__summary-unit">{{ 'common.unit.kcal' | translate }}</span>
-      </p>
-      <p class="food-page__summary-meta">
-        {{
-          'food.page.eatenOfGoal' | translate: { eaten: view.kcalEaten(), goal: view.kcalTarget() }
-        }}
-      </p>
-    </div>
-  </section>
-
-  <div class="food-page__macros">
-    @for (macro of view.macroCards(); track macro.key) {
-      <div class="food-page__macro">
-        <div class="food-page__macro-head">
-          <span>{{ macro.label }}</span>
-          <span>{{ macro.percentLabel }}</span>
-        </div>
-        <app-ui-progress-bar
-          class="food-page__macro-bar"
-          thickness="thin"
-          [value]="macro.progress"
-          [tone]="macro.tone"
-        />
-        <div class="food-page__macro-text">{{ macro.text }}</div>
+  @switch (status()) {
+    @case ('loading') {
+      <div class="food-page__status">
+        <app-ui-spinner size="lg" />
       </div>
     }
-  </div>
-
-  <div class="food-page__actions">
-    <button app-ui-button type="button" class="food-page__add" (click)="openAdd()">
-      <app-ui-icon name="plus" size="md" [strokeWidth]="3" />
-      {{ 'food.page.addFood' | translate }}
-    </button>
-    <button
-      app-ui-icon-button
-      type="button"
-      tone="outline"
-      class="food-page__scan"
-      [attr.aria-label]="'food.page.scan' | translate"
-      (click)="openScanner()"
-    >
-      <app-ui-icon name="scan" size="2xl" />
-    </button>
-  </div>
-
-  @if (notice(); as message) {
-    <app-ui-form-error class="food-page__notice" tone="negative" [message]="message" />
-  }
-
-  <div class="food-page__meals">
-    @for (group of view.mealGroups(); track group.id) {
-      <app-food-meal-group
-        [group]="group"
-        (edit)="openEdit($event)"
-        (removed)="removeEntry($event)"
-        (add)="openAddFor(group.id)"
-      />
+    @case ('error') {
+      <div class="food-page__status">
+        <app-ui-empty-state
+          class="food-page__status-message"
+          [message]="'food.page.loadError' | translate"
+        />
+        <button app-ui-button type="button" variant="outline" size="md" (click)="retry()">
+          {{ 'food.page.retry' | translate }}
+        </button>
+      </div>
     }
-  </div>
+    @default {
+      <section class="food-page__summary" [attr.aria-label]="'food.page.summaryLabel' | translate">
+        <app-ui-progress-ring
+          class="food-page__ring"
+          [value]="view.kcalProgress()"
+          [diameter]="ringDiameter"
+          [strokeWidth]="ringStrokeWidth"
+        />
+        <div class="food-page__summary-text">
+          <p class="food-page__summary-label">{{ 'food.page.leftToday' | translate }}</p>
+          <p class="food-page__summary-value">
+            {{ view.kcalLeft()
+            }}<span class="food-page__summary-unit">{{ 'common.unit.kcal' | translate }}</span>
+          </p>
+          <p class="food-page__summary-meta">
+            {{
+              'food.page.eatenOfGoal'
+                | translate: { eaten: view.kcalEaten(), goal: view.kcalTarget() }
+            }}
+          </p>
+        </div>
+      </section>
+
+      <div class="food-page__macros">
+        @for (macro of view.macroCards(); track macro.key) {
+          <div class="food-page__macro">
+            <div class="food-page__macro-head">
+              <span>{{ macro.label }}</span>
+              <span>{{ macro.percentLabel }}</span>
+            </div>
+            <app-ui-progress-bar
+              class="food-page__macro-bar"
+              thickness="thin"
+              [value]="macro.progress"
+              [tone]="macro.tone"
+            />
+            <div class="food-page__macro-text">{{ macro.text }}</div>
+          </div>
+        }
+      </div>
+
+      <div class="food-page__actions">
+        <button
+          app-ui-button
+          type="button"
+          class="food-page__add"
+          [loading]="pending()"
+          (click)="openAdd()"
+        >
+          <app-ui-icon name="plus" size="md" [strokeWidth]="3" />
+          {{ 'food.page.addFood' | translate }}
+        </button>
+        <button
+          app-ui-icon-button
+          type="button"
+          tone="outline"
+          class="food-page__scan"
+          [attr.aria-label]="'food.page.scan' | translate"
+          [disabled]="pending()"
+          (click)="openScanner()"
+        >
+          <app-ui-icon name="scan" size="2xl" />
+        </button>
+      </div>
+
+      @if (notice(); as message) {
+        <app-ui-form-error class="food-page__notice" tone="negative" [message]="message" />
+      }
+
+      <div class="food-page__meals">
+        @for (group of view.mealGroups(); track group.id) {
+          <app-food-meal-group
+            [group]="group"
+            (edit)="openEdit($event)"
+            (removed)="removeEntry($event)"
+            (add)="openAddFor(group.id)"
+          />
+        }
+      </div>
+    }
+  }
 
   <div class="food-page__clearance"></div>
 </div>
@@ -86,10 +114,12 @@
   [(meal)]="addMeal"
   [editEntry]="editEntry()"
   [startStep]="pickerStartStep()"
+  [busy]="pending()"
+  [error]="notice()"
   (closed)="closeAdd()"
   (selected)="onSelected($event)"
+  (collectionPicked)="onCollectionPicked($event)"
   (customFoodCreated)="onCustomFoodCreated($event)"
-  (customFoodEdited)="onCustomFoodEdited($event)"
   (scanRequested)="openScanner()"
 />
 
@@ -98,8 +128,20 @@
   [kcalRemaining]="view.kcalRemaining()"
   [mealLabel]="scannerMealLabel()"
   (found)="onScanFound($event)"
-  (customSaved)="onScanCustomSaved($event)"
   (manualRequested)="onScanManual()"
   (noBarcodeRequested)="onScanNoBarcode()"
   (closed)="onScannerClosed()"
+/>
+
+<app-ui-confirm-sheet
+  [open]="removeOpen()"
+  titleKey="food.removeSheet.title"
+  accentKey="food.removeSheet.titleAccent"
+  bodyKey="food.removeSheet.body"
+  [bodyParams]="removeParams()"
+  confirmKey="food.removeSheet.confirm"
+  cancelKey="food.removeSheet.cancel"
+  [busy]="pending()"
+  (closed)="cancelRemove()"
+  (confirmed)="confirmRemove()"
 />

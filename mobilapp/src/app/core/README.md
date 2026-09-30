@@ -29,8 +29,6 @@ rene hjælpefunktioner. `core` må **ikke** importere fra `shared/` eller `featu
   tilstanden i konstruktøren. Nøglerne står i `constants/storage-key.ts`.
 - **Tid injiceres.** Alt der skal kende "nu" bruger `NOW` fra `utils/now.ts` i stedet for
   `new Date()`, så tests kan fastfryse tiden.
-- **Forsinkelser er tokens.** Den kunstige svartid (`FOOD_SEARCH_DELAY_MS`) kan sættes til 0 i
-  tests.
 - **Native plugins bag tokens.** Capacitor-kald ligger i tynde adaptere bag et interface
   (`REMINDER_NOTIFIER`, `BARCODE_SCANNER_PLATFORM`), så specs kan give en fake.
 - **Ingen demo-data.** Appen starter tom: der er hverken egen varedatabase, retter, faste samlinger

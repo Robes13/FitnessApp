@@ -2,8 +2,7 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { FoodItem } from '../../../core/models/food';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
-import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
-import { TEST_GOAL, flushTestGoal } from '../../../core/testing/fixtures';
+import { TEST_GOAL, flushTestGoal, testFoodLog } from '../../../core/testing/fixtures';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { FoodViewService } from './food-view';
 
@@ -50,22 +49,15 @@ const CAKE: FoodItem = {
 describe('FoodViewService', () => {
   afterEach(() => TestBed.inject(HttpTestingController).verify());
 
-  let storage: FakeStorage;
-
   function setup(): { view: FoodViewService; log: FoodLogService } {
     TestBed.configureTestingModule({
-      providers: [...provideCoreTestEnvironment({ storage }), FoodViewService],
+      providers: [...provideCoreTestEnvironment(), FoodViewService],
     });
     flushTestGoal(GOAL);
     const log = TestBed.inject(FoodLogService);
-    log.add(SKYR, 'morgen');
-    log.add(SALAT, 'frokost');
+    log.addLogs([testFoodLog(SKYR, 'morgen'), testFoodLog(SALAT, 'frokost')]);
     return { view: TestBed.inject(FoodViewService), log };
   }
-
-  beforeEach(() => {
-    storage = createFakeStorage();
-  });
 
   it('sums the logged meals against the daily target', () => {
     const { view } = setup();
@@ -105,7 +97,7 @@ describe('FoodViewService', () => {
   it('caps the ring and the remaining number when the day goes over target', () => {
     const { view, log } = setup();
 
-    log.add(CAKE, 'snack');
+    log.addLogs([testFoodLog(CAKE, 'snack')]);
 
     expect(view.kcalEaten()).toBe(2830);
     expect(view.kcalRemaining()).toBe(-830);

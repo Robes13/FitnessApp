@@ -9,14 +9,19 @@ import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
-import { TEST_FOOD, flushTestGoal, weighHistory } from '../../../core/testing/fixtures';
+import { FoodLogDto } from '../../../core/models/food-api';
+import {
+  TEST_FOOD,
+  flushTestGoal,
+  testFoodLog,
+  weighHistory,
+} from '../../../core/testing/fixtures';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { HomeSummaryService } from './home-summary';
 
 /** Thursday, September 24, 2026 – mid-week, so past, today, and future are all in play. */
 const THURSDAY = new Date(2026, 8, 24, 10, 30);
 const THURSDAY_INDEX = 3;
-const THURSDAY_ISO = '2026-09-24';
 const RING_CIRCUMFERENCE = 100.5;
 
 const SKYR: FoodItem = {
@@ -43,6 +48,7 @@ describe('HomeSummaryService', () => {
 
   let storage: FakeStorage;
   let profilePatch: Partial<UserProfile>;
+  let foodLogs: FoodLogDto[];
 
   /** The profile `setup()` gives the user, on top of the API's goal. */
   function storeProfile(patch: Partial<UserProfile>): void {
@@ -51,34 +57,16 @@ describe('HomeSummaryService', () => {
 
   /** Puts meals on today's log, as if the user had logged them themselves. */
   function storeFoodLog(entries: readonly (FoodItem & { meal: MealId })[]): void {
-    storage.setItem(
-      STORAGE_KEY.FOOD_LOG,
-      JSON.stringify({
-        date: THURSDAY_ISO,
-        entries: entries.map(({ meal, ...food }, index) => ({
-          ...food,
-          meal,
-          logId: `log-${index}`,
-          loggedAt: THURSDAY.toISOString(),
-        })),
-      }),
-    );
+    foodLogs.push(...entries.map(({ meal, ...food }) => testFoodLog(food, meal, THURSDAY)));
   }
 
-  /** Puts meals on earlier days in the multi-day format, keyed by `YYYY-MM-DD`. */
+  /** Puts meals on earlier days, keyed by `YYYY-MM-DD`. */
   function storeFoodDays(days: Record<string, readonly FoodItem[]>): void {
-    const stored = Object.fromEntries(
-      Object.entries(days).map(([date, foods]) => [
-        date,
-        foods.map((food, index) => ({
-          ...food,
-          meal: 'frokost',
-          logId: `log-${date}-${index}`,
-          loggedAt: new Date(`${date}T12:00:00`).toISOString(),
-        })),
-      ]),
-    );
-    storage.setItem(STORAGE_KEY.FOOD_LOG, JSON.stringify({ days: stored }));
+    for (const [date, foods] of Object.entries(days)) {
+      foodLogs.push(
+        ...foods.map((food) => testFoodLog(food, 'frokost', new Date(`${date}T12:00:00`))),
+      );
+    }
   }
 
   function storeWeighHistory(): void {
@@ -91,12 +79,14 @@ describe('HomeSummaryService', () => {
     });
     flushTestGoal();
     TestBed.inject(UserProfileService).update(profilePatch);
+    TestBed.inject(FoodLogService).addLogs(foodLogs);
     return TestBed.inject(HomeSummaryService);
   }
 
   beforeEach(() => {
     storage = createFakeStorage();
     profilePatch = {};
+    foodLogs = [];
   });
 
   it('labels today and the week from the injected date', () => {
@@ -237,7 +227,9 @@ describe('HomeSummaryService', () => {
   it('counts today once the calorie target is met', () => {
     const service = setup();
     const target = TestBed.inject(UserProfileService).targets().kcal;
-    TestBed.inject(FoodLogService).add({ ...TEST_FOOD, kcal: target, protein: 500 }, 'aften');
+    TestBed.inject(FoodLogService).addLogs([
+      testFoodLog({ ...TEST_FOOD, kcal: target, protein: 500 }, 'aften', THURSDAY),
+    ]);
 
     expect(service.weekSummary()).toMatchObject({
       hitText: '1',
@@ -291,8 +283,10 @@ describe('HomeSummaryService', () => {
     const foodLog = TestBed.inject(FoodLogService);
     TestBed.inject(WeightLogService).add(74.2);
 
-    foodLog.add(TEST_FOOD, 'aften');
-    foodLog.add(TEST_FOOD, 'snack');
+    foodLog.addLogs([
+      testFoodLog(TEST_FOOD, 'aften', THURSDAY),
+      testFoodLog(TEST_FOOD, 'snack', THURSDAY),
+    ]);
 
     expect(service.todos()).toEqual([]);
     expect(service.nextTodo()).toBeNull();
@@ -305,7 +299,9 @@ describe('HomeSummaryService', () => {
 
     expect(service.goalReached()).toBe(false);
 
-    TestBed.inject(FoodLogService).add({ ...TEST_FOOD, kcal: target }, 'aften');
+    TestBed.inject(FoodLogService).addLogs([
+      testFoodLog({ ...TEST_FOOD, kcal: target }, 'aften', THURSDAY),
+    ]);
 
     expect(service.goalReached()).toBe(true);
     expect(service.daySummary().progressTone).toBe('positive');

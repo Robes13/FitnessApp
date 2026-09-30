@@ -9,26 +9,31 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { concatMap, finalize, from, toArray } from 'rxjs';
+import { API_ERROR_MESSAGE_KEY } from '../../../../core/constants/api';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { NewCollectionInput } from '../../../../core/models/food';
 import { formatGrams } from '../../../../core/utils/date-format';
 import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections/collections';
-import { FoodLogService } from '../../../../core/services/food-log/food-log';
+import {
+  DuplicateCustomFoodNameError,
+  FoodLogService,
+} from '../../../../core/services/food-log/food-log';
 import { injectTranslate } from '../../../../core/services/language/translate';
+import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+import { UiConfirmSheet } from '../../../../shared/components/ui-confirm-sheet/ui-confirm-sheet';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
+import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-icon-button';
 import { UiPageHeader } from '../../../../shared/components/ui-page-header/ui-page-header';
-import { DeleteCollectionSheet } from '../../components/delete-collection-sheet/delete-collection-sheet';
 import { MealPicker } from '../../components/meal-picker/meal-picker';
 import { NewCollectionSheet } from '../../components/new-collection-sheet/new-collection-sheet';
 import { CollectionsViewService } from '../../services/collections-view';
 
 const DEFAULT_MEAL: MealId = 'morgen';
-/** Dishes and bundles are logged as one portion, exactly like the design's `logRecipe`. */
-const LOG_QUANTITY = '1 portion';
 const NOT_FOUND_MESSAGE_KEY = 'collections.recipePage.notFound';
 const NO_CONTENTS_MESSAGE_KEY = 'collections.recipePage.noContents';
 
@@ -41,7 +46,8 @@ interface RecipeStat {
 /**
  * The recipe screen. The route id can be a dish, a whole collection (`col:<id>`) or a standalone
  * food – `CollectionsViewService.detailFor` looks up all three, and the page shows an empty
- * state if nothing matches. "Log X kcal" puts the entry in today's log and switches to Mad.
+ * state if nothing matches. "Log X kcal" puts a collection's items in today's log (one row each,
+ * P13) and switches to Mad; dishes and loose foods don't exist before wave 3 removes them.
  *
  * A user collection (`col:<id>`) can also be edited – the header's pencil reopens
  * `NewCollectionSheet` prefilled – and deleted after a confirmation, which returns to the list.
@@ -49,12 +55,13 @@ interface RecipeStat {
 @Component({
   selector: 'app-recipe-page',
   imports: [
-    DeleteCollectionSheet,
     MealPicker,
     NewCollectionSheet,
     TranslatePipe,
     UiButton,
+    UiConfirmSheet,
     UiEmptyState,
+    UiFormError,
     UiIcon,
     UiIconButton,
     UiPageHeader,
@@ -85,6 +92,10 @@ export class RecipePage {
   protected readonly collection = computed(() => this.view.editableCollectionFor(this.recipeId()));
   protected readonly editOpen = signal(false);
   protected readonly deleteOpen = signal(false);
+  /** The log is running – further taps are ignored. */
+  protected readonly logging = signal(false);
+  /** Translation key of the last failed log. */
+  protected readonly logError = signal<string | null>(null);
   protected readonly notFoundMessageKey = NOT_FOUND_MESSAGE_KEY;
   protected readonly noContentsMessageKey = NO_CONTENTS_MESSAGE_KEY;
 
@@ -137,15 +148,33 @@ export class RecipePage {
     void this.router.navigateByUrl(APP_PATH.COLLECTIONS);
   }
 
+  /**
+   * ponytail: one `add()` per item until `CollectionsService.log()` (wave 3) logs them in one
+   * call; a failure midway keeps the rows logged so far.
+   */
   protected log(): void {
-    const detail = this.detail();
-    if (!detail) {
+    const items = this.collection()?.items ?? [];
+    if (items.length === 0 || this.logging()) {
       return;
     }
-    this.foodLog.add(
-      { id: detail.id, name: detail.title, quantity: LOG_QUANTITY, ...detail.macros },
-      this.meal(),
-    );
-    void this.router.navigateByUrl(APP_PATH.FOOD);
+    const meal = this.meal();
+    this.logging.set(true);
+    this.logError.set(null);
+    from(items)
+      .pipe(
+        concatMap((item) => this.foodLog.add(item, meal)),
+        toArray(),
+        finalize(() => this.logging.set(false)),
+      )
+      .subscribe({
+        next: () => void this.router.navigateByUrl(APP_PATH.FOOD),
+        // A 409 only when another device just created an item's name – the generic text will do.
+        error: (error: unknown) =>
+          this.logError.set(
+            error instanceof DuplicateCustomFoodNameError
+              ? API_ERROR_MESSAGE_KEY.REQUEST_FAILED
+              : toApiError(error).messageKey,
+          ),
+      });
   }
 }

@@ -1,6 +1,6 @@
 # Services
 
-Singletons (`providedIn: 'root'`). Stores er signal-baserede; de lokale gemmer via `StorageService`, de API-baserede (`UserProfileService`) henter og gemmer via API'et.
+Singletons (`providedIn: 'root'`). Stores er signal-baserede; de lokale gemmer via `StorageService`, de API-baserede (`UserProfileService`, `FoodLogService`) henter og gemmer via API'et.
 
 Hver service har sin egen mappe med implementering og tests. Tilhørende adaptere ligger sammen med servicen: `keyboard-platform.ts` i `keyboard/`, `system-bars-platform.ts` i `theme/` og `reminder-notifier.ts` med sine tests i `reminders/`.
 
@@ -17,11 +17,12 @@ Hver service har sin egen mappe med implementering og tests. Tilhørende adapter
 | `session/session.ts`                           | `SessionService`                                       | Sessionen mod API'et: `status` (`guest` · `pending-verification` · `authenticated`), tokens, `register`, `login` (e-mail eller brugernavn; 403 → `pending-verification`), `checkVerification`, `resendVerification`, `logout`, `deleteAccount`, `accessToken()`, single-flight `refresh()` og `renewOnOpen()`. Log ud rører ikke lokale data.                                                      |
 | `session-data/session-data.ts`                 | `SessionDataService` + `SESSION_DATA_STORES`           | Kalder `load()` på alle registrerede stores (profil, vægt, mad, samlinger), når sessionen bliver `authenticated`, og `reset()`, når den bliver `guest`. Se [`session-data/README.md`](session-data/README.md).                                                                                                                                                                                     |
 | `user-profile/user-profile.ts`                 | `UserProfileService`                                   | API-baseret `SessionDataStore`: profilen som ét signal plus `status`, `goal`, `targets` (API'ets kalorie- og makromål, afrundet), `calorieFloorApplied`, `displayName`, `age`, `bmi`, `activityLevel` m.fl. `load()`, `save(patch)` (routes pr. felt), `reloadGoal()`; `update`/`replace`/`resetToDefaults` kun i hukommelsen. Mapningen ligger i `profile-mapping.ts`. Se "Profil og kaloriemål". |
-| `food-log/food-log.ts`                         | `FoodLogService`                                       | Madlog pr. dag i 90 dage: dagens dato som signal (`today`, skifter ved midnat), dagens (`entries`, `totals`, `byMeal`), tidligere dage (`entriesFor`, `totalsFor`, `dailyTotals`, `allEntries`) og egne varer (`addCustomFood`, `updateCustomFood`, `hasCustomFoodNamed`).                                                                                                                         |
-| `food-search/food-search.ts`                   | `FoodSearchService` + `FOOD_SEARCH_DELAY_MS`           | Søgning i brugerens egne varer, max 6. Der findes ingen varedatabase endnu.                                                                                                                                                                                                                                                                                                                        |
+| `food-log/food-log.ts`                         | `FoodLogService`                                       | API-baseret `SessionDataStore`: brugerens katalog (`foods`, `customFoods`) og madlog for 90 dage (`status`, `today`, `entries`, `totals`, `byMeal` fra `mealType`, `entriesFor`, `totalsFor`, `dailyTotals`, `allEntries`). Mutationer som `Observable`: `add`, `update` (kun mængden), `remove`, `addCustomFood`, `ensureFood`; `addLogs` lægger rækker ind. Se "Madloggen".                      |
+| `food-log/food-log-mapping.ts`                 | –                                                      | Rene funktioner: `toFoodItem(FoodDto)` (basisportion fra servings), `toLoggedFood(FoodLogDto)` (bruges også af historikken), `toPer100(makroer, mængde)` og `toApiUnit(token)`.                                                                                                                                                                                                                    |
+| `food-search/food-search.ts`                   | `FoodSearchService`                                    | Søgning i brugerens indlæste katalog (API'et har ingen fælles varedatabase), max 6, nyeste først. Svarer straks (`of`).                                                                                                                                                                                                                                                                            |
 | `barcode-scanner/barcode-scanner.ts`           | `BarcodeScannerService` + `BARCODE_SCANNER_PLATFORM`   | Kameraet via `@capacitor-mlkit/barcode-scanning` bag interfacet `BarcodeScannerPlatform`. `scan()` kaster aldrig, men giver et `BarcodeScanOutcome` (`scanned`, `cancelled`, `permission-denied`, `unreadable`, `module-installing`, `unavailable`). `canScan` er `false` i browseren. `openSettings()`, og `recordScan()` tæller opslag til badget.                                               |
 | `product-lookup/product-lookup.ts`             | `ProductLookupService`                                 | `lookup(barcode)` → `ProductLookupResult` (`found` / `not-found` / `error`). Open Food Facts API v2 via `HttpClient`, timeout `PRODUCT_LOOKUP_TIMEOUT_MS`, mapper `OpenFoodFactsProductResponse` til `ScannedProduct` (makroer pr. 100 g, `servingGrams`). Cacher fundne varer lokalt og spørger cachen først.                                                                                     |
-| `barcode-flow/barcode-flow.ts`                 | `BarcodeFlowService`                                   | Facade for stregkodescanneren i `shared/`: `scan`, `lookup` (tæller én scanning pr. opslag), `scale` (varen skaleret til en mængde i dens egen enhed), `isCustomFoodNameTaken` og `toCustomFood`. Holder domænelogikken ude af den delte komponent.                                                                                                                                                |
+| `barcode-flow/barcode-flow.ts`                 | `BarcodeFlowService`                                   | Facade for stregkodescanneren i `shared/`: `scan`, `lookup` (tæller én scanning pr. opslag), `scale` (varen skaleret til en mængde i dens egen enhed). Holder domænelogikken ude af den delte komponent. Logges en scannet vare, opretter `FoodLogService.ensureFood` den.                                                                                                                         |
 | `weight-log/weight-log.ts`                     | `WeightLogService`                                     | Vejninger nyeste først, `latest`, `weighedToday`, `add`/`update`/`remove` (højst én pr. dag), `entriesWithin`, grafens punkter (`seriesFor`). Holder profilens vægt lig seneste vejning.                                                                                                                                                                                                           |
 | `reminders/reminders.ts`                       | `ReminderService`                                      | Brugerens påmindelser (morgenmad, frokost, aftensmad, vejning, dagens madlog): `settings`, `update`, `setMasterEnabled`, `requestPermission`, `permission`, `isDelivering`, `sync`. Planlægger lokale notifikationer via `REMINDER_NOTIFIER`.                                                                                                                                                      |
 | `reminders/reminder-notifier.ts`               | `REMINDER_NOTIFIER` + `CapacitorReminderNotifier`      | Tynd adapter om `@capacitor/local-notifications` bag interfacet `ReminderNotifier`, så `ReminderService` kan testes med en fake. Utilgængelig i browseren. Planlægger altid med `isExactNotification: false` (se "Påmindelser").                                                                                                                                                                   |
@@ -38,8 +39,9 @@ SessionService ──► AuthApi ──► HttpClient (+ authInterceptor ──�
       └──────────► UserProfileService ──► HttpClient, NutritionCalculator
 SessionDataService ► SessionService, SESSION_DATA_STORES
 WeightLogService ► UserProfileService
+FoodLogService ► HttpClient, ProductLookupService, NutritionCalculator
 FoodSearchService ► FoodLogService
-BarcodeFlowService ► BarcodeScannerService, ProductLookupService, FoodLogService, NutritionCalculator
+BarcodeFlowService ► BarcodeScannerService, ProductLookupService, NutritionCalculator
 ReminderService ─► SessionService, UserProfileService, REMINDER_NOTIFIER
 alle stores ─────► StorageService, NOW
 ```
@@ -50,19 +52,30 @@ Ingen service kender til `shared/` eller `features/`.
 
 - **Ingen seed.** Alle stores starter tomme. Skærmene viser deres tomme tilstand, indtil
   brugeren selv registrerer noget – eller indtil backenden leverer data.
-- **Madloggen gemmes pr. dag.** Formatet er `{ days: { 'YYYY-MM-DD': LoggedFood[] } }`, og
-  dage ældre end `FOOD_LOG_RETENTION_DAYS` (90, i dag medregnet) og tomme dage fjernes.
-  Det gamle format `{ date, entries }` læses stadig og bliver til én dag. `entries` /
-  `totals` / `byMeal` er altid dagens; kun dagens log kan ændres (`add` / `update` /
-  `remove`), så en forældet redigering efter midnat ikke rører gårsdagen. Datoskift
-  kontrolleres ved midnat, ved tilbagevenden til appen og før ændringer i loggen. Egne varer
-  gemmes separat. `updateCustomFood` ændrer kun varen – allerede loggede poster beholder de
-  tal, de blev logget med. Dage i storage, der ikke er et array, droppes ved indlæsning.
+- **Madloggen** (plan-v2 P11/P12). `load()` henter alle sider af `GET foods?limit=100`
+  (brugerens katalog – API'et har ingen fælles database) og af
+  `GET me/food-logs?from=<lokal dag i dag − 89>&to=<i morgen>&limit=100` parallelt og fejler
+  aldrig (`status` `'error'`). Intet gemmes på enheden; lokale data fra før API'et migreres ikke.
+  `entries` / `totals` / `byMeal` er dagens (måltidet er rækkens `mealType`); datoskift
+  kontrolleres ved midnat, ved tilbagevenden til appen og før en logning. Værdierne afrundes
+  pr. række (`Math.round`) og summeres i appen, så summen passer til de viste rækker.
+- **Pessimistiske mutationer.** Hukommelsen ændres først fra API'ets svar, og en fejl er en
+  `ApiError` (`toApiError`) – eller `DuplicateCustomFoodNameError`, når `POST foods` giver 409.
+  `add(food, meal)` = `ensureFood(food)` → `POST me/food-logs { foodId, quantity, unit,
+consumedAt: nu, mealType }`. `update(logId, { quantity })` = `PATCH` af kun mængde og enhed
+  (API'et genberegner og beholder måltidet; der er ingen `PATCH foods`). `remove` = `DELETE`;
+  404 (allerede væk) fjerner rækken og fejler med `food.page.notFound`.
+- **`ensureFood(item)`** finder eller opretter API-madvaren bag en vare: et katalog-id er den
+  vare; en scannet vare (`off-<stregkode>`) er katalogvaren med samme stregkode eller en ny fra
+  `ProductLookupService` (svarer fra sin cache) – 409 prøves én gang med `navn (brand eller
+stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under sit eget id) er
+  katalogvaren med samme navn eller en ny ud fra varens egen portion (`toPer100`). Bagefter
+  oprettes den serving, logningens enhed kræver (`SERVING_GRAMS_PER_UNIT`, `PUT` = upsert), hvis
+  den mangler – så en halvt oprettet vare heles ved næste forsøg. Rækkefølgen er altid
+  `POST foods` → `PUT servings` → `POST me/food-logs`.
 - **Egne varers navne er unikke** (trimmet, uden forskel på store/små bogstaver, via
-  `normalizeName` i `utils/name.ts` – samme regel som samlinger). `addCustomFood` og
-  `updateCustomFood` kaster `DuplicateCustomFoodNameError`; UI'et tjekker med
-  `hasCustomFoodNamed` først. `addCustomFood(input, id?)` tager et valgfrit id, så vare-vælgeren
-  kan bestemme id'et én gang, og den loggede post peger på den gemte egne vare.
+  `normalizeName` i `utils/name.ts` – API'ets 409-regel). UI'et tjekker med
+  `hasCustomFoodNamed` først; `DuplicateCustomFoodNameError` er reserven.
 - **Højst én vejning pr. dag.** `add` på en dag med vejninger genbruger den nyeste vejnings id
   og fjerner alle andre fra samme dag (ældre data kan have flere).
 - **`AuthApi` er en tynd HTTP-klient.** Én metode pr. endpoint i `AUTH_ENDPOINT`, bodies som
@@ -110,8 +123,6 @@ Ingen service kender til `shared/` eller `features/`.
   refresh-token revokeres. E-mailen og konto-id'et huskes.
 - **`seriesFor(range)`** er brugerens egne vejninger inden for intervallet, ældste først.
   Uden vejninger er den tom, og grafen viser sin tomme tilstand.
-- **Forsinkelser** (`FOOD_SEARCH_DELAY_MS`) er `InjectionToken`s med `providedIn: 'root'`-fabrik, så tests sætter dem til
-  0 uden at ændre produktionskoden.
 - **Stregkodescanning** bruger pluginets færdige `scan()`-UI. På Android er det Googles
   kodescanner (ingen kameratilladelse, men Googles stregkodemodul – mangler det, startes
   installationen, og udfaldet er `module-installing`). På iOS spørges om kameraadgang først.

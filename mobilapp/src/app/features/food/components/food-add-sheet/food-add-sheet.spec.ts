@@ -3,14 +3,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FoodCollection, FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections/collections';
-import { FoodLogService } from '../../../../core/services/food-log/food-log';
+import { flushTestFoodLog, testFood } from '../../../../core/testing/fixtures';
 import { TEST_NOW, provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 import { FoodPickerStartStep } from '../../../../shared/components/food-picker/food-picker';
 import { FoodAddSheet } from './food-add-sheet';
 
 /**
- * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`,
- * a frozen `NOW` and 0ms mock delays. The browser's storage is cleared per test.
+ * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT` and a
+ * frozen `NOW`. The browser's storage is cleared per test.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
 
@@ -45,6 +45,7 @@ const NO_COLLECTIONS: Pick<CollectionsService, 'collections' | 'collectionTotals
       [startStep]="startStep()"
       (closed)="closes = closes + 1"
       (selected)="selected.push($event)"
+      (collectionPicked)="collectionsPicked.push($event)"
       (scanRequested)="scans = scans + 1"
     />
   `,
@@ -55,6 +56,7 @@ class Host {
   readonly editEntry = signal<LoggedFood | null>(null);
   readonly startStep = signal<FoodPickerStartStep>('search');
   readonly selected: FoodItem[] = [];
+  readonly collectionsPicked: (readonly FoodItem[])[] = [];
   closes = 0;
   scans = 0;
 }
@@ -145,7 +147,7 @@ describe('FoodAddSheet', () => {
     expect(text('.food-picker__title')).toBe('Kyllingesalat');
   });
 
-  it('lists the collections that have content and logs one as a single item', async () => {
+  it('lists the collections that have items and picks one as its items', async () => {
     // The app has no fixed collections – the user has to have created one themselves.
     const { host, root, settle } = await setup(undefined, [], () => {
       TestBed.inject(CollectionsService).create({
@@ -172,16 +174,8 @@ describe('FoodAddSheet', () => {
     rows[0]?.click();
     await settle();
 
-    const totals = first ? collections.collectionTotals(first) : null;
-    expect(host.selected[0]).toEqual({
-      id: first?.id,
-      name: first?.name,
-      quantity: `${totals?.count} varer`,
-      kcal: totals?.kcal,
-      protein: totals?.protein,
-      carbs: totals?.carbs,
-      fat: totals?.fat,
-    });
+    expect(host.collectionsPicked).toEqual([first?.items]);
+    expect(host.selected).toEqual([]);
   });
 
   it('explains how to build a collection when there are none', async () => {
@@ -211,14 +205,7 @@ describe('FoodAddSheet', () => {
   it('keeps the meal chips but drops the tabs on the portion step', async () => {
     // Search only finds the user's own foods, so there has to be one to select.
     const { root, settle } = await setup(undefined, [], () => {
-      TestBed.inject(FoodLogService).addCustomFood({
-        name: 'Havregryn',
-        quantity: '60 g',
-        kcal: 222,
-        protein: 8,
-        carbs: 38,
-        fat: 4,
-      });
+      flushTestFoodLog([testFood({ foodId: 1, name: 'Havregryn', caloriesPer100: 370 })]);
     });
 
     root.querySelector<HTMLButtonElement>('.food-picker__result')?.click();

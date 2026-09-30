@@ -19,6 +19,7 @@ App-dækkende typer, én fil pr. domæne. Kun typer – ingen logik.
 | `api.ts`             | API'ets fælles former: `CursorPage<T>` (`items`, `nextCursor`, `hasMore`), `ProblemDetails` (alle tre fejlformer; `errors` ved valideringsfejl) og `StoreStatus` (`idle` · `loading` · `ready` · `error` for API-baserede stores)                                              |
 | `barcode.ts`         | `BarcodeScanOutcome` (hvordan en kamerascanning endte), `CameraPermission`, `BarcodeScannerPlatform` (kameraet bag et interface), `ScannedProduct` (vare pr. 100 g + `servingGrams`) og `ProductLookupResult`                                                                  |
 | `open-food-facts.ts` | Open Food Facts' API-model: `OpenFoodFactsProductResponse`, `OpenFoodFactsProduct`, `OpenFoodFactsNutriments`. Mappes til `ScannedProduct` i `ProductLookupService`                                                                                                            |
+| `food-api.ts`        | Mad-API'ets kontrakt: `ApiQuantityUnit`, `ApiMealType`, `FoodDto`, `FoodServingDto`, `CreateFoodRequest`, `UpsertFoodServingRequest`, `FoodLogDto`, `CreateFoodLogRequest`, `UpdateFoodLogRequest` – se Konventioner.                                                          |
 | `profile-api.ts`     | Profil-API'ets kontrakt: `UserProfileDto`, `PatchUserProfileRequest` (alle felter valgfri), `UserGoalDto` (API'ets kalorie- og makromål), `CreateUserGoalRequest`, `UserSettingDto`, `UpsertUserSettingRequest`, `LatestWeightDto`. Mappes i `user-profile/profile-mapping.ts` |
 | `auth.ts`            | Auth-API'ets kontrakt: `RegisterRequest` (fladt), `UserDto`, `LoginRequest` (`emailOrUsername`), `AuthResponse`, `RefreshRequest`, `IdentifierRequest` (gensend og glemt adgangskode) og enum-værdierne `ApiGender`, `ApiTrainingIntensity`, `ApiGoalType`                     |
 
@@ -30,6 +31,9 @@ App-dækkende typer, én fil pr. domæne. Kun typer – ingen logik.
 - `DailyFoodTotals` er én dags summerede makroer fra madloggen; `entryCount` er 0 på dage
   uden log. `CustomFoodInput` er de felter, en egen vare oprettes og redigeres med.
   `NutritionCalculator.parseQuantity()` splitter den i tal og enhed.
+- `food-api.ts` er mad-API'ets former: `FoodDto` er brugerens egen vare pr. 100 g med sine
+  `servings`, og `FoodLogDto` har de forbrugte værdier og `mealType`. De mappes i
+  `food-log/food-log-mapping.ts`.
 - `FoodCollection.icon` er typen `CollectionIconName` fra `constants/collection-icons.ts`.
 - **API-modeller er adskilt fra UI-modeller.** Typerne i `auth.ts`/`api.ts` har API'ets
   camelCase-navne og PascalCase-enums (`'Male'`, `'LoseWeight'`); mapningen til appens egne

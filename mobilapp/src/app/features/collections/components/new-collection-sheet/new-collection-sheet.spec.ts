@@ -1,3 +1,4 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { Component, Provider, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -5,9 +6,10 @@ import { FoodCollection, NewCollectionInput } from '../../../../core/models/food
 import { MealId } from '../../../../core/models/meal';
 import { NewCollectionSheet } from './new-collection-sheet';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
-import { FoodLogService } from '../../../../core/services/food-log/food-log';
+import { FoodItem } from '../../../../core/models/food';
 import { CollectionsService } from '../../../../core/services/collections/collections';
-import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
+import { FoodLogService } from '../../../../core/services/food-log/food-log';
+import { flushTestFoodLog, testFood } from '../../../../core/testing/fixtures';
 import { FoodPicker } from '../../../../shared/components/food-picker/food-picker';
 
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
@@ -90,20 +92,15 @@ describe('NewCollectionSheet', () => {
   beforeEach(async () => {
     localStorage.clear();
     TestBed.configureTestingModule({ imports: [Host], providers: TEST_PROVIDERS });
-    // Search only finds the user's own foods – the app has no food database.
-    TestBed.inject(FoodLogService).addCustomFood({
-      name: 'Havregryn',
-      quantity: '60 g',
-      kcal: 222,
-      protein: 8,
-      carbs: 38,
-      fat: 4,
-    });
+    // Search only finds the user's own foods – the API has no shared food database.
+    flushTestFoodLog([testFood({ foodId: 1, name: 'Havregryn', caloriesPer100: 370 })]);
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     root = fixture.nativeElement as HTMLElement;
     await settle();
   });
+
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
 
   it('opens on the meal it was given and shows the first twelve icons', () => {
     const meals = Array.from(root.querySelectorAll<HTMLElement>('.meal-picker__option'));
@@ -231,9 +228,9 @@ describe('NewCollectionSheet', () => {
     expect(root.querySelector('app-ui-empty-state')).not.toBeNull();
   });
 
-  it('saves a custom food from the picker under its own id', async () => {
+  it('saves a custom food from the picker under "My foods"', async () => {
     await click(buttonByText('Søg vare'));
-    const custom = {
+    const custom: FoodItem = {
       id: 'food-picked',
       name: 'Egen bar',
       quantity: '1 stk',
@@ -247,22 +244,40 @@ describe('NewCollectionSheet', () => {
     fixture.debugElement
       .query(By.directive(FoodPicker))
       .triggerEventHandler('customFoodCreated', custom);
+    const http = TestBed.inject(HttpTestingController);
+    http
+      .expectOne({ method: 'POST', url: '/api/v1/foods' })
+      .flush(testFood({ foodId: 2, name: 'Egen bar', caloriesPer100: 150 }));
+    http
+      .expectOne({ method: 'PUT', url: '/api/v1/foods/2/servings/Piece' })
+      .flush({ foodServingId: 1, unit: 'Piece', gramsPerUnit: 100 });
     await settle();
 
-    expect(TestBed.inject(FoodLogService).customFoods()[0]?.id).toBe('food-picked');
+    expect(TestBed.inject(FoodLogService).customFoods()[0]).toMatchObject({
+      name: 'Egen bar',
+      quantity: '1 stk',
+    });
   });
 
-  it('still drafts a scanned food whose name is taken and explains why it was not saved', async () => {
-    fixture.debugElement.query(By.directive(BarcodeScanner)).triggerEventHandler('customSaved', {
-      id: 'food-scan',
-      name: ' HAVREGRYN',
-      quantity: '1 stk',
-      kcal: 150,
-      protein: 5,
-      carbs: 0,
-      fat: 0,
-      isCustom: true,
+  it('still drafts a new food whose name is taken and explains why it was not saved', async () => {
+    await click(buttonByText('Søg vare'));
+    fixture.debugElement.query(By.directive(FoodPicker)).triggerEventHandler('picked', {
+      item: {
+        id: 'food-new',
+        name: 'Havregryn',
+        quantity: '1 stk',
+        kcal: 150,
+        protein: 5,
+        carbs: 0,
+        fat: 0,
+        isCustom: true,
+      },
+      amount: 1,
+      unit: 'stk',
     });
+    TestBed.inject(HttpTestingController)
+      .expectOne({ method: 'POST', url: '/api/v1/foods' })
+      .flush({ status: 409 }, { status: 409, statusText: 'Conflict' });
     await settle();
 
     expect(TestBed.inject(FoodLogService).customFoods()).toHaveLength(1);
@@ -270,7 +285,7 @@ describe('NewCollectionSheet', () => {
       Array.from(root.querySelectorAll('.new-collection-sheet__item-name')).map((el) =>
         normalize(el.textContent),
       ),
-    ).toEqual(['HAVREGRYN']);
+    ).toEqual(['Havregryn']);
     expect(
       normalize(root.querySelector('.new-collection-sheet__custom-error')?.textContent),
     ).toContain('allerede en egen vare med navnet');

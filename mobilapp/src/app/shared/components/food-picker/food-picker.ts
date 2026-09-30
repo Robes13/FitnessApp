@@ -10,6 +10,7 @@ import {
   linkedSignal,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { newId } from '../../../core/utils/id';
@@ -22,13 +23,21 @@ import {
   Validators,
 } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { concat, map, of, switchMap } from 'rxjs';
+import { map, switchMap } from 'rxjs';
+import { PRODUCT_BASE_UNIT } from '../../../core/constants/barcode';
+import {
+  FOOD_LOG_MAX_KCAL,
+  FOOD_LOG_MAX_MACRO_GRAMS,
+  FOOD_NAME_MAX_LENGTH,
+  MAX_KCAL_PER_100_GRAMS,
+} from '../../../core/constants/food';
 import { DEFAULT_QUANTITY_UNIT } from '../../../core/constants/nutrition';
 import { FoodItem, Macros } from '../../../core/models/food';
 import { CUSTOM_FOOD_ID_PREFIX, FoodLogService } from '../../../core/services/food-log/food-log';
 import { FoodSearchService } from '../../../core/services/food-search/food-search';
 import { injectTranslate } from '../../../core/services/language/translate';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
+import { normalizeName } from '../../../core/utils/name';
 import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiButton } from '../ui-button/ui-button';
 import { UiChip } from '../ui-chip/ui-chip';
@@ -36,7 +45,6 @@ import { UiEmptyState } from '../ui-empty-state/ui-empty-state';
 import { IconName } from '../ui-icon/icon-registry';
 import { UiIcon } from '../ui-icon/ui-icon';
 import { UiIconButton } from '../ui-icon-button/ui-icon-button';
-import { UiSpinner } from '../ui-spinner/ui-spinner';
 import { UiTextInput } from '../ui-text-input/ui-text-input';
 
 export type FoodPickerStep = 'search' | 'new-food' | 'portion';
@@ -70,25 +78,12 @@ interface NewFoodForm {
   fat: FormControl<number | null>;
 }
 
-/** The custom food's own nutrition, editable while a logged custom food is edited. */
-interface MacroForm {
-  kcal: FormControl<number | null>;
-  protein: FormControl<number | null>;
-  carbs: FormControl<number | null>;
-  fat: FormControl<number | null>;
-}
-
 interface PortionStat {
   readonly label: string;
   readonly value: number;
   readonly accent: boolean;
 }
 
-type SearchState =
-  | { readonly status: 'loading' }
-  | { readonly status: 'ready'; readonly results: readonly FoodItem[] };
-
-const SEARCHING: SearchState = { status: 'loading' };
 const EMPTY_RESULTS: readonly FoodItem[] = [];
 const EMPTY_MACROS: Macros = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
 
@@ -98,10 +93,13 @@ const FOOD_UNITS: readonly FoodUnitOption[] = [
   { id: 'portion', labelKey: 'shared.foodPicker.unit.portion' },
 ];
 const DEFAULT_FOOD_UNIT: FoodUnitId = 'g';
-/** Amount when the "Portion" field is left empty (design's `parseFloat(nfAmt) || 1`). */
+/** Amount when the "Portion" field is left empty (design's `parseFloat(nfAmt) || 1`) – also the least one. */
 const DEFAULT_NEW_FOOD_AMOUNT = 1;
+const PER_100 = 100;
 
-/** Step for −/+ and drag: 5 for grams, otherwise 1 (design's `pickStep`). */
+/** Units measured like grams (5-steps, chips from the base portion); any other unit is counted. */
+const MEASURED_UNITS: readonly string[] = [DEFAULT_QUANTITY_UNIT, PRODUCT_BASE_UNIT.MILLILITRES];
+/** Step for −/+ and drag: 5 for grams and ml, otherwise 1 (design's `pickStep`). */
 const GRAM_STEP = 5;
 const PIECE_STEP = 1;
 /** Pixels per step when the number is dragged sideways (design's `pickDragMove`). */
@@ -133,6 +131,9 @@ const EMPTY_MESSAGE_KEY = {
 const DUPLICATE_NAME_ERROR_KEY = 'shared.foodPicker.duplicateName';
 const MACRO_ERROR_KEY = 'shared.foodPicker.macroError';
 const KCAL_ERROR_KEY = 'shared.foodPicker.kcalError';
+const VALUE_TOO_LARGE_KEY = 'shared.foodPicker.valueTooLarge';
+/** The portion would overflow one log (`FOOD_LOG_MAX_KCAL` / `FOOD_LOG_MAX_MACRO_GRAMS`). */
+const AMOUNT_TOO_LARGE_KEY = 'shared.foodPicker.amountTooLarge';
 const STAT_LABEL_KEY = {
   kcal: 'common.unit.kcal',
   protein: 'shared.foodPicker.stat.protein',
@@ -153,17 +154,31 @@ interface DragState {
   readonly startAmount: number;
 }
 
-/** Validators shared by "New custom item" and the macro editing on the portion step. */
-function kcalControl(value: number | null): FormControl<number | null> {
-  return new FormControl<number | null>(value, [Validators.required, Validators.min(1)]);
+/**
+ * The upper bounds keep the food's per-100 values and one log of its portion inside the API's
+ * `numeric(7,2)` (otherwise a 500).
+ */
+function macroControl(): FormControl<number | null> {
+  return new FormControl<number | null>(null, [
+    nonNegative,
+    Validators.max(FOOD_LOG_MAX_MACRO_GRAMS),
+  ]);
 }
 
-function macroControl(value: number | null): FormControl<number | null> {
-  return new FormControl<number | null>(value, [nonNegative]);
-}
-
-function hasNegativeMacro(values: readonly (number | null)[]): boolean {
-  return values.some((value) => value !== null && (!Number.isFinite(value) || value < 0));
+/** A portion in grams can't hold more than 900 kcal per 100 g, nor more macros than it weighs. */
+function plausibleForGrams(group: AbstractControl): ValidationErrors | null {
+  const { amount, unit, kcal, protein, carbs, fat } = (
+    group as FormGroup<NewFoodForm>
+  ).getRawValue();
+  const grams = amount ?? DEFAULT_NEW_FOOD_AMOUNT;
+  // Too small an amount is the amount field's own `min` error.
+  if (unit !== DEFAULT_QUANTITY_UNIT || grams < DEFAULT_NEW_FOOD_AMOUNT) {
+    return null;
+  }
+  const tooMuch =
+    ((kcal ?? 0) * PER_100) / grams > MAX_KCAL_PER_100_GRAMS ||
+    (protein ?? 0) + (carbs ?? 0) + (fat ?? 0) > grams;
+  return tooMuch ? { tooLarge: true } : null;
 }
 
 function nonNegative(control: AbstractControl<number | null>): ValidationErrors | null {
@@ -184,7 +199,8 @@ function notBlank(control: AbstractControl<string>): ValidationErrors | null {
  *
  * Search goes through `FoodSearchService`; scaling and portion parsing through
  * `NutritionCalculator`. The macros in `picked.item` are already scaled, and `quantity` is
- * `${amount} ${unit}`, so the parent can log the item directly.
+ * `${amount} ${unit}`, so the parent can log the item directly. After `picked` the step stays
+ * put – both parents close the picker once the pick is saved, and `busy` covers the wait.
  */
 @Component({
   selector: 'app-food-picker',
@@ -196,7 +212,6 @@ function notBlank(control: AbstractControl<string>): ValidationErrors | null {
     UiEmptyState,
     UiIcon,
     UiIconButton,
-    UiSpinner,
     UiTextInput,
     TranslatePipe,
   ],
@@ -210,24 +225,19 @@ export class FoodPicker {
   readonly initialQuery = input('');
   /** Start on the search or directly on "New custom item" (the scanner's "The item has no barcode"). */
   readonly startStep = input<FoodPickerStartStep>('search');
-  /** Edit an already logged item: starts on the portion step with the item's own amount. */
+  /** Edit an already logged item: starts on the portion step, and only the amount can change (spec 3.3). */
   readonly editItem = input<FoodItem | null>(null);
-  /**
-   * The user's own food that `editItem` was logged from. When set (and custom), the portion
-   * step uses it as the base and also lets the user edit its kcal and macros; saving then
-   * emits `customFoodEdited` before `picked`. Without it only the amount can be changed.
-   */
-  readonly editBaseItem = input<FoodItem | null>(null);
   readonly ctaVerb = input<FoodPickerCtaVerb>('Tilføj');
   /** Primary button on "New custom item", e.g. `'Save and log under breakfast'`. */
   readonly saveAndLogLabel = input.required<string>();
   readonly showScan = input(true, { transform: booleanAttribute });
+  /** The parent is saving the pick: the primary buttons show a spinner and block further taps. */
+  readonly busy = input(false, { transform: booleanAttribute });
 
+  /** A portion – or "Save and log …", whose new food the parent creates via `FoodLogService.ensureFood`. */
   readonly picked = output<FoodPickerSelection>();
-  /** New custom item – both for "Save without logging" and "Save and log …" (here `picked` follows after). */
+  /** New custom item from "Save without logging". */
   readonly customFoodCreated = output<FoodItem>();
-  /** The edited custom food (base portion, new macros) – only while editing a custom food. */
-  readonly customFoodEdited = output<FoodItem>();
   readonly scanRequested = output<void>();
   readonly stepChange = output<FoodPickerStep>();
   /** Back from the portion step when there's no search to return to (editing). */
@@ -251,34 +261,16 @@ export class FoodPicker {
 
   protected readonly queryControl = new FormControl('', { nonNullable: true });
   private readonly query = toSignal(this.queryControl.valueChanges, { initialValue: '' });
-  /** Counts up when the results need to be fetched again with the same search text (new custom item saved). */
-  private readonly searchVersion = signal(0);
-  private readonly searchRequest = computed(
-    () => ({ query: this.query(), version: this.searchVersion() }),
-    { equal: (a, b) => a.query === b.query && a.version === b.version },
+  /** Searches again when the text or the catalogue changes (e.g. a new custom food was saved). */
+  private readonly searchRequest = computed(() => ({
+    query: this.query(),
+    foods: this.foodLog.foods(),
+  }));
+  protected readonly results = toSignal(
+    toObservable(this.searchRequest).pipe(switchMap(({ query }) => this.foodSearch.search(query))),
+    { initialValue: EMPTY_RESULTS },
   );
-  private readonly searchState = toSignal(
-    toObservable(this.searchRequest).pipe(
-      switchMap(({ query }) =>
-        concat(
-          of(SEARCHING),
-          this.foodSearch
-            .search(query)
-            .pipe(map((results): SearchState => ({ status: 'ready', results }))),
-        ),
-      ),
-    ),
-    { initialValue: SEARCHING },
-  );
-
-  protected readonly isSearching = computed(() => this.searchState().status === 'loading');
-  protected readonly results = computed(() => {
-    const state = this.searchState();
-    return state.status === 'ready' ? state.results : EMPTY_RESULTS;
-  });
-  protected readonly hasNoMatches = computed(
-    () => !this.isSearching() && this.results().length === 0,
-  );
+  protected readonly hasNoMatches = computed(() => this.results().length === 0);
   protected readonly emptyMessage = computed(() =>
     this.t(this.query().trim() === '' ? EMPTY_MESSAGE_KEY.blank : EMPTY_MESSAGE_KEY.noMatches),
   );
@@ -292,15 +284,26 @@ export class FoodPicker {
   // --- New custom item -------------------------------------------------------------------
 
   protected readonly units = FOOD_UNITS;
-  protected readonly form = new FormGroup<NewFoodForm>({
-    name: new FormControl('', { nonNullable: true, validators: [notBlank] }),
-    amount: new FormControl<number | null>(null),
-    unit: new FormControl<FoodUnitId>(DEFAULT_FOOD_UNIT, { nonNullable: true }),
-    kcal: kcalControl(null),
-    protein: macroControl(null),
-    carbs: macroControl(null),
-    fat: macroControl(null),
-  });
+  protected readonly nameMaxLength = FOOD_NAME_MAX_LENGTH;
+  protected readonly form = new FormGroup<NewFoodForm>(
+    {
+      name: new FormControl('', {
+        nonNullable: true,
+        validators: [notBlank, Validators.maxLength(FOOD_NAME_MAX_LENGTH)],
+      }),
+      amount: new FormControl<number | null>(null, [Validators.min(DEFAULT_NEW_FOOD_AMOUNT)]),
+      unit: new FormControl<FoodUnitId>(DEFAULT_FOOD_UNIT, { nonNullable: true }),
+      kcal: new FormControl<number | null>(null, [
+        Validators.required,
+        Validators.min(1),
+        Validators.max(FOOD_LOG_MAX_KCAL),
+      ]),
+      protein: macroControl(),
+      carbs: macroControl(),
+      fat: macroControl(),
+    },
+    { validators: [plausibleForGrams] },
+  );
   private readonly formValue = toSignal(
     this.form.valueChanges.pipe(map(() => this.form.getRawValue())),
     { initialValue: this.form.getRawValue() },
@@ -308,17 +311,39 @@ export class FoodPicker {
   private readonly formValid = toSignal(this.form.statusChanges.pipe(map(() => this.form.valid)), {
     initialValue: this.form.valid,
   });
-  /** Case-insensitive, trimmed match against the user's own foods. */
-  protected readonly nameError = computed(() =>
-    this.foodLog.hasCustomFoodNamed(this.formValue().name)
-      ? this.t(DUPLICATE_NAME_ERROR_KEY)
-      : null,
+  /**
+   * The new food last sent to the parent. Its name isn't "taken": a save that failed after the
+   * food was created can be retried (`ensureFood` reuses it). After "Save without logging"
+   * (`leave`) the form stays until the food is in the catalogue, so a failed save keeps what was typed.
+   */
+  private readonly submitted = signal<{ readonly name: string; readonly leave: boolean } | null>(
+    null,
   );
+  /** Case-insensitive, trimmed match against the user's own foods. */
+  protected readonly nameError = computed(() => {
+    const name = normalizeName(this.formValue().name);
+    const retry = name === normalizeName(this.submitted()?.name ?? '');
+    return !retry && this.foodLog.hasCustomFoodNamed(name)
+      ? this.t(DUPLICATE_NAME_ERROR_KEY)
+      : null;
+  });
   protected readonly nameInvalid = computed(() => this.nameError() !== null);
   protected readonly canSaveNewFood = computed(() => this.formValid() && !this.nameInvalid());
-  protected readonly macroError = computed(() => {
-    const { protein, carbs, fat } = this.formValue();
-    return hasNegativeMacro([protein, carbs, fat]) ? this.t(MACRO_ERROR_KEY) : null;
+  /** One line for the number fields: a negative macro, too few kcal or a value that's too large. */
+  protected readonly valueError = computed(() => {
+    this.formValue(); // the control errors below are current whenever the value changes
+    const { kcal, protein, carbs, fat } = this.form.controls;
+    const macros = [protein, carbs, fat];
+    if (macros.some((control) => control.hasError('nonNegative'))) {
+      return this.t(MACRO_ERROR_KEY);
+    }
+    if (kcal.hasError('min')) {
+      return this.t(KCAL_ERROR_KEY);
+    }
+    return [kcal, ...macros].some((control) => control.hasError('max')) ||
+      this.form.hasError('tooLarge')
+      ? this.t(VALUE_TOO_LARGE_KEY)
+      : null;
   });
   protected readonly selectedUnit = computed(() => this.formValue().unit);
   protected readonly showMore = signal(false);
@@ -331,70 +356,21 @@ export class FoodPicker {
 
   // --- Portion -------------------------------------------------------------------------------
 
-  /** True while a logged custom food is edited – then its kcal and macros can be changed too. */
-  protected readonly canEditMacros = computed(
-    () => this.editItem() !== null && this.editBaseItem()?.isCustom === true,
-  );
-  protected readonly portionItem = linkedSignal<FoodItem | null>(() =>
-    this.canEditMacros() ? this.editBaseItem() : this.editItem(),
-  );
-  protected readonly macroForm = new FormGroup<MacroForm>({
-    kcal: kcalControl(null),
-    protein: macroControl(null),
-    carbs: macroControl(null),
-    fat: macroControl(null),
-  });
-  private readonly macroFormValue = toSignal(
-    this.macroForm.valueChanges.pipe(map(() => this.macroForm.getRawValue())),
-    { initialValue: this.macroForm.getRawValue() },
-  );
-  private readonly macroFormValid = toSignal(
-    this.macroForm.statusChanges.pipe(map(() => this.macroForm.valid)),
-    { initialValue: this.macroForm.valid },
-  );
-  protected readonly editMacroError = computed(() => {
-    if (!this.canEditMacros()) {
-      return null;
-    }
-    const { kcal, protein, carbs, fat } = this.macroFormValue();
-    if (hasNegativeMacro([protein, carbs, fat])) {
-      return this.t(MACRO_ERROR_KEY);
-    }
-    return kcal === null || kcal < 1 ? this.t(KCAL_ERROR_KEY) : null;
-  });
-  /** The base the portion is scaled from: the item, with the edited macros when editing is allowed. */
-  private readonly portionBase = computed<FoodItem | null>(() => {
-    const item = this.portionItem();
-    if (!item || !this.canEditMacros()) {
-      return item;
-    }
-    const { kcal, protein, carbs, fat } = this.macroFormValue();
-    return {
-      ...item,
-      kcal: Math.round(kcal ?? 0),
-      protein: Math.round(protein ?? 0),
-      carbs: Math.round(carbs ?? 0),
-      fat: Math.round(fat ?? 0),
-    };
-  });
-  protected readonly macroBaseLabel = computed(() =>
-    this.t('shared.foodPicker.macroBase', { quantity: this.portionItem()?.quantity ?? '' }),
-  );
+  protected readonly portionItem = linkedSignal<FoodItem | null>(() => this.editItem());
   private readonly baseQuantity = computed(() =>
     this.calculator.parseQuantity(this.portionItem()?.quantity ?? ''),
   );
   protected readonly unit = computed(() => this.baseQuantity().unit);
   private readonly baseAmount = computed(() => this.baseQuantity().amount);
-  private readonly amountStep = computed(() =>
-    this.unit() === DEFAULT_QUANTITY_UNIT ? GRAM_STEP : PIECE_STEP,
-  );
+  private readonly measured = computed(() => MEASURED_UNITS.includes(this.unit()));
+  private readonly amountStep = computed(() => (this.measured() ? GRAM_STEP : PIECE_STEP));
   /**
    * The selected amount. `null` = the field is cleared while typing. Resets to the default
    * portion every time a new item is selected (the source is the item itself).
    */
   protected readonly amount = linkedSignal<FoodItem | null, number | null>({
     source: this.portionItem,
-    computation: (item) => this.calculator.parseQuantity(this.initialQuantity(item)).amount,
+    computation: (item) => this.calculator.parseQuantity(item?.quantity ?? '').amount,
   });
   protected readonly amountValue = computed(() => {
     const amount = this.amount();
@@ -402,16 +378,27 @@ export class FoodPicker {
   });
   protected readonly portionName = computed(() => this.portionItem()?.name ?? '');
   protected readonly baseLabel = computed(() => {
-    const item = this.portionBase();
+    const item = this.portionItem();
     return item
       ? this.t('shared.foodPicker.baseLabel', { quantity: item.quantity, kcal: item.kcal })
       : '';
   });
   private readonly ratio = computed(() => (this.amount() ?? 0) / this.baseAmount());
   protected readonly scaled = computed<Macros>(() => {
-    const item = this.portionBase();
+    const item = this.portionItem();
     return item ? this.calculator.scaleMacros(item, this.ratio()) : EMPTY_MACROS;
   });
+  /** Spec 3.2-5a: one log may not overflow the API's `numeric(7,2)` – split it up instead. */
+  private readonly exceedsLogCap = computed(() => {
+    const { kcal, protein, carbs, fat } = this.scaled();
+    return (
+      kcal > FOOD_LOG_MAX_KCAL ||
+      [protein, carbs, fat].some((grams) => grams > FOOD_LOG_MAX_MACRO_GRAMS)
+    );
+  });
+  protected readonly amountError = computed(() =>
+    this.exceedsLogCap() ? this.t(AMOUNT_TOO_LARGE_KEY) : null,
+  );
   protected readonly stats = computed<readonly PortionStat[]>(() => {
     const macros = this.scaled();
     return [
@@ -422,7 +409,7 @@ export class FoodPicker {
     ];
   });
   protected readonly chipValues = computed<readonly number[]>(() => {
-    if (this.unit() !== DEFAULT_QUANTITY_UNIT) {
+    if (!this.measured()) {
       return PIECE_CHIP_VALUES;
     }
     const base = this.baseAmount();
@@ -435,9 +422,7 @@ export class FoodPicker {
       unit: this.unit(),
     }),
   );
-  protected readonly canConfirm = computed(
-    () => (this.amount() ?? 0) > 0 && (!this.canEditMacros() || this.macroFormValid()),
-  );
+  protected readonly canConfirm = computed(() => (this.amount() ?? 0) > 0 && !this.exceedsLogCap());
   protected readonly dragging = signal(false);
 
   private drag: DragState | null = null;
@@ -447,13 +432,14 @@ export class FoodPicker {
       this.queryControl.setValue(this.initialQuery());
     });
     effect(() => {
-      const base = this.canEditMacros() ? this.editBaseItem() : null;
-      this.macroForm.reset({
-        kcal: base?.kcal ?? null,
-        protein: base?.protein ?? null,
-        carbs: base?.carbs ?? null,
-        fat: base?.fat ?? null,
-      });
+      const submitted = this.submitted();
+      if (
+        submitted?.leave &&
+        this.step() === 'new-food' &&
+        this.foodLog.hasCustomFoodNamed(submitted.name)
+      ) {
+        untracked(() => this.finishNewFood());
+      }
     });
   }
 
@@ -469,6 +455,7 @@ export class FoodPicker {
   }
 
   protected openNewFood(): void {
+    this.submitted.set(null);
     this.form.reset({
       name: this.query().trim(),
       amount: null,
@@ -496,24 +483,29 @@ export class FoodPicker {
     this.showMore.update((shown) => !shown);
   }
 
+  /** Pessimistic: the form is left once the parent has saved the food (see `submitted`). */
   protected saveNewFood(): void {
     const item = this.buildCustomFood();
-    if (!item) {
+    if (!item || this.busy()) {
       return;
     }
+    this.submitted.set({ name: item.name, leave: true });
     this.customFoodCreated.emit(item);
-    this.finishNewFood();
   }
 
+  /**
+   * Only `picked`: the parent's `FoodLogService.add()` creates the food before it logs it (no
+   * race between the two). The form stays until the parent closes the picker, so a failed save
+   * keeps what was typed.
+   */
   protected saveNewFoodAndLog(): void {
     const item = this.buildCustomFood();
-    if (!item) {
+    if (!item || this.busy()) {
       return;
     }
-    this.customFoodCreated.emit(item);
     const { amount, unit } = this.calculator.parseQuantity(item.quantity);
+    this.submitted.set({ name: item.name, leave: false });
     this.picked.emit({ item, amount, unit });
-    this.finishNewFood();
   }
 
   // --- Portion -------------------------------------------------------------------------------
@@ -574,14 +566,12 @@ export class FoodPicker {
     this.dragging.set(false);
   }
 
+  /** Emits the portion. The step stays until the parent closes the picker (a failed save can be retried). */
   protected confirm(): void {
-    const item = this.portionBase();
+    const item = this.portionItem();
     const amount = this.amount();
-    if (!item || amount == null || !this.canConfirm()) {
+    if (!item || amount == null || !this.canConfirm() || this.busy()) {
       return;
-    }
-    if (this.canEditMacros()) {
-      this.customFoodEdited.emit(item);
     }
     const unit = this.unit();
     this.picked.emit({
@@ -589,11 +579,6 @@ export class FoodPicker {
       amount,
       unit,
     });
-    if (!this.editItem()) {
-      this.portionItem.set(null);
-      this.queryControl.setValue('');
-      this.goTo('search');
-    }
   }
 
   // --- Shared --------------------------------------------------------------------------------
@@ -606,18 +591,10 @@ export class FoodPicker {
     this.stepChange.emit(step);
   }
 
-  /** When editing from the custom food, the amount starts at the logged entry's amount. */
-  private initialQuantity(item: FoodItem | null): string {
-    const edited = this.editItem();
-    return item !== null && edited !== null && item === this.editBaseItem()
-      ? edited.quantity
-      : (item?.quantity ?? '');
-  }
-
-  /** After a saved custom item: back to an empty search that fetches the results again. */
+  /** After "Save without logging": back to an empty search, where the saved food shows up. */
   private finishNewFood(): void {
+    this.submitted.set(null);
     this.queryControl.setValue('');
-    this.searchVersion.update((version) => version + 1);
     this.goTo('search');
   }
 

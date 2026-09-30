@@ -182,7 +182,6 @@
       "lookupError": "Vi kunne ikke slå varen op. Tjek din internetforbindelse, og prøv igen.",
       "invalidBarcode": "Stregkoden skal være {{minDigits}}–{{maxDigits}} cifre.",
       "invalidAmount": "Angiv en mængde mellem {{minGrams}} og {{maxGrams}} g.",
-      "duplicateName": "Du har allerede en egen vare med det navn.",
       "servingLabel": "Portion",
       "amountLabel": "Mængde ({{unit}})",
       "amountAriaLabelMillilitres": "Mængde i milliliter",
@@ -376,9 +375,7 @@
       "titleEdit": "Rediger",
       "titleEditWhat": "vare",
       "collectionsEmpty": "Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her med ét tryk.",
-      "saveAndLog": "Gem og log under {{mealName}}",
-      "itemCountOne": "{{count}} vare",
-      "itemCountMany": "{{count}} varer"
+      "saveAndLog": "Gem og log under {{mealName}}"
     },
     "view": {
       "protein": "Protein",
@@ -395,7 +392,19 @@
       "eatenOfGoal": "{{eaten}} spist · mål {{goal}}",
       "addFood": "Tilføj mad",
       "scan": "Scan stregkode",
-      "duplicateCustomFood": "Du har allerede en egen vare med navnet \"{{foodName}}\", så den blev ikke gemt igen."
+      "duplicateCustomFood": "Du har allerede en egen vare med navnet \"{{foodName}}\", så den blev ikke gemt igen.",
+      "loadError": "Vi kunne ikke hente din mad og dit kaloriemål. Prøv igen om lidt.",
+      "saveError": "Varen blev ikke gemt. Prøv igen.",
+      "removeError": "Varen blev ikke fjernet. Prøv igen.",
+      "notFound": "Varen findes ikke længere.",
+      "retry": "Prøv igen"
+    },
+    "removeSheet": {
+      "title": "Fjern",
+      "titleAccent": "vare?",
+      "body": "«{{foodName}}» bliver fjernet fra dagens log.",
+      "confirm": "Ja, fjern varen",
+      "cancel": "Annuller"
     }
   },
   "history": {
@@ -745,6 +754,8 @@
       "duplicateName": "Du har allerede en egen vare med det navn.",
       "macroError": "Protein, kulhydrat og fedt skal være 0 eller større.",
       "kcalError": "Kalorier skal være mindst 1.",
+      "valueTooLarge": "Værdien er for stor.",
+      "amountTooLarge": "Det er for meget til én logning – del den op.",
       "stat": {
         "protein": "protein",
         "carbs": "kulhydrat",
@@ -752,7 +763,6 @@
       },
       "ctaAdd": "Tilføj {{amount}} {{unit}}",
       "ctaSave": "Gem {{amount}} {{unit}}",
-      "macroBase": "Næringsindhold pr. {{quantity}}",
       "baseLabel": "{{quantity}} · {{kcal}} kcal",
       "searchPlaceholder": "Søg mad, f.eks. havregryn",
       "scanBarcode": "Scan stregkode",
@@ -790,18 +800,6 @@
       "amountQuestion": "Hvor meget tog du?",
       "rescan": "Scan igen",
       "add": "Tilføj",
-      "unknownBadge": "Ukendt vare",
-      "unknownTitleStart": "Den kender vi",
-      "unknownTitleAccent": "ikke",
-      "unknownLead": "Stregkoden findes ikke i databasen. Tag tallene fra pakken, så gemmer vi varen under dine egne – næste gang er den klar med ét tryk.",
-      "barcodeValue": "Stregkode {{barcode}}",
-      "nameLabel": "Navn",
-      "namePlaceholder": "f.eks. Proteinbar Karamel",
-      "portionLabel": "Portion",
-      "portionPlaceholder": "f.eks. 55 g",
-      "kcalLabel": "Kalorier",
-      "proteinLabel": "Protein (g)",
-      "saveAndAdd": "Gem og tilføj",
       "verdictOver": "Den skubber dig {{kcalOver}} kcal over dagens mål. Overvej en halv, eller gem den til efter træning.",
       "verdictProtein": "God proteinkilde – {{protein}} g protein. Du har {{kcalLeft}} kcal tilbage bagefter.",
       "verdictFits": "Passer fint ind. {{kcalLeft}} kcal tilbage bagefter.",
@@ -810,7 +808,8 @@
         "protein": "protein",
         "carbs": "kulhydrat",
         "fat": "fedt"
-      }
+      },
+      "notFound": "Varen blev ikke fundet."
     }
   },
   "signup": {

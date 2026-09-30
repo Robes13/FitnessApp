@@ -46,12 +46,6 @@
     overflow-y: auto;
   }
 
-  &__loading {
-    display: flex;
-    justify-content: center;
-    padding: var(--space-4) 0;
-  }
-
   &__empty {
     margin-top: var(--space-2);
   }
@@ -394,13 +388,6 @@
     margin-top: var(--space-0-5);
     color: var(--color-text-secondary);
     font-size: var(--font-size-2xs);
-  }
-
-  &__edit-macros {
-    display: flex;
-    flex: none;
-    flex-direction: column;
-    gap: var(--space-2-5);
   }
 
   &__confirm {
