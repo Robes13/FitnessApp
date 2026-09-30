@@ -137,6 +137,7 @@ describe('ProfilePage', () => {
     );
 
     expect(kcalRow?.querySelector('.ui-row-button__chevron')).toBeNull();
+    expect(kcalRow?.disabled).toBe(true);
     kcalRow?.click();
     await fixture.whenStable();
 

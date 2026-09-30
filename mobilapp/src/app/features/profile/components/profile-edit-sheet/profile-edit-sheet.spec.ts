@@ -97,6 +97,9 @@ describe('ProfileEditSheet', () => {
     const request = http.expectOne({ method: 'PATCH', url: PROFILE_URL });
     expect(request.request.body).toEqual({ height: 179 });
     expect(button(result.host, 'Gem').getAttribute('aria-busy')).toBe('true');
+    // A running save can't be closed away (no close button, Escape ignored).
+    expect(result.host.querySelector('[aria-label="Luk"]')).toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(result.closed).toBe(0);
 
     request.flush(PROFILE_DTO);
@@ -210,6 +213,8 @@ describe('ProfileEditSheet', () => {
 
     expect(host.querySelector('h2')?.textContent?.trim()).toBe('Fødselsdato');
     expect(save.disabled).toBe(true);
+    // The native picker gets the API's age rule (13–100 years on the frozen 21 Sep 2026).
+    expect([field?.min, field?.max]).toEqual(['1925-09-22', '2013-09-21']);
 
     setValue(field, '2015-06-01');
     await fixture.whenStable();
@@ -282,6 +287,18 @@ describe('ProfileEditSheet', () => {
 
     button(result.host, 'Luk').click();
     expect(result.closed).toBeGreaterThan(0);
+  });
+
+  it('closes without a request when the e-mail is the current one', async () => {
+    const result = await open('email');
+    profiles.update({ email: 'mads@mail.dk' });
+    await result.fixture.whenStable();
+
+    setValue(result.host.querySelector<HTMLInputElement>('input'), ' MADS@mail.dk ');
+    await result.fixture.whenStable();
+    submit(result.host);
+
+    expect(result.closed).toBe(1);
   });
 
   it('says so when the new e-mail is taken', async () => {

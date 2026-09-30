@@ -239,7 +239,8 @@ export class HomeSummaryService {
     const proteinHit = this.dayTotals()
       .slice(0, today + 1)
       .filter(
-        (totals) => totals !== null && totals.protein >= proteinGoal * WEEK_HIT_THRESHOLD,
+        (totals) =>
+          totals !== null && proteinGoal > 0 && totals.protein >= proteinGoal * WEEK_HIT_THRESHOLD,
       ).length;
 
     let streak = 0;

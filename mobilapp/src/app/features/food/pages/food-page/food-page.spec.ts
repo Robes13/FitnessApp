@@ -1,3 +1,4 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -37,6 +38,8 @@ function normalize(value: string | null | undefined): string {
 }
 
 describe('FoodPage', () => {
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
   /** The app doesn't seed a food log itself – the tests put in the day's two meals. */
   beforeEach(() => {
     resetComponentTestStorage({

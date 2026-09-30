@@ -1,3 +1,4 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { APP_PATH, QUERY_PARAM } from '../../../core/constants/app-route';
 import { STORAGE_KEY } from '../../../core/constants/storage-key';
@@ -38,6 +39,8 @@ const SALAT: FoodItem = {
 };
 
 describe('HomeSummaryService', () => {
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
   let storage: FakeStorage;
   let profilePatch: Partial<UserProfile>;
 

@@ -4,6 +4,7 @@
   titleSize="sm"
   maxHeight="medium"
   scrollable
+  [hideClose]="saving()"
   (closed)="onClose()"
 >
   @if (hint()) {
@@ -78,6 +79,8 @@
         type="date"
         autocomplete="bday"
         [ariaLabel]="date.title"
+        [min]="date.min"
+        [max]="date.max"
         formControlName="value"
       />
       <app-ui-form-error tone="negative" [message]="formError()" />

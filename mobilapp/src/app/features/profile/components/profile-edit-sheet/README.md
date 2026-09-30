@@ -31,7 +31,8 @@ designets `editSaveDisabled`.
 
 Alt gemmes i API'et gennem `ProfileEditService` (pessimistisk). Mens et kald kører, er
 `saving` sand: "Gem" viser `UiButton`s spinner (`loading`), valgkortene er slået fra, og et
-nyt tryk sender intet – så der aldrig går to kald af sted. Lykkes det, lukker arket. Fejler
+nyt tryk sender intet – så der aldrig går to kald af sted. Arket kan heller ikke lukkes
+(`hideClose`), så svaret aldrig lander på en anden række. Lykkes det, lukker arket. Fejler
 det, bliver arket åbent med en `UiFormError`:
 
 | Fejl                     | Tekst                                                    |
@@ -41,9 +42,10 @@ det, bliver arket åbent med en `UiFormError`:
 | Alt andet                | `profile.edit.saveFailed`                                |
 
 Fødselsdatoen har samme regel lokalt (`isBirthdayValid`), så "Gem" er slået fra og teksten
-vises, før noget sendes. En gemt e-mail lukker ikke arket, men viser `profile.edit.emailSent`
-("Vi har sendt et bekræftelseslink til …") og en "Luk"-knap – adressen skifter først, når linket
-er trykket. At lukke arket uden at gemme er fortryd: intet er ændret.
+vises, før noget sendes; datovælgeren får samme grænser som native `min`/`max`. En gemt e-mail
+lukker ikke arket, men viser `profile.edit.emailSent` ("Vi har sendt et bekræftelseslink til …")
+og en "Luk"-knap – adressen skifter først, når linket er trykket. Er adressen den nuværende
+(uanset store/små bogstaver), sender API'et ingen mail, så arket lukker bare uden kald. At lukke arket uden at gemme er fortryd: intet er ændret.
 
 ## Målvægt og skift af mål
 

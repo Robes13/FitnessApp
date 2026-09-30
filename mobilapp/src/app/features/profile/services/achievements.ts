@@ -90,7 +90,8 @@ export class AchievementsService {
     const totals = this.foodLog.totals();
     const kcalPart = kcalTarget > 0 ? Math.min(1, totals.kcal / kcalTarget) : 0;
     const kcalHitToday = kcalPart >= DAY_HIT_THRESHOLD;
-    const proteinHitToday = totals.protein >= proteinGoalPerDay * DAY_HIT_THRESHOLD;
+    const proteinHitToday =
+      proteinGoalPerDay > 0 && totals.protein >= proteinGoalPerDay * DAY_HIT_THRESHOLD;
     return {
       hitDays: kcalHitToday ? 1 : 0,
       proteinHitDays: proteinHitToday ? 1 : 0,

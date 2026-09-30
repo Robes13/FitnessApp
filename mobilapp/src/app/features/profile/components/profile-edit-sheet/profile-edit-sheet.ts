@@ -69,7 +69,8 @@ const AGE_RANGE = { min: MIN_AGE, max: MAX_AGE } as const;
  *
  * Every save goes to the API (pessimistic): while it runs, "Gem" shows a spinner and the options
  * are disabled, so nothing is sent twice. On an error the sheet stays open with a message; on
- * success it closes. Closing without saving changes nothing.
+ * success it closes. Closing without saving changes nothing; a running save can't be closed
+ * away, so its result never lands on another row.
  *
  * The parent owns which row is open (`row`); `null` means closed.
  *
@@ -301,6 +302,11 @@ export class ProfileEditSheet {
       return;
     }
     const email = this.textForm.controls.value.value.trim();
+    // The API sends no mail for the current address (it compares case-insensitively).
+    if (email.toLowerCase() === this.textDefinition()?.value.toLowerCase()) {
+      this.closed.emit();
+      return;
+    }
     this.submit(this.editor.applyEmail(email), () => this.emailSentTo.set(email));
   }
 

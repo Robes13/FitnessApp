@@ -1,3 +1,4 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { FoodItem } from '../../../core/models/food';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
@@ -47,6 +48,8 @@ const CAKE: FoodItem = {
 };
 
 describe('FoodViewService', () => {
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
   let storage: FakeStorage;
 
   function setup(): { view: FoodViewService; log: FoodLogService } {

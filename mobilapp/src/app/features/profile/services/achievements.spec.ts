@@ -1,3 +1,4 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { addDays } from '../../../core/utils/date-format';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
@@ -16,6 +17,8 @@ function badge(list: readonly Achievement[], id: string): Achievement {
 }
 
 describe('AchievementsService', () => {
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
   function setup(): {
     achievements: AchievementsService;
     profiles: UserProfileService;
@@ -118,6 +121,12 @@ describe('AchievementsService', () => {
     expect(badge(achievements.achievements(), 'perfect-week').progressLabel).toBe('1/7 dage');
     expect(badge(achievements.achievements(), 'protein-5').progressLabel).toBe('1/5 dage');
     expect(badge(achievements.achievements(), 'streak-7').progressLabel).toBe('1/7 dage');
+  });
+
+  it('counts no protein day before the goal has loaded', () => {
+    const { achievements } = setup();
+
+    expect(badge(achievements.achievements(), 'protein-5').progressLabel).toBe('0/5 dage');
   });
 
   it('gives every badge a tone the progress ring understands', () => {

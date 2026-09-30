@@ -70,6 +70,7 @@
             [label]="row.label"
             [value]="row.value"
             [chevron]="row.editable !== false"
+            [disabled]="row.editable === false"
             (click)="openEdit(row)"
           ></button>
         }
