@@ -221,6 +221,8 @@ public sealed class FoodLogService(
         {
             throw new BusinessValidationException("Quantity unit is invalid.");
         }
+        if (!Enum.IsDefined(request.MealType))
+            throw new BusinessValidationException("Meal type is invalid.");
 
         var food = await _context.Foods
             .AsNoTracking()
@@ -229,7 +231,7 @@ public sealed class FoodLogService(
             ?? throw new NotFoundException("Food not found.");
 
         var consumedAt = RequestGuards.NormalizeUtc(request.ConsumedAt);
-        var log = new FoodLog { UserId = userId };
+        var log = new FoodLog { UserId = userId, MealType = request.MealType };
         ApplyNutrition(log, food, request.Quantity, request.Unit, consumedAt);
         return log;
     }
@@ -269,6 +271,7 @@ public sealed class FoodLogService(
             log.ProteinConsumed,
             log.CarbohydratesConsumed,
             log.FatConsumed,
-            log.ConsumedAt);
+            log.ConsumedAt,
+            log.MealType);
     }
 }

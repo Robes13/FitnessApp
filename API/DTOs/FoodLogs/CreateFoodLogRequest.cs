@@ -6,4 +6,5 @@ public sealed record CreateFoodLogRequest(
     int FoodId,
     decimal Quantity,
     QuantityUnit Unit,
-    DateTime ConsumedAt);
+    DateTime ConsumedAt,
+    MealType MealType);

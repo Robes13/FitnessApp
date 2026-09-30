@@ -1,12 +1,16 @@
+using System.Runtime.CompilerServices;
 using FitnessApp.Api.Data;
 using FitnessApp.Api.Domain.Entities;
 using FitnessApp.Api.Domain.Enums;
 using FitnessApp.Api.DTOs.Auth;
 using FitnessApp.Api.Exceptions;
+using FitnessApp.Api.Options;
 using FitnessApp.Api.Services.Goals;
 using FitnessApp.Api.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace FitnessApp.Api.Services.Auth;
 
@@ -17,14 +21,22 @@ public sealed class AuthService(
     IAccountMessageSender messageSender,
     IConfiguration configuration,
     TimeProvider timeProvider,
+    IMemoryCache cache,
+    IOptions<AppOptions> appOptions,
     ILogger<AuthService> logger) : IAuthService
 {
+    private const int MaxFailedAttempts = 5;
+    private const string InvalidCredentials = "Invalid credentials.";
+    private static readonly TimeSpan LockoutWindow = TimeSpan.FromMinutes(15);
+
     private readonly FitnessAppDbContext _context = context;
     private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
     private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;
     private readonly IAccountMessageSender _messageSender = messageSender;
     private readonly IConfiguration _configuration = configuration;
     private readonly TimeProvider _timeProvider = timeProvider;
+    private readonly IMemoryCache _cache = cache;
+    private readonly string _publicBaseUrl = appOptions.Value.PublicBaseUrl;
     private readonly ILogger<AuthService> _logger = logger;
 
     public async Task<UserDto> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
@@ -103,8 +115,8 @@ public sealed class AuthService(
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        await _messageSender.SendAsync(email, "Verify your FitnessApp email",
-            $"Your verification token is: {verificationToken}", cancellationToken);
+        var (subject, body) = AccountEmails.Verification(_publicBaseUrl, verificationToken);
+        await _messageSender.SendAsync(email, subject, body, cancellationToken);
 
         _logger.LogInformation("User {UserId} registered", user.UserId);
         return ToUserDto(user);
@@ -112,20 +124,31 @@ public sealed class AuthService(
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
-        var email = request.Email.Trim().ToLowerInvariant();
-        var user = await _context.Users
-            .SingleOrDefaultAsync(user => user.Email == email, cancellationToken);
+        var identifier = request.EmailOrUsername.Trim();
+        var user = await FindByIdentifierAsync(identifier, cancellationToken);
 
-        if (user is null || !user.IsActive || user.EmailVerifiedAt is null || user.DeletedAt is not null)
+        // ponytail: in-memory lockout is per API instance, resets on restart, and a burst racing the very first GetOrCreate can add a few attempts; move it to the database/Redis when the API is scaled out.
+        // Unknown identifiers get their own prefix so a numeric identifier can never lock the account with that id.
+        var key = user is null ? $"login-unknown:{identifier.ToLowerInvariant()}" : $"login:{user.UserId}";
+        var attempts = _cache.GetOrCreate(key, entry =>
         {
-            throw new UnauthorizedException("Invalid email or password.");
-        }
+            entry.AbsoluteExpirationRelativeToNow = LockoutWindow;
+            return new StrongBox<int>();
+        })!;
+        if (Interlocked.Increment(ref attempts.Value) > MaxFailedAttempts)
+            throw new TooManyRequestsException("Too many failed login attempts.");
 
+        if (user is null || user.DeletedAt is not null)
+            throw new UnauthorizedException(InvalidCredentials);
         var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
         if (result == PasswordVerificationResult.Failed)
-        {
-            throw new UnauthorizedException("Invalid email or password.");
-        }
+            throw new UnauthorizedException(InvalidCredentials);
+
+        _cache.Remove(key);
+        if (user.EmailVerifiedAt is null)
+            throw new UnauthorizedAccessException("The e-mail address has not been verified.");
+        if (!user.IsActive)
+            throw new UnauthorizedException(InvalidCredentials);
 
         if (result == PasswordVerificationResult.SuccessRehashNeeded)
         {
@@ -146,6 +169,18 @@ public sealed class AuthService(
         if (user is null || !user.IsActive || user.EmailVerifiedAt is null || user.DeletedAt is not null)
         {
             throw new UnauthorizedException("The account is not active.");
+        }
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        // spec 1.5: a refresh token issued today (UTC) is returned unchanged
+        if (identity.IssuedAt.Date == now.Date)
+        {
+            if (!await _context.RefreshTokens.AnyAsync(token => token.TokenId == identity.TokenId
+                    && token.UserId == identity.UserId && token.State == TokenState.Active, cancellationToken))
+                throw new UnauthorizedException("The refresh token is no longer active.");
+            var accessToken = _jwtTokenService.CreateAccessToken(user.UserId, user.Email, user.Username);
+            return new AuthResponse(accessToken.Value, accessToken.ExpiresAt, request.RefreshToken,
+                identity.ExpiresAt, ToUserDto(user));
         }
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -198,6 +233,13 @@ public sealed class AuthService(
         if (token is null || token.UsedAt is not null || token.ExpiresAt <= now
             || token.User.DeletedAt is not null)
             throw new BusinessValidationException("The verification token is invalid or expired.");
+        if (token.NewEmail is { } newEmail)
+        {
+            if (await _context.Users.AnyAsync(user => user.Email == newEmail && user.UserId != token.UserId,
+                    cancellationToken))
+                throw new BusinessValidationException("That e-mail address is already in use.");
+            token.User.Email = newEmail;
+        }
 
         token.UsedAt = now;
         token.User.EmailVerifiedAt = now;
@@ -211,8 +253,7 @@ public sealed class AuthService(
 
     public async Task ResendVerificationAsync(ResendVerificationRequest request, CancellationToken cancellationToken)
     {
-        var email = request.Email.Trim().ToLowerInvariant();
-        var user = await _context.Users.SingleOrDefaultAsync(candidate => candidate.Email == email, cancellationToken);
+        var user = await FindByIdentifierAsync(request.EmailOrUsername, cancellationToken);
         if (user is null || user.EmailVerifiedAt is not null || user.DeletedAt is not null) return;
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
@@ -228,15 +269,14 @@ public sealed class AuthService(
             ExpiresAt = now.AddHours(24)
         });
         await _context.SaveChangesAsync(cancellationToken);
-        await _messageSender.SendAsync(email, "Verify your FitnessApp email",
-            $"Your verification token is: {rawToken}", cancellationToken);
+        var (subject, body) = AccountEmails.Verification(_publicBaseUrl, rawToken);
+        await _messageSender.SendAsync(user.Email, subject, body, cancellationToken);
     }
 
     public async Task ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken)
     {
-        var email = request.Email.Trim().ToLowerInvariant();
-        var user = await _context.Users.SingleOrDefaultAsync(candidate => candidate.Email == email, cancellationToken);
-        if (user is null || !user.IsActive || user.DeletedAt is not null) return;
+        var user = await FindByIdentifierAsync(request.EmailOrUsername, cancellationToken);
+        if (user is null || !user.IsActive || user.EmailVerifiedAt is null || user.DeletedAt is not null) return;
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var rawToken = SecretToken.Create();
@@ -252,8 +292,17 @@ public sealed class AuthService(
             ExpiresAt = now.AddHours(1)
         });
         await _context.SaveChangesAsync(cancellationToken);
-        await _messageSender.SendAsync(email, "Reset your FitnessApp password",
-            $"Your password reset token is: {rawToken}", cancellationToken);
+        var (subject, body) = AccountEmails.PasswordReset(_publicBaseUrl, rawToken);
+        await _messageSender.SendAsync(user.Email, subject, body, cancellationToken);
+    }
+
+    public Task<bool> IsPasswordResetTokenActiveAsync(string token, CancellationToken cancellationToken)
+    {
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var hash = SecretToken.Hash(token);
+        return _context.PasswordResetTokens.AnyAsync(candidate => candidate.TokenId == hash
+            && candidate.State == TokenState.Active && candidate.ExpiresAt > now
+            && candidate.User.DeletedAt == null, cancellationToken);
     }
 
     public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken)
@@ -275,6 +324,7 @@ public sealed class AuthService(
             .ExecuteUpdateAsync(setters => setters.SetProperty(candidate => candidate.State, TokenState.Revoked), cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        _cache.Remove($"login:{token.UserId}");
     }
 
     public async Task ChangePasswordAsync(int userId, ChangePasswordRequest request, CancellationToken cancellationToken)
@@ -298,8 +348,17 @@ public sealed class AuthService(
 
     private static void EnsureMatchingPasswords(string password, string confirmation)
     {
-        if (password.Length < 10 || password != confirmation)
-            throw new BusinessValidationException("Password must be at least 10 characters and match confirmation.");
+        if (password.Length is < 10 or > 200 || password != confirmation)
+            throw new BusinessValidationException("Password must contain 10–200 characters and match confirmation.");
+    }
+
+    private Task<User?> FindByIdentifierAsync(string value, CancellationToken cancellationToken)
+    {
+        var identifier = value.Trim();
+        if (!identifier.Contains('@'))
+            return _context.Users.SingleOrDefaultAsync(user => user.Username == identifier, cancellationToken);
+        var email = identifier.ToLowerInvariant();
+        return _context.Users.SingleOrDefaultAsync(user => user.Email == email, cancellationToken);
     }
 
     private async Task<AuthResponse> IssueTokensAsync(User user, CancellationToken cancellationToken)

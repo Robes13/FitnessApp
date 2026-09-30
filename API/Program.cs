@@ -26,6 +26,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using AppDataProtectionOptions = FitnessApp.Api.Options.DataProtectionOptions;
@@ -67,10 +68,15 @@ builder.Services.AddOptions<AzureBlobStorageOptions>().Bind(builder.Configuratio
 builder.Services.AddOptions<ProfileImageOptions>().Bind(builder.Configuration.GetSection(ProfileImageOptions.SectionName))
     .Validate(value => value.MaximumFileSizeBytes > 0 && value.AllowedContentTypes.Length > 0,
         "ProfileImages maximum size and allowed content types are required.").ValidateOnStart();
+builder.Services.AddOptions<AppOptions>().Bind(builder.Configuration.GetSection(AppOptions.SectionName))
+    .Validate(value => Uri.TryCreate(value.PublicBaseUrl, UriKind.Absolute, out var uri)
+        && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps),
+        "App:PublicBaseUrl must be an absolute http(s) URL.").ValidateOnStart();
 builder.Services.AddOptions<SmtpOptions>().Bind(builder.Configuration.GetSection(SmtpOptions.SectionName));
 builder.Services.AddOptions<FirebaseOptions>().Bind(builder.Configuration.GetSection(FirebaseOptions.SectionName));
 builder.Services.AddOptions<AppDataProtectionOptions>().Bind(builder.Configuration.GetSection(AppDataProtectionOptions.SectionName));
 builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+builder.Services.AddMemoryCache();
 var dataProtection = builder.Services.AddDataProtection();
 var keyPath = builder.Configuration.GetSection(AppDataProtectionOptions.SectionName).Get<AppDataProtectionOptions>()?.KeysPath;
 if (!string.IsNullOrWhiteSpace(keyPath))
@@ -141,7 +147,10 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration.GetSection(FirebaseOptions.
     builder.Services.AddHostedService<ReminderNotificationWorker>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IProfileImageService, ProfileImageService>();
-builder.Services.AddSingleton<IProfileImageStorage, AzureBlobProfileImageStorage>();
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddSingleton<IProfileImageStorage, LocalProfileImageStorage>();
+else
+    builder.Services.AddSingleton<IProfileImageStorage, AzureBlobProfileImageStorage>();
 builder.Services.AddScoped<IUserGoalService, UserGoalService>();
 builder.Services.AddScoped<IHistoryService, HistoryService>();
 builder.Services.AddScoped<IFoodService, FoodService>();
@@ -184,6 +193,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    var devImages = Directory.CreateDirectory(Path.Combine(app.Environment.ContentRootPath, LocalProfileImageStorage.FolderName));
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(devImages.FullName),
+        RequestPath = "/api/v1/dev-images"
+    });
 }
 
 app.UseHttpsRedirection();

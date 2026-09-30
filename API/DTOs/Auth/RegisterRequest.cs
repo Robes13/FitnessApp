@@ -9,6 +9,7 @@ public sealed record RegisterRequest
     public required string Email { get; init; }
 
     [Required, MinLength(3), MaxLength(50)]
+    [RegularExpression("^[^@]+$", ErrorMessage = "Username cannot contain @.")]
     public required string Username { get; init; }
 
     [Required, MinLength(10), MaxLength(200)]

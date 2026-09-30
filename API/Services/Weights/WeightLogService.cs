@@ -203,7 +203,7 @@ public sealed class WeightLogService(
         }
     }
 
-    private static WeightLogDto ToDto(WeightLog log)
+    public static WeightLogDto ToDto(WeightLog log)
     {
         return new WeightLogDto(log.WeightLogId, log.Weight, log.RecordedAt, log.RecordedDate);
     }
