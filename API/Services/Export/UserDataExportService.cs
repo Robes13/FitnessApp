@@ -38,7 +38,7 @@ public sealed class UserDataExportService(
     public string CreateDownloadToken(int userId)
         => _protector.Protect(userId.ToString(CultureInfo.InvariantCulture), DownloadTokenLifetime);
 
-    public Task<UserDataExportDto> GetByDownloadTokenAsync(string? token, CancellationToken cancellationToken)
+    public async Task<UserDataExportDto> GetByDownloadTokenAsync(string? token, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(token)) throw new NotFoundException(InvalidLink);
         int userId;
@@ -51,7 +51,7 @@ public sealed class UserDataExportService(
             throw new NotFoundException(InvalidLink);
         }
 
-        return GetAsync(userId, cancellationToken);
+        return await GetAsync(userId, cancellationToken);
     }
 
     public async Task<UserDataExportDto> GetAsync(int userId, CancellationToken cancellationToken)

@@ -432,8 +432,9 @@ public sealed class ApiWorkflowTests
 
         Assert.Equal(owner.UserId, (await LoginAsync(auth, " OWNER@example.com ", Password)).User.UserId);
         Assert.Equal(owner.UserId, (await LoginAsync(auth, "owner", Password)).User.UserId);
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => LoginAsync(auth, "pending@example.com", Password));
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => LoginAsync(auth, "pending", Password));
+        // The app polls with the right password while it waits for verification, so 403 must never lock out.
+        for (var i = 0; i < 7; i++)
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => LoginAsync(auth, i % 2 == 0 ? "pending" : "pending@example.com", Password));
         var wrong = await Assert.ThrowsAsync<UnauthorizedException>(() => LoginAsync(auth, "owner@example.com", "WrongPassword1!"));
         foreach (var attempt in new Func<Task>[]
         {
@@ -462,6 +463,19 @@ public sealed class ApiWorkflowTests
         for (var i = 0; i < 5; i++)
             await Assert.ThrowsAsync<UnauthorizedException>(() => LoginAsync(auth, "nobody", Password));
         await Assert.ThrowsAsync<TooManyRequestsException>(() => LoginAsync(auth, "NOBODY", Password));
+    }
+
+    [Fact]
+    public async Task UnknownNumericIdentifierDoesNotLockTheAccountWithThatId()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var owner = await SeedUserWithPasswordAsync(database.Context);
+        var auth = CreateAuth(database.Context, new CapturingSender());
+        var id = owner.UserId.ToString();
+        for (var i = 0; i < 5; i++)
+            await Assert.ThrowsAsync<UnauthorizedException>(() => LoginAsync(auth, id, Password));
+        await Assert.ThrowsAsync<TooManyRequestsException>(() => LoginAsync(auth, id, Password));
+        Assert.Equal(owner.UserId, (await LoginAsync(auth, "owner", Password)).User.UserId);
     }
 
     [Fact]
