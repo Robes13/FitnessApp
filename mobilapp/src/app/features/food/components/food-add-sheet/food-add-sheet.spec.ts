@@ -45,6 +45,7 @@ const NO_COLLECTIONS: Pick<CollectionsService, 'collections' | 'collectionTotals
       [startStep]="startStep()"
       (closed)="closes = closes + 1"
       (selected)="selected.push($event)"
+      (collectionPicked)="collectionsPicked.push($event)"
       (scanRequested)="scans = scans + 1"
     />
   `,
@@ -55,6 +56,7 @@ class Host {
   readonly editEntry = signal<LoggedFood | null>(null);
   readonly startStep = signal<FoodPickerStartStep>('search');
   readonly selected: FoodItem[] = [];
+  readonly collectionsPicked: (readonly FoodItem[])[] = [];
   closes = 0;
   scans = 0;
 }
@@ -145,7 +147,7 @@ describe('FoodAddSheet', () => {
     expect(text('.food-picker__title')).toBe('Kyllingesalat');
   });
 
-  it('lists the collections that have content and logs one as a single item', async () => {
+  it('lists the collections that have items and picks one as its items', async () => {
     // The app has no fixed collections – the user has to have created one themselves.
     const { host, root, settle } = await setup(undefined, [], () => {
       TestBed.inject(CollectionsService).create({
@@ -172,16 +174,8 @@ describe('FoodAddSheet', () => {
     rows[0]?.click();
     await settle();
 
-    const totals = first ? collections.collectionTotals(first) : null;
-    expect(host.selected[0]).toEqual({
-      id: first?.id,
-      name: first?.name,
-      quantity: `${totals?.count} varer`,
-      kcal: totals?.kcal,
-      protein: totals?.protein,
-      carbs: totals?.carbs,
-      fat: totals?.fat,
-    });
+    expect(host.collectionsPicked).toEqual([first?.items]);
+    expect(host.selected).toEqual([]);
   });
 
   it('explains how to build a collection when there are none', async () => {

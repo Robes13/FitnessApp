@@ -68,7 +68,7 @@ consumedAt: nu, mealType }`. `update(logId, { quantity })` = `PATCH` af kun mæn
 - **`ensureFood(item)`** finder eller opretter API-madvaren bag en vare: et katalog-id er den
   vare; en scannet vare (`off-<stregkode>`) er katalogvaren med samme stregkode eller en ny fra
   `ProductLookupService` (svarer fra sin cache) – 409 prøves én gang med `navn (brand eller
-stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samling logget som én vare) er
+stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under sit eget id) er
   katalogvaren med samme navn eller en ny ud fra varens egen portion (`toPer100`). Bagefter
   oprettes den serving, logningens enhed kræver (`SERVING_GRAMS_PER_UNIT`, `PUT` = upsert), hvis
   den mangler – så en halvt oprettet vare heles ved næste forsøg. Rækkefølgen er altid

@@ -15,7 +15,7 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { newId } from '../../../../core/utils/id';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { finalize, map } from 'rxjs';
 import {
   COLLECTION_ICON_LABEL_KEYS,
   COLLECTION_ICON_NAMES,
@@ -179,6 +179,8 @@ export class NewCollectionSheet {
   );
 
   protected readonly pickerOpen = signal(false);
+  /** A custom food is being saved – the picker blocks a second save meanwhile. */
+  protected readonly savingCustomFood = signal(false);
   protected readonly pickerStartStep = signal<FoodPickerStartStep>('search');
   protected readonly scannerOpen = signal(false);
   private readonly editIndex = signal<number | null>(null);
@@ -332,14 +334,18 @@ export class NewCollectionSheet {
    */
   private saveCustomFood(item: FoodItem): void {
     this.customFoodFailure.set(null);
-    this.foodLog.addCustomFood(item).subscribe({
-      error: (error: unknown) =>
-        this.customFoodFailure.set(
-          error instanceof DuplicateCustomFoodNameError
-            ? { key: DUPLICATE_CUSTOM_FOOD_MESSAGE_KEY, params: { foodName: item.name } }
-            : { key: toApiError(error).messageKey },
-        ),
-    });
+    this.savingCustomFood.set(true);
+    this.foodLog
+      .addCustomFood(item)
+      .pipe(finalize(() => this.savingCustomFood.set(false)))
+      .subscribe({
+        error: (error: unknown) =>
+          this.customFoodFailure.set(
+            error instanceof DuplicateCustomFoodNameError
+              ? { key: DUPLICATE_CUSTOM_FOOD_MESSAGE_KEY, params: { foodName: item.name } }
+              : { key: toApiError(error).messageKey },
+          ),
+      });
   }
 
   /** Adds the food or replaces the one being edited. Draft foods get their own id. */

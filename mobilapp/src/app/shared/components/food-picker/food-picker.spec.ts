@@ -3,6 +3,7 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FoodItem } from '../../../core/models/food';
 import { FoodDto } from '../../../core/models/food-api';
+import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { flushTestFoodLog, testFood } from '../../../core/testing/fixtures';
 import { FoodPicker, FoodPickerCtaVerb, FoodPickerSelection, FoodPickerStep } from './food-picker';
 import { provideComponentTestEnvironment } from '../../../core/testing/test-providers';
@@ -254,6 +255,17 @@ describe('FoodPicker', () => {
 
       await click('.food-picker__stepper', 1); // More
       expect(text('.food-picker__confirm')).toBe('Tilføj 2 stk');
+    });
+
+    it('measures a 100 ml food like grams: 5 ml steps and chips from the base', async () => {
+      const { click, text, texts } = await setup({
+        configure: (h) => h.editItem.set({ ...SALAD, quantity: '100 ml', kcal: 45 }),
+      });
+
+      expect(texts('.food-picker__chip')).toEqual(['50 ml', '100 ml', '200 ml', '300 ml']);
+
+      await click('.food-picker__stepper', 1);
+      expect(text('.food-picker__confirm')).toBe('Tilføj 105 ml');
     });
 
     it('halves every macro when a 250 g base is set to 125 g', async () => {
@@ -533,6 +545,8 @@ describe('FoodPicker', () => {
       buttonByText('Gem uden at logge')?.click();
       await settle();
 
+      // The form stays until the parent has saved the food, so a failed save keeps what was typed.
+      expect(host.steps).toEqual(['new-food']);
       expect(host.created).toHaveLength(1);
       expect(host.created[0]).toMatchObject({
         name: 'Mormors frikadeller',
@@ -545,8 +559,40 @@ describe('FoodPicker', () => {
       });
       expect(host.created[0]?.id).toMatch(/^food-/);
       expect(host.picked).toEqual([]);
+
+      const created = host.created[0];
+      if (created) {
+        TestBed.inject(FoodLogService).addCustomFood(created).subscribe();
+      }
+      TestBed.inject(HttpTestingController)
+        .expectOne({ method: 'POST', url: '/api/v1/foods' })
+        .flush(testFood({ foodId: 9, name: 'Mormors frikadeller' }));
+      await settle();
+
       expect(host.steps).toEqual(['new-food', 'search']);
       expect(searchField(root)?.value).toBe('');
+    });
+
+    it('lets a save-and-log be retried after the food was created but the log failed', async () => {
+      const { host, root, click, typeInto, buttonByText, settle } = await setup();
+
+      await click('.food-picker__create');
+      await typeInto(formFields(root)[0] ?? null, 'Proteinpandekage');
+      await typeInto(formFields(root)[1] ?? null, '100');
+      await typeInto(formFields(root)[2] ?? null, '310');
+      buttonByText('Gem og log under morgenmad')?.click();
+      await settle();
+      expect(host.picked).toHaveLength(1);
+      // The parent's add() created the food; its log failed, so the form is still open.
+      flushTestFoodLog([testFood({ foodId: 9, name: 'Proteinpandekage' })]);
+      await settle();
+
+      expect(root.textContent).not.toContain('allerede en egen vare med det navn');
+      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(false);
+      buttonByText('Gem og log under morgenmad')?.click();
+      await settle();
+
+      expect(host.picked).toHaveLength(2);
     });
 
     it('emits only picked, once, for the save-and-log button and keeps the form', async () => {

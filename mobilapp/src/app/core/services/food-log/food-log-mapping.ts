@@ -27,8 +27,7 @@ const GRAM_BASE_PORTION = 100;
 
 /** The API unit of an app token (`'g'` → `'Gram'`). */
 export function toApiUnit(token: string): ApiQuantityUnit {
-  // A token that isn't a unit (a collection logged as one food: '2 varer') counts as portions,
-  // so the log still sums to the item's values.
+  // A token that isn't a unit counts as portions, so the log still sums to the item's values.
   return QUANTITY_UNIT_BY_TOKEN[token] ?? 'Serving';
 }
 

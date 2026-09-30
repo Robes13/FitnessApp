@@ -158,11 +158,15 @@
   (closed)="closePicker()"
 >
   @if (pickerOpen()) {
+    @if (customFoodError(); as message) {
+      <app-ui-form-error tone="negative" [message]="message" />
+    }
     <app-food-picker
       [startStep]="pickerStartStep()"
       [editItem]="editItem()"
       [ctaVerb]="editItem() ? 'Gem' : 'Tilføj'"
       [saveAndLogLabel]="saveAndAddLabelKey | translate"
+      [busy]="savingCustomFood()"
       (picked)="onPicked($event)"
       (customFoodCreated)="onCustomFoodCreated($event)"
       (scanRequested)="openScannerFromPicker()"

@@ -56,6 +56,9 @@
         [(value)]="meal"
         [ariaLabel]="'collections.recipePage.logUnder' | translate"
       />
+      @if (logError(); as messageKey) {
+        <app-ui-form-error tone="negative" [message]="messageKey | translate" />
+      }
       <button
         app-ui-button
         variant="primary"
@@ -63,6 +66,7 @@
         block
         type="button"
         class="recipe-page__log-button"
+        [loading]="logging()"
         (click)="log()"
       >
         {{ 'collections.recipePage.log' | translate: { kcal: recipe.macros.kcal } }}

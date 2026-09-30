@@ -100,6 +100,8 @@ describe('NewCollectionSheet', () => {
     await settle();
   });
 
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
   it('opens on the meal it was given and shows the first twelve icons', () => {
     const meals = Array.from(root.querySelectorAll<HTMLElement>('.meal-picker__option'));
     const selected = meals.find((meal) => meal.getAttribute('aria-checked') === 'true');

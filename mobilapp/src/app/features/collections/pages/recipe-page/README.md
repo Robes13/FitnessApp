@@ -9,9 +9,10 @@ tint, titel, undertekst, fire makro-fliser, "Indhold" og kortet "Log som spist u
 - Id'et kan være en ret, et bundt (`col:<id>`) eller en løs vare — se feature-README'en.
   Findes intet, vises en tom tilstand og en vej tilbage til listen.
 - Det valgte måltid starter på rettens eget (`linkedSignal`), så et nyt id nulstiller valget.
-- "Log X kcal" logger posten via `FoodLogService.add()` som én portion (API'et opretter en egen
-  vare med samlingens navn) og skifter til Mad, når API'et har svaret. Midlertidigt, indtil
-  samlingerne er på API'et (bølge 3).
+- "Log X kcal" logger samlingens varer, én række pr. vare (P13), via `FoodLogService.add()` og
+  skifter til Mad, når API'et har svaret. Imens viser knappen spinner og ignorerer flere tryk; en
+  fejl vises over knappen, og siden bliver stående. Retter og løse varer findes ikke, før bølge 3
+  sletter dem. Midlertidigt, indtil samlingerne er på API'et (bølge 3).
 - **Redigér og slet.** Er id'et en af brugerens egne samlinger (`col:<id>`, se
   `CollectionsViewService.editableCollectionFor()`), får sidehovedet en blyant ("Rediger
   samling"), der åbner `NewCollectionSheet` udfyldt, og bunden får "Slet samling". Sletning

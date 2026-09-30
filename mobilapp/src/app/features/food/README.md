@@ -51,9 +51,10 @@ viser spinner på knappen og blokerer et nyt kald, og en fejl vises i arket (og 
   snart vælgeren går videre til "Ny egen vare" eller portionstrinnet — og altid, når en logget
   vare redigeres. Så er måltidet givet, og arket hedder "Rediger vare" i stedet for
   "Tilføj morgenmad" (designets `addSheetVerb` / `addSheetWhat`).
-- **En samling logges som én vare.** Designets `addCollections` lægger hele samlingen ind som
-  én linje: samlingens navn, `n varer` som portion og summen af retter og løse varer
-  (`CollectionsService.collectionTotals`). Samlinger uden indhold vises ikke.
+- **En samling logges som sine varer** (P13): én række pr. vare under det valgte måltid, i
+  rækkefølge via `FoodLogService.add()`, så hver række kan rettes og fjernes for sig. Samlinger
+  uden varer vises ikke. `// ponytail:` fejler en vare midtvejs, bliver de allerede loggede
+  rækker stående; bølge 3 logger samlingen i ét kald (`POST me/meal-collections/{id}/log`).
 - **`?tilfoej=<måltid>`** (fra "Næste skridt" på Hjem) bindes som input via
   `withComponentInputBinding()` og fjernes fra URL'en igen med `replaceUrl`, så et tilbage-tryk
   eller en genindlæsning ikke åbner arket på ny. Angulars compiler kræver en literal i

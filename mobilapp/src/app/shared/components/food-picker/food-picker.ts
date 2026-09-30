@@ -10,6 +10,7 @@ import {
   linkedSignal,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { newId } from '../../../core/utils/id';
@@ -23,6 +24,7 @@ import {
 } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { map, switchMap } from 'rxjs';
+import { PRODUCT_BASE_UNIT } from '../../../core/constants/barcode';
 import {
   FOOD_LOG_MAX_KCAL,
   FOOD_LOG_MAX_MACRO_GRAMS,
@@ -35,6 +37,7 @@ import { CUSTOM_FOOD_ID_PREFIX, FoodLogService } from '../../../core/services/fo
 import { FoodSearchService } from '../../../core/services/food-search/food-search';
 import { injectTranslate } from '../../../core/services/language/translate';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
+import { normalizeName } from '../../../core/utils/name';
 import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiButton } from '../ui-button/ui-button';
 import { UiChip } from '../ui-chip/ui-chip';
@@ -94,7 +97,9 @@ const DEFAULT_FOOD_UNIT: FoodUnitId = 'g';
 const DEFAULT_NEW_FOOD_AMOUNT = 1;
 const PER_100 = 100;
 
-/** Step for −/+ and drag: 5 for grams, otherwise 1 (design's `pickStep`). */
+/** Units measured like grams (5-steps, chips from the base portion); any other unit is counted. */
+const MEASURED_UNITS: readonly string[] = [DEFAULT_QUANTITY_UNIT, PRODUCT_BASE_UNIT.MILLILITRES];
+/** Step for −/+ and drag: 5 for grams and ml, otherwise 1 (design's `pickStep`). */
 const GRAM_STEP = 5;
 const PIECE_STEP = 1;
 /** Pixels per step when the number is dragged sideways (design's `pickDragMove`). */
@@ -257,10 +262,10 @@ export class FoodPicker {
   protected readonly queryControl = new FormControl('', { nonNullable: true });
   private readonly query = toSignal(this.queryControl.valueChanges, { initialValue: '' });
   /** Searches again when the text or the catalogue changes (e.g. a new custom food was saved). */
-  private readonly searchRequest = computed(
-    () => ({ query: this.query(), foods: this.foodLog.foods() }),
-    { equal: (a, b) => a.query === b.query && a.foods === b.foods },
-  );
+  private readonly searchRequest = computed(() => ({
+    query: this.query(),
+    foods: this.foodLog.foods(),
+  }));
   protected readonly results = toSignal(
     toObservable(this.searchRequest).pipe(switchMap(({ query }) => this.foodSearch.search(query))),
     { initialValue: EMPTY_RESULTS },
@@ -306,12 +311,22 @@ export class FoodPicker {
   private readonly formValid = toSignal(this.form.statusChanges.pipe(map(() => this.form.valid)), {
     initialValue: this.form.valid,
   });
-  /** Case-insensitive, trimmed match against the user's own foods. */
-  protected readonly nameError = computed(() =>
-    this.foodLog.hasCustomFoodNamed(this.formValue().name)
-      ? this.t(DUPLICATE_NAME_ERROR_KEY)
-      : null,
+  /**
+   * The new food last sent to the parent. Its name isn't "taken": a save that failed after the
+   * food was created can be retried (`ensureFood` reuses it). After "Save without logging"
+   * (`leave`) the form stays until the food is in the catalogue, so a failed save keeps what was typed.
+   */
+  private readonly submitted = signal<{ readonly name: string; readonly leave: boolean } | null>(
+    null,
   );
+  /** Case-insensitive, trimmed match against the user's own foods. */
+  protected readonly nameError = computed(() => {
+    const name = normalizeName(this.formValue().name);
+    const retry = name === normalizeName(this.submitted()?.name ?? '');
+    return !retry && this.foodLog.hasCustomFoodNamed(name)
+      ? this.t(DUPLICATE_NAME_ERROR_KEY)
+      : null;
+  });
   protected readonly nameInvalid = computed(() => this.nameError() !== null);
   protected readonly canSaveNewFood = computed(() => this.formValid() && !this.nameInvalid());
   /** One line for the number fields: a negative macro, too few kcal or a value that's too large. */
@@ -347,9 +362,8 @@ export class FoodPicker {
   );
   protected readonly unit = computed(() => this.baseQuantity().unit);
   private readonly baseAmount = computed(() => this.baseQuantity().amount);
-  private readonly amountStep = computed(() =>
-    this.unit() === DEFAULT_QUANTITY_UNIT ? GRAM_STEP : PIECE_STEP,
-  );
+  private readonly measured = computed(() => MEASURED_UNITS.includes(this.unit()));
+  private readonly amountStep = computed(() => (this.measured() ? GRAM_STEP : PIECE_STEP));
   /**
    * The selected amount. `null` = the field is cleared while typing. Resets to the default
    * portion every time a new item is selected (the source is the item itself).
@@ -395,7 +409,7 @@ export class FoodPicker {
     ];
   });
   protected readonly chipValues = computed<readonly number[]>(() => {
-    if (this.unit() !== DEFAULT_QUANTITY_UNIT) {
+    if (!this.measured()) {
       return PIECE_CHIP_VALUES;
     }
     const base = this.baseAmount();
@@ -417,6 +431,16 @@ export class FoodPicker {
     effect(() => {
       this.queryControl.setValue(this.initialQuery());
     });
+    effect(() => {
+      const submitted = this.submitted();
+      if (
+        submitted?.leave &&
+        this.step() === 'new-food' &&
+        this.foodLog.hasCustomFoodNamed(submitted.name)
+      ) {
+        untracked(() => this.finishNewFood());
+      }
+    });
   }
 
   // --- Search --------------------------------------------------------------------------------
@@ -431,6 +455,7 @@ export class FoodPicker {
   }
 
   protected openNewFood(): void {
+    this.submitted.set(null);
     this.form.reset({
       name: this.query().trim(),
       amount: null,
@@ -458,13 +483,14 @@ export class FoodPicker {
     this.showMore.update((shown) => !shown);
   }
 
+  /** Pessimistic: the form is left once the parent has saved the food (see `submitted`). */
   protected saveNewFood(): void {
     const item = this.buildCustomFood();
-    if (!item) {
+    if (!item || this.busy()) {
       return;
     }
+    this.submitted.set({ name: item.name, leave: true });
     this.customFoodCreated.emit(item);
-    this.finishNewFood();
   }
 
   /**
@@ -478,6 +504,7 @@ export class FoodPicker {
       return;
     }
     const { amount, unit } = this.calculator.parseQuantity(item.quantity);
+    this.submitted.set({ name: item.name, leave: false });
     this.picked.emit({ item, amount, unit });
   }
 
@@ -564,8 +591,9 @@ export class FoodPicker {
     this.stepChange.emit(step);
   }
 
-  /** After "Save without logging": back to an empty search, where the food shows up once saved. */
+  /** After "Save without logging": back to an empty search, where the saved food shows up. */
   private finishNewFood(): void {
+    this.submitted.set(null);
     this.queryControl.setValue('');
     this.goTo('search');
   }

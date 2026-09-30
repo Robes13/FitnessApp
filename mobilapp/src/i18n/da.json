@@ -393,9 +393,7 @@
       "titleEdit": "Rediger",
       "titleEditWhat": "vare",
       "collectionsEmpty": "Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her med ét tryk.",
-      "saveAndLog": "Gem og log under {{mealName}}",
-      "itemCountOne": "{{count}} vare",
-      "itemCountMany": "{{count}} varer"
+      "saveAndLog": "Gem og log under {{mealName}}"
     },
     "view": {
       "protein": "Protein",

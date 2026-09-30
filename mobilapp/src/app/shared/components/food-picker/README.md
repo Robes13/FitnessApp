@@ -24,7 +24,7 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `search`   | Søgefelt ("Søg mad, f.eks. havregryn") + orange scan-knap. Resultater fra `FoodSearchService` (brugerens katalog med grøn "Egen vare"-pille, tom søgning viser de første seks – søges igen, når kataloget ændrer sig). `UiEmptyState` uden match: "Ingen varer matcher din søgning." efter en søgning, "Du har ingen varer endnu. …" før. Nederst "Opret "…" som ny vare" / "Opret en vare selv".                                             |
 | `new-food` | "Ny egen vare" med typed reactive form: Navn, Portion (mængde + enhed g/stk/port.), Kalorier, Protein (g) og en fold-ud med Kulhydrat/Fedt. Primær knap (`saveAndLogLabel`) er slået fra, indtil formularen er gyldig (se "Grænser"). Findes navnet allerede blandt brugerens egne varer (trimmet, uden forskel på store/små bogstaver), vises fejlen med `app-ui-form-error`, og begge knapper er slået fra. "Gem uden at logge" gemmer kun. |
-| `portion`  | Varens navn og "Standard: 250 g · 380 kcal", −/+ omkring et tal, der også kan trækkes til siden (8 px pr. trin), hurtigvalg (½ · 1× · 2× · 3× for gram, 1–4 for styk), fire fliser med skalerede makroer og knappen `${ctaVerb} ${mængde} ${enhed}`. Kun mængden kan ændres (også under redigering, spec 3.3). Bliver én logning for stor, slås knappen fra med _Det er for meget til én logning – del den op._                               |
+| `portion`  | Varens navn og "Standard: 250 g · 380 kcal", −/+ omkring et tal, der også kan trækkes til siden (8 px pr. trin), hurtigvalg (½ · 1× · 2× · 3× for gram og ml, 1–4 for styk), fire fliser med skalerede makroer og knappen `${ctaVerb} ${mængde} ${enhed}`. Kun mængden kan ændres (også under redigering, spec 3.3). Bliver én logning for stor, slås knappen fra med _Det er for meget til én logning – del den op._                         |
 
 ## Inputs
 
@@ -60,8 +60,10 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
   blot på forhånd for at vise fejlen i formularen.
 - **Trinnet bliver stående efter `picked`.** Begge forældre (Mad-arket og "Ny samling")
   lukker vælgeren, når valget er gemt, og `busy` dækker ventetiden. Fejler gemningen, står
-  formularen eller portionen der stadig med brugerens tal. "Gem uden at logge" går tilbage til
-  søgningen, hvor varen dukker op, når API'et har gemt den.
+  formularen eller portionen der stadig med brugerens tal. "Gem uden at logge" bliver også på
+  formularen, til varen er i kataloget, og går så tilbage til en tom søgning, hvor varen står.
+  Et navn, vælgeren lige har sendt, tæller ikke som taget – blev varen oprettet, men fejlede
+  logningen, kan "Gem og log …" prøves igen (`ensureFood` genbruger varen).
 - **Søgningen** er en `toObservable(request) → switchMap(search)`-kæde med søgeteksten og
   kataloget (`FoodLogService.foods`) som kilde, så en ny tekst afbryder den forrige, og en ny
   egen vare vises, så snart den er gemt. Søgningen svarer straks, så der er ingen spinner.

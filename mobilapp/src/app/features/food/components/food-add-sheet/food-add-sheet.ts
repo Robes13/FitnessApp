@@ -61,7 +61,7 @@ const CTA_VERB = { add: 'Tilføj', edit: 'Gem' } as const satisfies Record<
 
 const COLLECTIONS_EMPTY_MESSAGE_KEY = 'food.addSheet.collectionsEmpty';
 
-/** A collection in the "Collections" tab – the whole collection is logged as one food. */
+/** A collection in the "Collections" tab – logged as its items, one row each (P13). */
 interface CollectionRowView {
   readonly id: string;
   readonly name: string;
@@ -70,7 +70,7 @@ interface CollectionRowView {
   readonly kcalLabel: string;
   readonly icon: CollectionIconName;
   readonly toneClass: string;
-  readonly item: FoodItem;
+  readonly items: readonly FoodItem[];
 }
 
 /**
@@ -82,8 +82,8 @@ interface CollectionRowView {
  * then the meal is given, and the sheet is called "Edit food".
  *
  * The content sits behind `@if (open())`, so the picker starts over every time the sheet opens.
- * The sheet owns no data: everything is passed on to the page via `selected`, `customFoodCreated`
- * and `scanRequested`. While the page saves (`busy`) the picker's button shows a spinner, and a
+ * The sheet owns no data: everything is passed on to the page via `selected`, `collectionPicked`,
+ * `customFoodCreated` and `scanRequested`. While the page saves (`busy`) the picker's button shows a spinner, and a
  * failure (`error`) is shown above the content – the sheet stays open, so nothing typed is lost.
  */
 @Component({
@@ -117,8 +117,10 @@ export class FoodAddSheet {
   readonly error = input<string | null>(null);
 
   readonly closed = output<void>();
-  /** A finished food, ready for the log (from the picker or from a whole collection). */
+  /** A finished food from the picker, ready for the log. */
   readonly selected = output<FoodItem>();
+  /** The items of a collection from the "Collections" tab, each ready for the log. */
+  readonly collectionPicked = output<readonly FoodItem[]>();
   readonly customFoodCreated = output<FoodItem>();
   readonly scanRequested = output<void>();
 
@@ -188,7 +190,7 @@ export class FoodAddSheet {
   }
 
   protected onCollectionPicked(row: CollectionRowView): void {
-    this.selected.emit(row.item);
+    this.collectionPicked.emit(row.items);
   }
 
   private mealLabel(): string {
@@ -197,10 +199,10 @@ export class FoodAddSheet {
     return meal ? this.t(meal.labelKey) : '';
   }
 
-  /** The design's `colsFull`: only collections with content are shown, and they're logged as one combined food. */
+  /** The design's `colsFull`: only collections with items are shown. */
   private toRow(collection: FoodCollection): CollectionRowView | null {
     const totals = this.collections.collectionTotals(collection);
-    if (totals.count === 0) {
+    if (collection.items.length === 0) {
       return null;
     }
     const titles = [
@@ -209,10 +211,6 @@ export class FoodAddSheet {
         .filter((title): title is string => title !== undefined),
       ...collection.items.map((item) => item.name),
     ];
-    const quantity = this.t(
-      totals.count === 1 ? 'food.addSheet.itemCountOne' : 'food.addSheet.itemCountMany',
-      { count: totals.count },
-    );
     return {
       id: collection.id,
       name: collection.name,
@@ -220,15 +218,7 @@ export class FoodAddSheet {
       kcalLabel: `${totals.kcal} ${this.t('common.unit.kcal')}`,
       icon: collection.icon,
       toneClass: `food-add-sheet__icon--${MEAL_TONES[collection.meal]}`,
-      item: {
-        id: collection.id,
-        name: collection.name,
-        quantity,
-        kcal: totals.kcal,
-        protein: totals.protein,
-        carbs: totals.carbs,
-        fat: totals.fat,
-      },
+      items: collection.items,
     };
   }
 }

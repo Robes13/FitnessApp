@@ -8,7 +8,7 @@ import { CollectionsService } from '../../../../core/services/collections/collec
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
 import { COLLECTIONS_ROUTES } from '../../collections.routes';
 import { BUNDLE_ID_PREFIX } from '../../services/collections-view';
-import { testFood } from '../../../../core/testing/fixtures';
+import { flushTestFoodLog, testFood } from '../../../../core/testing/fixtures';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 
 @Component({ template: '' })
@@ -33,6 +33,8 @@ describe('RecipePage', () => {
     localStorage.clear();
     TestBed.configureTestingModule({ providers: TEST_PROVIDERS });
   });
+
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
 
   async function setup(recipeId: string) {
     const harness = await RouterTestingHarness.create(APP_PATH.recipe(recipeId));
@@ -80,24 +82,28 @@ describe('RecipePage', () => {
     expect(texts('.recipe-page__stat-value')).toEqual(['240', '28 g', '6 g', '11 g']);
   });
 
-  it('logs the bundle under the chosen meal and switches to Mad', async () => {
+  it('logs each item of the bundle under the chosen meal and switches to Mad', async () => {
+    // The item is the catalogue food of the same name (the collection keeps its own item id).
+    flushTestFoodLog([testFood({ foodId: 5, name: 'Tunsalat', caloriesPer100: 120 })]);
     const { page, button, click } = await setup(createBundle());
 
     await click(button('Aftensmad'));
     await click(page.querySelector('.recipe-page__log-button'));
-    // Until collections are on the API, the bundle is logged as one food of its own.
-    const http = TestBed.inject(HttpTestingController);
-    const food = testFood({ foodId: 5, name: 'Meal prep', caloriesPer100: 240 });
-    http.expectOne({ method: 'POST', url: '/api/v1/foods' }).flush(food);
-    http
-      .expectOne({ method: 'PUT', url: '/api/v1/foods/5/servings/Serving' })
-      .flush({ foodServingId: 1, unit: 'Serving', gramsPerUnit: 100 });
-    const log = http.expectOne({ method: 'POST', url: '/api/v1/me/food-logs' });
-    expect(log.request.body).toMatchObject({ foodId: 5, quantity: 1, mealType: 'Dinner' });
+    await click(page.querySelector('.recipe-page__log-button'));
+    const log = TestBed.inject(HttpTestingController).expectOne({
+      method: 'POST',
+      url: '/api/v1/me/food-logs',
+    });
+    expect(log.request.body).toMatchObject({
+      foodId: 5,
+      quantity: 200,
+      unit: 'Gram',
+      mealType: 'Dinner',
+    });
     log.flush({
       ...log.request.body,
       foodLogId: 1,
-      foodName: 'Meal prep',
+      foodName: 'Tunsalat',
       caloriesConsumed: 240,
       proteinConsumed: 28,
       carbohydratesConsumed: 6,
@@ -107,9 +113,26 @@ describe('RecipePage', () => {
 
     const logged = TestBed.inject(FoodLogService)
       .entries()
-      .find((entry) => entry.name === 'Meal prep');
+      .find((entry) => entry.name === 'Tunsalat');
     expect(logged).toMatchObject({ meal: 'aften', kcal: 240 });
     expect(TestBed.inject(Router).url).toBe(APP_PATH.FOOD);
+  });
+
+  it('stays on the page with a message when the log fails', async () => {
+    flushTestFoodLog([testFood({ foodId: 5, name: 'Tunsalat' })]);
+    const { page, click } = await setup(createBundle());
+
+    await click(page.querySelector('.recipe-page__log-button'));
+    TestBed.inject(HttpTestingController)
+      .expectOne({ method: 'POST', url: '/api/v1/me/food-logs' })
+      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+    await click(null);
+
+    expect(normalize(page.querySelector('app-ui-form-error')?.textContent)).toBe(
+      'Serveren svarer ikke lige nu. Prøv igen om lidt.',
+    );
+    expect(TestBed.inject(FoodLogService).entries()).toEqual([]);
+    expect(TestBed.inject(Router).url).not.toBe(APP_PATH.FOOD);
   });
 
   it('opens a user collection as a bundle', async () => {

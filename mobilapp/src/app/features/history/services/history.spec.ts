@@ -62,6 +62,8 @@ describe('HistoryService', () => {
     storage = createFakeStorage();
   });
 
+  afterEach(() => TestBed.inject(HttpTestingController, null)?.verify());
+
   it('er tom, indtil brugeren har registreret noget', () => {
     const { history } = setup();
 

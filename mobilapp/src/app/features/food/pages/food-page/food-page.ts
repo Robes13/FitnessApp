@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Observable, finalize } from 'rxjs';
+import { Observable, concatMap, finalize, from, toArray } from 'rxjs';
 import { API_ERROR_MESSAGE_KEY } from '../../../../core/constants/api';
 import { QUERY_PARAM } from '../../../../core/constants/app-route';
 import { MEAL_IDS } from '../../../../core/constants/meals';
@@ -212,7 +212,24 @@ export class FoodPage {
     );
   }
 
-  /** "Gem uden at logge": the picker is back on its search, where the food shows up once saved. */
+  /**
+   * A collection from the "Collections" tab: one log row per item, in order (P13).
+   * ponytail: a failure midway keeps the rows logged so far; wave 3 logs them in one call
+   * (`POST me/meal-collections/{id}/log`).
+   */
+  protected onCollectionPicked(items: readonly FoodItem[]): void {
+    const meal = this.addMeal();
+    this.run(
+      from(items).pipe(
+        concatMap((item) => this.foodLog.add(item, meal)),
+        toArray(),
+      ),
+      SAVE_ERROR_KEY,
+      () => this.closeAdd(),
+    );
+  }
+
+  /** "Gem uden at logge": the picker returns to its search once the food is saved. */
   protected onCustomFoodCreated(item: FoodItem): void {
     this.run(this.foodLog.addCustomFood(item), SAVE_ERROR_KEY);
   }

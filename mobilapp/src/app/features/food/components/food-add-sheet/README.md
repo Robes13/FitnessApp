@@ -9,8 +9,8 @@ Varer/Samlinger og enten `app-food-picker` eller listen over samlinger.
   også bliver stående på portionstrinnet (designets `showMealPicks`). Begge dele skjules i
   "Ny egen vare" og under redigering.
 - Indholdet ligger bag `@if (open())`, så vælgeren starter forfra ved hver åbning.
-- En samling logges som **én** vare: navn, `n varer` og summen fra
-  `CollectionsService.collectionTotals`. Uden samlinger med indhold vises `app-ui-empty-state`.
+- En samling udsendes som sine varer (`collectionPicked`), og siden logger én række pr. vare.
+  Uden samlinger med varer vises `app-ui-empty-state`.
 
 - Under redigering kan kun mængden ændres (spec 3.3) – makroerne på en egen vare rettes ikke
   her.

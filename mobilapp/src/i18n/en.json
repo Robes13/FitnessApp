@@ -393,9 +393,7 @@
       "titleEdit": "Edit",
       "titleEditWhat": "item",
       "collectionsEmpty": "You have no collections with items yet. Build one under Collection, then log it here with one tap.",
-      "saveAndLog": "Save and log under {{mealName}}",
-      "itemCountOne": "{{count}} item",
-      "itemCountMany": "{{count}} items"
+      "saveAndLog": "Save and log under {{mealName}}"
     },
     "view": {
       "protein": "Protein",

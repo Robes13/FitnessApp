@@ -273,9 +273,9 @@ export class FoodLogService implements SessionDataStore {
    * The API food behind a picker item: a catalogue id is that food; a scanned product
    * (`off-<barcode>`) is the catalogue food with that barcode or a new one from the product's
    * per-100 values (a taken name is retried once as `name (brand or barcode)`); any other item
-   * (an unsaved custom food) is the catalogue food with the same name or a new one from the
-   * item's own portion. Then the serving the item's unit needs is created when it's missing
-   * (idempotent – it also heals a half-created food).
+   * (an unsaved custom food, or a collection item under its own id) is the catalogue food with
+   * the same name or a new one from the item's own portion. Then the serving the item's unit
+   * needs is created when it's missing (idempotent – it also heals a half-created food).
    */
   ensureFood(item: FoodItem): Observable<FoodDto> {
     return defer(() => {
