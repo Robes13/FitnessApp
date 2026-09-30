@@ -6,7 +6,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { injectTranslate } from '../../../../core/services/language/translate';
@@ -35,9 +34,9 @@ const SAVED_LABEL_KEY = 'weight.page.saved';
  * The weight screen: record today's weight on the bathroom scale, save the weigh-in and see the trend.
  *
  * All derived logic and the API actions live in `WeightViewService`, which the page itself
- * provides, so the draft and the selected range belong to the screen. The page subscribes to the
- * actions for as long as it lives and holds the two short-lived animation states: "Saved ✓" on
- * the button and the figure's gaze, which follows the direction the weight was changed in.
+ * provides, so the draft and the selected range belong to the screen. The page starts the actions
+ * and holds the two short-lived animation states: "Saved ✓" on the button and the figure's gaze,
+ * which follows the direction the weight was changed in.
  *
  * While the weigh-ins or the profile load, a spinner replaces the screen; if one fails, a message
  * and "Prøv igen". A second weigh-in the same day opens the overwrite question (an inline sheet).
@@ -117,9 +116,17 @@ export class WeightPage {
     this.run(this.view.retryLoad());
   }
 
-  /** The view handles the errors of its actions, so `done` only runs on success. */
+  /**
+   * The view handles the errors of its actions, so `done` only runs on success. The finite action
+   * runs to the end even when the tab is left, so the API's answer (and the goal reload after it)
+   * always reaches the stores – only the page's own `done` is skipped then.
+   */
   private run(action: Observable<void>, done?: () => void): void {
-    action.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(done);
+    action.subscribe(() => {
+      if (!this.destroyRef.destroyed) {
+        done?.();
+      }
+    });
   }
 
   private showSaved(): void {

@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, defer, map, of, switchMap, throwError } from 'rxjs';
+import { PROFILE_ENDPOINT } from '../../constants/profile';
 import {
   WEIGHT_ENDPOINT,
   WEIGHT_LOG_LOAD_LIMIT,
@@ -19,6 +20,7 @@ import {
   WeightSaveResult,
 } from '../../models/weight';
 import {
+  fetchAllPages,
   injectApiUrl,
   mapApiError,
   parseApiDateTime,
@@ -62,16 +64,24 @@ export class WeightLogService implements SessionDataStore {
     return latest !== null && isSameDay(new Date(latest.at), this.now());
   });
 
-  /** Never errors – a failure sets `status` to `'error'`; "Prøv igen" calls this again. */
+  /**
+   * Every weigh-in, page by page (one GET until the user has more than 100). Never errors – a
+   * failure sets `status` to `'error'`; "Prøv igen" calls this again.
+   */
   load(): Observable<void> {
     return defer(() => {
       this.statusState.set('loading');
-      return this.http.get<CursorPage<WeightLogDto>>(this.url(WEIGHT_ENDPOINT.LOGS), {
-        params: { limit: WEIGHT_LOG_LOAD_LIMIT },
-      });
+      return fetchAllPages((cursor) =>
+        this.http.get<CursorPage<WeightLogDto>>(this.url(WEIGHT_ENDPOINT.LOGS), {
+          params:
+            cursor === null
+              ? { limit: WEIGHT_LOG_LOAD_LIMIT }
+              : { limit: WEIGHT_LOG_LOAD_LIMIT, cursor },
+        }),
+      );
     }).pipe(
-      map((page) => {
-        this.entriesState.set(sortNewestFirst(page.items.map(toWeighEntry)));
+      map((items) => {
+        this.entriesState.set(sortNewestFirst(items.map(toWeighEntry)));
         this.statusState.set('ready');
       }),
       catchError(() => {
@@ -169,7 +179,7 @@ export class WeightLogService implements SessionDataStore {
     const weightKg =
       latest === null
         ? this.http
-            .get<LatestWeightDto>(this.url(WEIGHT_ENDPOINT.LATEST))
+            .get<LatestWeightDto>(this.url(PROFILE_ENDPOINT.LATEST_WEIGHT))
             .pipe(map((dto) => dto.weight))
         : of(latest.kg);
     return weightKg.pipe(

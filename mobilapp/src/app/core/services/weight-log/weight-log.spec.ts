@@ -33,7 +33,7 @@ describe('WeightLogService', () => {
   afterEach(() => http.verify());
 
   describe('load', () => {
-    it('fetches one page with a single GET – not the latest weight – newest first', async () => {
+    it('fetches the list – not the latest weight – with a single GET, newest first', async () => {
       const service = setup();
       const profile = TestBed.inject(UserProfileService);
       profile.update({ weightKg: 80 });
@@ -42,8 +42,8 @@ describe('WeightLogService', () => {
       expect(service.status()).toBe('loading');
       http.expectOne({ method: 'GET', url: `${LOGS_URL}?limit=100` }).flush({
         items: [weightLogDto(2, 76, 8, TEST_NOW), weightLogDto(1, 74, 1, TEST_NOW)],
-        nextCursor: 'more',
-        hasMore: true,
+        nextCursor: null,
+        hasMore: false,
       });
       await done;
 
@@ -51,6 +51,26 @@ describe('WeightLogService', () => {
       expect(service.entries().map((entry) => entry.id)).toEqual(['1', '2']);
       expect(service.latest()?.kg).toBe(74);
       expect(profile.profile().weightKg).toBe(80);
+    });
+
+    it('follows nextCursor, so the very first weigh-in is loaded too', async () => {
+      const service = setup();
+
+      const done = firstValueFrom(service.load());
+      http.expectOne(`${LOGS_URL}?limit=100`).flush({
+        items: [weightLogDto(3, 74, 1, TEST_NOW)],
+        nextCursor: 'more',
+        hasMore: true,
+      });
+      http.expectOne(`${LOGS_URL}?limit=100&cursor=more`).flush({
+        items: [weightLogDto(1, 80, 200, TEST_NOW)],
+        nextCursor: null,
+        hasMore: false,
+      });
+      await done;
+
+      expect(service.status()).toBe('ready');
+      expect(service.entries().map((entry) => entry.id)).toEqual(['3', '1']);
     });
 
     it('reads the API timestamps with seven fraction digits', async () => {

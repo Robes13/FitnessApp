@@ -216,6 +216,17 @@ describe('WeightPage', () => {
     }
   });
 
+  it('gør vejningen færdig, selv om fanen forlades undervejs', async () => {
+    const root = await setup();
+
+    click(root, '.weight-page__save');
+    fixture.destroy();
+    http.expectOne({ method: 'POST', url: LOGS_URL }).flush(weightLogDto(9, 75, 0, TEST_NOW));
+    flushGoal();
+
+    expect(TestBed.inject(WeightLogService).weighedToday()).toBe(true);
+  });
+
   it('har intervalchipsene under grafen og kan skifte periode', async () => {
     const root = await setup();
     const chart = root.querySelector('app-weight-chart');
@@ -315,5 +326,27 @@ describe('WeightPage', () => {
     expect(TestBed.inject(WeightLogService).entries()).toHaveLength(2);
     expect(root.querySelectorAll('.weight-log-list__row')).toHaveLength(2);
     expect(TestBed.inject(UserProfileService).profile().weightKg).toBe(75.6);
+  });
+
+  it('viser fejlen under knappen, når den sidste vejning er slettet, men profilen ikke hentes', async () => {
+    const root = await setup([weightLogDto(1, 75, 3, TEST_NOW)]);
+    click(root, '.weight-log-list__row');
+    await fixture.whenStable();
+    click(root, '.weight-edit-sheet__delete');
+    await fixture.whenStable();
+
+    click(root, '.weight-edit-sheet__confirm-delete');
+    http
+      .expectOne({ method: 'DELETE', url: `${LOGS_URL}/1` })
+      .flush(null, { status: 204, statusText: 'No Content' });
+    http
+      .expectOne({ method: 'GET', url: `${LOGS_URL}/latest` })
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    await fixture.whenStable();
+
+    expect(root.querySelector('.weight-edit-sheet__save')).toBeNull();
+    expect(root.querySelector('.weight-page__save-error')?.textContent?.trim()).toBe(
+      'Serveren svarer ikke lige nu. Prøv igen om lidt.',
+    );
   });
 });

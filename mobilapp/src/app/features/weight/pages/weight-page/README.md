@@ -2,12 +2,12 @@
 
 `app-weight-page` – fanen Vægt (`/vaegt`).
 
-| Fil                   | Indhold                                                                                                             |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `weight-page.ts`      | Siden: udstiller `WeightViewService`, abonnerer på dens handlinger og holder de to kortlivede animationer.          |
-| `weight-page.html`    | Skærmens opbygning, indlæsning/fejl og overskrivningsarket.                                                         |
-| `weight-page.scss`    | Layout og typografi; `:host` er sidens rod (`page-screen`).                                                         |
-| `weight-page.spec.ts` | Opbygning, startvægt, spinner/"Prøv igen", −/+, gem (fejl, overskriv/annullér), intervalchips, listen, ret og slet. |
+| Fil                   | Indhold                                                                                                                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `weight-page.ts`      | Siden: udstiller `WeightViewService`, starter dens handlinger og holder de to kortlivede animationer.                                                                 |
+| `weight-page.html`    | Skærmens opbygning, indlæsning/fejl og overskrivningsarket.                                                                                                           |
+| `weight-page.scss`    | Layout og typografi; `:host` er sidens rod (`page-screen`).                                                                                                           |
+| `weight-page.spec.ts` | Opbygning, startvægt, spinner/"Prøv igen", −/+, gem (fejl, overskriv/annullér, tab-skift undervejs), intervalchips, listen, ret og slet (også fejl efter sletningen). |
 
 ## Opbygning
 
@@ -32,7 +32,9 @@ Siden holder kun to kortlivede signals, fordi de er ren animation:
 - `saved` – knappens kvittering, nulstilles efter 1,4 s.
 - `lookDirection` – figurens blik følger den retning, vægten blev ændret i, i 0,9 s.
 
-Begge timere ryddes i `DestroyRef.onDestroy`, så en hurtig tab-skift ikke efterlader dem.
+Begge timere ryddes i `DestroyRef.onDestroy`, så en hurtig tab-skift ikke efterlader dem. En
+handling, der er i gang, afbrydes ikke af et tab-skift (API'ets svar skal nå storene); kun sidens
+kvittering springes over, når siden er væk.
 Alt andet er afledt i `WeightViewService`.
 
 ## Bemærk

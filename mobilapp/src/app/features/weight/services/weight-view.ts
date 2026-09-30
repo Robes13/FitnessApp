@@ -1,5 +1,16 @@
 import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
-import { EMPTY, Observable, catchError, defer, finalize, map, merge, mergeMap, of } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  catchError,
+  defer,
+  finalize,
+  map,
+  merge,
+  mergeMap,
+  of,
+  throwError,
+} from 'rxjs';
 import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../core/constants/nutrition';
 import { WEIGHT_LOG_HISTORY_RANGE } from '../../../core/constants/weight';
 import { StoreStatus } from '../../../core/models/api';
@@ -396,7 +407,11 @@ export class WeightViewService {
     this.overwriteErrorKey.set(null);
   }
 
-  /** Runs `mutation` on the weigh-in open in the edit sheet and closes the sheet when it is done. */
+  /**
+   * Runs `mutation` on the weigh-in open in the edit sheet and closes the sheet when it is done.
+   * On an error the sheet stays open with it – unless the row is already gone (a delete whose
+   * sync after it failed): the sheet has closed then, so the error shows under "Gem vejning".
+   */
   private editing(mutation: (id: string) => Observable<void>): Observable<void> {
     return this.track(
       this.editBusyState,
@@ -404,7 +419,19 @@ export class WeightViewService {
       (error) => toApiError(error).messageKey,
       () => {
         const id = this.editingId();
-        return id === null ? EMPTY : mutation(id).pipe(map(() => this.editingId.set(null)));
+        return id === null
+          ? EMPTY
+          : mutation(id).pipe(
+              map(() => this.editingId.set(null)),
+              catchError((error: unknown) => {
+                if (this.editingRow() !== null) {
+                  return throwError(() => error);
+                }
+                this.editingId.set(null);
+                this.saveErrorKey.set(toApiError(error).messageKey);
+                return EMPTY;
+              }),
+            );
       },
     );
   }

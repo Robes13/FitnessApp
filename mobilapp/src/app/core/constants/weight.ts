@@ -1,18 +1,16 @@
 import { WeightRange } from '../models/weight';
 
-/** Weigh-in endpoints, relative to `API_BASE_URL`. */
+/**
+ * Weigh-in endpoints, relative to `API_BASE_URL`. The newest weigh-in (or the starting weight) is
+ * `PROFILE_ENDPOINT.LATEST_WEIGHT`.
+ */
 export const WEIGHT_ENDPOINT = {
   LOGS: 'me/weight-logs',
-  /** The newest weigh-in, or the starting weight from sign-up without one. */
-  LATEST: 'me/weight-logs/latest',
 } as const;
 
 /**
- * How many weigh-ins `load()` fetches (one page). There is at most one per day, so 100 cover
- * more than the 3 months the screen shows.
- *
- * ponytail: one page – older weigh-ins aren't loaded. Follow `nextCursor` with
- * `fetchAllPages()` once something needs them.
+ * The page size of `load()`, the API's maximum. `load()` follows the pages, because Home's goal
+ * progress and the "kg lost" achievements start from the user's very first weigh-in.
  */
 export const WEIGHT_LOG_LOAD_LIMIT = 100;
 

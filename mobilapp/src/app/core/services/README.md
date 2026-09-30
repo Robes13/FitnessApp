@@ -63,8 +63,9 @@ Ingen service kender til `shared/` eller `features/`.
   `updateCustomFood` kaster `DuplicateCustomFoodNameError`; UI'et tjekker med
   `hasCustomFoodNamed` først. `addCustomFood(input, id?)` tager et valgfrit id, så vare-vælgeren
   kan bestemme id'et én gang, og den loggede post peger på den gemte egne vare.
-- **Vejninger** (plan-v2 P16). `load()` er kun `GET me/weight-logs?limit=100` (én side, nyeste
-  først – højst én pr. dag, så det dækker skærmens 3 mdr.; `// ponytail:` ældre sider hentes ikke);
+- **Vejninger** (plan-v2 P16). `load()` henter kun listen (`GET me/weight-logs?limit=100`, nyeste
+  først, ikke `latest`) og følger `nextCursor` med `fetchAllPages`, så Hjems målfremskridt og
+  "kg tabt"-præstationerne har den allerførste vejning – ét kald, til brugeren har over 100;
   `weightKg` sætter profilens `load()`. API'et tillader én vejning pr. kalenderdag i profilens
   tidszone: `add(kg)` sender altid `POST { weight, recordedAt: nu }` og svarer ved 409
   `{ kind: 'exists', id }` ud fra `existingWeightLogId` (læst med `readProblemBody`, så også

@@ -16,7 +16,7 @@ de sidste 3 mdr., hvor en vejning kan rettes eller slettes.
 Featuren har ingen egen persistens. Den læser og skriver via `core/services`, som taler med
 API'et (`me/weight-logs`):
 
-- `WeightLogService` – vejningerne (nyeste først, én side á 100), `add()` (`POST`), `update()`
+- `WeightLogService` – alle vejningerne (nyeste først, sider á 100), `add()` (`POST`), `update()`
   (`PATCH`), `remove()` (`DELETE`), `entriesWithin()` og grafens punkter `seriesFor()`.
 - `UserProfileService` – vægt, højde, mål og målvægt. Profilens `load()` sætter vægten (seneste
   vejning, ellers startvægten). Efter hver ændring sætter `WeightLogService` profilens vægt til den
@@ -35,7 +35,8 @@ aldrig en række.
 - **`WeightViewService` er feature-lokal og udstilles af `WeightPage`** (`providers: […]`), ikke
   `providedIn: 'root'`. Kladdevægten og det valgte interval hører til skærmen og nulstilles, når
   man forlader fanen – præcis som designets `newWeight10` og `range`. Alt, der skal overleve,
-  ligger i core-storene.
+  ligger i core-storene. En handling, der er i gang, kører færdig, selv om fanen forlades, så
+  API'ets svar og det genberegnede mål altid når storene.
 - **Kladden regnes i tiendedele kilo.** Designet arbejder i `newWeight10` (heltal) for at undgå
   flydende-tal-støj; servicen runder derfor altid til nærmeste 0,1 kg og klemmer værdien fast
   mellem `WEIGHT_MIN_KG` og `WEIGHT_MAX_KG`.
@@ -53,8 +54,9 @@ aldrig en række.
 - **Ret og slet.** Tryk på en række i listen åbner `WeightEditSheet`. Use casen kræver kun, at den
   seneste vejning kan rettes, men alle viste rækker kan rettes – det koster intet ekstra. Gem og
   slet venter på API'et (spinner, arket kan ikke lukkes imens); fejler de, bliver arket åbent med
-  fejlen. Rettes eller slettes den seneste vejning, følger profilens vægt den nye seneste; slettes
-  den eneste, bliver den startvægten fra API'et.
+  fejlen. Er vejningen slettet, men fejler hentningen af vægten eller målet bagefter, er arket
+  lukket, og fejlen står under "Gem vejning". Rettes eller slettes den seneste vejning, følger
+  profilens vægt den nye seneste; slettes den eneste, bliver den startvægten fra API'et.
 - **3 uger i stedet for designets 4** (spec 6.3, plan-v2 P16) – også som standardinterval.
 - **Listen viser højst 3 mdr. tilbage** (`WEIGHT_LOG_HISTORY_RANGE`, samme periode som grafens
   længste interval). Som udgangspunkt vises de 6 nyeste; "Vis alle" folder resten af de 3 mdr.
