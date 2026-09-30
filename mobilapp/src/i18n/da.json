@@ -195,7 +195,7 @@
     "weight": {
       "range": {
         "lastWeek": "Sidste uge",
-        "lastFourWeeks": "Sidste 4 uger",
+        "lastThreeWeeks": "Sidste 3 uger",
         "lastThreeMonths": "Sidste 3 mdr."
       },
       "logList": {
@@ -549,9 +549,19 @@
     "logList": {
       "title": "Seneste vejninger"
     },
+    "overwriteSheet": {
+      "body": "Du har allerede vejet dig i dag. Vil du overskrive vejningen med {{kg}} kg?",
+      "cancel": "Annuller",
+      "confirm": "Ja, overskriv",
+      "titleAccent": "dagens vejning?",
+      "titleStart": "Overskriv"
+    },
     "page": {
+      "loadError": "Vejningerne kunne ikke hentes.",
       "rangesAriaLabel": "Vælg periode",
+      "retry": "Prøv igen",
       "save": "Gem vejning",
+      "saveError": "Vejningen blev ikke gemt. Prøv igen.",
       "saved": "Gemt ✓",
       "sinceLast": "Siden sidst",
       "titleAccent": "vægt",
@@ -567,20 +577,20 @@
       "ariaLabel": "Figur på vægt"
     },
     "view": {
-      "emptyLog": "Ingen vejninger endnu.",
+      "emptyLog": "Ingen vejninger endnu. Startvægten fra registreringen kan ikke rettes – registrér en ny vejning først.",
       "lastWeighed": "Sidst vejet {{day}}",
       "logStart": "Start",
-      "neverWeighed": "Ingen vejninger endnu",
+      "neverWeighed": "Startvægt fra registreringen",
       "noRecentLog": "Ingen vejninger de sidste 3 mdr.",
       "rangeDelta": "{{delta}} kg",
       "rangeStart": {
-        "fourWeeks": "-4 uger",
         "threeMonths": "-3 mdr.",
+        "threeWeeks": "-3 uger",
         "week": "-uge"
       },
       "ranges": {
-        "fourWeeks": "4 uger",
         "threeMonths": "3 mdr.",
+        "threeWeeks": "3 uger",
         "week": "1 uge"
       }
     }

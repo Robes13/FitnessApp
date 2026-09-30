@@ -4,27 +4,40 @@ import { AuthResponse } from '../models/auth';
 import { FoodItem } from '../models/food';
 import { UserGoalDto } from '../models/profile-api';
 import { SessionState } from '../models/session';
-import { WeighEntry } from '../models/weight';
+import { WeightLogDto } from '../models/weight';
 import { UserProfileService } from '../services/user-profile/user-profile';
+import { WeightLogService } from '../services/weight-log/weight-log';
+import { toIsoDate } from '../utils/date-format';
 
 const MS_PER_DAY = 86_400_000;
 
-/** A weigh-in `daysAgo` days before `now`, at the same time of day. */
-export function weighEntry(id: string, kg: number, daysAgo: number, now: Date): WeighEntry {
-  return { id, kg, at: new Date(now.getTime() - daysAgo * MS_PER_DAY).toISOString() };
+/** A weigh-in as the API sends it, `daysAgo` days before `now` at the same time of day. */
+export function weightLogDto(id: number, kg: number, daysAgo: number, now: Date): WeightLogDto {
+  const at = new Date(now.getTime() - daysAgo * MS_PER_DAY);
+  return { weightLogId: id, weight: kg, recordedAt: at.toISOString(), recordedDate: toIsoDate(at) };
 }
 
 /**
- * Three weigh-ins to test with, newest first: 75.0 kg 3 days ago, 75.6 kg 10 days ago
- * and 76.1 kg 20 days ago. The app doesn't seed anything itself – specs that need a
- * weigh-in history put it here in storage.
+ * Three weigh-ins to test with, newest first: 75.0 kg 3 days ago (id 1), 75.6 kg 10 days ago
+ * (id 2) and 76.1 kg 20 days ago (id 3). Give them to the store with `flushTestWeighIns()`.
  */
-export function weighHistory(now: Date): readonly WeighEntry[] {
+export function weighHistory(now: Date): readonly WeightLogDto[] {
   return [
-    weighEntry('w-1', 75, 3, now),
-    weighEntry('w-2', 75.6, 10, now),
-    weighEntry('w-3', 76.1, 20, now),
+    weightLogDto(1, 75, 3, now),
+    weightLogDto(2, 75.6, 10, now),
+    weightLogDto(3, 76.1, 20, now),
   ];
+}
+
+/**
+ * Gives `WeightLogService` weigh-ins the way the API does: `load()` answered with `weighIns` (one
+ * page). Needs `HttpTestingController` (every spec has it). The profile's weight is not touched.
+ */
+export function flushTestWeighIns(weighIns: readonly WeightLogDto[]): void {
+  TestBed.inject(WeightLogService).load().subscribe();
+  TestBed.inject(HttpTestingController)
+    .expectOne('/api/v1/me/weight-logs?limit=100')
+    .flush({ items: weighIns, nextCursor: null, hasMore: false });
 }
 
 /** An item to log in tests. */

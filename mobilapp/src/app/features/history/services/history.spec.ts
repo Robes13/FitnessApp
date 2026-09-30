@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { STORAGE_KEY } from '../../../core/constants/storage-key';
+import { WeightLogDto } from '../../../core/models/weight';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { injectTranslate } from '../../../core/services/language/translate';
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
-import { TEST_FOOD, weighEntry } from '../../../core/testing/fixtures';
+import { TEST_FOOD, flushTestWeighIns, weightLogDto } from '../../../core/testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { HistoryEntry } from '../models/history';
 import {
@@ -31,11 +32,13 @@ function findEntry(history: HistoryService, title: string): HistoryEntry {
 
 describe('HistoryService', () => {
   let storage: FakeStorage;
+  let weighIns: readonly WeightLogDto[];
 
   function setup(): Context {
     TestBed.configureTestingModule({
       providers: [...provideCoreTestEnvironment({ storage }), HistoryService],
     });
+    flushTestWeighIns(weighIns);
     return {
       history: TestBed.inject(HistoryService),
       foodLog: TestBed.inject(FoodLogService),
@@ -45,14 +48,12 @@ describe('HistoryService', () => {
 
   /** Two weigh-ins: today and three days ago. */
   function storeWeighings(): void {
-    storage.setItem(
-      STORAGE_KEY.WEIGHT_LOG,
-      JSON.stringify([weighEntry('w-1', 75, 0, TEST_NOW), weighEntry('w-2', 75.6, 3, TEST_NOW)]),
-    );
+    weighIns = [weightLogDto(1, 75, 0, TEST_NOW), weightLogDto(2, 75.6, 3, TEST_NOW)];
   }
 
   beforeEach(() => {
     storage = createFakeStorage();
+    weighIns = [];
   });
 
   it('er tom, indtil brugeren har registreret noget', () => {

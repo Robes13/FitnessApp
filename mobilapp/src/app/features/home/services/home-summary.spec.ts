@@ -6,10 +6,16 @@ import { FoodItem } from '../../../core/models/food';
 import { MealId } from '../../../core/models/meal';
 import { UserProfile } from '../../../core/models/profile';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
+import { WeightLogDto } from '../../../core/models/weight';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
-import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
-import { TEST_FOOD, flushTestGoal, weighHistory } from '../../../core/testing/fixtures';
+import {
+  TEST_FOOD,
+  flushTestGoal,
+  flushTestWeighIns,
+  weighHistory,
+  weightLogDto,
+} from '../../../core/testing/fixtures';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { HomeSummaryService } from './home-summary';
 
@@ -43,6 +49,7 @@ describe('HomeSummaryService', () => {
 
   let storage: FakeStorage;
   let profilePatch: Partial<UserProfile>;
+  let weighIns: readonly WeightLogDto[];
 
   /** The profile `setup()` gives the user, on top of the API's goal. */
   function storeProfile(patch: Partial<UserProfile>): void {
@@ -82,7 +89,12 @@ describe('HomeSummaryService', () => {
   }
 
   function storeWeighHistory(): void {
-    storage.setItem(STORAGE_KEY.WEIGHT_LOG, JSON.stringify(weighHistory(THURSDAY)));
+    weighIns = weighHistory(THURSDAY);
+  }
+
+  /** Today's weigh-in, as if the user had just weighed in. */
+  function weighInToday(): void {
+    flushTestWeighIns([weightLogDto(1, 74.2, 0, THURSDAY)]);
   }
 
   function setup(): HomeSummaryService {
@@ -90,6 +102,7 @@ describe('HomeSummaryService', () => {
       providers: provideCoreTestEnvironment({ storage, now: THURSDAY }),
     });
     flushTestGoal();
+    flushTestWeighIns(weighIns);
     TestBed.inject(UserProfileService).update(profilePatch);
     return TestBed.inject(HomeSummaryService);
   }
@@ -97,6 +110,7 @@ describe('HomeSummaryService', () => {
   beforeEach(() => {
     storage = createFakeStorage();
     profilePatch = {};
+    weighIns = [];
   });
 
   it('labels today and the week from the injected date', () => {
@@ -272,7 +286,7 @@ describe('HomeSummaryService', () => {
       { ...SALAT, meal: 'frokost' },
     ]);
     const service = setup();
-    TestBed.inject(WeightLogService).add(74.2);
+    weighInToday();
 
     const todo = service.nextTodo();
 
@@ -289,7 +303,7 @@ describe('HomeSummaryService', () => {
     ]);
     const service = setup();
     const foodLog = TestBed.inject(FoodLogService);
-    TestBed.inject(WeightLogService).add(74.2);
+    weighInToday();
 
     foodLog.add(TEST_FOOD, 'aften');
     foodLog.add(TEST_FOOD, 'snack');

@@ -40,13 +40,13 @@
     color: var(--color-accent);
   }
 
+  /* Wraps instead of squeezing the title – "Startvægt fra registreringen" is long. */
   &__last-weighed {
-    flex: none;
     margin: 0;
     color: var(--color-text-secondary);
     font-size: var(--font-size-sm);
     line-height: var(--line-height-tight);
-    white-space: nowrap;
+    text-align: end;
   }
 
   /* Numbers and key figures on the left, the bathroom scale on the right. */
@@ -159,8 +159,38 @@
     margin-top: var(--space-3-5);
   }
 
+  /* The save error's reserved line (16 px) + 4 px = the design's 20 px above the chart. */
   &__chart {
-    margin-top: var(--space-5);
+    margin-top: var(--space-1);
+  }
+
+  /* Loading and load error instead of the screen. */
+  &__status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3-5);
+    padding: var(--space-6) 0;
+  }
+
+  &__status-message {
+    align-self: stretch;
+  }
+
+  /* The overwrite question – the same layout as the log-out sheet. */
+  &__overwrite-body {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
+    text-wrap: pretty;
+  }
+
+  &__overwrite-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2-5);
+    margin-top: var(--space-4);
   }
 
   &__ranges {

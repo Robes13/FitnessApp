@@ -7,7 +7,7 @@ funktioner og providers, så de kan kompileres sammen med appen uden vitest-afh�
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `fake-document.ts`         | `createFakeDocument()` / `createFakeStorage()` – et minimalt `DOCUMENT` med `documentElement`-attributter og en `localStorage` i hukommelsen (med `length`/`key()`, så `clearAll()` kan gennemløbe den).                                                                                                             |
 | `test-providers.ts`        | `provideCoreTestEnvironment()` (service-specs), `provideComponentTestEnvironment()` + `resetComponentTestStorage()` (komponent-specs) og `TEST_NOW`.                                                                                                                                                                 |
-| `fixtures.ts`              | Testdata, appen ikke selv leverer: `weighEntry()` / `weighHistory()` til en vejningshistorik, `TEST_FOOD` til en vare, der kan logges, sessionerne `AUTHENTICATED_SESSION` / `PENDING_SESSION` + `TEST_AUTH_RESPONSE` / `TEST_EMAIL` og `TEST_GOAL` + `flushTestGoal()` (giver profilen et mål og dermed `targets`). |
+| `fixtures.ts`              | Testdata, appen ikke selv leverer: `weighHistory()` / `weightLogDto()` + `flushTestWeighIns()` (vejningerne via `load()`), `TEST_FOOD` (vare), sessionerne `AUTHENTICATED_SESSION` / `PENDING_SESSION` + `TEST_AUTH_RESPONSE` / `TEST_EMAIL` og `TEST_GOAL` + `flushTestGoal()` (profilens mål og dermed `targets`). |
 | `global-test-providers.ts` | Providers, alle specs får (`providersFile` i `angular.json`): ngx-translate med dansk og `HttpClient` på Angulars testing-backend.                                                                                                                                                                                   |
 
 `TEST_NOW` er mandag 21. september 2026 kl. 10:30. Begge miljøer fryser `NOW` og sætter den
@@ -57,9 +57,9 @@ const service = TestBed.inject(FoodLogService);
 
 Seed storage før `TestBed.inject`, hvis en test skal ramme "genskab fra storage"-stien.
 
-Appen seeder ikke selv noget: alle stores starter tomme. En test, der har brug for en
-vejningshistorik eller et logget måltid, lægger det selv i storage – `fixtures.ts` har
-byggestenene.
+Appen seeder ikke selv noget: alle stores starter tomme. Vejninger kommer fra API'et, så en test
+giver dem med `flushTestWeighIns(weighHistory(TEST_NOW))` (efter `configureTestingModule`); et
+logget måltid lægger testen selv i storage – `fixtures.ts` har byggestenene.
 
 ## Profilen i specs
 

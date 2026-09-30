@@ -195,7 +195,7 @@
     "weight": {
       "range": {
         "lastWeek": "Last week",
-        "lastFourWeeks": "Last 4 weeks",
+        "lastThreeWeeks": "Last 3 weeks",
         "lastThreeMonths": "Last 3 mo"
       },
       "logList": {
@@ -549,9 +549,19 @@
     "logList": {
       "title": "Recent weigh-ins"
     },
+    "overwriteSheet": {
+      "body": "You've already weighed in today. Do you want to overwrite the weigh-in with {{kg}} kg?",
+      "cancel": "Cancel",
+      "confirm": "Yes, overwrite",
+      "titleAccent": "today's weigh-in?",
+      "titleStart": "Overwrite"
+    },
     "page": {
+      "loadError": "Your weigh-ins couldn't be loaded.",
       "rangesAriaLabel": "Choose period",
+      "retry": "Try again",
       "save": "Save weigh-in",
+      "saveError": "The weigh-in wasn't saved. Please try again.",
       "saved": "Saved ✓",
       "sinceLast": "Since last time",
       "titleAccent": "weight",
@@ -567,20 +577,20 @@
       "ariaLabel": "Figure on scale"
     },
     "view": {
-      "emptyLog": "No weigh-ins yet.",
+      "emptyLog": "No weigh-ins yet. The starting weight from sign-up can't be edited – record a new weigh-in first.",
       "lastWeighed": "Last weighed {{day}}",
       "logStart": "Start",
-      "neverWeighed": "No weigh-ins yet",
+      "neverWeighed": "Starting weight from sign-up",
       "noRecentLog": "No weigh-ins in the last 3 mo.",
       "rangeDelta": "{{delta}} kg",
       "rangeStart": {
-        "fourWeeks": "-4 weeks",
         "threeMonths": "-3 mo",
+        "threeWeeks": "-3 weeks",
         "week": "-week"
       },
       "ranges": {
-        "fourWeeks": "4 weeks",
         "threeMonths": "3 mo",
+        "threeWeeks": "3 weeks",
         "week": "1 week"
       }
     }

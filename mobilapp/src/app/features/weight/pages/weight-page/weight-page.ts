@@ -6,10 +6,16 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
+import { Observable } from 'rxjs';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
+import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
+import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
+import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
+import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
 import { WeightChart } from '../../components/weight-chart/weight-chart';
 import { WeightEditSheet } from '../../components/weight-edit-sheet/weight-edit-sheet';
 import { WeightLogList } from '../../components/weight-log-list/weight-log-list';
@@ -28,9 +34,13 @@ const SAVED_LABEL_KEY = 'weight.page.saved';
 /**
  * The weight screen: record today's weight on the bathroom scale, save the weigh-in and see the trend.
  *
- * All derived logic lives in `WeightViewService`, which the page itself provides, so the draft
- * and the selected range belong to the screen. The page only holds the two short-lived animation
- * states: "Saved ✓" on the button and the figure's gaze, which follows the direction the weight was changed in.
+ * All derived logic and the API actions live in `WeightViewService`, which the page itself
+ * provides, so the draft and the selected range belong to the screen. The page subscribes to the
+ * actions for as long as it lives and holds the two short-lived animation states: "Saved ✓" on
+ * the button and the figure's gaze, which follows the direction the weight was changed in.
+ *
+ * While the weigh-ins or the profile load, a spinner replaces the screen; if one fails, a message
+ * and "Prøv igen". A second weigh-in the same day opens the overwrite question (an inline sheet).
  */
 @Component({
   selector: 'app-weight-page',
@@ -38,6 +48,10 @@ const SAVED_LABEL_KEY = 'weight.page.saved';
     TranslatePipe,
     UiButton,
     UiChip,
+    UiEmptyState,
+    UiFormError,
+    UiSheet,
+    UiSpinner,
     WeightChart,
     WeightEditSheet,
     WeightLogList,
@@ -52,6 +66,7 @@ const SAVED_LABEL_KEY = 'weight.page.saved';
 })
 export class WeightPage {
   protected readonly view = inject(WeightViewService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly t = injectTranslate();
 
   private readonly saved = signal(false);
@@ -69,7 +84,7 @@ export class WeightPage {
   );
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => {
+    this.destroyRef.onDestroy(() => {
       this.clearTimer(this.savedTimer);
       this.clearTimer(this.lookTimer);
     });
@@ -83,7 +98,31 @@ export class WeightPage {
   }
 
   protected save(): void {
-    this.view.save();
+    this.run(this.view.save(), () => this.showSaved());
+  }
+
+  protected confirmOverwrite(): void {
+    this.run(this.view.confirmOverwrite(), () => this.showSaved());
+  }
+
+  protected saveEdit(kg: number): void {
+    this.run(this.view.saveEdit(kg));
+  }
+
+  protected removeEditing(): void {
+    this.run(this.view.removeEditing());
+  }
+
+  protected retryLoad(): void {
+    this.run(this.view.retryLoad());
+  }
+
+  /** The view handles the errors of its actions, so `done` only runs on success. */
+  private run(action: Observable<void>, done?: () => void): void {
+    action.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(done);
+  }
+
+  private showSaved(): void {
     this.saved.set(true);
     this.clearTimer(this.savedTimer);
     this.savedTimer = setTimeout(() => {

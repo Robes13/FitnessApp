@@ -1,34 +1,60 @@
+import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { newId } from '../../utils/id';
-import { STORAGE_KEY } from '../../constants/storage-key';
-import { WEIGHT_RANGE_DAYS, WEIGHT_RANGE_LABEL_KEY } from '../../constants/weight';
-import { WeighEntry, WeightPoint, WeightRange } from '../../models/weight';
+import { Observable, catchError, defer, map, of, switchMap, throwError } from 'rxjs';
+import {
+  WEIGHT_ENDPOINT,
+  WEIGHT_LOG_LOAD_LIMIT,
+  WEIGHT_RANGE_DAYS,
+  WEIGHT_RANGE_LABEL_KEY,
+} from '../../constants/weight';
+import { CursorPage, StoreStatus } from '../../models/api';
+import { LatestWeightDto } from '../../models/profile-api';
+import {
+  CreateWeightLogRequest,
+  UpdateWeightLogRequest,
+  WeighEntry,
+  WeightLogDto,
+  WeightPoint,
+  WeightRange,
+  WeightSaveResult,
+} from '../../models/weight';
+import {
+  injectApiUrl,
+  mapApiError,
+  parseApiDateTime,
+  readProblemBody,
+  toApiError,
+} from '../../utils/api';
 import { addDays, isSameDay } from '../../utils/date-format';
 import { roundTo } from '../../utils/math';
 import { NOW } from '../../utils/now';
 import { injectTranslate } from '../language/translate';
 import { SessionDataStore } from '../session-data/session-data';
-import { StorageService } from '../storage/storage';
 import { UserProfileService } from '../user-profile/user-profile';
 
 /**
- * Weigh-ins, newest first. Every change (`add`, `update`, `remove`) keeps the profile's weight
- * equal to the latest weigh-in, so Home, Food and the calorie calculation stay in sync.
+ * The user's weigh-ins from the API, newest first.
  *
- * At most one weigh-in per calendar day: recording again on a day that already has a weigh-in
- * replaces that day's entry instead of adding a duplicate.
+ * `load()` only fetches the list – the profile's `load()` sets `weightKg` (the newest weigh-in or
+ * the starting weight). Mutations are pessimistic: the list changes once the API has answered.
+ * The API recalculates the goal on every mutation, so each one ends by setting the profile's
+ * weight to the newest weigh-in (with none left: `GET me/weight-logs/latest`, the starting
+ * weight) and reloading the goal.
  *
- * The log starts empty: there are no weigh-ins until the user records one themselves.
+ * The API allows one weigh-in per calendar day: `add()` on a day that has one answers
+ * `{ kind: 'exists', id }` and changes nothing – the caller asks, and overwrites with `update()`.
  */
 @Injectable({ providedIn: 'root' })
 export class WeightLogService implements SessionDataStore {
-  private readonly storage = inject(StorageService);
+  private readonly http = inject(HttpClient);
+  private readonly url = injectApiUrl();
   private readonly now = inject(NOW);
-  private readonly profile = inject(UserProfileService);
+  private readonly profiles = inject(UserProfileService);
   private readonly t = injectTranslate();
-  private readonly entriesState = signal<readonly WeighEntry[]>(this.restore());
+  private readonly entriesState = signal<readonly WeighEntry[]>([]);
+  private readonly statusState = signal<StoreStatus>('idle');
 
+  readonly status: Signal<StoreStatus> = this.statusState.asReadonly();
   readonly entries: Signal<readonly WeighEntry[]> = this.entriesState.asReadonly();
   readonly latest: Signal<WeighEntry | null> = computed(() => this.entriesState()[0] ?? null);
   readonly weighedToday: Signal<boolean> = computed(() => {
@@ -36,46 +62,76 @@ export class WeightLogService implements SessionDataStore {
     return latest !== null && isSameDay(new Date(latest.at), this.now());
   });
 
+  /** Never errors – a failure sets `status` to `'error'`; "Prøv igen" calls this again. */
+  load(): Observable<void> {
+    return defer(() => {
+      this.statusState.set('loading');
+      return this.http.get<CursorPage<WeightLogDto>>(this.url(WEIGHT_ENDPOINT.LOGS), {
+        params: { limit: WEIGHT_LOG_LOAD_LIMIT },
+      });
+    }).pipe(
+      map((page) => {
+        this.entriesState.set(sortNewestFirst(page.items.map(toWeighEntry)));
+        this.statusState.set('ready');
+      }),
+      catchError(() => {
+        this.statusState.set('error');
+        return of(undefined);
+      }),
+    );
+  }
+
+  /** Forgets the account's weigh-ins – memory only. */
+  reset(): void {
+    this.entriesState.set([]);
+    this.statusState.set('idle');
+  }
+
   /**
-   * Records a weigh-in. If the day of `at` already has one, the newest of them keeps its id and
-   * gets the new weight and time – so weighing in twice a day updates the day's weigh-in. Every
-   * other entry from that day (legacy data can have several) is dropped.
+   * Records a weigh-in now. `{ kind: 'exists', id }` when the day already has one (409 with
+   * `existingWeightLogId`) – nothing changes then. Other failures are an `ApiError`.
    */
-  add(kg: number, at: Date = this.now()): WeighEntry {
-    const current = this.entriesState();
-    const sameDay = current.find((entry) => isSameDay(new Date(entry.at), at));
-    const entry: WeighEntry = {
-      id: sameDay?.id ?? newId('weigh'),
-      kg: roundTo(kg, 1),
-      at: at.toISOString(),
+  add(kg: number): Observable<WeightSaveResult> {
+    const request: CreateWeightLogRequest = {
+      weight: roundTo(kg, 1),
+      recordedAt: this.now().toISOString(),
     };
-    const others = current.filter((existing) => !isSameDay(new Date(existing.at), at));
-    this.commit(sortNewestFirst([entry, ...others]));
-    return entry;
+    return this.http.post<WeightLogDto>(this.url(WEIGHT_ENDPOINT.LOGS), request).pipe(
+      switchMap((dto) => this.commit(dto)),
+      map((entry): WeightSaveResult => ({ kind: 'saved', entry })),
+      // Only the POST fails with an `HttpErrorResponse` here – `commit` maps its own errors.
+      catchError((error: unknown) => {
+        const id =
+          error instanceof HttpErrorResponse && error.status === HttpStatusCode.Conflict
+            ? readProblemBody(error)['existingWeightLogId']
+            : undefined;
+        return typeof id === 'number'
+          ? of<WeightSaveResult>({ kind: 'exists', id: String(id) })
+          : throwError(() => toApiError(error));
+      }),
+    );
   }
 
-  /** Corrects the weight of an existing weigh-in (time unchanged). `null` if the id is unknown. */
-  update(id: string, kg: number): WeighEntry | null {
-    const existing = this.entriesState().find((entry) => entry.id === id);
-    if (!existing) {
-      return null;
-    }
-    const updated: WeighEntry = { ...existing, kg: roundTo(kg, 1) };
-    this.commit(this.entriesState().map((entry) => (entry.id === id ? updated : entry)));
-    return updated;
+  /** Corrects a weigh-in's weight – and its time when `at` is given (overwriting today's). */
+  update(id: string, kg: number, at?: Date): Observable<WeighEntry> {
+    const request: UpdateWeightLogRequest = {
+      weight: roundTo(kg, 1),
+      recordedAt: at?.toISOString(),
+    };
+    return this.http.patch<WeightLogDto>(this.url(`${WEIGHT_ENDPOINT.LOGS}/${id}`), request).pipe(
+      mapApiError(),
+      switchMap((dto) => this.commit(dto)),
+    );
   }
 
-  /**
-   * Deletes a weigh-in. The profile's weight follows the new latest weigh-in; deleting the only
-   * one leaves the profile's weight as it is (it is still the user's last known weight).
-   */
-  remove(id: string): boolean {
-    const remaining = this.entriesState().filter((entry) => entry.id !== id);
-    if (remaining.length === this.entriesState().length) {
-      return false;
-    }
-    this.commit(remaining);
-    return true;
+  remove(id: string): Observable<void> {
+    return this.http.delete<void>(this.url(`${WEIGHT_ENDPOINT.LOGS}/${id}`)).pipe(
+      mapApiError(),
+      switchMap(() => {
+        this.entriesState.update((entries) => entries.filter((entry) => entry.id !== id));
+        return this.syncProfile();
+      }),
+    );
   }
 
   /** The weigh-ins within the range, newest first. */
@@ -95,29 +151,43 @@ export class WeightLogService implements SessionDataStore {
     return this.t(WEIGHT_RANGE_LABEL_KEY[range]);
   }
 
-  /** Persists the entries and syncs the profile's weight to the latest one (if any). */
-  private commit(entries: readonly WeighEntry[]): void {
-    this.entriesState.set(entries);
-    this.storage.write(STORAGE_KEY.WEIGHT_LOG, entries);
-    const latest = entries[0];
-    if (latest) {
-      this.profile.update({ weightKg: latest.kg });
-    }
+  /** Puts the API's weigh-in into the list (replacing the one with its id) and syncs the profile. */
+  private commit(dto: WeightLogDto): Observable<WeighEntry> {
+    const entry = toWeighEntry(dto);
+    this.entriesState.update((entries) =>
+      sortNewestFirst([entry, ...entries.filter((existing) => existing.id !== entry.id)]),
+    );
+    return this.syncProfile().pipe(map(() => entry));
   }
 
-  private restore(): readonly WeighEntry[] {
-    const stored = this.storage.read<readonly WeighEntry[]>(STORAGE_KEY.WEIGHT_LOG);
-    return stored ? sortNewestFirst(stored) : [];
+  /**
+   * The profile's weight follows the newest weigh-in – or, with none left, the API's latest (the
+   * starting weight). Then the goal the API recalculated is reloaded.
+   */
+  private syncProfile(): Observable<void> {
+    const latest = this.latest();
+    const weightKg =
+      latest === null
+        ? this.http
+            .get<LatestWeightDto>(this.url(WEIGHT_ENDPOINT.LATEST))
+            .pipe(map((dto) => dto.weight))
+        : of(latest.kg);
+    return weightKg.pipe(
+      map((kg) => this.profiles.update({ weightKg: kg })),
+      switchMap(() => this.profiles.reloadGoal()),
+      mapApiError(),
+    );
   }
+}
 
-  // Stub - replaced by the API-backed store in wave 2/3 (plan-v2 4).
-  load(): Observable<void> {
-    return of(undefined);
-  }
-
-  reset(): void {}
+function toWeighEntry(dto: WeightLogDto): WeighEntry {
+  return {
+    id: String(dto.weightLogId),
+    kg: dto.weight,
+    at: parseApiDateTime(dto.recordedAt).toISOString(),
+  };
 }
 
 function sortNewestFirst(entries: readonly WeighEntry[]): readonly WeighEntry[] {
-  return [...entries].sort((a, b) => b.at.localeCompare(a.at));
+  return [...entries].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 }

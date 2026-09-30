@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
-import { TEST_FOOD, weighEntry } from '../../../../core/testing/fixtures';
+import { TEST_FOOD, flushTestWeighIns, weightLogDto } from '../../../../core/testing/fixtures';
 import {
   TEST_NOW,
   provideComponentTestEnvironment,
@@ -27,11 +27,6 @@ function textsOf(fixture: ComponentFixture<HistoryPage>, selector: string): read
 describe('HistoryPage', () => {
   beforeEach(() => {
     resetComponentTestStorage({
-      [STORAGE_KEY.WEIGHT_LOG]: [
-        weighEntry('w-1', 75, 0, TEST_NOW),
-        weighEntry('w-2', 75.6, 1, TEST_NOW),
-        weighEntry('w-3', 76.1, 3, TEST_NOW),
-      ],
       [STORAGE_KEY.FOOD_LOG]: {
         date: '2026-09-21',
         entries: [
@@ -45,6 +40,11 @@ describe('HistoryPage', () => {
     TestBed.configureTestingModule({
       providers: provideComponentTestEnvironment(),
     });
+    flushTestWeighIns([
+      weightLogDto(1, 75, 0, TEST_NOW),
+      weightLogDto(2, 75.6, 1, TEST_NOW),
+      weightLogDto(3, 76.1, 3, TEST_NOW),
+    ]);
     const fixture = TestBed.createComponent(HistoryPage);
     fixture.detectChanges();
     return fixture;

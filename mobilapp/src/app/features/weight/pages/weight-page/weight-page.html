@@ -5,101 +5,175 @@
         'weight.page.titleAccent' | translate
       }}</span>
     </h1>
-    <p class="weight-page__last-weighed">{{ view.lastWeighLabel() }}</p>
+    @if (view.loadStatus() === 'ready') {
+      <p class="weight-page__last-weighed">{{ view.lastWeighLabel() }}</p>
+    }
   </header>
 
-  <section class="weight-page__summary">
-    <div class="weight-page__summary-main">
-      <p class="weight-page__draft">
-        <span
-          class="weight-page__draft-value"
-          [class.weight-page__draft-value--wide]="view.draftIsWide()"
-          >{{ view.draftText() }}</span
-        >
-        <span class="weight-page__draft-unit">{{ 'common.unit.kg' | translate }}</span>
-      </p>
-      <div class="weight-page__tiles">
-        <div class="weight-page__tile">
-          <span class="weight-page__tile-label">{{ 'weight.page.sinceLast' | translate }}</span>
-          <span class="weight-page__tile-value" [class]="deltaClass()">
-            <span class="weight-page__tile-number">{{ view.deltaText() }}</span>
-            <span class="weight-page__tile-unit">{{ 'common.unit.kg' | translate }}</span>
-          </span>
-        </div>
-        <div class="weight-page__tile">
-          <span class="weight-page__tile-label">{{ 'weight.page.toGoal' | translate }}</span>
-          <span class="weight-page__tile-value">
-            <span class="weight-page__tile-number">{{ view.toGoalText() }}</span>
-            <span class="weight-page__tile-unit">{{ 'common.unit.kg' | translate }}</span>
-          </span>
-        </div>
+  @switch (view.loadStatus()) {
+    @case ('loading') {
+      <div class="weight-page__status">
+        <app-ui-spinner size="lg" />
       </div>
-    </div>
-
-    <app-weight-scale-scene
-      [weightKg]="view.draftKg()"
-      [heightCm]="view.heightCm()"
-      [progressKg]="view.progressKg()"
-      [saved]="isSaved()"
-      [lookDirection]="lookDirection()"
-    />
-  </section>
-
-  <app-weight-ruler-input
-    class="weight-page__scale"
-    [value]="view.draftKg()"
-    (valueChange)="onDraftChange($event)"
-  />
-
-  <button app-ui-button block type="button" class="weight-page__save" (click)="save()">
-    {{ saveLabel() }}
-  </button>
-
-  <app-weight-chart
-    class="weight-page__chart"
-    [weightText]="view.profileWeightText()"
-    [seriesKg]="view.seriesKg()"
-    [goalWeightKg]="view.goalWeightKg()"
-    [goalWeightText]="view.goalWeightText()"
-    [rangeLabel]="view.rangeLabel()"
-    [rangeStartLabel]="view.rangeStartLabel()"
-    [deltaText]="view.rangeDeltaText()"
-    [deltaTone]="view.rangeDeltaTone()"
-  />
-
-  <div
-    class="weight-page__ranges"
-    role="group"
-    [attr.aria-label]="'weight.page.rangesAriaLabel' | translate"
-  >
-    @for (option of view.rangeOptions; track option.id) {
-      <button
-        app-ui-chip
-        class="weight-page__range"
-        [selected]="view.range() === option.id"
-        (click)="view.selectRange(option.id)"
-      >
-        {{ option.labelKey | translate }}
-      </button>
     }
-  </div>
+    @case ('error') {
+      <div class="weight-page__status">
+        <app-ui-empty-state
+          class="weight-page__status-message"
+          [message]="'weight.page.loadError' | translate"
+        />
+        <button app-ui-button type="button" variant="outline" size="md" (click)="retryLoad()">
+          {{ 'weight.page.retry' | translate }}
+        </button>
+      </div>
+    }
+    @default {
+      <section class="weight-page__summary">
+        <div class="weight-page__summary-main">
+          <p class="weight-page__draft">
+            <span
+              class="weight-page__draft-value"
+              [class.weight-page__draft-value--wide]="view.draftIsWide()"
+              >{{ view.draftText() }}</span
+            >
+            <span class="weight-page__draft-unit">{{ 'common.unit.kg' | translate }}</span>
+          </p>
+          <div class="weight-page__tiles">
+            <div class="weight-page__tile">
+              <span class="weight-page__tile-label">{{ 'weight.page.sinceLast' | translate }}</span>
+              <span class="weight-page__tile-value" [class]="deltaClass()">
+                <span class="weight-page__tile-number">{{ view.deltaText() }}</span>
+                <span class="weight-page__tile-unit">{{ 'common.unit.kg' | translate }}</span>
+              </span>
+            </div>
+            <div class="weight-page__tile">
+              <span class="weight-page__tile-label">{{ 'weight.page.toGoal' | translate }}</span>
+              <span class="weight-page__tile-value">
+                <span class="weight-page__tile-number">{{ view.toGoalText() }}</span>
+                <span class="weight-page__tile-unit">{{ 'common.unit.kg' | translate }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
 
-  <app-weight-log-list
-    class="weight-page__log"
-    [rows]="view.logRows()"
-    [hiddenCount]="view.hiddenLogCount()"
-    [expanded]="view.logExpanded()"
-    [emptyMessage]="view.logEmptyMessage()"
-    (rowSelected)="view.startEdit($event)"
-    (expandToggled)="view.toggleLogExpanded()"
-  />
+        <app-weight-scale-scene
+          [weightKg]="view.draftKg()"
+          [heightCm]="view.heightCm()"
+          [progressKg]="view.progressKg()"
+          [saved]="isSaved()"
+          [lookDirection]="lookDirection()"
+        />
+      </section>
+
+      <app-weight-ruler-input
+        class="weight-page__scale"
+        [value]="view.draftKg()"
+        (valueChange)="onDraftChange($event)"
+      />
+
+      <button
+        app-ui-button
+        block
+        type="button"
+        class="weight-page__save"
+        [loading]="view.saving()"
+        (click)="save()"
+      >
+        {{ saveLabel() }}
+      </button>
+      <app-ui-form-error
+        tone="negative"
+        class="weight-page__save-error"
+        [message]="view.saveError()"
+      />
+
+      <app-weight-chart
+        class="weight-page__chart"
+        [weightText]="view.profileWeightText()"
+        [seriesKg]="view.seriesKg()"
+        [goalWeightKg]="view.goalWeightKg()"
+        [goalWeightText]="view.goalWeightText()"
+        [rangeLabel]="view.rangeLabel()"
+        [rangeStartLabel]="view.rangeStartLabel()"
+        [deltaText]="view.rangeDeltaText()"
+        [deltaTone]="view.rangeDeltaTone()"
+      />
+
+      <div
+        class="weight-page__ranges"
+        role="group"
+        [attr.aria-label]="'weight.page.rangesAriaLabel' | translate"
+      >
+        @for (option of view.rangeOptions; track option.id) {
+          <button
+            app-ui-chip
+            class="weight-page__range"
+            [selected]="view.range() === option.id"
+            (click)="view.selectRange(option.id)"
+          >
+            {{ option.labelKey | translate }}
+          </button>
+        }
+      </div>
+
+      <app-weight-log-list
+        class="weight-page__log"
+        [rows]="view.logRows()"
+        [hiddenCount]="view.hiddenLogCount()"
+        [expanded]="view.logExpanded()"
+        [emptyMessage]="view.logEmptyMessage()"
+        (rowSelected)="view.startEdit($event)"
+        (expandToggled)="view.toggleLogExpanded()"
+      />
+    }
+  }
 </div>
 
 <app-weight-edit-sheet
   [row]="view.editingRow()"
-  (saved)="view.saveEdit($event)"
-  (removed)="view.removeEditing()"
+  [busy]="view.editBusy()"
+  [errorMessage]="view.editError()"
+  (saved)="saveEdit($event)"
+  (removed)="removeEditing()"
   (closed)="view.cancelEdit()"
 />
+
+<app-ui-sheet
+  [open]="view.overwriteId() !== null"
+  [title]="'weight.overwriteSheet.titleStart' | translate"
+  [titleAccent]="'weight.overwriteSheet.titleAccent' | translate"
+  hideClose
+  scrollable
+  layer="overlay"
+>
+  <p class="weight-page__overwrite-body">
+    {{ 'weight.overwriteSheet.body' | translate: { kg: view.draftText() } }}
+  </p>
+  <app-ui-form-error tone="negative" [message]="view.overwriteError()" />
+
+  <div sheetFooter class="weight-page__overwrite-actions">
+    <button
+      app-ui-button
+      type="button"
+      block
+      class="weight-page__overwrite-confirm"
+      [loading]="view.saving()"
+      (click)="confirmOverwrite()"
+    >
+      {{ 'weight.overwriteSheet.confirm' | translate }}
+    </button>
+    <button
+      app-ui-button
+      type="button"
+      variant="outline"
+      block
+      class="weight-page__overwrite-cancel"
+      [disabled]="view.saving()"
+      (click)="view.cancelOverwrite()"
+    >
+      {{ 'weight.overwriteSheet.cancel' | translate }}
+    </button>
+  </div>
+</app-ui-sheet>
 
 <div class="weight-page__clearance"></div>

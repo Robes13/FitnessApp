@@ -1,8 +1,8 @@
 # Vægt
 
-Fanen **Vægt**: registrér dagens vægt på en badevægt, gem vejningen og se udviklingen i en
-graf med intervallerne 1 uge / 4 uger / 3 mdr. samt en liste over vejningerne fra de sidste 3 mdr.,
-hvor en vejning kan rettes eller slettes.
+Fanen **Vægt** (use case 6.0–6.3): registrér dagens vægt på en badevægt, gem vejningen og se
+udviklingen i en graf med intervallerne 1 uge / 3 uger / 3 mdr. samt en liste over vejningerne fra
+de sidste 3 mdr., hvor en vejning kan rettes eller slettes.
 
 | Fil / mappe                                         | Indhold                                                                 |
 | --------------------------------------------------- | ----------------------------------------------------------------------- |
@@ -13,16 +13,22 @@ hvor en vejning kan rettes eller slettes.
 
 ## Data
 
-Featuren har ingen egen persistens. Den læser og skriver via `core/services`:
+Featuren har ingen egen persistens. Den læser og skriver via `core/services`, som taler med
+API'et (`me/weight-logs`):
 
-- `WeightLogService` – vejningerne (nyeste først), `add()`, `update()`, `remove()`,
-  `entriesWithin()` og grafens punkter `seriesFor()`.
-- `UserProfileService` – vægt, højde, mål og målvægt. `WeightLogService` holder selv profilens
-  vægt lig den seneste vejning ved hver ændring, så Hjem, Mad og kaloriemålet følger med.
+- `WeightLogService` – vejningerne (nyeste først, én side á 100), `add()` (`POST`), `update()`
+  (`PATCH`), `remove()` (`DELETE`), `entriesWithin()` og grafens punkter `seriesFor()`.
+- `UserProfileService` – vægt, højde, mål og målvægt. Profilens `load()` sætter vægten (seneste
+  vejning, ellers startvægten). Efter hver ændring sætter `WeightLogService` profilens vægt til den
+  nyeste vejning (`GET me/weight-logs/latest`, når der ingen er tilbage) og genindlæser målet, som
+  API'et har genberegnet – så Hjem, Mad og kaloriemålet følger med.
 
-Der er ingen netværkskald: en vejning gemmes lokalt og synkront, så skærmen har hverken
-loading- eller fejltilstand. Den tomme tilstand (ingen vejninger endnu) håndteres to steder –
-`Sidst vejet …` bliver til "Ingen vejninger endnu", og listen viser en tom tilstand.
+**Tilstande:** Mens vejningerne eller profilen indlæses, viser skærmen en spinner i stedet for
+indholdet; fejler en af dem, en besked og "Prøv igen", som kun genindlæser den, der fejlede. Uden
+vejninger er profilens vægt startvægten fra registreringen: "Sidst vejet …" bliver til "Startvægt
+fra registreringen" (6.1), og listen forklarer, at startvægten ikke kan rettes – brugeren skal
+registrere en ny vejning først (6.2-2a). Alle viste rækker kan rettes og slettes; startvægten er
+aldrig en række.
 
 ## Beslutninger
 
@@ -37,16 +43,22 @@ loading- eller fejltilstand. Den tomme tilstand (ingen vejninger endnu) håndter
   `core/utils/date-format` – også grafens delta, hvor prototypen brugte punktum.
 - **Intervalchipsene ligger under grafen** (designerens eksplicitte rækkefølge) og er
   `UiChip`-knapper med `flex: 1`.
-- **Én vejning pr. dag.** Gemmer brugeren igen en dag, der allerede har en vejning, erstattes
-  dagens vejning (samme id, ny vægt og ny tid) i stedet for at oprette en dublet. Det holder
-  listen, grafen og "Siden sidst" meningsfulde, og en fejlvejning kan rettes blot ved at veje igen.
+- **En vejning pr. dag – med spørgsmål (6.0-4a/4b).** "Gem vejning" sender altid `POST` først.
+  Har profilens kalenderdag allerede en vejning, svarer API'et 409 med `existingWeightLogId`, og
+  arket "Overskriv **dagens vejning?**" spørger: "Ja, overskriv" sender `PATCH` med kladdens vægt
+  og tiden nu, "Annuller" lukker uden kald. Der overskrives aldrig automatisk. Knapperne viser en
+  spinner, mens der gemmes, så et dobbelttryk ikke sender to gange. Fejler gemningen, står fejlen
+  under knappen (eller i arket); fejler kun genindlæsningen af målet bagefter, er vejningen gemt, og
+  et nyt tryk giver spørgsmålet.
 - **Ret og slet.** Tryk på en række i listen åbner `WeightEditSheet`. Use casen kræver kun, at den
-  seneste vejning kan rettes, men alle viste rækker kan rettes – det koster intet ekstra.
-  Rettes eller slettes den seneste vejning, følger profilens vægt den nye seneste. Slettes den
-  eneste vejning, bliver profilens vægt stående (det er stadig brugerens sidst kendte vægt).
+  seneste vejning kan rettes, men alle viste rækker kan rettes – det koster intet ekstra. Gem og
+  slet venter på API'et (spinner, arket kan ikke lukkes imens); fejler de, bliver arket åbent med
+  fejlen. Rettes eller slettes den seneste vejning, følger profilens vægt den nye seneste; slettes
+  den eneste, bliver den startvægten fra API'et.
+- **3 uger i stedet for designets 4** (spec 6.3, plan-v2 P16) – også som standardinterval.
 - **Listen viser højst 3 mdr. tilbage** (`WEIGHT_LOG_HISTORY_RANGE`, samme periode som grafens
   længste interval). Som udgangspunkt vises de 6 nyeste; "Vis alle" folder resten af de 3 mdr.
-  ud. Ældre vejninger gemmes stadig, men vises ikke i listen.
+  ud. Ældre vejninger ligger stadig i API'et, men vises ikke i listen.
 - **Linealen er den fælles `UiRuler`** (pakket i `WeightRulerInput`, så siden og ret-arket deler den) i `size="lg"` (96 px) med `step` 0,1 kg og streger for
   hvert kilo. −/+ knapperne ligger oven på dens ender og springer ét trin.
 - **Kortlivede animationer styres af siden**, ikke af servicen: "Gemt ✓" i 1,4 s og figurens
