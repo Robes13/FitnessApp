@@ -7,10 +7,8 @@ import {
   animatedFigure,
   computeFigureGeometry,
 } from '../../../../../../shared/components/figure';
+import { MIN_AGE } from '../../../../../../core/constants/nutrition';
 import { CAKE_NUMBER_MIN_AGE, computeCakeGeometry } from './cake-geometry';
-
-/** The age limit in the design: under 16 you can't use the app. */
-const MIN_AGE = 16;
 
 /** The design's `bfig` mood: happy when the age is valid, sad when it's too low. */
 const MOOD_HAPPY = 0.8;
