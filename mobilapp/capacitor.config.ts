@@ -9,7 +9,7 @@ import { KeyboardResize } from '@capacitor/keyboard';
  */
 const config: CapacitorConfig = {
   appId: 'dk.meploy.fitnessapp',
-  appName: 'Mobilapp',
+  appName: 'Nutrify',
   webDir: 'dist/mobilapp/browser',
   android: {
     backgroundColor: '#F8FAFC',

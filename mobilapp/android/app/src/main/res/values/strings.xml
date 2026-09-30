@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Mobilapp</string>
-    <string name="title_activity_main">Mobilapp</string>
+    <string name="app_name">Nutrify</string>
+    <string name="title_activity_main">Nutrify</string>
     <string name="package_name">dk.meploy.fitnessapp</string>
     <string name="custom_url_scheme">dk.meploy.fitnessapp</string>
 </resources>
