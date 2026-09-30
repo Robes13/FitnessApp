@@ -28,7 +28,7 @@ using Microsoft.Extensions.Options;
 
 namespace FitnessApp.Api.Tests;
 
-public sealed class ApiWorkflowTests
+public sealed partial class ApiWorkflowTests
 {
     private static readonly DateTime Jan1 = new(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
 
@@ -57,7 +57,7 @@ public sealed class ApiWorkflowTests
         Assert.Single(await database.Context.UserGoals.ToListAsync());
         Assert.NotEmpty(sender.Messages);
         await Assert.ThrowsAsync<UnauthorizedException>(() => auth.LoginAsync(
-            new LoginRequest { Email = request.Email, Password = request.Password }, CancellationToken.None));
+            new LoginRequest { Username = request.Username, Password = request.Password }, CancellationToken.None));
         await Assert.ThrowsAsync<ConflictException>(() => auth.RegisterAsync(request, CancellationToken.None));
     }
 
@@ -250,7 +250,7 @@ public sealed class ApiWorkflowTests
         var auth = new AuthService(database.Context, jwt, hasher, sender,
             new ConfigurationBuilder().Build(), TimeProvider.System,
             NullLogger<AuthService>.Instance);
-        var login = await auth.LoginAsync(new LoginRequest { Email = user.Email, Password = password },
+        var login = await auth.LoginAsync(new LoginRequest { Username = user.Username, Password = password },
             CancellationToken.None);
         var rotated = await auth.RefreshAsync(new RefreshRequest { RefreshToken = login.RefreshToken },
             CancellationToken.None);
@@ -395,6 +395,8 @@ public sealed class ApiWorkflowTests
 
     private sealed class CapturingSender : IAccountMessageSender
     {
+        public Task SendVerificationAsync(string email, string token, CancellationToken cancellationToken)
+            => SendAsync(email, "verification", token, cancellationToken);
         public List<string> Messages { get; } = [];
         public Task SendAsync(string email, string subject, string message, CancellationToken cancellationToken)
         {
@@ -466,6 +468,8 @@ public sealed class ApiWorkflowTests
         protected override void OnModelCreating(Microsoft.EntityFrameworkCore.ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<User>().Property(user => user.NormalizedUsername)
+                .HasComputedColumnSql("lower(\"Username\")", stored: true);
             modelBuilder.Entity<FitnessApp.Api.Domain.Entities.LogEntry>()
                 .Ignore(entry => entry.Parameters);
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())

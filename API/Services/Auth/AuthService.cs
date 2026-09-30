@@ -35,7 +35,8 @@ public sealed class AuthService(
             throw new BusinessValidationException("Terms must be accepted to create an account.");
 
         var email = request.Email.Trim().ToLowerInvariant();
-        var username = request.Username.Trim();
+        var username = UsernameRules.Validate(request.Username);
+        var normalizedUsername = UsernameRules.Normalize(username);
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var profile = new UserProfile
         {
@@ -60,7 +61,7 @@ public sealed class AuthService(
             throw new ConflictException("An account with that email already exists.");
         }
 
-        if (await _context.Users.AnyAsync(user => user.Username == username, cancellationToken))
+        if (await _context.Users.AnyAsync(user => user.NormalizedUsername == normalizedUsername, cancellationToken))
         {
             throw new ConflictException("That username is already in use.");
         }
@@ -96,6 +97,7 @@ public sealed class AuthService(
         });
         user.EmailVerificationTokens.Add(new EmailVerificationToken
         {
+            Email = email,
             TokenHash = SecretToken.Hash(verificationToken),
             CreatedAt = now,
             ExpiresAt = now.AddHours(24)
@@ -103,8 +105,7 @@ public sealed class AuthService(
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        await _messageSender.SendAsync(email, "Verify your FitnessApp email",
-            $"Your verification token is: {verificationToken}", cancellationToken);
+        await _messageSender.SendVerificationAsync(email, verificationToken, cancellationToken);
 
         _logger.LogInformation("User {UserId} registered", user.UserId);
         return ToUserDto(user);
@@ -112,19 +113,19 @@ public sealed class AuthService(
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
-        var email = request.Email.Trim().ToLowerInvariant();
+        var username = UsernameRules.Normalize(request.Username);
         var user = await _context.Users
-            .SingleOrDefaultAsync(user => user.Email == email, cancellationToken);
+            .SingleOrDefaultAsync(user => user.NormalizedUsername == username, cancellationToken);
 
         if (user is null || !user.IsActive || user.EmailVerifiedAt is null || user.DeletedAt is not null)
         {
-            throw new UnauthorizedException("Invalid email or password.");
+            throw new UnauthorizedException("Invalid username or password.");
         }
 
         var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
         if (result == PasswordVerificationResult.Failed)
         {
-            throw new UnauthorizedException("Invalid email or password.");
+            throw new UnauthorizedException("Invalid username or password.");
         }
 
         if (result == PasswordVerificationResult.SuccessRehashNeeded)
@@ -191,45 +192,58 @@ public sealed class AuthService(
 
     public async Task VerifyEmailAsync(VerifyEmailRequest request, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(request.Token) || request.Token.Length != 64
+            || !request.Token.All(char.IsAsciiHexDigit))
+            throw new BusinessValidationException("The verification token is invalid or expired.");
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var hash = SecretToken.Hash(request.Token);
-        var token = await _context.EmailVerificationTokens.Include(candidate => candidate.User)
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        var token = await _context.EmailVerificationTokens.AsNoTracking()
             .SingleOrDefaultAsync(candidate => candidate.TokenHash == hash, cancellationToken);
-        if (token is null || token.UsedAt is not null || token.ExpiresAt <= now
-            || token.User.DeletedAt is not null)
+        if (token is null)
             throw new BusinessValidationException("The verification token is invalid or expired.");
-
-        token.UsedAt = now;
-        token.User.EmailVerifiedAt = now;
-        token.User.IsActive = true;
-        await _context.EmailVerificationTokens
-            .Where(candidate => candidate.UserId == token.UserId && candidate.UsedAt == null
-                && candidate.EmailVerificationTokenId != token.EmailVerificationTokenId)
+        // Lock the account first, consistently with resend and account changes.
+        var updated = await _context.Users.Where(user => user.UserId == token.UserId
+                && user.Email == token.Email && user.DeletedAt == null && user.EmailVerifiedAt == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(user => user.EmailVerifiedAt, now)
+                .SetProperty(user => user.IsActive, true), cancellationToken);
+        var claimed = await _context.EmailVerificationTokens.Where(candidate => candidate.TokenHash == hash
+                && candidate.UsedAt == null && candidate.ExpiresAt > now)
             .ExecuteUpdateAsync(setters => setters.SetProperty(candidate => candidate.UsedAt, now), cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
+        if (updated != 1 || claimed != 1)
+            throw new BusinessValidationException("The verification token is invalid or expired.");
+        await _context.EmailVerificationTokens.Where(candidate => candidate.UserId == token.UserId && candidate.UsedAt == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(candidate => candidate.UsedAt, now), cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     public async Task ResendVerificationAsync(ResendVerificationRequest request, CancellationToken cancellationToken)
     {
         var email = request.Email.Trim().ToLowerInvariant();
-        var user = await _context.Users.SingleOrDefaultAsync(candidate => candidate.Email == email, cancellationToken);
-        if (user is null || user.EmailVerifiedAt is not null || user.DeletedAt is not null) return;
-
         var now = _timeProvider.GetUtcNow().UtcDateTime;
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        // A row update serializes concurrent resend/verification/email-change requests across API instances.
+        var locked = await _context.Users.Where(candidate => candidate.Email == email
+                && candidate.EmailVerifiedAt == null && candidate.DeletedAt == null)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(candidate => candidate.IsActive, false), cancellationToken);
+        if (locked != 1) return;
+        var user = await _context.Users.AsNoTracking().SingleAsync(candidate => candidate.Email == email, cancellationToken);
+        if (await _context.EmailVerificationTokens.AnyAsync(token => token.UserId == user.UserId
+            && token.CreatedAt > now.AddMinutes(-1), cancellationToken)) return;
         var rawToken = SecretToken.Create();
-        await _context.EmailVerificationTokens
-            .Where(token => token.UserId == user.UserId && token.UsedAt == null)
+        await _context.EmailVerificationTokens.Where(token => token.UserId == user.UserId && token.UsedAt == null)
             .ExecuteUpdateAsync(setters => setters.SetProperty(token => token.UsedAt, now), cancellationToken);
         _context.EmailVerificationTokens.Add(new EmailVerificationToken
         {
             UserId = user.UserId,
+            Email = email,
             TokenHash = SecretToken.Hash(rawToken),
             CreatedAt = now,
             ExpiresAt = now.AddHours(24)
         });
         await _context.SaveChangesAsync(cancellationToken);
-        await _messageSender.SendAsync(email, "Verify your FitnessApp email",
-            $"Your verification token is: {rawToken}", cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        await _messageSender.SendVerificationAsync(email, rawToken, cancellationToken);
     }
 
     public async Task ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken)

@@ -1,49 +1,31 @@
 using System.Net;
-using System.Net.Mail;
 using FitnessApp.Api.Options;
+using FitnessApp.Api.Services.Email;
+using FitnessApp.Api.Exceptions;
 using Microsoft.Extensions.Options;
 
 namespace FitnessApp.Api.Services.Auth;
 
-public sealed class AccountMessageSender(
-    IOptions<SmtpOptions> options,
-    IHostEnvironment environment) : IAccountMessageSender
+public sealed class AccountMessageSender(IEmailService emailService, IOptions<SmtpOptions> options,
+    ILogger<AccountMessageSender> logger) : IAccountMessageSender
 {
-    private readonly SmtpOptions _options = options.Value;
-    private readonly IHostEnvironment _environment = environment;
+    public Task SendAsync(string email, string subject, string message, CancellationToken cancellationToken)
+        => emailService.SendEmailAsync(email, subject, $"<p>{WebUtility.HtmlEncode(message)}</p>", message, cancellationToken);
 
-    public async Task SendAsync(string email, string subject, string message, CancellationToken cancellationToken)
+    public async Task SendVerificationAsync(string email, string token, CancellationToken cancellationToken)
     {
-        if (_environment.IsDevelopment())
+        try
         {
-            var directory = Path.Combine(_environment.ContentRootPath, ".dev-outbox");
-            Directory.CreateDirectory(directory);
-            var filename = Path.Combine(directory, $"{Guid.NewGuid():N}.txt");
-            await File.WriteAllTextAsync(filename,
-                $"To: {email}{Environment.NewLine}Subject: {subject}{Environment.NewLine}{Environment.NewLine}{message}",
-                cancellationToken);
-            return;
+            if (options.Value.ApplicationUrl != "https://eldorado-fts.dk")
+                throw new ExternalServiceConfigurationException("The Nutrify application URL must be https://eldorado-fts.dk.");
+            var url = options.Value.ApplicationUrl + "/api/v1/auth/email/verify?token=" + Uri.EscapeDataString(token);
+            var (html, text) = VerificationEmailTemplate.Create(url);
+            await emailService.SendEmailAsync(email, "Verify your Nutrify email", html, text, cancellationToken);
         }
-
-        var host = _options.Host;
-        var from = _options.From;
-        if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(from))
+        catch (ExternalServiceConfigurationException exception)
         {
-            throw new InvalidOperationException("Smtp:Host and Smtp:From must be configured for account email delivery.");
+            // Account and token are already committed. Keep registration successful and allow a later resend.
+            logger.LogWarning("Verification email not delivered: {Reason}", exception.Message);
         }
-
-        using var client = new SmtpClient(host, _options.Port)
-        {
-            EnableSsl = _options.EnableSsl,
-            DeliveryMethod = SmtpDeliveryMethod.Network
-        };
-        var username = _options.Username;
-        if (!string.IsNullOrWhiteSpace(username))
-        {
-            client.Credentials = new NetworkCredential(username, _options.Password);
-        }
-
-        using var mail = new MailMessage(from, email, subject, message);
-        await client.SendMailAsync(mail, cancellationToken);
     }
 }

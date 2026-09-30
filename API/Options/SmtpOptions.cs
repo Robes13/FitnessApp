@@ -8,5 +8,7 @@ public sealed class SmtpOptions
     public string Username { get; init; } = string.Empty;
     public string Password { get; init; } = string.Empty;
     public string From { get; init; } = string.Empty;
+    public string DisplayName { get; init; } = "Nutrify";
+    public string ApplicationUrl { get; init; } = "https://eldorado-fts.dk";
     public bool EnableSsl { get; init; } = true;
 }

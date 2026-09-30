@@ -4,6 +4,7 @@ using System.Text.Json;
 using FitnessApp.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FitnessApp.Api.Migrations
 {
     [DbContext(typeof(FitnessAppDbContext))]
-    partial class FitnessAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260930082029_BindEmailVerificationTokensToEmail")]
+    partial class BindEmailVerificationTokensToEmail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -417,12 +420,6 @@ namespace FitnessApp.Api.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("NormalizedUsername")
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("varchar(50)")
-                        .HasComputedColumnSql("translate(\"Username\", 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')", true);
-
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("varchar(500)");
@@ -434,9 +431,6 @@ namespace FitnessApp.Api.Migrations
                     b.HasKey("UserId");
 
                     b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.HasIndex("NormalizedUsername")
                         .IsUnique();
 
                     b.HasIndex("Username")

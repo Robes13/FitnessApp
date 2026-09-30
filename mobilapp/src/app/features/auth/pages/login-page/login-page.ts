@@ -58,7 +58,10 @@ export class LoginPage {
   protected readonly errorKey = signal<string | null>(null);
 
   protected readonly form = new FormGroup<LoginForm>({
-    username: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    username: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(50)],
+    }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
@@ -67,7 +70,7 @@ export class LoginPage {
   }
 
   protected submit(): void {
-    if (this.loading()) {
+    if (this.loading() || this.form.invalid) {
       return;
     }
     const { username, password } = this.form.getRawValue();

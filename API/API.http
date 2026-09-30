@@ -1,6 +1,10 @@
 @API_HostAddress = http://localhost:5210
 
-GET {{API_HostAddress}}/weatherforecast/
-Accept: application/json
+### Username login (email is not accepted as a login identifier)
+POST {{API_HostAddress}}/api/v1/auth/login
+Content-Type: application/json
 
-###
+{
+  "username": "your_username",
+  "password": "your-password"
+}

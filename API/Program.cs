@@ -32,6 +32,8 @@ using AppDataProtectionOptions = FitnessApp.Api.Options.DataProtectionOptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
@@ -130,6 +132,8 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddHttpClient("Resend", client => client.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.AddScoped<FitnessApp.Api.Services.Email.IEmailService, FitnessApp.Api.Services.Email.SmtpEmailService>();
 builder.Services.AddScoped<IAccountMessageSender, AccountMessageSender>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();

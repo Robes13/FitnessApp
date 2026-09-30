@@ -55,6 +55,9 @@ public class FitnessAppDbContext(DbContextOptions<FitnessAppDbContext> options) 
         entity.HasKey(x => x.UserId);
         entity.Property(x => x.Email).HasColumnType("varchar(320)").IsRequired();
         entity.Property(x => x.Username).HasColumnType("varchar(50)").IsRequired();
+        entity.Property(x => x.NormalizedUsername).HasColumnType("varchar(50)")
+            .HasComputedColumnSql("translate(\"Username\", 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')", stored: true);
+        entity.HasIndex(x => x.NormalizedUsername).IsUnique();
         entity.Property(x => x.PasswordHash).HasColumnType("varchar(500)").IsRequired();
         entity.Property(x => x.CreatedAt).HasColumnType("timestamp with time zone");
         entity.Property(x => x.EmailVerifiedAt).HasColumnType("timestamp with time zone");
@@ -152,6 +155,7 @@ public class FitnessAppDbContext(DbContextOptions<FitnessAppDbContext> options) 
     {
         var entity = modelBuilder.Entity<EmailVerificationToken>();
         entity.ToTable("EMAIL_VERIFICATION_TOKEN");
+        entity.Property(x => x.Email).HasColumnType("varchar(320)").IsRequired();
         entity.HasKey(x => x.EmailVerificationTokenId);
         entity.Property(x => x.TokenHash).HasColumnType("varchar(64)").IsRequired();
         entity.Property(x => x.ExpiresAt).HasColumnType("timestamp with time zone");

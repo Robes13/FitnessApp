@@ -59,6 +59,30 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     }
 
     [AllowAnonymous]
+    [HttpGet("email/verify")]
+    public async Task<IActionResult> VerifyEmailLink([FromQuery] VerifyEmailRequest request, CancellationToken cancellationToken)
+    {
+        Response.Headers.CacheControl = "no-store";
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        await _authService.VerifyEmailAsync(request, cancellationToken);
+        return Redirect("https://eldorado-fts.dk/api/v1/auth/email/verified");
+    }
+
+    [AllowAnonymous]
+    [HttpGet("email/verified")]
+    public ContentResult EmailVerified()
+    {
+        Response.Headers.CacheControl = "no-store";
+        Response.Headers["Referrer-Policy"] = "no-referrer";
+        return Content("""
+            <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Nutrify ? Email verified</title></head>
+            <body style="font-family:Arial,sans-serif;max-width:600px;margin:60px auto;padding:20px;color:#173c32">
+            <h1>Nutrify</h1><h2>Email verified</h2><p>Your email address has been verified. You can now sign in to Nutrify.</p>
+            <a href="https://eldorado-fts.dk">Continue to Nutrify</a></body></html>
+            """, "text/html");
+    }
+
+    [AllowAnonymous]
     [HttpPost("email/resend-verification")]
     public async Task<IActionResult> ResendVerification(ResendVerificationRequest request, CancellationToken cancellationToken)
     {

@@ -198,7 +198,7 @@ export class SignupStateService {
     switch (this.stepState()) {
       case 'account':
         return (
-          this.username().trim().length > 0 &&
+          /^[A-Za-z0-9_-]{3,50}(?![\s\S])/.test(this.username()) &&
           this.password().length >= PASSWORD_MIN_LENGTH &&
           this.password() === this.passwordRepeat()
         );

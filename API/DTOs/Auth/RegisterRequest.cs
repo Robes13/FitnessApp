@@ -1,3 +1,4 @@
+using FitnessApp.Api.Utilities;
 using System.ComponentModel.DataAnnotations;
 using FitnessApp.Api.Domain.Enums;
 
@@ -8,7 +9,7 @@ public sealed record RegisterRequest
     [Required, EmailAddress, MaxLength(320)]
     public required string Email { get; init; }
 
-    [Required, MinLength(3), MaxLength(50)]
+    [Required, MinLength(3), MaxLength(50), RegularExpression(UsernameRules.Pattern)]
     public required string Username { get; init; }
 
     [Required, MinLength(10), MaxLength(200)]

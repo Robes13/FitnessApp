@@ -173,6 +173,20 @@ describe('SignupStateService', () => {
   });
 
   describe('canContinue', () => {
+    it('requires a 3-50 character ASCII username without whitespace', () => {
+      const state = setup();
+      state.password.set('hemmelig1');
+      state.passwordRepeat.set('hemmelig1');
+      for (const username of ['ab', 'a'.repeat(51), 'has space', ' leading', 'a@b', 'mads\n']) {
+        state.username.set(username);
+        expect(state.canContinue()).toBe(false);
+      }
+      for (const username of ['JohnDoe', 'john_doe', 'john-doe', 'a'.repeat(50)]) {
+        state.username.set(username);
+        expect(state.canContinue()).toBe(true);
+      }
+    });
+
     it('requires a username and two matching passwords of at least eight characters', () => {
       const state = setup();
 

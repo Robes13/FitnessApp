@@ -34,18 +34,19 @@ public sealed class UserAccountService(
 
     public async Task<UserDto> UpdateAsync(int userId, UpdateAccountRequest request, CancellationToken cancellationToken)
     {
+        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        await _context.Users.Where(candidate => candidate.UserId == userId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(candidate => candidate.Email, candidate => candidate.Email), cancellationToken);
         var user = await _context.Users.SingleOrDefaultAsync(candidate => candidate.UserId == userId
             && candidate.DeletedAt == null, cancellationToken)
             ?? throw new NotFoundException("User not found.");
         var emailChanged = request.Email is not null
             && !string.Equals(user.Email, request.Email.Trim(), StringComparison.OrdinalIgnoreCase);
-        await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         if (request.Username is not null)
         {
-            var username = request.Username.Trim();
-            if (username.Length is < 3 or > 50)
-                throw new BusinessValidationException("Username must contain 3–50 characters.");
-            if (await _context.Users.AnyAsync(candidate => candidate.Username == username
+            var username = UsernameRules.Validate(request.Username);
+            var normalizedUsername = UsernameRules.Normalize(username);
+            if (await _context.Users.AnyAsync(candidate => candidate.NormalizedUsername == normalizedUsername
                 && candidate.UserId != userId, cancellationToken))
                 throw new ConflictException("That username is already in use.");
             user.Username = username;
@@ -68,6 +69,7 @@ public sealed class UserAccountService(
             _context.EmailVerificationTokens.Add(new Domain.Entities.EmailVerificationToken
             {
                 UserId = userId,
+                Email = email,
                 TokenHash = SecretToken.Hash(verificationToken),
                 CreatedAt = now,
                 ExpiresAt = now.AddHours(24)
@@ -79,8 +81,7 @@ public sealed class UserAccountService(
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         if (verificationToken is not null)
-            await _messageSender.SendAsync(user.Email, "Verify your FitnessApp email",
-                $"Your verification token is: {verificationToken}", cancellationToken);
+            await _messageSender.SendVerificationAsync(user.Email, verificationToken, cancellationToken);
         return new UserDto(user.UserId, user.Email, user.Username, user.IsActive,
             user.EmailVerifiedAt, user.CreatedAt);
     }
