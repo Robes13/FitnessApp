@@ -1,7 +1,7 @@
 # UiPageHeader
 
 Sidehoved til undersider uden tab bar-fokus: rund tilbage-knap til venstre, centreret
-uppercase-titel og en højre plads til en handling. Bruges på Opskrift ("Opskrift") og Profil
+uppercase-titel og en højre plads til en handling. Bruges på samlingsskærmen ("Samling") og Profil
 ("Profil").
 
 ```html

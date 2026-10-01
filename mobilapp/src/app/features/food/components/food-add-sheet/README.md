@@ -10,8 +10,12 @@ Varer/Samlinger og enten `app-food-picker` eller listen over samlinger.
   "Ny egen vare" og under redigering.
 - Indholdet ligger bag `@if (open())`, så vælgeren starter forfra ved hver åbning.
 - **Fanen "Samlinger"** viser brugerens samlinger (navn, varernes navne, afrundet kcal). Et tryk
-  logger samlingen under det valgte måltid med `CollectionsService.log()` – ét kald, én række pr.
-  vare (P13). Imens er rækkerne slået fra (`aria-busy`); bagefter udsender arket `closed`. En
+  logger ikke: det viser samlingen med dens samlede næring (kcal, protein, kulhydrat, fedt) og
+  knapperne "Log X kcal under <måltid>" og "Fortryd" (spec 3.2 – vis næring, vælg måltid, log
+  eller fortryd). Måltids-chipsene bliver stående, så måltidet kan skiftes lige før. "Fortryd"
+  går tilbage til listen; et fanebyt eller en ny åbning nulstiller valget. "Log" logger samlingen
+  under det valgte måltid med `CollectionsService.log()` – ét kald, én række pr. vare (P13).
+  Imens viser knappen spinner; bagefter udsender arket `closed`. En
   fejl ("Samlingen blev ikke logget. Prøv igen.") vises øverst, og arket bliver åbent. Mens
   samlingerne hentes, vises en spinner; kunne de ikke hentes, vises fejlen med "Prøv igen"
   (`CollectionsService.load()`). Uden samlinger vises `app-ui-empty-state`.

@@ -1,7 +1,8 @@
 # NewCollectionSheet
 
 Arket "Ny samling" (designets `newColOpen`): navn og en kladde af varer med kladdens samlede
-kcal og protein under listen (spec 4.0/4.1, genberegnet ved hver ændring). Bunden har "Opret
+næring – kcal, protein, kulhydrat og fedt – under listen (spec 4.0/4.1, genberegnet ved hver
+ændring). Bunden har "Opret
 samling", der er slået fra, indtil samlingen har et gyldigt navn og mindst én vare (spec
 4.0-8a) – og mens en ny egen vare stadig gemmes, så `ensureFood` ikke opretter den to gange.
 
@@ -50,14 +51,17 @@ stedet for `created`. Varer tilføjes, rettes og fjernes præcis som ved oprette
   sletter den gamle række og tilføjer den nye (diffen i `CollectionsService.update()`). Åbnes en
   vare uden ændringer, beholdes den, som den er.
 - **Egne varer** gemmes samtidig under "Mine varer" i API'et (`FoodLogService.addCustomFood`,
-  både fra "Gem uden at logge" og fra "Gem og føj til samlingen", der kun udsender `picked`), så
+  både fra "Gem kun under Mine varer" og fra "Gem og føj til samlingen", der kun udsender `picked`), så
   de kan søges frem igen — vælgerens egen tekst lover det ("Gemmes under Mine varer"). Fejler
   det (fx `DuplicateCustomFoodNameError`, når navnet er taget på en anden enhed), ligger varen
   stadig i kladden, og arket viser beskeden under knapperne (og øverst i vælgeren, mens den er
-  åben). Imens gemningen kører, er vælgeren `busy`, så "Gem uden at logge" ikke sender to gange;
+  åben). Imens gemningen kører, er vælgeren `busy`, så "Gem kun under Mine varer" ikke sender to gange;
   den bliver på formularen, til varen er gemt. Gemningen afbrydes ikke, når arket lukkes.
-- Vare-vælgerens primærknap hedder her **"Gem og føj til samlingen"**. Designet genbruger
-  "Gem og log under <måltid>" fra Mad-skærmen, men varen havner i samlingen, ikke i dagens
-  log, så teksten ville være forkert.
+- Vare-vælgerens primærknap hedder her **"Gem og føj til samlingen"** og den sekundære **"Gem
+  kun under Mine varer"** (vælgerens `saveOnlyLabel`). Designet genbruger "Gem og log under
+  <måltid>" og "Gem uden at logge" fra Mad-skærmen, men en samling logger ikke noget, så teksten
+  ville være forkert.
+- Vælgerens ark hedder **"Tilføj til samling"** – og **"Rediger vare"**, mens en kladde-række
+  er åbnet for at rette mængden (`pickerText`).
 - Ikongitteret og "Hører under" er slettet: API'et har hverken ikon eller måltid på en samling
   (P13). Måltidet vælges, når samlingen logges.

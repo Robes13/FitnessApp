@@ -212,7 +212,7 @@
           [disabled]="!canSaveNewFood() || busy()"
           (click)="saveNewFood()"
         >
-          {{ 'shared.foodPicker.saveWithoutLogging' | translate }}
+          {{ saveOnlyText() }}
         </button>
       </div>
     </form>

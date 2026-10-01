@@ -272,7 +272,7 @@
     "deleteSheet": {
       "title": "Slet",
       "titleAccent": "samling?",
-      "body": "«{{name}}» og varerne i den bliver slettet. Det kan ikke fortrydes.",
+      "body": "«{{name}}» bliver slettet. Varerne og det, du allerede har logget, bliver stående. Det kan ikke fortrydes.",
       "confirm": "Ja, slet samlingen",
       "cancel": "Annuller"
     },
@@ -291,6 +291,9 @@
       "scan": "Scan",
       "pickerTitle": "Tilføj",
       "pickerTitleAccent": "til samling",
+      "pickerTitleEdit": "Rediger",
+      "pickerTitleEditAccent": "vare",
+      "saveOnly": "Gem kun under Mine varer",
       "duplicateName": "Du har allerede en samling med det navn.",
       "duplicateCustomFood": "Du har allerede en egen vare med navnet \"{{foodName}}\", så den blev ikke gemt igen under Mine varer.",
       "saveAndAdd": "Gem og føj til samlingen",
@@ -298,7 +301,7 @@
     },
     "page": {
       "title": "Samlinger",
-      "subtitle": "Dine varer og retter – log dem direkte som spist.",
+      "subtitle": "Saml de varer, du tit spiser sammen, og log dem samlet som spist.",
       "create": "Opret samling",
       "empty": "Du har ingen samlinger endnu. Tryk på + for at samle de varer, du tit spiser sammen.",
       "loadError": "Vi kunne ikke hente dine samlinger.",
@@ -307,17 +310,18 @@
     "view": {
       "itemCountOne": "1 vare",
       "itemCountMany": "{{count}} varer",
-      "macros": "{{kcal}} kcal · {{protein}} g protein"
+      "macros": "{{kcal}} kcal · {{protein}} g protein",
+      "totals": "{{kcal}} kcal · {{protein}} g protein · {{carbs}} g kulhydrat · {{fat}} g fedt"
     },
     "recipePage": {
-      "title": "Opskrift",
+      "title": "Samling",
       "edit": "Rediger samling",
       "contents": "Indhold",
       "logUnder": "Log som spist under",
       "log": "Log {{kcal}} kcal",
       "delete": "Slet samling",
       "backToCollections": "Tilbage til samlinger",
-      "notFound": "Vi kunne ikke finde den her opskrift.",
+      "notFound": "Vi kunne ikke finde den her samling.",
       "calories": "Kalorier",
       "protein": "Protein",
       "carbs": "Kulhydrat",
@@ -338,8 +342,10 @@
       "titleAdd": "Tilføj",
       "titleEdit": "Rediger",
       "titleEditWhat": "vare",
-      "collectionsEmpty": "Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her med ét tryk.",
-      "saveAndLog": "Gem og log under {{mealName}}"
+      "collectionsEmpty": "Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her.",
+      "saveAndLog": "Gem og log under {{mealName}}",
+      "logCollection": "Log {{kcal}} kcal under {{mealName}}",
+      "cancelCollection": "Fortryd"
     },
     "view": {
       "protein": "Protein",

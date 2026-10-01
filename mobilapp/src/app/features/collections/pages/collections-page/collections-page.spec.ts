@@ -74,6 +74,10 @@ describe('CollectionsPage', () => {
     const { text, texts } = await setup();
 
     expect(text('.collections-page__title')).toBe('Samlinger');
+    // Collections only – no dishes or loose items (P13).
+    expect(text('.collections-page__subtitle')).toBe(
+      'Saml de varer, du tit spiser sammen, og log dem samlet som spist.',
+    );
     expect(texts('.collections-page__card-title')).toEqual([]);
     expect(text('app-ui-empty-state')).toBe(
       'Du har ingen samlinger endnu. Tryk på + for at samle de varer, du tit spiser sammen.',

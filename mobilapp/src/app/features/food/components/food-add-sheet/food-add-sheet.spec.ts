@@ -156,7 +156,16 @@ describe('FoodAddSheet', () => {
 
     async function openTab(): Promise<Setup> {
       const result = await setup(undefined, [], () => {
-        flushTestFoodLog([testFood({ foodId: 1, name: 'Havregryn', caloriesPer100: 370 })]);
+        flushTestFoodLog([
+          testFood({
+            foodId: 1,
+            name: 'Havregryn',
+            caloriesPer100: 370,
+            proteinPer100: 13,
+            carbohydratesPer100: 60,
+            fatPer100: 7,
+          }),
+        ]);
         flushTestCollections([
           testCollection(3, 'Meal prep', [
             { foodId: 1, foodName: 'Havregryn', quantity: 60, unit: 'Gram' },
@@ -173,6 +182,17 @@ describe('FoodAddSheet', () => {
       return root.querySelector<HTMLButtonElement>('.food-add-sheet__collection');
     }
 
+    function logButton(root: HTMLElement): HTMLButtonElement | null {
+      return root.querySelector<HTMLButtonElement>('.food-add-sheet__confirm-log');
+    }
+
+    /** Spec 3.2: a tap only chooses the collection – nothing is logged before the confirmation. */
+    async function choose({ root, settle }: Setup): Promise<void> {
+      row(root)?.click();
+      await settle();
+      TestBed.inject(HttpTestingController).expectNone({ method: 'POST', url: LOG_URL });
+    }
+
     it('lists the collections with their items and rounded kcal', async () => {
       const { texts } = await openTab();
 
@@ -181,15 +201,42 @@ describe('FoodAddSheet', () => {
       expect(texts('.food-add-sheet__collection-end')).toEqual(['370 kcal']);
     });
 
-    it('logs a collection under the chosen meal in one call and then closes', async () => {
-      const { host, root, settle } = await openTab();
-      const http = TestBed.inject(HttpTestingController);
+    it('shows the chosen collection with its nutrition before anything is logged', async () => {
+      const sheet = await openTab();
+      await choose(sheet);
 
-      row(root)?.click();
+      expect(sheet.root.querySelector('.food-add-sheet__collections')).toBeNull();
+      expect(sheet.text('.food-add-sheet__confirm .food-add-sheet__collection-name')).toBe(
+        'Meal prep',
+      );
+      expect(sheet.text('.food-add-sheet__confirm-totals')).toBe(
+        '370 kcal · 13 g protein · 60 g kulhydrat · 7 g fedt',
+      );
+      expect(sheet.text('.food-add-sheet__confirm-log')).toBe('Log 370 kcal under morgenmad');
+    });
+
+    it('goes back to the list without logging on "Fortryd"', async () => {
+      const sheet = await openTab();
+      await choose(sheet);
+
+      sheet.root.querySelector<HTMLButtonElement>('.food-add-sheet__confirm-cancel')?.click();
+      await sheet.settle();
+
+      expect(sheet.texts('.food-add-sheet__collection-name')).toEqual(['Meal prep']);
+      expect(sheet.host.closes).toBe(0);
+    });
+
+    it('logs a collection under the chosen meal in one call and then closes', async () => {
+      const sheet = await openTab();
+      const { host, root, settle } = sheet;
+      const http = TestBed.inject(HttpTestingController);
+      await choose(sheet);
+
+      logButton(root)?.click();
       await settle();
-      // The row is off while the log runs, so a second tap sends nothing.
-      expect(row(root)?.disabled).toBe(true);
-      row(root)?.click();
+      // The button is busy while the log runs, so a second tap sends nothing.
+      expect(logButton(root)?.getAttribute('aria-busy')).toBe('true');
+      logButton(root)?.click();
       const request = http.expectOne({ method: 'POST', url: LOG_URL });
       expect(request.request.body).toMatchObject({ mealType: 'Breakfast', multiplier: 1 });
       request.flush([
@@ -204,9 +251,11 @@ describe('FoodAddSheet', () => {
     });
 
     it('stays open with a message when the log fails', async () => {
-      const { host, root, settle, text } = await openTab();
+      const sheet = await openTab();
+      const { host, root, settle, text } = sheet;
+      await choose(sheet);
 
-      row(root)?.click();
+      logButton(root)?.click();
       TestBed.inject(HttpTestingController)
         .expectOne({ method: 'POST', url: LOG_URL })
         .flush(null, { status: 400, statusText: 'Bad Request' });
@@ -214,7 +263,7 @@ describe('FoodAddSheet', () => {
 
       expect(host.closes).toBe(0);
       expect(text('.food-add-sheet__error')).toBe('Samlingen blev ikke logget. Prøv igen.');
-      expect(row(root)?.disabled).toBe(false);
+      expect(logButton(root)?.getAttribute('aria-busy')).toBeNull();
     });
 
     it('turns the rows off while the page saves', async () => {
@@ -259,7 +308,7 @@ describe('FoodAddSheet', () => {
     await settle();
 
     expect(text('app-ui-empty-state')).toBe(
-      'Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her med ét tryk.',
+      'Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her.',
     );
   });
 

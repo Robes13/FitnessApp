@@ -77,7 +77,16 @@ describe('NewCollectionSheet', () => {
     localStorage.clear();
     TestBed.configureTestingModule({ imports: [Host], providers: TEST_PROVIDERS });
     // Search only finds the user's own foods – the API has no shared food database.
-    flushTestFoodLog([testFood({ foodId: 1, name: 'Havregryn', caloriesPer100: 370 })]);
+    flushTestFoodLog([
+      testFood({
+        foodId: 1,
+        name: 'Havregryn',
+        caloriesPer100: 370,
+        proteinPer100: 13,
+        carbohydratesPer100: 60,
+        fatPer100: 7,
+      }),
+    ]);
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
     root = fixture.nativeElement as HTMLElement;
@@ -139,8 +148,25 @@ describe('NewCollectionSheet', () => {
     await addHavregryn();
 
     expect(normalize(root.querySelector('.new-collection-sheet__totals')?.textContent)).toBe(
-      '740 kcal · 0 g protein',
+      '740 kcal · 26 g protein · 120 g kulhydrat · 14 g fedt',
     );
+  });
+
+  /** The food picker's sheet sits on top of this one (`sheet-high`), so its title comes last. */
+  function pickerTitle(): string {
+    const titles = Array.from(root.querySelectorAll('.ui-sheet__title'));
+    return normalize(titles[titles.length - 1]?.textContent);
+  }
+
+  it('calls the picker "Tilføj til samling" and its save-only button "Gem kun under Mine varer"', async () => {
+    await click(buttonByText('Søg vare'));
+    expect(pickerTitle()).toBe('Tilføj til samling');
+
+    await click(root.querySelector('.food-picker__create'));
+
+    // A collection logs nothing – the custom food is only saved under "Mine varer".
+    expect(buttonByText('Gem kun under Mine varer')).toBeDefined();
+    expect(buttonByText('Gem uden at logge')).toBeUndefined();
   });
 
   it('can not be saved while a new custom food is still being saved', async () => {
@@ -352,6 +378,12 @@ describe('NewCollectionSheet', () => {
           ],
         },
       ]);
+    });
+
+    it('calls the picker "Rediger vare" while an item’s amount is edited', async () => {
+      await click(root.querySelector('.new-collection-sheet__item'));
+
+      expect(pickerTitle()).toBe('Rediger vare');
     });
 
     it('re-adds an item whose amount changed, so the save replaces it', async () => {

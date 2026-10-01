@@ -95,6 +95,8 @@ describe('RecipePage', () => {
     loadMealPrep();
     const { text, texts } = await setup(BUNDLE_ID);
 
+    // A collection, not a recipe (P13).
+    expect(text('.ui-page-header__title')).toBe('Samling');
     expect(text('.recipe-page__title')).toBe('Meal prep');
     expect(texts('.recipe-page__stat-value')).toEqual(['240', '28 g', '6 g', '11 g']);
     expect(texts('.recipe-page__line-qty')).toEqual(['200 g']);
@@ -163,7 +165,7 @@ describe('RecipePage', () => {
   it('shows an empty state and a way back when the id is unknown', async () => {
     const { page, text, button, click } = await setup('findes-ikke');
 
-    expect(text('app-ui-empty-state')).toBe('Vi kunne ikke finde den her opskrift.');
+    expect(text('app-ui-empty-state')).toBe('Vi kunne ikke finde den her samling.');
     expect(page.querySelector('[aria-label="Rediger samling"]')).toBeNull();
     expect(button('Slet samling')).toBeUndefined();
 
@@ -222,9 +224,13 @@ describe('RecipePage', () => {
     });
 
     it('keeps the collection when the deletion is cancelled', async () => {
-      const { button, click } = await setup(BUNDLE_ID);
+      const { button, click, text } = await setup(BUNDLE_ID);
 
       await click(button('Slet samling'));
+      // Only the collection goes – its foods and the rows already logged from it stay.
+      expect(text('.ui-confirm-sheet__body')).toBe(
+        '«Meal prep» bliver slettet. Varerne og det, du allerede har logget, bliver stående. Det kan ikke fortrydes.',
+      );
       await click(button('Annuller'));
 
       expect(TestBed.inject(CollectionsService).collections()).toHaveLength(1);

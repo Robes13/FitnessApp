@@ -125,8 +125,8 @@
 
 <app-ui-sheet
   [open]="pickerOpen()"
-  [title]="'collections.newCollectionSheet.pickerTitle' | translate"
-  [titleAccent]="'collections.newCollectionSheet.pickerTitleAccent' | translate"
+  [title]="pickerText().title"
+  [titleAccent]="pickerText().accent"
   titleSize="md"
   layer="sheet-high"
   maxHeight="full"
@@ -142,6 +142,7 @@
       [editItem]="editItem()"
       [ctaVerb]="editItem() ? 'Gem' : 'Tilføj'"
       [saveAndLogLabel]="saveAndAddLabelKey | translate"
+      [saveOnlyLabel]="saveOnlyLabelKey | translate"
       [busy]="savingCustomFood()"
       (picked)="onPicked($event)"
       (customFoodCreated)="onCustomFoodCreated($event)"
