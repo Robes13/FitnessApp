@@ -58,7 +58,7 @@ API ✔ = findes i dag. `A<n>` = API-ændring i §3. Domæner: se §4.
 | 2.0                    | Opdatér e-mail                                             | A5                              | profile (1)                      | Gammel adresse aktiv til linket (P5)                      |
 | 2.1–2.3, 2.5, 2.7, 2.8 | Profilfelter + mål                                         | ✔                               | profile (1)                      | Genberegning på serveren                                  |
 | 2.4                    | Profilbillede                                              | A10 (kun Development)           | profile-extras (3)               | Beskæring bages ind; 4a = filen kan ikke læses (P10)      |
-| 2.6                    | Skridt fra Health Connect/Apple Health                     | ✔ (`StepsIntegration`)          | step-sync (senere)               | Bygget senere (`tasks/health.md`)                         |
+| 2.6                    | Skridt fra Health Connect/Apple Health                     | ✔ (`StepsIntegration`)          | step-sync                        | Bygget (`tasks/health.md`)                                |
 | 3.0                    | Manuel madvare                                             | ✔ (+A6)                         | food (2)                         | Portion → per 100 i appen, loft pr. logning (P12)         |
 | 3.1                    | Stregkode                                                  | ✔ (OFF i klienten)              | food (2)                         | "Ikke fundet" → 3.0-formularen                            |
 | 3.2                    | Log madvare/samling + måltidstype                          | A6                              | food (2), collections (3)        | `mealType` (P11)                                          |
@@ -691,5 +691,6 @@ ops før enhver rigtig udrulning (se `README.md` "Før produktion").
    række?
 6. Hvem roterer hemmelighederne og fjerner SAS fra `profileImageUrl` før produktion?
 7. "Frokost" eller spec'ens "middagsmad" som label?
-8. OK at samtykkeoversigten kun er én række (vilkår inkl. sundheds- og profildata), så længe
-   Health Connect/Apple Health (2.6, 9.2-3a) er sprunget over?
+8. OK at samtykkeoversigten er én række for vilkårene (inkl. sundheds- og profildata)? (**Ja**,
+   P20.) Skridt fra Apple Sundhed / Health Connect (2.6, 9.2-3a) er bygget som en egen række med
+   kontakt (`tasks/health.md`).
