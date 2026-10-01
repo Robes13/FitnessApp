@@ -1,5 +1,6 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 import { APP_PATH, QUERY_PARAM } from '../../../core/constants/app-route';
 import { FoodItem } from '../../../core/models/food';
 import { MealId } from '../../../core/models/meal';
@@ -7,6 +8,7 @@ import { UserProfile } from '../../../core/models/profile';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { WeightLogDto } from '../../../core/models/weight';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
+import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
 import { FoodLogDto } from '../../../core/models/food-api';
 import {
@@ -18,12 +20,24 @@ import {
   weightLogDto,
 } from '../../../core/testing/fixtures';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
-import { HomeSummaryService } from './home-summary';
+import { HOME_HISTORY_DAYS, HomeSummaryService, TODAY_INDEX } from './home-summary';
 
-/** Thursday, September 24, 2026 – mid-week, so past, today, and future are all in play. */
+/** Thursday, September 24, 2026 – the rolling week runs from Friday the 18th to today. */
 const THURSDAY = new Date(2026, 8, 24, 10, 30);
-const THURSDAY_INDEX = 3;
+/** Index of Tuesday the 22nd and Wednesday the 23rd in the rolling week. */
+const TUESDAY_INDEX = 4;
+const WEDNESDAY_INDEX = 5;
 const RING_CIRCUMFERENCE = 100.5;
+const SERVER_ERROR = { status: 500, statusText: 'Server Error' };
+const EMPTY_PAGE = { items: [], nextCursor: null, hasMore: false };
+
+/** The three API stores Home reads, each with its own load. */
+type LoadingStore = Pick<FoodLogService, 'load' | 'status'>;
+const STORES: readonly (readonly [string, () => LoadingStore])[] = [
+  ['the food log', () => TestBed.inject(FoodLogService)],
+  ['the weigh-ins', () => TestBed.inject(WeightLogService)],
+  ['the profile', () => TestBed.inject(UserProfileService)],
+];
 
 const SKYR: FoodItem = {
   id: 'f-skyr',
@@ -91,6 +105,14 @@ describe('HomeSummaryService', () => {
     return TestBed.inject(HomeSummaryService);
   }
 
+  /** Starts the store's load and fails its first request; the others are cancelled. */
+  function failLoad(store: LoadingStore): void {
+    store.load().subscribe();
+    TestBed.inject(HttpTestingController)
+      .match(() => true)[0]
+      ?.flush(null, SERVER_ERROR);
+  }
+
   beforeEach(() => {
     storage = createFakeStorage();
     profilePatch = {};
@@ -98,13 +120,11 @@ describe('HomeSummaryService', () => {
     weighIns = [];
   });
 
-  it('labels today and the week from the injected date', () => {
+  it('labels today from the injected date and selects it', () => {
     const service = setup();
 
-    expect(service.todayIndex()).toBe(THURSDAY_INDEX);
     expect(service.todayLabel()).toBe('Torsdag 24. sep');
-    expect(service.weekProgressLabel()).toBe('Dag 4 af 7');
-    expect(service.selectedDay()).toBe(THURSDAY_INDEX);
+    expect(service.selectedDay()).toBe(TODAY_INDEX);
   });
 
   it('greets without a name until the profile has one', () => {
@@ -117,27 +137,27 @@ describe('HomeSummaryService', () => {
     expect(service.hasName()).toBe(true);
   });
 
-  it('leaves every ring without a logged day empty', () => {
+  it('rolls the rings over the last seven days with today last', () => {
     storeFoodLog([{ ...SKYR, meal: 'morgen' }]);
     const service = setup();
     const rings = service.weekRings();
 
     expect(rings.map((ring) => ring.label)).toEqual([
+      'Fre',
+      'Lør',
+      'Søn',
       'Man',
       'Tir',
       'Ons',
       'Tor',
-      'Fre',
-      'Lør',
-      'Søn',
     ]);
     expect(rings[0]?.tone).toBe('none');
     expect(rings[0]?.dashOffset).toBeCloseTo(RING_CIRCUMFERENCE, 3);
-    expect(rings[THURSDAY_INDEX]?.tone).toBe('accent');
-    expect(rings[THURSDAY_INDEX]?.isToday).toBe(true);
-    expect(rings[THURSDAY_INDEX]?.isSelected).toBe(true);
-    expect(rings[6]?.tone).toBe('none');
-    expect(rings[6]?.isFuture).toBe(true);
+    expect(rings[WEDNESDAY_INDEX]?.tone).toBe('none');
+    expect(rings[TODAY_INDEX]?.tone).toBe('accent');
+    expect(rings[TODAY_INDEX]?.isToday).toBe(true);
+    expect(rings[TODAY_INDEX]?.isSelected).toBe(true);
+    expect(rings.filter((ring) => ring.isToday)).toHaveLength(1);
   });
 
   it('shows the kcal and macros of an earlier logged day', () => {
@@ -147,13 +167,16 @@ describe('HomeSummaryService', () => {
     const target = TestBed.inject(UserProfileService).targets().kcal;
 
     const rings = service.weekRings();
-    expect(rings[0]?.tone).toBe('none');
-    expect(rings[1]?.tone).toBe('accent');
-    expect(rings[1]?.dashOffset).toBeCloseTo(RING_CIRCUMFERENCE * (1 - 830 / target), 3);
-    expect(rings[2]?.tone).toBe('accent');
-    expect(rings[THURSDAY_INDEX]?.tone).toBe('none');
+    expect(rings[TUESDAY_INDEX - 1]?.tone).toBe('none');
+    expect(rings[TUESDAY_INDEX]?.tone).toBe('accent');
+    expect(rings[TUESDAY_INDEX]?.dashOffset).toBeCloseTo(
+      RING_CIRCUMFERENCE * (1 - 830 / target),
+      3,
+    );
+    expect(rings[WEDNESDAY_INDEX]?.tone).toBe('accent');
+    expect(rings[TODAY_INDEX]?.tone).toBe('none');
 
-    service.selectDay(1);
+    service.selectDay(TUESDAY_INDEX);
     const summary = service.daySummary();
     expect(summary.kcalEatenText).toBe('830');
     expect(summary.progressTone).toBe('accent');
@@ -167,11 +190,14 @@ describe('HomeSummaryService', () => {
 
     expect(service.daySummary().title).toBe('Torsdag · i dag');
 
-    service.selectDay(2);
+    service.selectDay(WEDNESDAY_INDEX);
     expect(service.daySummary().title).toBe('Onsdag · i går');
 
-    service.selectDay(1);
+    service.selectDay(TUESDAY_INDEX);
     expect(service.daySummary().title).toBe('Tirsdag');
+
+    service.selectDay(0);
+    expect(service.daySummary().title).toBe('Fredag');
   });
 
   it('shows the logged totals for today', () => {
@@ -185,7 +211,7 @@ describe('HomeSummaryService', () => {
 
     // 380 + 450 kcal and 32 + 41 g protein.
     expect(summary.kcalEatenText).toBe('830');
-    expect(summary.kcalTargetText).toBe(String(target));
+    expect(summary.kcalTargetText).toBe('2.500');
     expect(summary.progress).toBeCloseTo(830 / target, 5);
     expect(summary.progressTone).toBe('accent');
     expect(summary.macros.map((macro) => macro.label)).toEqual(['Protein', 'Kulhydrat', 'Fedt']);
@@ -195,8 +221,8 @@ describe('HomeSummaryService', () => {
   it('shows a dash for every day without data', () => {
     const service = setup();
 
-    // No food log: even today has no data to show.
-    for (const day of [1, 3, 6]) {
+    // The food log hasn't loaded: even today has no data to show.
+    for (const day of [1, 3, TODAY_INDEX]) {
       service.selectDay(day);
       const summary = service.daySummary();
 
@@ -208,28 +234,47 @@ describe('HomeSummaryService', () => {
     }
   });
 
+  it('shows 0 for today once the food log has loaded – a dash while it loads', () => {
+    const service = setup();
+    TestBed.inject(FoodLogService).load().subscribe();
+
+    expect(service.daySummary().kcalEatenText).toBe('–');
+
+    for (const request of TestBed.inject(HttpTestingController).match(() => true)) {
+      request.flush(EMPTY_PAGE);
+    }
+    const today = service.daySummary();
+
+    expect(today.kcalEatenText).toBe('0');
+    expect(today.macros.every((macro) => macro.text.startsWith('0 / '))).toBe(true);
+    expect(service.weekRings()[TODAY_INDEX]?.tone).toBe('none');
+    // Only today counts as 0 – the week's numbers still have no logged day.
+    expect(service.weekSummary().note).toBe('Ingen dage logget de seneste 7 dage.');
+    service.selectDay(WEDNESDAY_INDEX);
+    expect(service.daySummary().kcalEatenText).toBe('–');
+  });
+
   it('shows the weighing of an earlier day when there is one', () => {
     storeWeighHistory();
     const service = setup();
 
     // The most recent weigh-in is three days before Thursday, i.e. on Monday.
-    service.selectDay(0);
+    service.selectDay(TUESDAY_INDEX - 1);
     expect(service.daySummary().weightText).toBe('75,0');
 
-    service.selectDay(1);
+    service.selectDay(TUESDAY_INDEX);
     expect(service.daySummary().weightText).toBe('–');
   });
 
   it('counts only the days that have data in the week card', () => {
     const service = setup();
 
-    expect(service.weekSummary()).toMatchObject({
-      progressLabel: 'Dag 4 af 7',
+    expect(service.weekSummary()).toEqual({
       hitText: '0',
       proteinHitText: '0',
       streakText: '0 dage',
       averageKcalText: '–',
-      note: 'Ingen dage logget i denne uge endnu.',
+      note: 'Ingen dage logget de seneste 7 dage.',
     });
   });
 
@@ -315,6 +360,54 @@ describe('HomeSummaryService', () => {
     expect(service.goalReached()).toBe(true);
     expect(service.daySummary().progressTone).toBe('positive');
   });
+
+  it('lists the last 30 days newest first with a dash for days without entries', () => {
+    const big = { ...TEST_FOOD, kcal: 1850.4, protein: 120.4, carbs: 200, fat: 60 };
+    storeFoodLog([{ ...SKYR, meal: 'morgen' }]);
+    // The 26th of August is the oldest of the 30 days, the 25th is one too many.
+    storeFoodDays({ '2026-09-22': [SKYR, SALAT], '2026-08-26': [big], '2026-08-25': [big] });
+    const rows = setup().dayRows();
+
+    expect(rows).toHaveLength(HOME_HISTORY_DAYS);
+    expect(rows[0]).toEqual({
+      id: '2026-09-24',
+      label: 'Tor. 24. sep',
+      kcalText: '380 / 2.500 kcal',
+      macroText: 'P 32 g · K 38 g · F 9 g',
+    });
+    expect(rows[1]).toEqual({
+      id: '2026-09-23',
+      label: 'Ons. 23. sep',
+      kcalText: '–',
+      macroText: '',
+    });
+    expect(rows[2]?.kcalText).toBe('830 / 2.500 kcal');
+    expect(rows.at(-1)).toEqual({
+      id: '2026-08-26',
+      label: 'Ons. 26. aug',
+      kcalText: '1.850 / 2.500 kcal',
+      macroText: 'P 120 g · K 200 g · F 60 g',
+    });
+  });
+
+  for (const [name, store] of STORES) {
+    it(`offers "Prøv igen" when ${name} failed to load and reloads only that store`, () => {
+      const service = setup();
+
+      expect(service.loadFailed()).toBe(false);
+      failLoad(store());
+      expect(service.loadFailed()).toBe(true);
+
+      const loads = STORES.map(([, other]) =>
+        vi.spyOn(other(), 'load').mockReturnValue(of(undefined)),
+      );
+      service.reload();
+
+      expect(loads.map((load) => load.mock.calls.length)).toEqual(
+        STORES.map(([other]) => (other === name ? 1 : 0)),
+      );
+    });
+  }
 
   it('describes the way to the goal weight', () => {
     storeProfile({ goal: 'tabe', weightKg: 75, goalWeightKg: 70 });

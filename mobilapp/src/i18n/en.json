@@ -448,7 +448,9 @@
       "toGoal": "To goal"
     },
     "page": {
-      "profileAriaLabel": "Profile"
+      "profileAriaLabel": "Profile",
+      "loadError": "Your data couldn't be loaded.",
+      "retry": "Try again"
     },
     "summary": {
       "dayTitle": {
@@ -480,12 +482,11 @@
         "weighTitle": "Remember to weigh yourself today"
       },
       "weekNote": {
-        "empty": "No days logged this week yet.",
+        "empty": "No days logged in the last 7 days.",
         "solid": "Solid week. Protein is what lifts the rest.",
         "strong": "Strong week – keep it up.",
         "uneven": "Uneven week. Set one goal: hit protein tomorrow."
-      },
-      "weekProgress": "Day {{dayNumber}} of 7"
+      }
     },
     "todoCard": {
       "caption": "Next step"
@@ -503,13 +504,19 @@
     },
     "weekCard": {
       "averageKcal": "kcal avg.",
-      "caption": "This week",
+      "caption": "Last 7 days",
       "daysOnTarget": "days on target",
       "proteinHit": "protein hit",
       "streak": "streak"
     },
     "weekRings": {
-      "ariaLabel": "Days of the week"
+      "ariaLabel": "The last 7 days"
+    },
+    "monthSheet": {
+      "kcal": "{{eaten}} / {{goal}} kcal",
+      "macros": "P {{protein}} g · C {{carbs}} g · F {{fat}} g",
+      "open": "See the last 30 days",
+      "title": "Last 30 days"
     }
   },
   "weight": {
