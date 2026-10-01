@@ -10,6 +10,8 @@ import { UserProfileService } from '../../../core/services/user-profile/user-pro
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { toApiError } from '../../../core/utils/api';
 import {
+  daysBetween,
+  formatDayMonth,
   formatDecimal,
   formatRelativeDay,
   formatSignedDecimal,
@@ -17,7 +19,7 @@ import {
 } from '../../../core/utils/date-format';
 import { clamp, roundTo } from '../../../core/utils/math';
 import { NOW } from '../../../core/utils/now';
-import { injectTranslate } from '../../../core/services/language/translate';
+import { Translate, injectTranslate } from '../../../core/services/language/translate';
 
 /** The tone of a weight change: green when it goes the right way, red when it doesn't. */
 export type WeightChangeTone = Extract<Tone, 'positive' | 'negative' | 'muted'>;
@@ -27,6 +29,8 @@ export interface WeighLogRow {
   readonly id: string;
   /** `'I dag'` · `'I går'` · `'3 dage siden'`. */
   readonly date: string;
+  /** The day inside a sentence: `'i dag'` · `'i går'` · `'18. sep'`. */
+  readonly dateInSentence: string;
   /** `'07:45'`. */
   readonly time: string;
   /** The weight with a Danish comma, e.g. `'75,0'`. */
@@ -256,6 +260,7 @@ export class WeightViewService {
   readonly allLogRows = computed<readonly WeighLogRow[]>(() => {
     const entries = this.log.entries();
     const goal = this.goal();
+    const today = this.now();
     return this.log.entriesWithin(WEIGHT_LOG_HISTORY_RANGE).map((entry, index) => {
       // `entriesWithin` is a newest-first prefix of `entries`, so the indexes line up.
       const previous = entries[index + 1];
@@ -264,7 +269,8 @@ export class WeightViewService {
       const deltaTone: WeightChangeTone = previous ? weightChangeTone(change, goal) : 'muted';
       return {
         id: entry.id,
-        date: formatRelativeDay(this.t, at, this.now()),
+        date: formatRelativeDay(this.t, at, today),
+        dateInSentence: dayInSentence(this.t, at, today),
         time: formatTime(at),
         kg: formatDecimal(entry.kg),
         kgValue: entry.kg,
@@ -467,6 +473,13 @@ function rangeTone(deltaKg: number, goal: GoalId | null): WeightChangeTone {
         ? Math.abs(deltaKg) < MAINTAIN_TOLERANCE_KG
         : deltaKg < 0;
   return good ? 'positive' : 'negative';
+}
+
+/** `'i dag'` · `'i går'` · `'18. sep'` – relative up to yesterday, then the date. */
+function dayInSentence(t: Translate, date: Date, today: Date): string {
+  return daysBetween(date, today) <= 1
+    ? formatRelativeDay(t, date, today).toLowerCase()
+    : formatDayMonth(t, date);
 }
 
 /** `75` → `'75'`, `74,5` → `'74,5'` (design's `weightText`). */

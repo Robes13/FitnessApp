@@ -140,6 +140,17 @@ describe('WeightViewService', () => {
     expect(view.logRows()[0]?.date).toBe('3 dage siden');
   });
 
+  it('har en dag til brug inde i en sætning: "i dag", "i går" og ellers datoen', () => {
+    const view = setup({ goal: 'tabe' }, [
+      weightLogDto(1, 75, 0, TEST_NOW),
+      weightLogDto(2, 75.2, 1, TEST_NOW),
+      weightLogDto(3, 75.4, 3, TEST_NOW),
+    ]);
+
+    expect(view.logRows().map((row) => row.date)).toEqual(['I dag', 'I går', '3 dage siden']);
+    expect(view.logRows().map((row) => row.dateInSentence)).toEqual(['i dag', 'i går', '18. sep']);
+  });
+
   describe('gem', () => {
     it('gemmer kladden som en ny vejning og opdaterer profilens vægt', () => {
       const view = setup();
