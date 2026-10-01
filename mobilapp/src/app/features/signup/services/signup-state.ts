@@ -100,8 +100,9 @@ const PERCENT_MAX = 100;
 
 /**
  * The draft behind the signup flow: one signal per field, the step navigation and the derived
- * progress. The service is provided by the route (`SIGNUP_ROUTES`), not at the root, so the draft
- * lives exactly as long as the flow and starts over if the user leaves it.
+ * progress. The service is provided by `SignupPage`, not at the root (or the route, whose injector
+ * outlives the page), so the draft – password included – lives exactly as long as the flow and
+ * starts over every time it is entered.
  *
  * The step components inject the service directly and write to the draft signals – they have
  * neither inputs nor outputs.
@@ -136,6 +137,11 @@ export class SignupStateService {
   readonly notifications = signal<boolean | null>(DEFAULT_PROFILE.notificationsEnabled);
   readonly email = signal('');
   readonly termsAccepted = signal(false);
+
+  /** Something typed that isn't an e-mail – not the empty field. */
+  readonly emailInvalid = computed(
+    () => this.email().length > 0 && !this.calculator.isValidEmail(this.email()),
+  );
 
   private readonly stepState = signal<SignupStepId>(FIRST_STEP);
   private readonly editFromState = signal<SignupStepId | null>(null);

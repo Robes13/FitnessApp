@@ -8,7 +8,9 @@ kalder `SignupStateService.submit()` (trinnet kender hverken spinner eller fejl)
 
 1. **E-mail** — `UiTextInput` styret af en typet reactive form (`FormGroup<{ email }>`), der
    skriver videre til kladdens `email`-signal. Kanten bliver rød, så snart der står noget,
-   der ikke ligner en e-mail — ikke i det tomme felt.
+   der ikke ligner en e-mail — ikke i det tomme felt (`SignupStateService.emailInvalid`).
+   Teksten "Skriv en gyldig e-mail." står i sidens fejllinje over knapperne, så trinnets layout
+   ikke hopper.
 2. **Ni linjer** (`buildSummaryRows` i `summary-rows.ts`) i `UiRowButton` med
    `density="compact"`. Værdien for "Mål" er orange; resten er almindelig. Hver linje er en
    knap med `aria-label="Ret …"`, som kalder `jumpTo(step)` og dermed går i rette-tilstand:

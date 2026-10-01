@@ -4,12 +4,14 @@ import {
   DestroyRef,
   computed,
   inject,
+  linkedSignal,
   signal,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
+import { AUTH_ERROR_MESSAGE_KEY } from '../../../../core/constants/auth';
 import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { toApiError } from '../../../../core/utils/api';
@@ -36,7 +38,8 @@ import { SignupStateService } from '../../services/signup-state';
 
 /**
  * The signup flow's only page: progress at the top, the active step in the middle and
- * back/next at the bottom. The steps fetch their own data from `SignupStateService`.
+ * back/next at the bottom. The steps fetch their own data from `SignupStateService`, which the
+ * page provides, so the draft is destroyed with it.
  */
 @Component({
   selector: 'app-signup-page',
@@ -66,6 +69,7 @@ import { SignupStateService } from '../../services/signup-state';
   styleUrl: './signup-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'signup-page' },
+  providers: [SignupStateService],
 })
 export class SignupPage {
   private readonly router = inject(Router);
@@ -76,10 +80,19 @@ export class SignupPage {
   /** Above the on-screen keyboard the progress header slims down, so the fields keep the room. */
   protected readonly keyboardOpen = inject(KeyboardService).isOpen;
   protected readonly submitting = signal(false);
-  /** The design has no error state here – the texts are our own, in the design's tone. */
-  private readonly errorKey = signal<string | null>(null);
+  /**
+   * The design has no error state here – the texts are our own, in the design's tone. The refused
+   * draft's error is cleared as soon as the user edits it: a step opens from the summary, or the
+   * e-mail on it changes.
+   */
+  private readonly errorKey = linkedSignal({
+    source: () => [this.state.step(), this.state.email()],
+    computation: (): string | null => null,
+  });
+  /** The refused draft's error, else why the summary's e-mail keeps "Create account" disabled. */
   protected readonly error = computed(() => {
-    const key = this.errorKey();
+    const invalidEmail = this.state.step() === 'summary' && this.state.emailInvalid();
+    const key = this.errorKey() ?? (invalidEmail ? AUTH_ERROR_MESSAGE_KEY.INVALID_EMAIL : null);
     return key === null ? null : this.t(key);
   });
 
