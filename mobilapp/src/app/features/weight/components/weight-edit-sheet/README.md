@@ -17,6 +17,9 @@
   `linkedSignal`, der nulstilles til vejningens vægt, hver gang en ny vejning åbnes.
 - **Slet kræver bekræftelse:** "Slet" skifter footeren til "Ja, slet vejning" / "Annuller" og
   viser en rød advarsel. Bekræftelsestrinnet nulstilles også, når arket åbnes igen.
+- Tidspunktet øverst står som i listen ("I dag kl. 07:45", "3 dage siden kl. 07:45"). Inde i
+  advarslen bruges rækkens `dateInSentence`: "i dag" / "i går" med lille, ældre vejninger med
+  datoen – "Vil du slette vejningen fra 18. sep kl. 07:45?".
 - Luk-knap, scrim og Escape lukker uden at gemme (`closed`).
 - **Venter på API'et:** mens `busy`, viser den kørende knap en spinner, de andre er slået fra, og
   arket kan ikke lukkes. Fejler gem/slet, bliver arket åbent, og `errorMessage` står i en

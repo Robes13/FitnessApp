@@ -21,7 +21,7 @@
 
   @if (confirmingDelete()) {
     <p class="weight-edit-sheet__confirm">
-      {{ 'weight.editSheet.confirmMessage' | translate: { when: whenText() } }}
+      {{ 'weight.editSheet.confirmMessage' | translate: { when: confirmWhenText() } }}
     </p>
   }
 

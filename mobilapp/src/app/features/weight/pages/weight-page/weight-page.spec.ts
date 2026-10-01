@@ -311,8 +311,9 @@ describe('WeightPage', () => {
     click(root, '.weight-edit-sheet__delete');
     await fixture.whenStable();
 
-    expect(root.querySelector('.weight-edit-sheet__confirm')?.textContent).toContain(
-      'Vil du slette vejningen',
+    // An older weigh-in is named by its date – "fra 3 dage siden" doesn't read.
+    expect(root.querySelector('.weight-edit-sheet__confirm')?.textContent?.trim()).toBe(
+      'Vil du slette vejningen fra 18. sep kl. 10:30? Det kan ikke fortrydes.',
     );
     http.expectNone({ method: 'DELETE' });
 
@@ -326,6 +327,21 @@ describe('WeightPage', () => {
     expect(TestBed.inject(WeightLogService).entries()).toHaveLength(2);
     expect(root.querySelectorAll('.weight-log-list__row')).toHaveLength(2);
     expect(TestBed.inject(UserProfileService).profile().weightKg).toBe(75.6);
+  });
+
+  it('skriver "i dag" med lille i sletteadvarslen, men stort øverst i arket', async () => {
+    const root = await setup([weightLogDto(1, 75, 0, TEST_NOW)]);
+    click(root, '.weight-log-list__row');
+    await fixture.whenStable();
+    click(root, '.weight-edit-sheet__delete');
+    await fixture.whenStable();
+
+    expect(root.querySelector('.weight-edit-sheet__when')?.textContent?.trim()).toBe(
+      'I dag kl. 10:30',
+    );
+    expect(root.querySelector('.weight-edit-sheet__confirm')?.textContent?.trim()).toBe(
+      'Vil du slette vejningen fra i dag kl. 10:30? Det kan ikke fortrydes.',
+    );
   });
 
   it('viser fejlen under knappen, når den sidste vejning er slettet, men profilen ikke hentes', async () => {

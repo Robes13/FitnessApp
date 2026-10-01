@@ -50,6 +50,11 @@ export class WeightEditSheet {
     const row = this.row();
     return row ? this.t('weight.editSheet.when', { date: row.date, time: row.time }) : '';
   });
+  /** `'i dag kl. 07:45'` · `'18. sep kl. 07:45'` – inside the delete question. */
+  protected readonly confirmWhenText = computed(() => {
+    const row = this.row();
+    return row ? this.t('weight.editSheet.when', { date: row.dateInSentence, time: row.time }) : '';
+  });
 
   // Falls back to the ruler's minimum only while closed, so the ruler never gets an invalid value.
   protected readonly draftKg = linkedSignal(() => this.row()?.kgValue ?? WEIGHT_MIN_KG);
