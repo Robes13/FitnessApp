@@ -27,6 +27,10 @@ refresh, email/resend-verification, password/forgot). Bekræftelses- og nulstill
 4. **Afvist fornyelse.** Svarer `auth/refresh` med 4xx, afslutter `SessionService` sessionen
    (gæst) og sender brugeren til login. Ved netværks- eller serverfejl beholdes sessionen, og
    fejlen går videre til kalderen.
+5. **Sene svar efter log ud.** Et svar, der lander, efter at kontoen, der sendte kaldet, er logget
+   ud (eller en anden konto er logget ind), smides væk (`SessionService.accountId`): kaldet
+   completer uden værdi, så fx et "Prøv igen"-load ikke fylder en store igen efter `reset()`.
+   Fejl går altid videre.
 
 **Ved app-start** kalder `SessionService.renewOnOpen()` `refresh()` én gang (spec 1.5), før storene
 indlæses; deres første `/me/**`-kald deler den samme single-flight-fornyelse, hvis tokenet er ved at

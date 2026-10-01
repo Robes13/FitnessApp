@@ -5,7 +5,7 @@ import {
   HttpStatusCode,
 } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, of, switchMap, throwError } from 'rxjs';
+import { catchError, filter, of, switchMap, throwError } from 'rxjs';
 import { API_BASE_URL } from '../constants/api';
 import { ANONYMOUS_AUTH_ENDPOINTS, AUTH_ENDPOINT } from '../constants/auth';
 import { SessionService } from '../services/session/session';
@@ -27,6 +27,8 @@ const QUERY_START = '?';
  * already refreshed since this one was sent, otherwise after one (single-flight) refresh. A 401
  * **with** a body is a business error (e.g. wrong password) and is passed on untouched. When the
  * refresh itself is rejected, `SessionService` ends the session and sends the user to login.
+ * An answer that lands after the account that sent it logged out (or another one logged in) is
+ * dropped – the request completes without a value; errors always pass.
  *
  * Calls to `auth/refresh` skip this interceptor, so refreshing never recurses.
  */
@@ -36,6 +38,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
   const session = inject(SessionService);
+  const sentBy = session.accountId();
   const retries = !NO_RETRY_ENDPOINTS.has(endpoint);
   return session.accessToken().pipe(
     switchMap((token) =>
@@ -52,6 +55,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
         ),
       ),
     ),
+    filter(() => sentBy === null || session.accountId() === sentBy),
   );
 };
 

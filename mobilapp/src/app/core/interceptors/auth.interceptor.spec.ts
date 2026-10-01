@@ -183,6 +183,21 @@ describe('authInterceptor', () => {
     expect(session.isAuthenticated()).toBe(true);
   });
 
+  it('drops an answer that lands after the account logged out', async () => {
+    const { client, http, session } = setup();
+    const next = vi.fn();
+    client.get(ME).subscribe(next);
+    const load = http.expectOne(ME);
+
+    const loggedOut = firstValueFrom(session.logout());
+    http.expectOne(LOGOUT).flush(null);
+    await loggedOut;
+    load.flush({ userId: 1 });
+
+    expect(session.status()).toBe('guest');
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('signs out and goes to login when the refresh is rejected', async () => {
     const { client, http, session, navigate } = setup();
 

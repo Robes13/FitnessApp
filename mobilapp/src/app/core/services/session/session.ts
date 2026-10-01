@@ -74,6 +74,13 @@ export class SessionService {
    * `isLoggedIn`. Home stays locked behind the verification sheet until it is `true`.
    */
   readonly isAuthenticated: Signal<boolean> = computed(() => this.status() === 'authenticated');
+  /**
+   * The signed-in account, otherwise `null`. The auth interceptor drops an answer that lands after
+   * it changed (logged out, or another account), so a late load can't refill a store after `reset()`.
+   */
+  readonly accountId: Signal<number | null> = computed(() =>
+    this.isAuthenticated() ? this.state().userId : null,
+  );
 
   /** Creates the account. The API has already sent the verification e-mail – no resend here. */
   register(profile: UserProfile, password: string, passwordConfirmation: string): Observable<void> {
