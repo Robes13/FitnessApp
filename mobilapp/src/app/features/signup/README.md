@@ -5,7 +5,7 @@ træning, mål og notifikationer og lander på en opsummering, der opretter kont
 
 | Fil/mappe                     | Indhold                                                                           |
 | ----------------------------- | --------------------------------------------------------------------------------- |
-| `signup.routes.ts`            | `SIGNUP_ROUTES`: `SignupPage` med `SignupStateService` som route-provider.        |
+| `signup.routes.ts`            | `SIGNUP_ROUTES`: ruten til `SignupPage`, som selv leverer `SignupStateService`.   |
 | `services/`                   | `SignupStateService` – kladden, trin-navigationen og oprettelsen.                 |
 | `pages/signup-page/`          | Siden: fremdrift øverst, det aktive trin i midten, tilbage/videre nederst.        |
 | `components/signup-progress/` | Ringen med trinnummeret, kapitelnavn og kapitelbjælkerne.                         |
@@ -61,7 +61,14 @@ hukommelsen**, så arket kan logge brugeren ind automatisk, når e-mailen er bek
 Kladden skrives som lokal profil via `UserProfileService.replace` først, når API'et har oprettet
 kontoen. Siden viser fejlen i en `UiFormError` – e-mail eller brugernavn optaget (409),
 for kort adgangskode eller "Kontoen kunne ikke oprettes" – via `toApiError(error).messageKey`.
-Selve navigationen til Hjem sker i `SignupPage`, fordi den også ejer spinner og fejltekst.
+Fejlen forsvinder, så snart brugeren retter kladden: et trin åbnes fra opsummeringen, eller
+e-mailen ændres. Selve navigationen til Hjem sker i `SignupPage`, fordi den også ejer spinner og
+fejltekst.
+
+Kladden – også adgangskoden – lever kun, så længe `SignupPage` gør: siden leverer
+`SignupStateService` i sine egne `providers`, så den nedlægges, når brugeren går til Hjem eller
+login. Næste besøg på `/opret` (fx en ny bruger efter log ud) starter tomt. Den må **ikke** ligge
+på ruten: Angular beholder en rutes injector, efter at brugeren er gået væk.
 
 ### API'ets regler i trinnene
 
@@ -86,5 +93,6 @@ Selve navigationen til Hjem sker i `SignupPage`, fordi den også ejer spinner og
   notifikationer altid bliver spurgt om.
 - **Fejltekst ved oprettelse.** Prototypen har ingen fejltilstand på det sidste trin. Slår
   registreringen fejl, viser siden en oversat fejltekst (fx "Der findes allerede en konto med
-  den e-mail.").
+  den e-mail."). Står der noget i e-mailfeltet, der ikke er en e-mail, siger samme linje
+  "Skriv en gyldig e-mail." (1.0-15a), så det er tydeligt, hvorfor "Opret konto" er slået fra.
 - **Alderen regnes ud fra `NOW`.** Prototypen har datoen 16. september 2026 hardkodet.

@@ -5,9 +5,10 @@
 | `signup-state.ts`      | `SignupStateService` + `SignupStepId`, `SIGNUP_STEP_ORDER`, `SignupChapter`, `SKIP_PACE_FOR_MAINTAIN`. |
 | `signup-state.spec.ts` | Rækkefølge, spring-regler, `canContinue` pr. trin, knaptekster, kapitler, rette-kæder og oprettelse.   |
 
-`SignupStateService` er **ikke** `providedIn: 'root'`. Den leveres af ruten i
-`signup.routes.ts`, så kladden lever præcis lige så længe som flowet: forlader brugeren
-oprettelsen, er alt væk næste gang.
+`SignupStateService` er **ikke** `providedIn: 'root'`. Den leveres af `SignupPage`
+(`providers`), så kladden – adgangskoden med – lever præcis lige så længe som siden: forlader
+brugeren oprettelsen (også efter en oprettet konto eller et log ud), er alt væk næste gang.
+Ikke på ruten: Angular beholder en rutes injector, når brugeren går væk.
 
 ## Offentlig API
 
@@ -15,6 +16,8 @@ oprettelsen, er alt væk næste gang.
   `birthday`, `gender`, `weightKg`, `heightCm`, `stepsPerDay`, `trainingDays`,
   `trainingMinutes`, `trainingRpe`, `goal`, `goalWeightKg`, `pace`, `notifications`, `email`,
   `termsAccepted`. Startværdierne kommer fra `DEFAULT_PROFILE`, så kladden begynder tom.
+  `emailInvalid` er sand, når der står noget i `email`, som ikke er en e-mail (ikke i det tomme
+  felt) – opsummeringen markerer feltet, og siden forklarer det.
 - **Navigation**: `step`, `editFrom`, `isEditing`, `visibleOrder`, `stepNumber`, `stepTotal`,
   `progressValue`, `chapters`, `canContinue`, `nextLabel`, `next()`, `back()`,
   `jumpTo(step)`, `toggleTrainingDay(index)`.

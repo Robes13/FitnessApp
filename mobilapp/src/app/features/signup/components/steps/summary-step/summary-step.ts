@@ -92,10 +92,6 @@ export class SummaryStep {
   });
 
   private readonly emailValid = computed(() => this.calculator.isValidEmail(this.state.email()));
-  /** Red border only appears once something is actually wrong – not on the empty field. */
-  protected readonly emailInvalid = computed(
-    () => this.state.email().length > 0 && !this.emailValid(),
-  );
 
   protected readonly caption = computed(() => {
     if (!this.emailValid()) {
