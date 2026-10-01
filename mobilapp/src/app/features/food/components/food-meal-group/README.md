@@ -5,7 +5,9 @@ de loggede varer og linket "+ Tilføj til <måltid>".
 
 Gruppen får en færdig `MealGroupView` fra `FoodViewService` og udsender `edit`, `removed` og
 `add`. Den kender hverken loggen eller måltidernes rækkefølge. Rækkens kcal vises som hele tal
-(`kcal(entry)`), fordi loggen har API'ets præcise værdier.
+(`kcal(entry)`), fordi loggen har API'ets præcise værdier, og mængden går gennem
+`formatQuantity` (`quantity(entry)`), så enheden står på brugerens sprog og i flertal
+(`'2 portioner'`, `'2 servings'`).
 
 En tom gruppe viser kun tilføj-linket og en tankestreg i stedet for kalorier — som i designet.
 Der er derfor bevidst ingen `app-ui-empty-state` her.

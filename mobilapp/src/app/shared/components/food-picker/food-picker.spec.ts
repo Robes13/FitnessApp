@@ -289,6 +289,32 @@ describe('FoodPicker', () => {
       expect(text('.food-picker__confirm')).toBe('Tilføj 2 stk');
     });
 
+    it('writes a portion in the plural from 2 up, but emits the unit token', async () => {
+      const { host, click, text, texts } = await setup({
+        configure: (h) => h.editItem.set({ ...SALAD, quantity: '1 portion', kcal: 1200 }),
+      });
+
+      expect(text('.food-picker__subtitle')).toBe('Standard: 1 portion · 1.200 kcal');
+      expect(texts('.food-picker__chip')).toEqual([
+        '1 portion',
+        '2 portioner',
+        '3 portioner',
+        '4 portioner',
+      ]);
+      expect(text('.food-picker__amount-unit')).toBe('portion');
+
+      await click('.food-picker__stepper', 1); // More
+      expect(text('.food-picker__amount-unit')).toBe('portioner');
+      expect(text('.food-picker__confirm')).toBe('Tilføj 2 portioner');
+
+      await click('.food-picker__confirm');
+      expect(host.picked[0]).toMatchObject({
+        item: { quantity: '2 portion' },
+        amount: 2,
+        unit: 'portion',
+      });
+    });
+
     it('measures a 100 ml food like grams: 5 ml steps and chips from the base', async () => {
       const { click, text, texts } = await setup({
         configure: (h) => h.editItem.set({ ...SALAD, quantity: '100 ml', kcal: 45 }),

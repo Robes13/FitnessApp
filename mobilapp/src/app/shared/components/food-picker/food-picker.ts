@@ -40,6 +40,7 @@ import { injectTranslate } from '../../../core/services/language/translate';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
 import { formatInteger } from '../../../core/utils/date-format';
 import { normalizeName } from '../../../core/utils/name';
+import { formatQuantity, formatQuantityUnit } from '../../../core/utils/quantity';
 import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiButton } from '../ui-button/ui-button';
 import { UiChip } from '../ui-chip/ui-chip';
@@ -88,6 +89,12 @@ interface ResultRow {
   readonly item: FoodItem;
   readonly meta: string;
   readonly kcal: string;
+}
+
+interface PortionChip {
+  readonly value: number;
+  /** As shown, `'2 portioner'`. */
+  readonly label: string;
 }
 
 interface PortionStat {
@@ -311,7 +318,7 @@ export class FoodPicker {
     this.results().map((item) => ({
       item,
       meta: this.t('shared.foodPicker.resultMeta', {
-        quantity: item.quantity,
+        quantity: formatQuantity(this.t, item.quantity),
         protein: Math.round(item.protein),
         carbs: Math.round(item.carbs),
         fat: Math.round(item.fat),
@@ -444,7 +451,12 @@ export class FoodPicker {
   private readonly baseQuantity = computed(() =>
     this.calculator.parseQuantity(this.portionItem()?.quantity ?? ''),
   );
-  protected readonly unit = computed(() => this.baseQuantity().unit);
+  /** The unit token (`'portion'`), as in `quantity` and `picked`. */
+  private readonly unit = computed(() => this.baseQuantity().unit);
+  /** The unit as shown after the selected amount (`'portioner'` for 2). */
+  protected readonly unitLabel = computed(() =>
+    formatQuantityUnit(this.t, this.unit(), this.amount() ?? 0),
+  );
   private readonly baseAmount = computed(() => this.baseQuantity().amount);
   private readonly measured = computed(() => MEASURED_UNITS.includes(this.unit()));
   private readonly amountStep = computed(() => (this.measured() ? GRAM_STEP : PIECE_STEP));
@@ -465,7 +477,7 @@ export class FoodPicker {
     const item = this.portionItem();
     return item
       ? this.t('shared.foodPicker.baseLabel', {
-          quantity: item.quantity,
+          quantity: formatQuantity(this.t, item.quantity),
           // A logged row being edited has the API's exact values.
           kcal: formatInteger(item.kcal),
         })
@@ -517,7 +529,7 @@ export class FoodPicker {
       { label: this.t(STAT_LABEL_KEY.fat), value: formatInteger(macros.fat), accent: false },
     ];
   });
-  protected readonly chipValues = computed<readonly number[]>(() => {
+  private readonly chipValues = computed<readonly number[]>(() => {
     if (!this.measured()) {
       return PIECE_CHIP_VALUES;
     }
@@ -525,13 +537,19 @@ export class FoodPicker {
     const half = Math.round(base / HALF / GRAM_STEP) * GRAM_STEP || GRAM_STEP;
     return [half, base, ...GRAM_CHIP_MULTIPLIERS.map((factor) => base * factor)];
   });
+  protected readonly chips = computed<readonly PortionChip[]>(() =>
+    this.chipValues().map((value) => ({
+      value,
+      label: `${value} ${formatQuantityUnit(this.t, this.unit(), value)}`,
+    })),
+  );
   protected readonly saveOnlyText = computed(
     () => this.saveOnlyLabel() ?? this.t('shared.foodPicker.saveWithoutLogging'),
   );
   protected readonly ctaLabel = computed(() =>
     this.t(CTA_LABEL_KEY[this.ctaVerb()], {
       amount: String(this.amount() ?? ''),
-      unit: this.unit(),
+      unit: this.unitLabel(),
     }),
   );
   protected readonly canConfirm = computed(() => (this.amount() ?? 0) > 0 && !this.exceedsLogCap());

@@ -3,12 +3,13 @@ import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Observable, finalize } from 'rxjs';
 import { APP_PATH } from '../../../../core/constants/app-route';
-import { NewCollectionInput } from '../../../../core/models/food';
+import { CollectionItem, NewCollectionInput } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
 import { formatGrams, formatInteger } from '../../../../core/utils/date-format';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { toApiError } from '../../../../core/utils/api';
+import { formatQuantity } from '../../../../core/utils/quantity';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiConfirmSheet } from '../../../../shared/components/ui-confirm-sheet/ui-confirm-sheet';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
@@ -108,6 +109,11 @@ export class RecipePage {
     ];
   });
   protected readonly logKcal = computed(() => formatInteger(this.detail()?.macros.kcal ?? 0));
+
+  /** `'2 portioner'` – the unit in the active language. */
+  protected quantity(line: CollectionItem): string {
+    return formatQuantity(this.t, line.quantity);
+  }
 
   protected back(): void {
     void this.router.navigateByUrl(APP_PATH.COLLECTIONS);

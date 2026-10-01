@@ -149,7 +149,7 @@
       "moduleInstalling": "The barcode scanner is being downloaded from Google Play. Try again in a moment.",
       "lookupError": "We couldn't look up the item. Check your internet connection and try again.",
       "invalidBarcode": "The barcode must be {{minDigits}}–{{maxDigits}} digits.",
-      "invalidAmount": "Enter an amount between {{minGrams}} and {{maxGrams}} g.",
+      "invalidAmount": "Enter an amount between {{minGrams}} and {{maxGrams}} {{unit}}.",
       "servingLabel": "Serving",
       "amountLabel": "Amount ({{unit}})",
       "amountAriaLabelMillilitres": "Amount in millilitres",
@@ -157,6 +157,12 @@
       "barcodeLabelNative": "Or enter the barcode",
       "barcodeLabelWeb": "Enter the barcode",
       "unnamedProduct": "Item {{barcode}}"
+    },
+    "quantity": {
+      "piece": "pc",
+      "pieces": "pcs",
+      "serving": "serving",
+      "servings": "servings"
     },
     "weight": {
       "range": {

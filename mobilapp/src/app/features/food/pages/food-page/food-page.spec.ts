@@ -347,6 +347,12 @@ describe('FoodPage', () => {
       .entries()
       .find((candidate) => candidate.logId === String(lunch.foodLogId));
     expect(entry).toMatchObject({ quantity: '2 portion', kcal: 900, meal: 'frokost' });
+    // The row says it in Danish – the token stays in the data.
+    expect(
+      Array.from(page.querySelectorAll('.food-meal-group__quantity'), (quantity) =>
+        normalize(quantity.textContent),
+      ),
+    ).toEqual(['250 g', '2 portioner']);
   });
 
   it('opens the add sheet on the meal from the query param and clears it again', async () => {

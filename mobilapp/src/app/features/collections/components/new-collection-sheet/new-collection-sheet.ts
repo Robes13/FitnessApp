@@ -33,6 +33,7 @@ import {
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { toApiError } from '../../../../core/utils/api';
 import { formatGrams, formatInteger } from '../../../../core/utils/date-format';
+import { formatQuantity } from '../../../../core/utils/quantity';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import {
   FoodPicker,
@@ -229,6 +230,11 @@ export class NewCollectionSheet {
   /** Whole kcal as shown, `'1.600'`. */
   protected kcal(item: FoodItem): string {
     return formatInteger(item.kcal);
+  }
+
+  /** `'2 portioner'` – the unit in the active language. */
+  protected quantity(item: FoodItem): string {
+    return formatQuantity(this.t, item.quantity);
   }
 
   protected removeAt(index: number): void {

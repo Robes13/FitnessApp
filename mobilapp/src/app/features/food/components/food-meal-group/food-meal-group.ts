@@ -3,6 +3,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { LoggedFood } from '../../../../core/models/food';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { formatInteger } from '../../../../core/utils/date-format';
+import { formatQuantity } from '../../../../core/utils/quantity';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { MealGroupView } from '../../services/food-view';
 
@@ -35,6 +36,11 @@ export class FoodMealGroup {
   /** Whole kcal (`'1.600'`): the log holds the API's exact values. */
   protected kcal(entry: LoggedFood): string {
     return formatInteger(entry.kcal);
+  }
+
+  /** `'2 portioner'` – the unit in the active language. */
+  protected quantity(entry: LoggedFood): string {
+    return formatQuantity(this.t, entry.quantity);
   }
 
   protected editLabel(entry: LoggedFood): string {

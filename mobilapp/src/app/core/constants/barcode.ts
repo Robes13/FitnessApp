@@ -69,7 +69,7 @@ export const BARCODE_SCANNER_TEXT_KEY = {
   LOOKUP_ERROR: 'core.barcode.lookupError',
   /** Params: `BARCODE_SCANNER_TEXT_PARAMS.INVALID_BARCODE`. */
   INVALID_BARCODE: 'core.barcode.invalidBarcode',
-  /** Params: `BARCODE_SCANNER_TEXT_PARAMS.INVALID_AMOUNT`. */
+  /** Params: `BARCODE_SCANNER_TEXT_PARAMS.INVALID_AMOUNT` and the item's `unit` (g or ml). */
   INVALID_AMOUNT: 'core.barcode.invalidAmount',
   SERVING_LABEL: 'core.barcode.servingLabel',
   /** Params: `unit`. */

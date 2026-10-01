@@ -37,7 +37,27 @@ Hele tal, der vises – kcal, skridt og grænserne i fejlbeskeder (`'Højst 9.99
 portion.'`, `'… mellem 0 og 50.000 skridt.'`) – går altid gennem `formatInteger` (den afrunder
 selv), også når de sendes som parameter til en oversættelse, så tusindtalsseparatoren er ens på
 alle skærme. Undtagelsen er en vares `quantity` (`'1500 g'`): den er data, som
-`NutritionCalculator.parseQuantity` læser tilbage, og formateres derfor ikke.
+`NutritionCalculator.parseQuantity` læser tilbage, og tallet formateres derfor ikke (kun enheden,
+se `quantity.ts`).
+
+## `quantity.ts`
+
+`FoodItem.quantity` beholder appens enhedstoken (`'2 portion'`, `'1 stk'`), fordi det er data, der
+læses tilbage og sendes til API'et. Hvor en mængde **vises**, går den gennem
+`formatQuantity(t, quantity)`, som skriver de talte enheder på det aktive sprog og i ental/flertal
+(`COUNTED_UNIT_LABEL_KEY`, nøglerne `core.quantity.*`):
+
+| Ind           | Dansk           | Engelsk        |
+| ------------- | --------------- | -------------- |
+| `'1 portion'` | `'1 portion'`   | `'1 serving'`  |
+| `'2 portion'` | `'2 portioner'` | `'2 servings'` |
+| `'2 stk'`     | `'2 stk'`       | `'2 pcs'`      |
+| `'150 g'`     | `'150 g'`       | `'150 g'`      |
+
+Ental er præcis 1 – alt andet er flertal (`'1.5 portioner'`). g, ml og de enheder, appen aldrig
+opretter, vises som tokenet. `formatQuantityUnit(t, unit, amount)` giver kun enheden – til
+portionstrinnets enhed ved tallet, hurtigvalgene og knappen (`Tilføj 2 portioner`). Bruges af
+vare-vælgeren, Mad-sidens rækker, samlingsarkets kladde og opskriftssiden.
 
 ## `api.ts`
 

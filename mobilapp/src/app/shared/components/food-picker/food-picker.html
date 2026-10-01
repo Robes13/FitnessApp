@@ -275,7 +275,7 @@
             [value]="amountValue()"
             (input)="onAmountInput(amountField.value)"
           />
-          <span class="food-picker__amount-unit">{{ unit() }}</span>
+          <span class="food-picker__amount-unit">{{ unitLabel() }}</span>
         </div>
         <button
           app-ui-icon-button
@@ -292,15 +292,15 @@
       <p class="food-picker__hint">{{ 'shared.foodPicker.dragHint' | translate }}</p>
 
       <div class="food-picker__chips">
-        @for (value of chipValues(); track value) {
+        @for (chip of chips(); track chip.value) {
           <button
             app-ui-chip
             size="sm"
             class="food-picker__chip"
-            [selected]="value === amount()"
-            (click)="setAmount(value)"
+            [selected]="chip.value === amount()"
+            (click)="setAmount(chip.value)"
           >
-            {{ value }} {{ unit() }}
+            {{ chip.label }}
           </button>
         }
       </div>

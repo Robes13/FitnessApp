@@ -149,7 +149,7 @@
       "moduleInstalling": "Stregkodescanneren hentes fra Google Play. Prøv igen om et øjeblik.",
       "lookupError": "Vi kunne ikke slå varen op. Tjek din internetforbindelse, og prøv igen.",
       "invalidBarcode": "Stregkoden skal være {{minDigits}}–{{maxDigits}} cifre.",
-      "invalidAmount": "Angiv en mængde mellem {{minGrams}} og {{maxGrams}} g.",
+      "invalidAmount": "Angiv en mængde mellem {{minGrams}} og {{maxGrams}} {{unit}}.",
       "servingLabel": "Portion",
       "amountLabel": "Mængde ({{unit}})",
       "amountAriaLabelMillilitres": "Mængde i milliliter",
@@ -157,6 +157,12 @@
       "barcodeLabelNative": "Eller indtast stregkoden",
       "barcodeLabelWeb": "Indtast stregkoden",
       "unnamedProduct": "Vare {{barcode}}"
+    },
+    "quantity": {
+      "piece": "stk",
+      "pieces": "stk",
+      "serving": "portion",
+      "servings": "portioner"
     },
     "weight": {
       "range": {
