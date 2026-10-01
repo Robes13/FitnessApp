@@ -347,9 +347,33 @@ describe('FoodLogService', () => {
     await expect(saved).resolves.toMatchObject({ id: '50', quantity: '100 g', kcal: 400 });
     expect(service.hasCustomFoodNamed(' EGEN bar')).toBe(true);
 
-    const duplicate = firstValueFrom(service.addCustomFood(input));
+    // A name taken in the API (e.g. on another device) but not in this catalogue.
+    const duplicate = firstValueFrom(service.addCustomFood({ ...input, name: 'Anden bar' }));
     http.expectOne({ method: 'POST', url: URL.FOODS }).flush({ status: 409 }, CONFLICT);
     await expect(duplicate).rejects.toBeInstanceOf(DuplicateCustomFoodNameError);
+    expect(service.foods()).toHaveLength(1);
+  });
+
+  it('heals a custom food whose serving failed on the next save instead of creating it twice', async () => {
+    const service = setup();
+    await load(service);
+    const input = { name: 'Kiks', quantity: '1 stk', kcal: 80, protein: 1, carbs: 10, fat: 4 };
+    const kiks = testFood({ foodId: 51, name: 'Kiks', caloriesPer100: 80 });
+
+    const first = firstValueFrom(service.addCustomFood(input));
+    http.expectOne({ method: 'POST', url: URL.FOODS }).flush(kiks);
+    http
+      .expectOne({ method: 'PUT', url: `${URL.FOODS}/51/servings/Piece` })
+      .flush(null, { status: 500, statusText: 'Error' });
+    await expect(first).rejects.toMatchObject({ messageKey: expect.any(String) });
+    expect(service.customFoods()[0]).toMatchObject({ id: '51', quantity: '100 g' });
+
+    const second = firstValueFrom(service.addCustomFood(input));
+    http
+      .expectOne({ method: 'PUT', url: `${URL.FOODS}/51/servings/Piece` })
+      .flush({ foodServingId: 7, unit: 'Piece', gramsPerUnit: 100 });
+
+    await expect(second).resolves.toMatchObject({ id: '51', quantity: '1 stk', kcal: 80 });
     expect(service.foods()).toHaveLength(1);
   });
 

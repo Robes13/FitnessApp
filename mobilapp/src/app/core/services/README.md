@@ -75,7 +75,9 @@ stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under
   `POST foods` → `PUT servings` → `POST me/food-logs`.
 - **Egne varers navne er unikke** (trimmet, uden forskel på store/små bogstaver, via
   `normalizeName` i `utils/name.ts` – API'ets 409-regel). UI'et tjekker med
-  `hasCustomFoodNamed` først; `DuplicateCustomFoodNameError` er reserven.
+  `hasCustomFoodNamed` først; `DuplicateCustomFoodNameError` er reserven. `addCustomFood`
+  genbruger en katalogvare med samme navn (som `ensureFood`), så et nyt forsøg efter en fejlet
+  serving kun opretter servingen.
 - **Højst én vejning pr. dag.** `add` på en dag med vejninger genbruger den nyeste vejnings id
   og fjerner alle andre fra samme dag (ældre data kan have flere).
 - **`AuthApi` er en tynd HTTP-klient.** Én metode pr. endpoint i `AUTH_ENDPOINT`, bodies som

@@ -77,7 +77,10 @@ verdict-boksen.
   forvalg der er lig portionen). Startmængden er portionen, ellers 100 g.
 - Feltet er en typed reactive form (1–5000 g). Ændres mængden, genberegnes tal og verdict med
   `BarcodeFlowService.scale` (8a). Ugyldig mængde viser `UiFormError`, skjuler tallene
-  og slår "Tilføj" fra.
+  og slår "Tilføj" fra. Det samme loft pr. logning som i vælgeren (`exceedsFoodLogCap`, spec
+  3.2-5a) gælder også her: Open Food Facts' tal er ikke til at stole på (fx kJ skrevet som
+  kcal), så over 9999 kcal eller 999 g af en makro viser `shared.foodPicker.amountTooLarge` og
+  slår "Tilføj" fra – ellers svarer API'et 500.
 
 | Tilfælde                      | Tone                         | Tekst (ordret fra designet)                                                                 |
 | ----------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------- |

@@ -1,4 +1,5 @@
 import { Component, Provider, signal } from '@angular/core';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FoodCollection, FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
@@ -43,6 +44,7 @@ const NO_COLLECTIONS: Pick<CollectionsService, 'collections' | 'collectionTotals
       [(meal)]="meal"
       [editEntry]="editEntry()"
       [startStep]="startStep()"
+      [busy]="busy()"
       (closed)="closes = closes + 1"
       (selected)="selected.push($event)"
       (collectionPicked)="collectionsPicked.push($event)"
@@ -55,6 +57,7 @@ class Host {
   readonly meal = signal<MealId>('morgen');
   readonly editEntry = signal<LoggedFood | null>(null);
   readonly startStep = signal<FoodPickerStartStep>('search');
+  readonly busy = signal(false);
   readonly selected: FoodItem[] = [];
   readonly collectionsPicked: (readonly FoodItem[])[] = [];
   closes = 0;
@@ -78,6 +81,8 @@ describe('FoodAddSheet', () => {
   beforeEach(() => {
     localStorage.clear();
   });
+
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
 
   async function setup(
     configure?: (host: Host) => void,
@@ -176,6 +181,12 @@ describe('FoodAddSheet', () => {
 
     expect(host.collectionsPicked).toEqual([first?.items]);
     expect(host.selected).toEqual([]);
+
+    // While the page logs the items, the rows can't be tapped again.
+    host.busy.set(true);
+    await settle();
+    expect(rows[0]?.disabled).toBe(true);
+    expect(rows[0]?.getAttribute('aria-busy')).toBe('true');
   });
 
   it('explains how to build a collection when there are none', async () => {

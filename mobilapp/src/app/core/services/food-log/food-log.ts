@@ -258,12 +258,14 @@ export class FoodLogService implements SessionDataStore {
 
   /**
    * Saves a custom food, described per portion (`'2 stk'`), as the API's per-100 values plus the
-   * serving its unit needs. A taken name (409) errors with `DuplicateCustomFoodNameError`.
+   * serving its unit needs. A catalogue food with the same name is reused, so a retry after a
+   * failed serving only adds the serving (the picker only lets an unchanged form retry). A name
+   * taken in the API (409) errors with `DuplicateCustomFoodNameError`.
    */
   addCustomFood(input: CustomFoodInput): Observable<FoodItem> {
     return defer(() => {
       const quantity = this.calculator.parseQuantity(input.quantity);
-      return this.createOwnFood(input, quantity).pipe(
+      return this.ensureOwnFood(input, quantity).pipe(
         switchMap((food) => this.ensureServing(food, toApiUnit(quantity.unit))),
       );
     }).pipe(map(toFoodItem), mapFoodError());
@@ -293,7 +295,10 @@ export class FoodLogService implements SessionDataStore {
     return this.foodsState().some((food) => normalizeName(food.name) === needle);
   }
 
-  private ensureOwnFood(item: FoodItem, quantity: ParsedQuantity): Observable<FoodDto> {
+  private ensureOwnFood(
+    item: CustomFoodInput & Partial<Pick<FoodItem, 'id'>>,
+    quantity: ParsedQuantity,
+  ): Observable<FoodDto> {
     const foods = this.foodsState();
     const name = normalizeName(item.name);
     const existing =

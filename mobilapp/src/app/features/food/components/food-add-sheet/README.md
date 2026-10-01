@@ -14,7 +14,8 @@ Varer/Samlinger og enten `app-food-picker` eller listen over samlinger.
 
 - Under redigering kan kun mængden ændres (spec 3.3) – makroerne på en egen vare rettes ikke
   her.
-- `busy` (siden gemmer) går videre til vælgeren, så dens knap viser spinner, og `error` (siden
+- `busy` (siden gemmer) går videre til vælgeren, så dens knap viser spinner, og slår
+  samlingsrækkerne fra (`aria-busy`), mens en samling logges vare for vare. `error` (siden
   har oversat fejlen) vises øverst med `app-ui-form-error`. Arket bliver stående ved en fejl,
   så brugerens tal ikke går tabt.
 

@@ -57,6 +57,11 @@
     font-family: var(--font-family-base);
     text-align: left;
     cursor: pointer;
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
   }
 
   &__collection-main {

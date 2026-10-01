@@ -1,7 +1,8 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
-import { TEST_FOOD, testFoodLog, weighEntry } from '../../../../core/testing/fixtures';
+import { TEST_FOOD, testFood, testFoodLog, weighEntry } from '../../../../core/testing/fixtures';
 import {
   TEST_NOW,
   provideComponentTestEnvironment,
@@ -71,7 +72,7 @@ describe('HistoryPage', () => {
     expect(root.querySelectorAll('.history-page__relog')).toHaveLength(0);
   });
 
-  it('viser gen-log-knappen på måltider og melder "Logget i dag" efter et tryk', () => {
+  it('viser gen-log-knappen på måltider og melder "Logget i dag", når rækken er gemt', () => {
     const fixture = setup();
     const root = rootOf(fixture);
     const relog = root.querySelector<HTMLButtonElement>('.history-page__relog');
@@ -79,6 +80,16 @@ describe('HistoryPage', () => {
     expect(relog?.getAttribute('aria-label')).toBe('Log igen i dag');
 
     relog?.click();
+    fixture.detectChanges();
+    expect(relog?.getAttribute('aria-label')).toBe('Log igen i dag');
+    // The meal isn't in the (empty) catalogue, so add() creates the food before it logs it.
+    const http = TestBed.inject(HttpTestingController);
+    http
+      .expectOne({ method: 'POST', url: '/api/v1/foods' })
+      .flush(testFood({ foodId: 1, name: TEST_FOOD.name }));
+    http
+      .expectOne({ method: 'POST', url: '/api/v1/me/food-logs' })
+      .flush(testFoodLog(TEST_FOOD, 'aften'));
     fixture.detectChanges();
 
     const updated = root.querySelector<HTMLButtonElement>('.history-page__relog');
