@@ -1,32 +1,103 @@
-import { HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { CursorPage } from '../../../core/models/api';
+import { FoodLogDto } from '../../../core/models/food-api';
+import { UserGoalDto } from '../../../core/models/profile-api';
 import { WeightLogDto } from '../../../core/models/weight';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { injectTranslate } from '../../../core/services/language/translate';
-import { WeightLogService } from '../../../core/services/weight-log/weight-log';
-import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-document';
 import {
   TEST_FOOD,
+  TEST_GOAL,
   flushTestFoodLog,
-  flushTestWeighIns,
   testFood,
   testFoodLog,
   weightLogDto,
 } from '../../../core/testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
-import { HistoryEntry } from '../models/history';
+import { HistoryEntry, HistoryEventDto, HistoryFilter, HistoryFilterId } from '../models/history';
 import {
+  HISTORY_FILTERS,
   HistoryService,
   RELOGGED_DURATION_MS,
-  formatFoodSummary,
   RELOGGED_LABEL_KEY,
+  RELOG_FAILED_LABEL_KEY,
   RELOG_LABEL_KEY,
 } from './history';
 
-interface Context {
-  readonly history: HistoryService;
-  readonly foodLog: FoodLogService;
-  readonly weightLog: WeightLogService;
+const HISTORY_URL = '/api/v1/me/history';
+const ALL_TYPES = 'AccountCreated,GoalUpdated,FoodLogged,WeightRecorded';
+
+/** `daysAgo` days before `TEST_NOW` at `hour` o'clock, local time. */
+function daysAgo(days: number, hour = 9): Date {
+  return new Date(TEST_NOW.getFullYear(), TEST_NOW.getMonth(), TEST_NOW.getDate() - days, hour);
+}
+
+const NO_PAYLOAD = { foodLog: null, weightLog: null, goal: null };
+
+function foodEvent(foodLog: FoodLogDto): HistoryEventDto {
+  return {
+    type: 'FoodLogged',
+    occurredAt: foodLog.consumedAt,
+    referenceId: foodLog.foodLogId,
+    ...NO_PAYLOAD,
+    foodLog,
+  };
+}
+
+function weighEvent(weightLog: WeightLogDto): HistoryEventDto {
+  return {
+    type: 'WeightRecorded',
+    occurredAt: weightLog.recordedAt,
+    referenceId: weightLog.weightLogId,
+    ...NO_PAYLOAD,
+    weightLog,
+  };
+}
+
+function goalEvent(goal: UserGoalDto): HistoryEventDto {
+  return {
+    type: 'GoalUpdated',
+    occurredAt: goal.createdAt,
+    referenceId: goal.userGoalId,
+    ...NO_PAYLOAD,
+    goal,
+  };
+}
+
+function accountEvent(occurredAt: string): HistoryEventDto {
+  return { type: 'AccountCreated', occurredAt, referenceId: 1, ...NO_PAYLOAD };
+}
+
+/** The sign-up: the API creates the account and its first goal with the same timestamp. */
+const SIGN_UP_GOAL = goalEvent(TEST_GOAL);
+const ACCOUNT_CREATED = accountEvent(TEST_GOAL.createdAt);
+/** A goal change after the sign-up. */
+const LATER_GOAL = goalEvent({
+  ...TEST_GOAL,
+  userGoalId: 8,
+  goalType: 'MaintainWeight',
+  targetDailyCalories: 2345.6,
+  createdAt: daysAgo(2).toISOString(),
+});
+
+function page(
+  items: HistoryEventDto[],
+  nextCursor: string | null = null,
+): CursorPage<HistoryEventDto> {
+  return { items, nextCursor, hasMore: nextCursor !== null };
+}
+
+function filterOf(id: HistoryFilterId): HistoryFilter {
+  const filter = HISTORY_FILTERS.find((candidate) => candidate.id === id);
+  if (!filter) {
+    throw new Error(`Intet filter med id "${id}".`);
+  }
+  return filter;
+}
+
+function titles(history: HistoryService): readonly string[] {
+  return history.entries().map((entry) => entry.title);
 }
 
 function findEntry(history: HistoryService, title: string): HistoryEntry {
@@ -38,193 +109,326 @@ function findEntry(history: HistoryService, title: string): HistoryEntry {
 }
 
 describe('HistoryService', () => {
-  let storage: FakeStorage;
-  let weighIns: readonly WeightLogDto[];
+  let history: HistoryService;
+  let http: HttpTestingController;
 
-  function setup(): Context {
-    TestBed.configureTestingModule({
-      providers: [...provideCoreTestEnvironment({ storage }), HistoryService],
-    });
-    flushTestWeighIns(weighIns);
-    return {
-      history: TestBed.inject(HistoryService),
-      foodLog: TestBed.inject(FoodLogService),
-      weightLog: TestBed.inject(WeightLogService),
-    };
+  /** The request for one page – the URL with exactly these params, in this order. */
+  function expectPage(types = ALL_TYPES, cursor?: string): TestRequest {
+    const query = `types=${types}&limit=50${cursor === undefined ? '' : `&cursor=${cursor}`}`;
+    return http.expectOne({ method: 'GET', url: `${HISTORY_URL}?${query}` });
   }
 
-  /** Two weigh-ins: today and three days ago. */
-  function storeWeighings(): void {
-    weighIns = [weightLogDto(1, 75, 0, TEST_NOW), weightLogDto(2, 75.6, 3, TEST_NOW)];
+  /** Opens the history (the page calls `loadMore()`) and answers the first page. */
+  function open(items: HistoryEventDto[], nextCursor: string | null = null): void {
+    history.loadMore();
+    expectPage().flush(page(items, nextCursor));
   }
 
   beforeEach(() => {
-    storage = createFakeStorage();
-    weighIns = [];
+    TestBed.configureTestingModule({
+      providers: [...provideCoreTestEnvironment(), HistoryService],
+    });
+    history = TestBed.inject(HistoryService);
+    http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => TestBed.inject(HttpTestingController, null)?.verify());
+  afterEach(() => http.verify());
 
-  it('er tom, indtil brugeren har registreret noget', () => {
-    const { history } = setup();
+  describe('sider og filtre', () => {
+    it('henter intet, før siden beder om det, og så første side med alle typer undtagen præstationer', () => {
+      expect(history.status()).toBe('idle');
 
-    expect(history.entries()).toEqual([]);
-    expect(history.groups()).toEqual([]);
-    expect(history.isEmpty()).toBe(true);
+      history.loadMore();
+      expect(history.status()).toBe('loading');
+      expectPage().flush(page([ACCOUNT_CREATED]));
+
+      expect(history.status()).toBe('ready');
+      expect(history.hasMore()).toBe(false);
+      expect(history.events()).toEqual([ACCOUNT_CREATED]);
+    });
+
+    it('sender filterets typer som types', () => {
+      for (const [id, types] of [
+        ['vejning', 'WeightRecorded'],
+        ['mad', 'FoodLogged'],
+        ['maal', 'GoalUpdated'],
+        ['alle', ALL_TYPES],
+      ] as const) {
+        history.setFilter(filterOf(id));
+        expect(history.filter()).toBe(id);
+        expectPage(types).flush(page([]));
+      }
+    });
+
+    it('sender nextCursor med, når næste side hentes, og lægger den efter den første', () => {
+      const today = weighEvent(weightLogDto(1, 75, 0, TEST_NOW));
+      const older = weighEvent(weightLogDto(2, 76, 5, TEST_NOW));
+      open([today], 'c2');
+      expect(history.nextCursor()).toBe('c2');
+      expect(history.hasMore()).toBe(true);
+
+      history.loadMore();
+      expectPage(ALL_TYPES, 'c2').flush(page([older]));
+
+      expect(history.events()).toEqual([today, older]);
+      expect(history.hasMore()).toBe(false);
+      expect(history.nextCursor()).toBeNull();
+    });
+
+    it('beder ikke om en side, mens en indlæses, eller efter den sidste', () => {
+      history.loadMore();
+      history.loadMore();
+      expectPage().flush(page([ACCOUNT_CREATED]));
+
+      history.loadMore();
+      http.expectNone(() => true);
+    });
+
+    it('starter forfra ved filterskift og dropper en side på vej', () => {
+      open([weighEvent(weightLogDto(1, 75, 0, TEST_NOW))], 'c2');
+      history.loadMore();
+      const pending = expectPage(ALL_TYPES, 'c2');
+
+      history.setFilter(filterOf('mad'));
+
+      expect(pending.cancelled).toBe(true);
+      expect(history.events()).toEqual([]);
+      expect(history.status()).toBe('loading');
+      const meal = foodEvent(testFoodLog(TEST_FOOD, 'aften'));
+      expectPage('FoodLogged').flush(page([meal]));
+      expect(history.events()).toEqual([meal]);
+    });
+
+    it('melder fejl, beder ikke selv igen og henter den fejlede side ved retry()', () => {
+      const today = weighEvent(weightLogDto(1, 75, 0, TEST_NOW));
+      open([today], 'c2');
+      history.loadMore();
+      expectPage(ALL_TYPES, 'c2').flush(null, { status: 500, statusText: 'Error' });
+
+      expect(history.status()).toBe('error');
+      expect(history.events()).toEqual([today]);
+      history.loadMore();
+      http.expectNone(() => true);
+
+      history.retry();
+      expect(history.status()).toBe('loading');
+      expectPage(ALL_TYPES, 'c2').flush(page([ACCOUNT_CREATED]));
+
+      expect(history.status()).toBe('ready');
+      expect(history.events()).toEqual([today, ACCOUNT_CREATED]);
+    });
+
+    it('er kun tom, når siden er hentet uden poster', () => {
+      history.setFilter(filterOf('maal'));
+      expect(history.isEmpty()).toBe(false);
+
+      expectPage('GoalUpdated').flush(page([]));
+
+      expect(history.isEmpty()).toBe(true);
+      expect(history.groups()).toEqual([]);
+    });
   });
 
-  it('viser vejningerne nyeste først og mærker den seneste', () => {
-    storeWeighings();
-    const { history } = setup();
+  describe('poster', () => {
+    it('viser vejningen med vægten, og kun den første får "Seneste vejning"', () => {
+      open([
+        weighEvent(weightLogDto(1, 75, 0, TEST_NOW)),
+        weighEvent(weightLogDto(2, 75.6, 3, TEST_NOW)),
+      ]);
 
-    expect(history.entries().map((entry) => entry.value)).toEqual(['75,0 kg', '75,6 kg']);
-    expect(history.entries().map((entry) => entry.subtitle)).toEqual([
-      'Seneste vejning',
-      'Vejning registreret',
-    ]);
-    expect(history.entries().every((entry) => entry.kind === 'vejning')).toBe(true);
-  });
+      const entries = history.entries();
+      expect(entries.map((entry) => entry.kind)).toEqual(['vejning', 'vejning']);
+      expect(entries.map((entry) => entry.title)).toEqual(['Vejning', 'Vejning']);
+      expect(entries.map((entry) => entry.value)).toEqual(['75,0 kg', '75,6 kg']);
+      expect(entries.map((entry) => entry.subtitle)).toEqual([
+        'Seneste vejning',
+        'Vejning registreret',
+      ]);
+    });
 
-  it('viser dagens måltider med måltidets navn og kalorier', () => {
-    const { history, foodLog } = setup();
+    it('viser et måltid med navn, måltid og kalorier og kan logge det igen', () => {
+      open([foodEvent(testFoodLog(TEST_FOOD, 'aften', daysAgo(1)))]);
 
-    foodLog.addLogs([testFoodLog(TEST_FOOD, 'aften')]);
-
-    const entry = findEntry(history, 'Proteinbar');
-    expect(entry.kind).toBe('mad');
-    expect(entry.subtitle).toBe('Aftensmad');
-    expect(entry.value).toBe('210 kcal');
-    expect(entry.when).toBe('I dag');
-  });
-
-  it('grupperer posterne pr. dag med etiketterne fra designet', () => {
-    storeWeighings();
-    const { history, foodLog } = setup();
-    foodLog.addLogs([testFoodLog(TEST_FOOD, 'morgen')]);
-
-    expect(history.groups().map((group) => group.label)).toEqual([
-      'I dag · 21. sep',
-      'Fre. · 18. sep',
-    ]);
-    expect(history.groups()[0]?.entries).toHaveLength(2);
-  });
-
-  it('filtrerer på posttype og melder tom, når filteret ikke rammer noget', () => {
-    storeWeighings();
-    const { history, foodLog } = setup();
-    foodLog.addLogs([testFoodLog(TEST_FOOD, 'morgen')]);
-
-    history.setFilter('vejning');
-    expect(history.visibleEntries().every((entry) => entry.kind === 'vejning')).toBe(true);
-    expect(history.isEmpty()).toBe(false);
-
-    history.setFilter('mad');
-    expect(history.visibleEntries().map((entry) => entry.title)).toEqual(['Proteinbar']);
-
-    // Goal changes aren't tracked yet – they'll come from the backend.
-    history.setFilter('maal');
-    expect(history.visibleEntries()).toEqual([]);
-    expect(history.isEmpty()).toBe(true);
-
-    history.setFilter('alle');
-    expect(history.visibleEntries()).toHaveLength(history.entries().length);
-  });
-
-  it('viser måltider fra tidligere dage med dagens samlede kalorier og makroer', () => {
-    const { history, foodLog } = setup();
-    foodLog.addLogs([
-      testFoodLog(TEST_FOOD, 'frokost', new Date(2026, 8, 19, 12)),
-      testFoodLog(TEST_FOOD, 'aften', new Date(2026, 8, 19, 18)),
-      testFoodLog(TEST_FOOD, 'morgen'),
-    ]);
-
-    const groups = history.groups();
-    expect(groups.map((group) => group.label)).toEqual(['I dag · 21. sep', 'Lør. · 19. sep']);
-    expect(groups[1]?.entries).toHaveLength(2);
-    const t = TestBed.runInInjectionContext(() => injectTranslate());
-    expect(groups[1]?.foodSummary).toBe(
-      formatFoodSummary(t, foodLog.totalsFor(new Date(2026, 8, 19))),
-    );
-    expect(groups[1]?.foodSummary).toMatch(/^420 kcal · P /);
-  });
-
-  it('viser ingen madopsummering på dage uden måltider', () => {
-    storeWeighings();
-    const { history } = setup();
-
-    expect(history.groups().every((group) => group.foodSummary === null)).toBe(true);
-  });
-
-  it('kun måltidsposter kan logges igen', () => {
-    storeWeighings();
-    const { history, foodLog } = setup();
-    foodLog.addLogs([testFoodLog(TEST_FOOD, 'morgen')]);
-
-    expect(findEntry(history, 'Proteinbar').food?.kcal).toBe(210);
-    expect(findEntry(history, 'Vejning').food).toBeUndefined();
-  });
-
-  it('logger måltidet igen og viser "Logget i dag" i 2,6 sekunder', () => {
-    vi.useFakeTimers();
-    try {
-      const { history, foodLog } = setup();
-      const t = TestBed.runInInjectionContext(() => injectTranslate());
-      const logged = testFoodLog(TEST_FOOD, 'aften');
-      flushTestFoodLog([testFood({ foodId: logged.foodId, name: TEST_FOOD.name })], [logged]);
       const entry = findEntry(history, 'Proteinbar');
+      expect(entry.kind).toBe('mad');
+      expect(entry.subtitle).toBe('Aftensmad');
+      expect(entry.value).toBe('210 kcal');
+      expect(entry.when).toBe('I går');
+      expect(entry.meal).toBe('aften');
+      expect(entry.food?.kcal).toBe(210);
+    });
 
-      history.relog(entry);
-      TestBed.inject(HttpTestingController)
-        .expectOne({ method: 'POST', url: '/api/v1/me/food-logs' })
-        .flush({ ...logged, foodLogId: logged.foodLogId + 1000 });
+    it('viser en målændring med målet og det afrundede kaloriemål', () => {
+      open([LATER_GOAL, SIGN_UP_GOAL, ACCOUNT_CREATED]);
 
-      expect(foodLog.entries()).toHaveLength(2);
-      expect(foodLog.entries().at(-1)?.meal).toBe('aften');
-      expect(history.isRelogged(entry)).toBe(true);
-      expect(history.relogLabel(entry)).toBe(t(RELOGGED_LABEL_KEY));
+      const entry = findEntry(history, 'Mål opdateret');
+      expect(entry.kind).toBe('maal');
+      expect(entry.subtitle).toBe('Holde vægten');
+      expect(entry.value).toBe('2.346 kcal');
+      expect(entry.food).toBeUndefined();
+    });
 
-      vi.advanceTimersByTime(RELOGGED_DURATION_MS);
+    it('viser kun "Konto oprettet" for en ny konto – registreringens mål skjules', () => {
+      open([SIGN_UP_GOAL, ACCOUNT_CREATED]);
 
-      expect(history.isRelogged(entry)).toBe(false);
-      expect(history.relogLabel(entry)).toBe(t(RELOG_LABEL_KEY));
-    } finally {
-      vi.useRealTimers();
-    }
+      expect(history.entries()).toHaveLength(1);
+      const [account] = history.entries();
+      expect(account?.kind).toBe('konto');
+      expect(account?.title).toBe('Konto oprettet');
+      expect(account?.value).toBe('');
+    });
+
+    it('skjuler registreringens mål, også når kontoen først kommer på næste side', () => {
+      open([weighEvent(weightLogDto(1, 75, 0, TEST_NOW)), SIGN_UP_GOAL], 'c2');
+      expect(titles(history)).toEqual(['Vejning', 'Mål opdateret']);
+
+      history.loadMore();
+      expectPage(ALL_TYPES, 'c2').flush(page([ACCOUNT_CREATED]));
+
+      expect(titles(history)).toEqual(['Vejning', 'Konto oprettet']);
+    });
+
+    it('beholder senere målændringer og viser det første mål under "Mål"', () => {
+      open([LATER_GOAL, SIGN_UP_GOAL, ACCOUNT_CREATED]);
+      expect(titles(history)).toEqual(['Mål opdateret', 'Konto oprettet']);
+
+      history.setFilter(filterOf('maal'));
+      expectPage('GoalUpdated').flush(page([LATER_GOAL, SIGN_UP_GOAL]));
+
+      expect(titles(history)).toEqual(['Mål opdateret', 'Mål opdateret']);
+    });
+
+    it('grupperer pr. dag, nyeste først, med designets etiketter', () => {
+      open([
+        weighEvent(weightLogDto(1, 75, 0, TEST_NOW)),
+        foodEvent(testFoodLog(TEST_FOOD, 'morgen', daysAgo(0, 8))),
+        foodEvent(testFoodLog(TEST_FOOD, 'aften', daysAgo(2))),
+      ]);
+
+      expect(history.groups().map((group) => group.label)).toEqual([
+        'I dag · 21. sep',
+        'Lør. · 19. sep',
+      ]);
+      expect(history.groups()[0]?.entries).toHaveLength(2);
+    });
   });
 
-  it('viser ikke "Logget i dag", når gen-logningen fejler', () => {
-    const { history } = setup();
-    const logged = testFoodLog(TEST_FOOD, 'aften');
-    flushTestFoodLog([testFood({ foodId: logged.foodId, name: TEST_FOOD.name })], [logged]);
-    const entry = findEntry(history, 'Proteinbar');
+  describe('dagens madopsummering', () => {
+    it('summerer dagens måltider fra payloaden og udelader dage uden måltider', () => {
+      open([
+        weighEvent(weightLogDto(1, 75, 0, TEST_NOW)),
+        foodEvent(testFoodLog(TEST_FOOD, 'aften', daysAgo(1, 18))),
+        foodEvent(testFoodLog(TEST_FOOD, 'frokost', daysAgo(1, 12))),
+      ]);
 
-    history.relog(entry);
-    expect(history.isRelogged(entry)).toBe(false);
-    TestBed.inject(HttpTestingController)
-      .expectOne({ method: 'POST', url: '/api/v1/me/food-logs' })
-      .flush(null, { status: 500, statusText: 'Error' });
+      expect(history.groups().map((group) => group.foodSummary)).toEqual([
+        null,
+        '420 kcal · P 40 g · K 44 g · F 14 g',
+      ]);
+    });
 
-    expect(history.isRelogged(entry)).toBe(false);
+    it('venter med den sidste dag, til næste side er hentet', () => {
+      open(
+        [
+          foodEvent(testFoodLog(TEST_FOOD, 'morgen', daysAgo(0, 8))),
+          foodEvent(testFoodLog(TEST_FOOD, 'aften', daysAgo(1, 18))),
+        ],
+        'c2',
+      );
+      expect(history.groups().map((group) => group.foodSummary)).toEqual([
+        '210 kcal · P 20 g · K 22 g · F 7 g',
+        null,
+      ]);
+
+      history.loadMore();
+      expectPage(ALL_TYPES, 'c2').flush(
+        page([foodEvent(testFoodLog(TEST_FOOD, 'frokost', daysAgo(1, 12)))]),
+      );
+
+      expect(history.groups()[1]?.foodSummary).toBe('420 kcal · P 40 g · K 44 g · F 14 g');
+    });
   });
 
-  it('rydder "Logget i dag"-timeren, når siden lukkes', () => {
-    vi.useFakeTimers();
-    try {
-      const { history } = setup();
-      const logged = testFoodLog(TEST_FOOD, 'morgen');
-      flushTestFoodLog([testFood({ foodId: logged.foodId, name: TEST_FOOD.name })], [logged]);
-      const entry = findEntry(history, 'Proteinbar');
-      history.relog(entry);
-      TestBed.inject(HttpTestingController)
-        .expectOne({ method: 'POST', url: '/api/v1/me/food-logs' })
-        .flush({ ...logged, foodLogId: logged.foodLogId + 1000 });
-      expect(history.isRelogged(entry)).toBe(true);
-
-      TestBed.resetTestingModule();
-
-      expect(vi.getTimerCount()).toBe(0);
-    } finally {
-      vi.useRealTimers();
+  describe('gen-log', () => {
+    /** The meal in the catalogue (so `add()` only posts the log) and in the history. */
+    function openWithMeal(): { entry: HistoryEntry; logged: FoodLogDto } {
+      const logged = testFoodLog(TEST_FOOD, 'aften', daysAgo(1));
+      flushTestFoodLog([testFood({ foodId: logged.foodId, name: TEST_FOOD.name })]);
+      open([foodEvent(logged)]);
+      return { entry: findEntry(history, 'Proteinbar'), logged };
     }
+
+    function expectLogPost(): TestRequest {
+      return http.expectOne({ method: 'POST', url: '/api/v1/me/food-logs' });
+    }
+
+    it('logger måltidet én gang i dag og viser "Logget i dag" i 2,6 sekunder', () => {
+      vi.useFakeTimers();
+      try {
+        const { entry, logged } = openWithMeal();
+        const t = TestBed.runInInjectionContext(() => injectTranslate());
+
+        history.relog(entry);
+        history.relog(entry);
+        expect(history.relogState(entry)).toBe('pending');
+        const post = expectLogPost();
+        expect(post.request.body).toMatchObject({ foodId: logged.foodId, mealType: 'Dinner' });
+        post.flush({
+          ...logged,
+          foodLogId: logged.foodLogId + 1000,
+          consumedAt: TEST_NOW.toISOString(),
+        });
+
+        expect(
+          TestBed.inject(FoodLogService)
+            .entries()
+            .map((food) => food.meal),
+        ).toEqual(['aften']);
+        expect(history.relogState(entry)).toBe('logged');
+        expect(history.relogLabel(entry)).toBe(t(RELOGGED_LABEL_KEY));
+
+        vi.advanceTimersByTime(RELOGGED_DURATION_MS);
+
+        expect(history.relogState(entry)).toBeNull();
+        expect(history.relogLabel(entry)).toBe(t(RELOG_LABEL_KEY));
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('viser i 2,6 sekunder, at gen-logningen fejlede', () => {
+      vi.useFakeTimers();
+      try {
+        const { entry } = openWithMeal();
+        const t = TestBed.runInInjectionContext(() => injectTranslate());
+
+        history.relog(entry);
+        expectLogPost().flush(null, { status: 500, statusText: 'Error' });
+
+        expect(history.relogState(entry)).toBe('failed');
+        expect(history.relogLabel(entry)).toBe(t(RELOG_FAILED_LABEL_KEY));
+
+        vi.advanceTimersByTime(RELOGGED_DURATION_MS);
+        expect(history.relogState(entry)).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('rydder timeren, når siden lukkes', () => {
+      vi.useFakeTimers();
+      try {
+        const { entry, logged } = openWithMeal();
+        history.relog(entry);
+        expectLogPost().flush({ ...logged, foodLogId: logged.foodLogId + 1000 });
+        expect(history.relogState(entry)).toBe('logged');
+
+        TestBed.resetTestingModule();
+
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 });
