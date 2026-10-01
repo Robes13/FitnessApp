@@ -4,6 +4,7 @@ import { BarcodeScannerService } from '../barcode-scanner/barcode-scanner';
 import { CollectionsService } from '../collections/collections';
 import { FoodLogService } from '../food-log/food-log';
 import { SessionService } from '../session/session';
+import { StepSyncService } from '../step-sync/step-sync';
 import { UserProfileService } from '../user-profile/user-profile';
 import { WeightLogService } from '../weight-log/weight-log';
 
@@ -36,6 +37,7 @@ export const SESSION_DATA_STORES = new InjectionToken<readonly SessionDataStore[
       inject(FoodLogService),
       inject(CollectionsService),
       inject(BarcodeScannerService),
+      inject(StepSyncService),
     ],
   },
 );

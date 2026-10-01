@@ -6,7 +6,10 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { firstValueFrom } from 'rxjs';
 import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
+import { HealthPlatform } from '../../../../core/models/step-sync';
 import { SessionService } from '../../../../core/services/session/session';
+import { HEALTH_PLATFORM } from '../../../../core/services/step-sync/health-platform';
+import { StepSyncService } from '../../../../core/services/step-sync/step-sync';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { WeightLogService } from '../../../../core/services/weight-log/weight-log';
 import {
@@ -42,7 +45,7 @@ describe('HomePage', () => {
     TestBed.inject(HttpTestingController).verify();
   });
 
-  async function setup(): Promise<{
+  async function setup(providers: Provider[] = []): Promise<{
     settle: () => Promise<void>;
     page: HTMLElement;
     harness: RouterTestingHarness;
@@ -50,6 +53,7 @@ describe('HomePage', () => {
     TestBed.configureTestingModule({
       providers: [
         ...TEST_PROVIDERS,
+        ...providers,
         provideRouter([
           { path: APP_ROUTE.HOME, component: HomePage },
           { path: APP_ROUTE.FOOD, component: OtherTab },
@@ -87,6 +91,46 @@ describe('HomePage', () => {
       .expectOne('/api/v1/me/weight-logs/latest')
       .flush({ weightLogId: null, weight: 80, recordedAt: '', isStartingWeight: true });
   }
+
+  it('2.6-3b: says when the monthly step sync failed, also without opening Profile', async () => {
+    const failingHealthStore: HealthPlatform = {
+      source: () => 'apple-health',
+      isAvailable: async () => true,
+      requestStepsAccess: async () => true,
+      hasStepsAccess: async () => true,
+      dailyStepTotals: async () => {
+        throw new Error('HealthKit is unavailable');
+      },
+    };
+    const { settle, page } = await setup([
+      { provide: HEALTH_PLATFORM, useValue: failingHealthStore },
+    ]);
+    expect(page.querySelector('.home-page__notice')).toBeNull();
+
+    const loaded = firstValueFrom(TestBed.inject(StepSyncService).load());
+    await settle();
+    TestBed.inject(HttpTestingController)
+      .expectOne('/api/v1/me/consents?limit=50')
+      .flush({
+        items: [
+          {
+            userConsentId: 2,
+            consentType: 'StepsIntegration',
+            documentVersion: '1',
+            grantedAt: '2026-09-01T08:00:00Z',
+            withdrawnAt: null,
+          },
+        ],
+        nextCursor: null,
+        hasMore: false,
+      });
+    await loaded;
+    await settle();
+
+    expect(page.querySelector('.home-page__notice')?.textContent?.trim()).toBe(
+      'Vi kunne ikke hente dine skridt. Vi prøver igen næste gang.',
+    );
+  });
 
   it('greets the user and links the avatar to the profile', async () => {
     const { page } = await setup();

@@ -22,6 +22,7 @@ afbrydes den. Servicen oprettes af en app initializer i `app.config.ts`.
 | `FoodLogService`        | API-baseret (katalog og madlog for 90 dage)                        |
 | `CollectionsService`    | API-baseret (samlinger; næringen fra madloggens katalog)           |
 | `BarcodeScannerService` | Lokal (scanningstælleren til badget; læses fra storage i `load()`) |
+| `StepSyncService`       | API + enhed (skridtsamtykket; synkroniserer, når det er tid)       |
 
 `ReminderService` er bevidst **ikke** med: den oprettes efter sprogets app initializer.
 

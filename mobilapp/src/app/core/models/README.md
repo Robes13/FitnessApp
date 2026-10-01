@@ -21,6 +21,7 @@ App-dækkende typer, én fil pr. domæne. Kun typer – ingen logik.
 | `open-food-facts.ts` | Open Food Facts' API-model: `OpenFoodFactsProductResponse`, `OpenFoodFactsProduct`, `OpenFoodFactsNutriments`. Mappes til `ScannedProduct` i `ProductLookupService`                                                                                                            |
 | `food-api.ts`        | Mad-API'ets kontrakt: `ApiQuantityUnit`, `ApiMealType`, `FoodDto`, `FoodServingDto`, `CreateFoodRequest`, `UpsertFoodServingRequest`, `FoodLogDto`, `CreateFoodLogRequest`, `UpdateFoodLogRequest` – se Konventioner.                                                          |
 | `profile-api.ts`     | Profil-API'ets kontrakt: `UserProfileDto`, `PatchUserProfileRequest` (alle felter valgfri), `UserGoalDto` (API'ets kalorie- og makromål), `CreateUserGoalRequest`, `UserSettingDto`, `UpsertUserSettingRequest`, `LatestWeightDto`. Mappes i `user-profile/profile-mapping.ts` |
+| `step-sync.ts`       | `HealthSource`, `HealthPlatform` (sundhedsdataene bag et interface, kun læsning af skridt), `StepSyncStatus`, `StepSyncRecord` og API'ets kontrakt: `ApiConsentType`, `UserConsentDto`, `GrantConsentRequest`, `UpdateActivityRequest`                                         |
 | `auth.ts`            | Auth-API'ets kontrakt: `RegisterRequest` (fladt), `UserDto`, `LoginRequest` (`emailOrUsername`), `AuthResponse`, `RefreshRequest`, `IdentifierRequest` (gensend og glemt adgangskode) og enum-værdierne `ApiGender`, `ApiTrainingIntensity`, `ApiGoalType`                     |
 
 ## Konventioner

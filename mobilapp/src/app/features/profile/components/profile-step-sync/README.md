@@ -1,0 +1,21 @@
+# ProfileStepSync
+
+`app-profile-step-sync` – rækken "Skridt fra Apple Sundhed" (iOS) / "Skridt fra Health Connect"
+(Android) under Profil → Privatliv (spec 2.6 og 9.2-3a). Ingen inputs eller outputs: den læser og
+ændrer `StepSyncService` direkte.
+
+- Vises kun, når `StepSyncService.available` er sand – i browseren er den tom.
+- **Kontakten** (`app-ui-switch`) er pessimistisk: under `enable()` / `disable()` viser den værdien,
+  der gemmes, og er låst; den er også låst, mens storen indlæses eller synkroniserer.
+- **Til**: `enable()` – systemets dialog, samtykket gives, og skridtene hentes med det samme.
+  Afvises adgangen, springer den tilbage, og linjen under siger hvorfor.
+- **Fra**: åbner `app-ui-confirm-sheet` ("Slå skridt fra?", aktivitetsniveauet skal nu rettes
+  manuelt). Kontakten står på fra, mens arket er åbent, og på til igen ved "Annuller". "Ja, slå
+  fra" kalder `disable()`; arket er optaget, til API'et har svaret. En fejl lukker arket og vises
+  under rækken.
+- **Statuslinjen** (`app-ui-form-error`) under forklaringen: en fejl fra kontakten, ellers – når
+  den er slået til – "Henter …", "Ikke nok skridtdata endnu …", "… giv adgang i …", "Vi kunne ikke
+  hente …" eller den seneste synkronisering ("Hentet d. 1. okt – 7.432 skridt om dagen").
+
+Teksterne ligger under `profile.stepSync.*` og `core.stepSync.*`; kildens navn (Apple Sundhed /
+Health Connect) og tallene 7 og 30 interpoleres fra `core/constants/step-sync.ts`.

@@ -4,4 +4,6 @@
     <string name="title_activity_main">Nutrify</string>
     <string name="package_name">dk.meploy.fitnessapp</string>
     <string name="custom_url_scheme">dk.meploy.fitnessapp</string>
+    <!-- Health Connect's privacy policy link opens this page from the web build (public/privatliv.html). -->
+    <string name="health_connect_privacy_policy_url" translatable="false">file:///android_asset/public/privatliv.html</string>
 </resources>

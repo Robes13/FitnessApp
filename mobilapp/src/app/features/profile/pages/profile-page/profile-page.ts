@@ -36,6 +36,7 @@ import { ProfileEditSheet } from '../../components/profile-edit-sheet/profile-ed
 import { ProfileLogoutSheet } from '../../components/profile-logout-sheet/profile-logout-sheet';
 import { ProfilePhotoSheet } from '../../components/profile-photo-sheet/profile-photo-sheet';
 import { ProfileRemindersSheet } from '../../components/profile-reminders-sheet/profile-reminders-sheet';
+import { ProfileStepSync } from '../../components/profile-step-sync/profile-step-sync';
 import { AchievementsService } from '../../services/achievements';
 import { ProfileEditRowId } from '../../services/profile-edit';
 import { PrivacyService } from '../../services/privacy';
@@ -53,7 +54,7 @@ const WITHDRAW_CONSENT_BODY_KEY = 'profile.deleteAccountSheet.withdrawBody';
 
 /**
  * The profile screen: avatar and key figures at the top, then "Min plan", "Konto", the
- * achievements, "Privatliv", "Log ud" and "Slet konto". All plan and account rows open the same
+ * achievements, "Privatliv" (with the step sync on a phone), "Log ud" and "Slet konto". All plan and account rows open the same
  * edit sheet, which knows its own variant – except the calorie target, which is the API's and
  * can't be edited.
  *
@@ -73,6 +74,7 @@ const WITHDRAW_CONSENT_BODY_KEY = 'profile.deleteAccountSheet.withdrawBody';
     ProfileLogoutSheet,
     ProfilePhotoSheet,
     ProfileRemindersSheet,
+    ProfileStepSync,
     TranslatePipe,
     UiButton,
     UiEmptyState,

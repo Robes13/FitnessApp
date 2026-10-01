@@ -11,6 +11,7 @@ import { BarcodeScannerService } from '../barcode-scanner/barcode-scanner';
 import { CollectionsService } from '../collections/collections';
 import { FoodLogService } from '../food-log/food-log';
 import { SessionService } from '../session/session';
+import { StepSyncService } from '../step-sync/step-sync';
 import { UserProfileService } from '../user-profile/user-profile';
 import { WeightLogService } from '../weight-log/weight-log';
 import { SESSION_DATA_STORES, SessionDataService, SessionDataStore } from './session-data';
@@ -122,18 +123,19 @@ describe('SessionDataService', () => {
     expect(store.cancelled).toBe(1);
   });
 
-  it('registers the profile, weight, food, collections and scan count stores by default', () => {
+  it('registers the profile, weight, food, collections, scan count and step sync stores by default', () => {
     TestBed.configureTestingModule({
       providers: [...provideCoreTestEnvironment(), provideRouter([])],
     });
 
     const stores = TestBed.inject(SESSION_DATA_STORES);
 
-    expect(stores).toHaveLength(5);
+    expect(stores).toHaveLength(6);
     expect(stores[0]).toBe(TestBed.inject(UserProfileService));
     expect(stores[1]).toBe(TestBed.inject(WeightLogService));
     expect(stores[2]).toBe(TestBed.inject(FoodLogService));
     expect(stores[3]).toBe(TestBed.inject(CollectionsService));
     expect(stores[4]).toBe(TestBed.inject(BarcodeScannerService));
+    expect(stores[5]).toBe(TestBed.inject(StepSyncService));
   });
 });

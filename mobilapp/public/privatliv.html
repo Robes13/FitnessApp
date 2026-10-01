@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="da">
+  <head>
+    <meta charset="utf-8" />
+    <title>Nutrify – privatliv og skridtdata</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <!--
+      Health Connect's "Privatlivspolitik" link (Android): the Health plugin's
+      PermissionsRationaleActivity opens this page from the app's assets
+      (string health_connect_privacy_policy_url). Its WebView runs no
+      JavaScript, so the page is plain HTML/CSS. Colors mirror the palette in
+      src/styles/_tokens.scss (a static page cannot load the app's tokens).
+    -->
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        /* The rationale screen is edge to edge: keep the text below the status bar. */
+        padding-top: max(48px, env(safe-area-inset-top));
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        line-height: 1.5;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      main {
+        max-width: 560px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 16px;
+      }
+      h2 {
+        font-size: 17px;
+        margin: 24px 0 8px;
+      }
+      p,
+      li {
+        font-size: 16px;
+        color: #334155;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #0f172a;
+          color: #f8fafc;
+        }
+        p,
+        li {
+          color: #cbd5e1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Nutrify og dine skridt</h1>
+      <p>
+        Slår du «Skridt fra Health Connect» (eller «Skridt fra Apple Sundhed» på iPhone) til under
+        Profil → Privatliv, giver du Nutrify lov til at læse dit antal skridt.
+      </p>
+
+      <h2>Hvad Nutrify læser</h2>
+      <ul>
+        <li>Kun skridt – ingen andre sundhedsdata.</li>
+        <li>Antal skridt pr. dag for de seneste 30 hele dage, én gang om måneden.</li>
+      </ul>
+
+      <h2>Hvad der sendes til Nutrify</h2>
+      <p>
+        Kun ét tal: dit gennemsnitlige antal skridt om dagen. Det gemmes som dit aktivitetsniveau i
+        din profil og bruges til at beregne dit daglige kalorie- og makromål. De enkelte dages
+        skridt forlader ikke telefonen.
+      </p>
+
+      <h2>Hvad Nutrify ikke gør</h2>
+      <p>Nutrify skriver aldrig noget i Health Connect eller Apple Sundhed.</p>
+
+      <h2>Sådan stopper du det</h2>
+      <p>
+        Slå kontakten fra under Profil → Privatliv. Så trækkes samtykket tilbage, og Nutrify henter
+        ikke flere skridt. Dit aktivitetsniveau bliver stående, og du kan selv rette det under Min
+        plan → Aktivitet. Du kan også fjerne Nutrifys adgang i Health Connect eller Apple Sundhed.
+        Vil du have dine data slettet, kan du slette din konto under Profil.
+      </p>
+    </main>
+  </body>
+</html>

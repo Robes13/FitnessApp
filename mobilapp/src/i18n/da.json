@@ -238,6 +238,18 @@
         "nov": "nov",
         "dec": "dec"
       }
+    },
+    "stepSync": {
+      "source": {
+        "appleHealth": "Apple Sundhed",
+        "healthConnect": "Health Connect"
+      },
+      "syncing": "Henter dine skridt …",
+      "synced": "Hentet d. {{day}} – {{steps}} skridt om dagen",
+      "insufficient": "Ikke nok skridtdata endnu. Der skal være skridt fra mindst {{minDays}} af de seneste {{days}} dage.",
+      "noPermission": "Nutrify har ikke adgang til dine skridt – giv adgang i {{source}}.",
+      "failed": "Vi kunne ikke hente dine skridt. Vi prøver igen næste gang.",
+      "accessDenied": "Nutrify fik ikke adgang til dine skridt, så de hentes ikke."
     }
   },
   "auth": {
@@ -726,6 +738,17 @@
       "complete": "Klaret",
       "missing": "Mangler",
       "progress": "{{value}}/{{target}} {{unit}}"
+    },
+    "stepSync": {
+      "label": "Skridt fra {{source}}",
+      "hint": "Én gang om måneden henter Nutrify dit gennemsnitlige antal skridt de seneste {{days}} dage og opdaterer dit aktivitetsniveau og kaloriemål. Kun gennemsnittet sendes til Nutrify.",
+      "offSheet": {
+        "title": "Slå skridt",
+        "titleAccent": "fra?",
+        "body": "Nutrify holder op med at hente dine skridt fra {{source}}. Dit aktivitetsniveau bliver stående – fremover retter du det selv under Min plan → Aktivitet.",
+        "confirm": "Ja, slå fra",
+        "cancel": "Annuller"
+      }
     }
   },
   "shared": {

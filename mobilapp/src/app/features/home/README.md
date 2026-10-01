@@ -37,6 +37,10 @@ storene, når sessionen er logget ind (use case 5.2–5.5, P15 i `plan-v2.md`).
 - **Fejl:** fejler mad-, vægt- eller profil-storen, viser siden "Dine data kunne ikke hentes." med
   `app-ui-form-error` og "Prøv igen" over ringene. Knappen genindlæser kun de stores, der fejlede.
   Profilen tæller med, fordi en fejlet profil ellers ville vise et tavst kaloriemål på 0 (5.3).
+- **Skridt (2.6-3b):** fejlede den månedlige skridtsynkronisering ved app-start
+  (`StepSyncService.status` = `failed`), står "Vi kunne ikke hente dine skridt. Vi prøver igen næste
+  gang." over ringene – også for en bruger, der ikke åbner Profil. Ingen "Prøv igen": næste
+  app-start prøver selv igen.
 - **Dagens tal** er summen af API'ets præcise værdier, afrundet én gang til visning (kcal og arket
   som hele tal, dagskortets makroer med højst én decimal) – samme tal som API'ets egne summer.
 - **Fejringen** starter først, når både madloggen og profilen er hentet, og nås målet på en anden

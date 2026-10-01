@@ -1,0 +1,28 @@
+@if (available()) {
+  <div class="profile-step-sync__row">
+    <span class="profile-step-sync__label">{{ label() }}</span>
+    <app-ui-switch
+      [ariaLabel]="label()"
+      [checked]="checked()"
+      [disabled]="busy()"
+      (checkedChange)="toggle($event)"
+    />
+  </div>
+  <p class="profile-step-sync__hint">{{ hint() }}</p>
+  @if (statusLine(); as line) {
+    <app-ui-form-error [tone]="line.tone" [message]="line.text" />
+  }
+
+  <app-ui-confirm-sheet
+    [open]="confirmOpen()"
+    titleKey="profile.stepSync.offSheet.title"
+    accentKey="profile.stepSync.offSheet.titleAccent"
+    bodyKey="profile.stepSync.offSheet.body"
+    [bodyParams]="offSheetParams()"
+    confirmKey="profile.stepSync.offSheet.confirm"
+    cancelKey="profile.stepSync.offSheet.cancel"
+    [busy]="disabling()"
+    (closed)="cancelOff()"
+    (confirmed)="confirmOff()"
+  />
+}

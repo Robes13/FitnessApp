@@ -238,6 +238,18 @@
         "nov": "Nov",
         "dec": "Dec"
       }
+    },
+    "stepSync": {
+      "source": {
+        "appleHealth": "Apple Health",
+        "healthConnect": "Health Connect"
+      },
+      "syncing": "Fetching your steps …",
+      "synced": "Fetched {{day}} – {{steps}} steps a day",
+      "insufficient": "Not enough step data yet. There must be steps on at least {{minDays}} of the last {{days}} days.",
+      "noPermission": "Nutrify can't read your steps – allow access in {{source}}.",
+      "failed": "We couldn't fetch your steps. We'll try again next time.",
+      "accessDenied": "Nutrify didn't get access to your steps, so they aren't fetched."
     }
   },
   "auth": {
@@ -726,6 +738,17 @@
       "complete": "Done",
       "missing": "Missing",
       "progress": "{{value}}/{{target}} {{unit}}"
+    },
+    "stepSync": {
+      "label": "Steps from {{source}}",
+      "hint": "Once a month Nutrify fetches your average daily steps over the last {{days}} days and updates your activity level and calorie target. Only the average is sent to Nutrify.",
+      "offSheet": {
+        "title": "Turn steps",
+        "titleAccent": "off?",
+        "body": "Nutrify stops fetching your steps from {{source}}. Your activity level stays as it is – from now on you update it yourself under My plan → Activity.",
+        "confirm": "Yes, turn off",
+        "cancel": "Cancel"
+      }
     }
   },
   "shared": {

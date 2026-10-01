@@ -19,6 +19,7 @@ profile/
 │   ├── profile-edit-sheet/           "Rediger profil" – alle fire feltvarianter
 │   ├── profile-photo-sheet/          "Profilbillede" – filvalg, træk og zoom
 │   ├── profile-reminders-sheet/      "Dine påmindelser" – typer, tidspunkter og vejedag
+│   ├── profile-step-sync/            "Skridt fra Apple Sundhed / Health Connect" – kontakt, status, slå fra-ark
 │   ├── profile-logout-sheet/         "Log ud?" – bekræftelsen
 │   └── profile-delete-account-sheet/ "Slet konto?" – bekræftelsen (også ved tilbagetrækning af samtykke)
 └── services/                         Rækker, redigeringsdefinitioner, præstationer og dataeksport
@@ -44,8 +45,9 @@ notifikationer, påmindelser, privatliv, log ud og slet konto kan bruges hele ti
 4. **Konto** – E-mail, kontakterne "Lys tilstand" og
    "Notifikationer" samt rækken "Påmindelser", der åbner påmindelses-arket.
 5. **Præstationer** – 12 badges i fire kolonner.
-6. **Privatliv** – "Download mine data" og samtykkerækken "Servicevilkår og behandling af
-   sundheds- og profildata · Træk tilbage" (se nedenfor).
+6. **Privatliv** – "Download mine data", samtykkerækken "Servicevilkår og behandling af
+   sundheds- og profildata · Træk tilbage" og – kun på en telefon med sundhedsdata – "Skridt fra
+   Apple Sundhed" / "Skridt fra Health Connect" (se nedenfor).
 7. **Log ud** – rød tekst i en omrids-pille, der åbner bekræftelsen.
 8. **Slet konto** – en diskret tekstknap under "Log ud", der åbner sin egen bekræftelse.
 
@@ -94,12 +96,22 @@ Mens tokenet hentes, er rækken slået fra; en fejl vises under den i en `UiForm
 WebViews kan ikke gemme en blob, og Filesystem/Share ville være nye pakker – derfor navigationen.
 
 **Samtykke:** Ved registreringen gives kun `Terms` (signup-teksten siger, at vilkårene omfatter
-behandling af sundheds- og profildata); `HealthDataProcessing` gives aldrig, og skridt fra Health
-Connect/Apple Health findes ikke (9.2-3a springes over). Oversigten er derfor **én statisk række**
-uden `GET me/consents`. "Træk tilbage" åbner slet-arket med en egen tekst (`bodyKey`): samtykket
+behandling af sundheds- og profildata); `HealthDataProcessing` gives aldrig. Vilkårene er **én
+statisk række**; det eneste andet samtykke er skridtene (`StepsIntegration`, nedenfor). "Træk tilbage" åbner slet-arket med en egen tekst (`bodyKey`): samtykket
 er en forudsætning for appen, så tilbagetrækning sletter kontoen (9.2-3b). Bekræftelsen kalder
 `SessionService.withdrawConsent()` (`POST me/consents/Terms/withdraw`), som – ligesom slet konto –
 først efter API'ets 204 rydder storage og genindlæser appen på login.
+
+**Skridt fra Apple Sundhed / Health Connect (spec 2.6 og 9.2-3a):** `profile-step-sync` viser en
+kontakt med en kort forklaring og den seneste status, kun når `StepSyncService.available` er sand
+(aldrig i browseren). Til = `enable()`: systemets tilladelsesdialog → samtykket gives → skridtene
+hentes med det samme; afvises adgangen, forbliver den slået fra med en besked. Fra spørger først
+(`app-ui-confirm-sheet`: aktivitetsniveauet skal nu rettes manuelt) og kalder så `disable()`, som
+trækker samtykket tilbage. Statuslinjen: "Hentet d. … – 7.432 skridt om dagen", "Henter dine
+skridt …", "Ikke nok skridtdata endnu …", "Nutrify har ikke adgang til dine skridt – giv adgang i …"
+eller "Vi kunne ikke hente dine skridt. Vi prøver igen næste gang." Den sidste vises også på Hjem,
+så en bruger, der ikke åbner Profil, hører om det. Selve logikken ligger i
+`core/services/step-sync/` (se [`core/services/README.md`](../../core/services/README.md)).
 
 ## Slet konto
 

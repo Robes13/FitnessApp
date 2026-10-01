@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   effect,
   inject,
   signal,
@@ -9,7 +10,9 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import { RouterLink } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
+import { STEP_SYNC_TEXT_KEY } from '../../../../core/constants/step-sync';
 import { SessionService } from '../../../../core/services/session/session';
+import { StepSyncService } from '../../../../core/services/step-sync/step-sync';
 import { ProfileAvatar } from '../../../../shared/components/profile-avatar/profile-avatar';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
@@ -30,8 +33,8 @@ const CELEBRATION_VIBRATION_MS: readonly number[] = [16, 45, 28];
 
 /**
  * Home: greeting and avatar, the last seven days' rings (with "Prøv igen" when a store failed to
- * load, and the 30-day sheet below), next step, the selected day's card, the goal card, and the
- * week's key figures.
+ * load, a notice when the step sync failed, and the 30-day sheet below), next step, the selected
+ * day's card, the goal card, and the week's key figures.
  *
  * The page owns the celebration toast: when `HomeSummaryService.celebrationDue()` says today's
  * calories crossed the goal (also while Home was on another tab), it pops up with vibration where
@@ -62,10 +65,17 @@ const CELEBRATION_VIBRATION_MS: readonly number[] = [16, 45, 28];
 export class HomePage {
   protected readonly summary = inject(HomeSummaryService);
   private readonly session = inject(SessionService);
+  private readonly stepSync = inject(StepSyncService);
 
   protected readonly profilePath = APP_PATH.PROFILE;
   /** Home stays locked behind the verification sheet until the session has tokens. */
   protected readonly isAuthenticated = this.session.isAuthenticated;
+  /**
+   * Spec 2.6: the monthly step sync failed at start-up. Said here as well as on Profile, so a user
+   * who doesn't open Profile hears of it; it stays until the next sync (at the next app start).
+   */
+  protected readonly stepSyncFailed = computed(() => this.stepSync.status() === 'failed');
+  protected readonly stepSyncFailedKey = STEP_SYNC_TEXT_KEY.FAILED;
   protected readonly celebrating = signal(false);
   protected readonly monthSheetOpen = signal(false);
 

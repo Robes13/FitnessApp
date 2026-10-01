@@ -16,8 +16,8 @@ const config: CapacitorConfig = {
     // Angular 22 targets "baseline widely available", whose Chrome floor is 119.
     // The production bundle is not transpiled below that (e.g. Object.hasOwn,
     // optional chaining), so an older System WebView renders a blank screen and
-    // runs unpatched Chromium with native bridge access. 119 is also the last
-    // WebView release available to Android 7 (minSdkVersion 24) devices.
+    // runs unpatched Chromium with native bridge access. (minSdkVersion is 26,
+    // Android 8 – Health Connect's minimum.)
     minWebViewVersion: 119,
   },
   server: {

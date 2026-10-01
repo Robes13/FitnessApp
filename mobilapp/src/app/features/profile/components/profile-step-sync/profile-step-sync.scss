@@ -1,0 +1,27 @@
+:host {
+  display: block;
+}
+
+.profile-step-sync {
+  /* The profile page's switch rows: label left, switch right, a divider above. */
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3-5) 0 var(--space-1-5);
+    border-top: var(--border-width-thin) solid var(--color-border);
+  }
+
+  &__label {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+  }
+
+  &__hint {
+    margin: 0 0 var(--space-2);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    line-height: var(--line-height-snug);
+  }
+}

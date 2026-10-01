@@ -27,6 +27,14 @@
     </div>
   }
 
+  @if (stepSyncFailed()) {
+    <app-ui-form-error
+      class="home-page__notice"
+      tone="negative"
+      [message]="stepSyncFailedKey | translate"
+    />
+  }
+
   <app-home-week-rings
     class="home-page__rings"
     [rings]="summary.weekRings()"

@@ -8,6 +8,14 @@ export const STORAGE_KEY = {
   SCAN_COUNT: 'nutrify.scan-count',
   PRODUCT_CACHE: 'nutrify.product-cache',
   REMINDERS: 'nutrify.reminders',
+  /**
+   * The latest step sync (`StepSyncRecord`). On the device, not in the API, because the health
+   * store is the device's: each device syncs its own steps once a month. An account's data like
+   * the others, so another account signing in here starts without it.
+   * ponytail: device-local, so a reinstall syncs again at once (harmless: same average); move
+   * the date to a `UserSetting` in the API if syncs must ever be limited across devices.
+   */
+  STEP_SYNC: 'nutrify.step-sync',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEY)[keyof typeof STORAGE_KEY];

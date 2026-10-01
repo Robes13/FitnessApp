@@ -31,6 +31,8 @@ Hver service har sin egen mappe med implementering og tests. Tilhørende adapter
 | `back-button/back-button.ts`                   | `BackButtonService` + `BACK_BUTTON_PLATFORM`           | Androids tilbageknap og -gestus via `@capacitor/app`: lukker først det øverste ark eller scanneren (oversat til Escape, som de i forvejen lytter på), går ellers tilbage i historikken og minimerer kun appen, når der ikke er mere at gå tilbage til. Startes fra en app initializer.                                                                                                                                                                                                                                                  |
 | `theme/system-bars-platform.ts`                | `SYSTEM_BARS_PLATFORM` + `CapacitorSystemBarsPlatform` | Tynd adapter om Capacitors indbyggede `SystemBars`: lyse ikoner i mørkt tema, mørke i lyst. Gør intet i browseren. Specs giver en fake.                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `collections/collections.ts`                   | `CollectionsService`                                   | API-baseret `SessionDataStore` (`me/meal-collections`): `status`, `collections` (varerne skaleret fra `FoodLogService.foods`), `collectionById`, `collectionTotals`, `isNameTaken` (kun i appen). Mutationer som `Observable`: `create`, `update` (diff), `remove`, `log(id, måltid)`. Se "Samlingerne".                                                                                                                                                                                                                                |
+| `step-sync/step-sync.ts`                       | `StepSyncService`                                      | Spec 2.6 og 9.2-3a: skridt fra Apple Sundhed (iOS) / Health Connect (Android) som `SessionDataStore`: `available`, `enabled` (aktivt `StepsIntegration`-samtykke), `status`, `lastSync`, `source`. `load()` læser samtykket og synkroniserer, når det er tid (højst hver 30. dag pr. enhed); `enable()` / `disable()` giver og trækker samtykket. Se "Skridt fra Apple Sundhed / Health Connect".                                                                                                                                       |
+| `step-sync/health-platform.ts`                 | `HEALTH_PLATFORM` + `CapacitorHealthPlatform`          | Tynd adapter om `@capgo/capacitor-health` bag interfacet `HealthPlatform` (kun læsning af skridt), så `StepSyncService` kan testes med en fake. Utilgængelig i browseren.                                                                                                                                                                                                                                                                                                                                                               |
 
 ## Afhængigheder mellem services
 
@@ -44,6 +46,7 @@ FoodSearchService ► FoodLogService
 CollectionsService ► HttpClient, FoodLogService, NutritionCalculator
 BarcodeFlowService ► BarcodeScannerService, ProductLookupService, FoodLogService, NutritionCalculator
 ReminderService ─► SessionService, UserProfileService, REMINDER_NOTIFIER
+StepSyncService ─► HttpClient, UserProfileService, HEALTH_PLATFORM
 alle stores ─────► StorageService, NOW
 ```
 
@@ -208,6 +211,38 @@ sundheds- og profildata, så API'et sletter og anonymiserer kontoen. Begge deler
 root-stores forfra som gæst på én gang. Sessionen ændres bevidst ikke i hukommelsen først: så
 ville stores reagere på skiftet (`SessionDataService` → `reset()`) og kunne skrive til storage
 igen, før siden er væk.
+
+### Skridt fra Apple Sundhed / Health Connect
+
+`StepSyncService` (spec 2.6 og 9.2-3a) henter brugerens daglige skridt fra telefonens
+sundhedsdata og sender **kun gennemsnittet** til API'et. Den er en `SessionDataStore` (i
+`SESSION_DATA_STORES`), injicerer aldrig `SessionService`, og `reset()` rydder kun hukommelsen.
+
+- **Tilgængelig** (`available`) kun på en telefon med sundhedsdataene (`HealthPlatform.isAvailable()`
+  – i browseren `false`, og intet hentes). UI'et skjuler funktionen ellers.
+- **Slået til** (`enabled`) = et aktivt `StepsIntegration`-samtykke, læst i `load()` med
+  `GET me/consents?limit=50` (én side er nok: den nyeste `StepsIntegration`-række er den aktive).
+- **Månedlig synkronisering (2.6)** ved hver `load()` (app-start og login), ingen scheduler: den er
+  forfalden, når den er slået til, tilgængelig, og den seneste vellykkede er mindst 30 dage gammel
+  eller aldrig sket. Datoen og værdien gemmes på enheden (`STORAGE_KEY.STEP_SYNC`), fordi
+  sundhedsdataene er enhedens.
+- **Synkroniseringen** venter først på, at profilens egen `load()` er færdig (ellers kunne dens
+  ældre svar overskrive de nye skridt), og spørger så uden dialog om læseadgang
+  (`hasStepsAccess`). Ingen adgang = 2.6-4a: intet hentes, `status` `no-permission`. Ellers dagssummer
+  for de seneste 30 hele lokale dage (`queryAggregated`, `bucket: 'day'`); gennemsnittet over dagene
+  med skridt. Under 7 sådanne dage = 2.6-3a (`insufficient`, intet ændres). Ellers
+  `PUT me/profile/activity { dailySteps: round(snit), fromHealthIntegration: true }` (begrænset til
+  `STEPS_MIN`–`STEPS_MAX`), profilens `stepsPerDay` fra svaret, `reloadGoal()` (API'et har genberegnet
+  målet) og **først derefter** gemmes datoen (`synced`). En fejl i pluginet eller API'et = 2.6-3b:
+  `failed`, datoen gemmes ikke, så næste app-start prøver igen. 4a og 3a gemmer heller ingen dato.
+- **`enable()`**: `requestStepsAccess()` (systemets dialog) → `POST me/consents { consentType:
+"StepsIntegration", documentVersion: "1" }` (409 = allerede aktivt = fint) → synkronisering med det
+  samme. Afvist adgang giver `false`, og intet ændres.
+- **`disable()`** (9.2-3a): `POST me/consents/StepsIntegration/withdraw` (404 = allerede væk = fint)
+  → `enabled` `false`, ingen flere synkroniseringer. Aktivitetsniveauet bliver stående og rettes
+  manuelt (2.5).
+- **iOS** fortæller aldrig, om læsning er nægtet (privatliv): efter dialogen svarer HealthKit
+  "givet", og en nægtet læsning giver bare ingen data – altså `insufficient`, ikke `no-permission`.
 
 ### Påmindelser
 
