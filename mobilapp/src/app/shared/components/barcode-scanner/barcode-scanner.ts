@@ -44,6 +44,7 @@ import { MealId } from '../../../core/models/meal';
 import { BarcodeFlowService, formatAmount } from '../../../core/services/barcode-flow/barcode-flow';
 import { KeyboardService } from '../../../core/services/keyboard/keyboard';
 import { Translate, injectTranslate } from '../../../core/services/language/translate';
+import { formatInteger } from '../../../core/utils/date-format';
 import { UiButton } from '../ui-button/ui-button';
 import { UiChip } from '../ui-chip/ui-chip';
 import { UiFormError } from '../ui-form-error/ui-form-error';
@@ -86,7 +87,8 @@ interface ScanPortionView {
 
 interface ScanStatView {
   readonly label: string;
-  readonly value: number;
+  /** Whole number as shown, `'1.600'`. */
+  readonly value: string;
   readonly accent: boolean;
 }
 
@@ -180,7 +182,9 @@ export function buildScanVerdict(t: Translate, kcalRemaining: number, item: Food
   if (leftAfter < 0) {
     return {
       tone: 'negative',
-      text: t('shared.barcodeScanner.verdictOver', { kcalOver: Math.abs(leftAfter) }),
+      text: t('shared.barcodeScanner.verdictOver', {
+        kcalOver: formatInteger(Math.abs(leftAfter)),
+      }),
     };
   }
   if (item.protein >= HIGH_PROTEIN_GRAMS) {
@@ -188,13 +192,13 @@ export function buildScanVerdict(t: Translate, kcalRemaining: number, item: Food
       tone: 'positive',
       text: t('shared.barcodeScanner.verdictProtein', {
         protein: item.protein,
-        kcalLeft: leftAfter,
+        kcalLeft: formatInteger(leftAfter),
       }),
     };
   }
   return {
     tone: 'neutral',
-    text: t('shared.barcodeScanner.verdictFits', { kcalLeft: leftAfter }),
+    text: t('shared.barcodeScanner.verdictFits', { kcalLeft: formatInteger(leftAfter) }),
   };
 }
 
@@ -365,10 +369,11 @@ export class BarcodeScanner {
   });
   protected readonly amountError = computed(() => {
     if (this.validGrams() === null) {
-      return this.t(
-        BARCODE_SCANNER_TEXT_KEY.INVALID_AMOUNT,
-        BARCODE_SCANNER_TEXT_PARAMS.INVALID_AMOUNT,
-      );
+      const { minGrams, maxGrams } = BARCODE_SCANNER_TEXT_PARAMS.INVALID_AMOUNT;
+      return this.t(BARCODE_SCANNER_TEXT_KEY.INVALID_AMOUNT, {
+        minGrams: formatInteger(minGrams),
+        maxGrams: formatInteger(maxGrams),
+      });
     }
     return this.exceedsLogCap() ? this.t(AMOUNT_TOO_LARGE_KEY) : null;
   });
@@ -415,7 +420,7 @@ export class BarcodeScanner {
     const servingOption = serving === null ? [] : [serving];
     return [...servingOption, ...presets].map((grams) => {
       const kcal = this.t('shared.barcodeScanner.kcalAmount', {
-        kcal: this.flow.scale(product, grams).kcal,
+        kcal: formatInteger(this.flow.scale(product, grams).kcal),
       });
       const isServing = grams === serving;
       const amount = formatAmount(product, grams);
@@ -434,10 +439,22 @@ export class BarcodeScanner {
       return [];
     }
     return [
-      { label: this.t('common.unit.kcal'), value: item.kcal, accent: true },
-      { label: this.t('shared.barcodeScanner.stat.protein'), value: item.protein, accent: false },
-      { label: this.t('shared.barcodeScanner.stat.carbs'), value: item.carbs, accent: false },
-      { label: this.t('shared.barcodeScanner.stat.fat'), value: item.fat, accent: false },
+      { label: this.t('common.unit.kcal'), value: formatInteger(item.kcal), accent: true },
+      {
+        label: this.t('shared.barcodeScanner.stat.protein'),
+        value: formatInteger(item.protein),
+        accent: false,
+      },
+      {
+        label: this.t('shared.barcodeScanner.stat.carbs'),
+        value: formatInteger(item.carbs),
+        accent: false,
+      },
+      {
+        label: this.t('shared.barcodeScanner.stat.fat'),
+        value: formatInteger(item.fat),
+        accent: false,
+      },
     ];
   });
 

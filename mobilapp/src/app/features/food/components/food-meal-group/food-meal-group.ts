@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { TranslatePipe } from '@ngx-translate/core';
 import { LoggedFood } from '../../../../core/models/food';
 import { injectTranslate } from '../../../../core/services/language/translate';
+import { formatInteger } from '../../../../core/utils/date-format';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { MealGroupView } from '../../services/food-view';
 
@@ -31,9 +32,9 @@ export class FoodMealGroup {
 
   private readonly t = injectTranslate();
 
-  /** Whole kcal: the log holds the API's exact values. */
-  protected kcal(entry: LoggedFood): number {
-    return Math.round(entry.kcal);
+  /** Whole kcal (`'1.600'`): the log holds the API's exact values. */
+  protected kcal(entry: LoggedFood): string {
+    return formatInteger(entry.kcal);
   }
 
   protected editLabel(entry: LoggedFood): string {

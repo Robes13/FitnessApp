@@ -32,7 +32,7 @@ import {
 } from '../../../../core/services/food-log/food-log';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { toApiError } from '../../../../core/utils/api';
-import { formatGrams } from '../../../../core/utils/date-format';
+import { formatGrams, formatInteger } from '../../../../core/utils/date-format';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import {
   FoodPicker,
@@ -167,7 +167,7 @@ export class NewCollectionSheet {
   protected readonly totalsText = computed(() => {
     const totals = this.collections.collectionTotals({ id: '', name: '', items: this.draft() });
     return this.t('collections.view.totals', {
-      kcal: Math.round(totals.kcal),
+      kcal: formatInteger(totals.kcal),
       protein: formatGrams(totals.protein),
       carbs: formatGrams(totals.carbs),
       fat: formatGrams(totals.fat),
@@ -224,6 +224,11 @@ export class NewCollectionSheet {
 
   protected removeLabel(item: FoodItem): string {
     return this.t(REMOVE_ITEM_LABEL_KEY, { foodName: item.name });
+  }
+
+  /** Whole kcal as shown, `'1.600'`. */
+  protected kcal(item: FoodItem): string {
+    return formatInteger(item.kcal);
   }
 
   protected removeAt(index: number): void {

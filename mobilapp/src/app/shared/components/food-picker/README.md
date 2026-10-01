@@ -70,7 +70,8 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
   `addCustomFood` genbruger varen ud fra navnet). Ændres formularen bagefter, er navnet taget:
   varen findes allerede med de første tal, og de nye ville ellers blive logget med dem.
 - **Søgeresultaterne** viser katalogets tal afrundet (`resultRows`); selve varen beholder
-  decimalerne, så portionen skaleres fra dem.
+  decimalerne, så portionen skaleres fra dem. Kcal i listen, "Standard: …", fliserne og
+  grænsen i fejlbeskeden skrives med `formatInteger` (`'1.600 kcal'`, `'Højst 9.999 kcal …'`).
 - **Søgningen** er en `toObservable(request) → switchMap(search)`-kæde med søgeteksten og
   kataloget (`FoodLogService.foods`) som kilde, så en ny tekst afbryder den forrige, og en ny
   egen vare vises, så snart den er gemt. Søgningen svarer straks, så der er ingen spinner.

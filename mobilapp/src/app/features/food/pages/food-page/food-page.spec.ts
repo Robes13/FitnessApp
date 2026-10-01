@@ -154,7 +154,8 @@ describe('FoodPage', () => {
       'Aftensmad',
       'Snacks',
     ]);
-    expect(text('.food-page__summary-value')).toBe('1170kcal');
+    expect(text('.food-page__summary-value')).toBe('1.170kcal');
+    expect(text('.food-page__summary-meta')).toBe('830 spist · mål 2.000');
     expect(texts('.food-page__macro-head span')).toEqual([
       'Protein',
       '49%',
@@ -166,6 +167,20 @@ describe('FoodPage', () => {
     expect(texts('.food-page__macro-text')).toEqual(['73 / 150 g', '56 / 225 g', '31 / 56 g']);
     expect(texts('.food-meal-group__name-text')).toEqual(['Skyr-bowl med bær', 'Kyllingesalat']);
     expect(page.querySelector('.food-page__clearance')).not.toBeNull();
+  });
+
+  it('writes kcal from 1000 up with a thousands separator', async () => {
+    const { settle, text, texts } = await setup();
+
+    TestBed.inject(FoodLogService).addLogs([
+      testFoodLog({ ...SALAT, name: 'Festmåltid', kcal: 1600 }, 'snack', undefined, 3),
+    ]);
+    await settle();
+
+    expect(text('.food-page__summary-value')).toBe('0kcal');
+    expect(text('.food-page__summary-meta')).toBe('2.430 spist · mål 2.000');
+    expect(texts('.food-meal-group__total')).toEqual(['380 kcal', '450 kcal', '–', '1.600 kcal']);
+    expect(texts('.food-meal-group__kcal')).toEqual(['380 kcal', '450 kcal', '1.600 kcal']);
   });
 
   it('shows a spinner during the first load', async () => {

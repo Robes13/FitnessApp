@@ -29,6 +29,7 @@ import { GoalId } from '../../../../core/models/profile';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { NutritionCalculator } from '../../../../core/services/nutrition-calculator/nutrition-calculator';
 import { toApiError } from '../../../../core/utils/api';
+import { formatInteger } from '../../../../core/utils/date-format';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
@@ -192,7 +193,9 @@ export class ProfileEditSheet {
       const outOfRange = value < min || value > max;
       return (
         this.goalWeightErrorFor(value) ??
-        (outOfRange ? this.t(NUMBER_RANGE_KEY, { min, max, unit }) : null)
+        (outOfRange
+          ? this.t(NUMBER_RANGE_KEY, { min: formatInteger(min), max: formatInteger(max), unit })
+          : null)
       );
     }
     const date = this.dateValue();

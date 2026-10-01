@@ -35,15 +35,10 @@
         <div class="food-page__summary-text">
           <p class="food-page__summary-label">{{ 'food.page.leftToday' | translate }}</p>
           <p class="food-page__summary-value">
-            {{ view.kcalLeft()
+            {{ view.kcalLeftText()
             }}<span class="food-page__summary-unit">{{ 'common.unit.kcal' | translate }}</span>
           </p>
-          <p class="food-page__summary-meta">
-            {{
-              'food.page.eatenOfGoal'
-                | translate: { eaten: view.kcalEaten(), goal: view.kcalTarget() }
-            }}
-          </p>
+          <p class="food-page__summary-meta">{{ view.eatenOfGoalText() }}</p>
         </div>
       </section>
 

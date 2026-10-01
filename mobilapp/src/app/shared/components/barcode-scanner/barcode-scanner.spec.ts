@@ -303,6 +303,17 @@ describe('BarcodeScanner', () => {
     expect(host.closedCount).toBe(1);
   });
 
+  it('writes numbers from 1000 up with a thousands separator', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
+
+    typeInto('Mængde i gram', '500');
+
+    expect(statValues()).toEqual(['2.000', '200', '150', '60']);
+    expect(verdict()?.textContent?.trim()).toBe(
+      'Den skubber dig 1.500 kcal over dagens mål. Overvej en halv, eller gem den til efter træning.',
+    );
+  });
+
   it('shows which meal the item goes under and lets the user change it before adding', async () => {
     await scanAndRespond({ status: 'found', product: PRODUCT });
     const chips = (): HTMLButtonElement[] =>
@@ -348,7 +359,7 @@ describe('BarcodeScanner', () => {
 
     typeInto('Mængde i gram', '0');
 
-    expect(formErrors()).toEqual(['Angiv en mængde mellem 1 og 5000 g.']);
+    expect(formErrors()).toEqual(['Angiv en mængde mellem 1 og 5.000 g.']);
     expect(statValues()).toEqual([]);
     expect(buttonByText('Tilføj').disabled).toBe(true);
   });
@@ -585,6 +596,10 @@ describe('buildScanVerdict', () => {
     expect(buildScanVerdict(t, 500, { ...item, protein: 10 })).toEqual({
       tone: 'neutral',
       text: 'Passer fint ind. 290 kcal tilbage bagefter.',
+    });
+    expect(buildScanVerdict(t, 2455, { ...item, protein: 10 })).toEqual({
+      tone: 'neutral',
+      text: 'Passer fint ind. 2.245 kcal tilbage bagefter.',
     });
   });
 });

@@ -269,6 +269,12 @@ describe('HistoryService', () => {
       expect(entry.food?.kcal).toBe(210);
     });
 
+    it('skriver et måltids kalorier fra 1000 og op med tusindtalsseparator', () => {
+      open([foodEvent(testFoodLog({ ...TEST_FOOD, name: 'Festmåltid', kcal: 1600 }, 'snack'))]);
+
+      expect(findEntry(history, 'Festmåltid').value).toBe('1.600 kcal');
+    });
+
     it('viser en målændring med målet og det afrundede kaloriemål', () => {
       open([LATER_GOAL, SIGN_UP_GOAL, ACCOUNT_CREATED]);
 

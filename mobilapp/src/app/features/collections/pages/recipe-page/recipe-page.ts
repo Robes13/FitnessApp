@@ -5,7 +5,7 @@ import { Observable, finalize } from 'rxjs';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { NewCollectionInput } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
-import { formatGrams } from '../../../../core/utils/date-format';
+import { formatGrams, formatInteger } from '../../../../core/utils/date-format';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { toApiError } from '../../../../core/utils/api';
@@ -95,7 +95,7 @@ export class RecipePage {
     return [
       {
         label: this.t('collections.recipePage.calories'),
-        value: `${Math.round(macros.kcal)}`,
+        value: formatInteger(macros.kcal),
         accent: true,
       },
       {
@@ -107,7 +107,7 @@ export class RecipePage {
       { label: this.t('collections.recipePage.fat'), value: grams(macros.fat), accent: false },
     ];
   });
-  protected readonly logKcal = computed(() => Math.round(this.detail()?.macros.kcal ?? 0));
+  protected readonly logKcal = computed(() => formatInteger(this.detail()?.macros.kcal ?? 0));
 
   protected back(): void {
     void this.router.navigateByUrl(APP_PATH.COLLECTIONS);

@@ -4,7 +4,7 @@ import { LoggedFood } from '../../../core/models/food';
 import { MealId } from '../../../core/models/meal';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
-import { formatDayLabel, formatGrams } from '../../../core/utils/date-format';
+import { formatDayLabel, formatGrams, formatInteger } from '../../../core/utils/date-format';
 import { NOW } from '../../../core/utils/now';
 import { injectTranslate } from '../../../core/services/language/translate';
 import { ProgressBarTone } from '../../../shared/components/ui-progress-bar/ui-progress-bar';
@@ -74,8 +74,15 @@ export class FoodViewService {
   readonly kcalEaten = computed(() => Math.round(this.foodLog.totals().kcal));
   /** Target − eaten. Can be negative: the scanner's verdict computes further on it. */
   readonly kcalRemaining = computed(() => this.kcalTarget() - this.kcalEaten());
-  /** The design's `kcalLeft`: never below 0 in the actual number on screen. */
-  readonly kcalLeft = computed(() => Math.max(0, this.kcalRemaining()));
+  /** The design's `kcalLeft` as shown (`'1.170'`): never below 0 in the actual number on screen. */
+  readonly kcalLeftText = computed(() => formatInteger(Math.max(0, this.kcalRemaining())));
+  /** `'830 spist · mål 2.000'`. */
+  readonly eatenOfGoalText = computed(() =>
+    this.t('food.page.eatenOfGoal', {
+      eaten: formatInteger(this.kcalEaten()),
+      goal: formatInteger(this.kcalTarget()),
+    }),
+  );
   /** The design's `kcalRing` rewritten as a share 0..1. */
   readonly kcalProgress = computed(() => fraction(this.kcalEaten(), this.kcalTarget()));
 
@@ -108,7 +115,7 @@ export class FoodViewService {
         label,
         addLabel: this.t('food.view.addTo', { mealName: label.toLowerCase() }),
         entries,
-        kcalText: kcal > 0 ? `${kcal} ${this.t('common.unit.kcal')}` : NO_KCAL_TEXT,
+        kcalText: kcal > 0 ? `${formatInteger(kcal)} ${this.t('common.unit.kcal')}` : NO_KCAL_TEXT,
         hasKcal: kcal > 0,
       };
     });

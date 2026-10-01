@@ -4,7 +4,7 @@ import { CollectionItem, FoodCollection, Macros } from '../../../core/models/foo
 import { CollectionsService } from '../../../core/services/collections/collections';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { Translate, injectTranslate } from '../../../core/services/language/translate';
-import { formatGrams } from '../../../core/utils/date-format';
+import { formatGrams, formatInteger } from '../../../core/utils/date-format';
 
 /** The prefix in front of a collection's id in the recipe screen's route (`col:<id>`). */
 export const BUNDLE_ID_PREFIX = 'col:';
@@ -80,7 +80,7 @@ export class CollectionsViewService {
         subtitle: itemNames(collection),
         meta: countLabel(this.t, totals.count),
         macrosText: this.t('collections.view.macros', {
-          kcal: Math.round(totals.kcal),
+          kcal: formatInteger(totals.kcal),
           protein: formatGrams(totals.protein),
         }),
       };

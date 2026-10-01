@@ -151,6 +151,15 @@ describe('ProfileEditSheet', () => {
     expect(box?.classList).not.toContain('profile-edit-sheet__number--invalid');
   });
 
+  it('writes bounds from 1000 up with a thousands separator', async () => {
+    const { fixture, host } = await open('steps');
+
+    setValue(host.querySelector<HTMLInputElement>('input[type="number"]'), '60000');
+    await fixture.whenStable();
+
+    expect(host.textContent).toContain('Vælg en værdi mellem 0 og 50.000 skridt.');
+  });
+
   it('never steps past the bounds of the row', async () => {
     const { fixture, host } = await open('trainFreq');
     const minus = button(host, 'Mindre');

@@ -53,7 +53,7 @@ describe('RecipePage', () => {
   afterEach(() => http.verify());
 
   /** Tunsalat 200 g = 240 kcal, 28 g protein, 6 g carbs, 11 g fat. */
-  function loadMealPrep(): void {
+  function loadMealPrep(collection = MEAL_PREP): void {
     flushTestFoodLog([
       testFood({
         foodId: 5,
@@ -64,7 +64,7 @@ describe('RecipePage', () => {
         fatPer100: 5.5,
       }),
     ]);
-    flushTestCollections([MEAL_PREP]);
+    flushTestCollections([collection]);
   }
 
   async function setup(recipeId: string) {
@@ -101,6 +101,18 @@ describe('RecipePage', () => {
     expect(texts('.recipe-page__stat-value')).toEqual(['240', '28 g', '6 g', '11 g']);
     expect(texts('.recipe-page__line-qty')).toEqual(['200 g']);
     expect(text('.recipe-page__log-button')).toBe('Log 240 kcal');
+  });
+
+  it('writes kcal from 1000 up with a thousands separator', async () => {
+    loadMealPrep(
+      testCollection(3, 'Meal prep', [
+        { foodId: 5, foodName: 'Tunsalat', quantity: 1000, unit: 'Gram' },
+      ]),
+    );
+    const { text, texts } = await setup(BUNDLE_ID);
+
+    expect(texts('.recipe-page__stat-value')).toEqual(['1.200', '140 g', '30 g', '55 g']);
+    expect(text('.recipe-page__log-button')).toBe('Log 1.200 kcal');
   });
 
   it('logs the collection under the chosen meal in one call and switches to Mad', async () => {
