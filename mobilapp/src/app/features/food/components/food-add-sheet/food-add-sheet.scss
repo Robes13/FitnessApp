@@ -30,12 +30,16 @@
   /*
    * Only the list scrolls; the meal chips and Foods/Collections stay fixed at the top of the sheet
    * (`UiSheet` with `column`). `display: flex` lets the food picker fill the rest of the height.
+   * The inline padding (given back by the margin) is room for the focus ring that the picker's
+   * fields reach into with their negative margin – inside the padding nothing scrolls sideways.
    */
   &__scroll {
     @include mixins.scroll-area;
 
     display: flex;
     flex-direction: column;
+    margin-inline: calc(-1 * var(--space-1));
+    padding-inline: var(--space-1);
   }
 
   &__status {

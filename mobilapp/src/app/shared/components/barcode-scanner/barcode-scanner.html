@@ -107,7 +107,7 @@
         {{ 'shared.barcodeScanner.enterManually' | translate }}
       </button>
       <button app-ui-button variant="ghost" size="sm" type="button" (click)="requestNoBarcode()">
-        {{ 'shared.barcodeScanner.noBarcode' | translate }}
+        {{ newFoodLabelKey() | translate }}
       </button>
     </div>
   </div>
@@ -116,6 +116,29 @@
     @if (product()) {
       <div class="barcode-scanner__result">
         <p class="barcode-scanner__subtitle">{{ resultSubtitle() }}</p>
+        @if (showMeals()) {
+          <p class="barcode-scanner__caption">
+            {{ 'shared.barcodeScanner.mealQuestion' | translate }}
+          </p>
+          <div
+            class="barcode-scanner__meals"
+            role="group"
+            [attr.aria-label]="'shared.barcodeScanner.mealQuestion' | translate"
+          >
+            @for (option of mealOptions; track option.id) {
+              <button
+                app-ui-chip
+                type="button"
+                size="sm"
+                class="barcode-scanner__meal"
+                [selected]="option.id === meal()"
+                (click)="pickMeal(option.id)"
+              >
+                {{ option.labelKey | translate }}
+              </button>
+            }
+          </div>
+        }
         <p class="barcode-scanner__caption">
           {{ 'shared.barcodeScanner.amountQuestion' | translate }}
         </p>

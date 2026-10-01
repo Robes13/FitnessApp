@@ -7,6 +7,7 @@ import {
   ScannedProduct,
 } from '../../../core/models/barcode';
 import { FoodItem } from '../../../core/models/food';
+import { MealId } from '../../../core/models/meal';
 import { injectTranslate } from '../../../core/services/language/translate';
 import { BarcodeScannerService } from '../../../core/services/barcode-scanner/barcode-scanner';
 import { ProductLookupService } from '../../../core/services/product-lookup/product-lookup';
@@ -79,21 +80,23 @@ class FakeProductLookupService {
     <app-barcode-scanner
       [open]="open()"
       [kcalRemaining]="kcalRemaining()"
-      mealLabel="Morgenmad"
+      [(meal)]="meal"
       (closed)="closedCount = closedCount + 1"
       (found)="found.push($event)"
       (manualRequested)="manualCount = manualCount + 1"
-      (noBarcodeRequested)="noBarcodeCount = noBarcodeCount + 1"
+      (noBarcodeRequested)="noBarcode.push($event)"
     />
   `,
 })
 class Host {
   readonly open = signal(true);
   readonly kcalRemaining = signal<number | null>(500);
+  readonly meal = signal<MealId | null>('morgen');
   readonly found: FoodItem[] = [];
+  /** What each `noBarcodeRequested` carried: the not-found barcode, or `null`. */
+  readonly noBarcode: (string | null)[] = [];
   closedCount = 0;
   manualCount = 0;
-  noBarcodeCount = 0;
 }
 
 describe('BarcodeScanner', () => {
@@ -300,6 +303,46 @@ describe('BarcodeScanner', () => {
     expect(host.closedCount).toBe(1);
   });
 
+  it('shows which meal the item goes under and lets the user change it before adding', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
+    const chips = (): HTMLButtonElement[] =>
+      Array.from(root.querySelectorAll<HTMLButtonElement>('.barcode-scanner__meal'));
+
+    expect(root.querySelector('.barcode-scanner__result')?.textContent).toContain(
+      'Hvilket måltid?',
+    );
+    expect(chips().map((chip) => chip.textContent?.trim())).toEqual([
+      'Morgenmad',
+      'Frokost',
+      'Aftensmad',
+      'Snacks',
+    ]);
+    expect(chips().map((chip) => chip.getAttribute('aria-pressed'))).toEqual([
+      'true',
+      'false',
+      'false',
+      'false',
+    ]);
+
+    buttonByText('Frokost').click();
+    fixture.detectChanges();
+
+    expect(host.meal()).toBe('frokost');
+    expect(buttonByText('Frokost').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('hides the meal chips when the parent has no meal (a collection draft)', async () => {
+    await setup();
+    host.meal.set(null);
+    lookup.respond({ status: 'found', product: PRODUCT });
+    fixture.detectChanges();
+
+    expect(root.querySelector('.barcode-scanner__meal')).toBeNull();
+    expect(root.querySelector('.barcode-scanner__result')?.textContent).not.toContain(
+      'Hvilket måltid?',
+    );
+  });
+
   it('blocks logging an invalid amount', async () => {
     await scanAndRespond({ status: 'found', product: PRODUCT });
 
@@ -327,18 +370,19 @@ describe('BarcodeScanner', () => {
     expect(buttonByText('Tilføj').disabled).toBe(false);
   });
 
-  it('says an unknown product was not found and offers the manual form', async () => {
+  it('says an unknown product was not found and offers to create it with its barcode', async () => {
     await scanAndRespond({ status: 'not-found', barcode: BARCODE });
 
     expect(hint()).toBe('Varen blev ikke fundet.');
     expect(root.querySelector('.barcode-scanner__hint--error')).not.toBeNull();
     expect(dialogs()).toEqual(['Scan stregkode']);
     expect(findButton('Indtast manuelt i stedet')).toBeDefined();
+    expect(findButton('Varen har ingen stregkode')).toBeUndefined();
 
-    buttonByText('Varen har ingen stregkode').click();
+    buttonByText('Opret varen selv').click();
     fixture.detectChanges();
 
-    expect(host.noBarcodeCount).toBe(1);
+    expect(host.noBarcode).toEqual([BARCODE]);
     expect(host.closedCount).toBe(1);
     expect(host.found).toEqual([]);
   });
@@ -438,7 +482,7 @@ describe('BarcodeScanner', () => {
 
     buttonByText('Varen har ingen stregkode').click();
     fixture.detectChanges();
-    expect(host.noBarcodeCount).toBe(1);
+    expect(host.noBarcode).toEqual([null]);
     expect(host.closedCount).toBe(2);
   });
 

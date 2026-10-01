@@ -2,38 +2,38 @@
 
 Stregkodescanneren (use casen "logge en madvare med stregkode"). På telefonen åbner den
 kameraet; i browseren – og efter en mislykket scanning – kan stregkodens tal indtastes.
-Stregkoden slås op i Open Food Facts, og
-varen vises med kcal og makroer og en mængde, der kan justeres, før den logges. Kendes varen
-ikke, siger overlayet det, og "Varen har ingen stregkode" fører til den fulde formular for en
-egen vare (3.1-6a → 3.0).
+Stregkoden slås op i brugerens eget katalog og ellers i Open Food Facts, og
+varen vises med kcal og makroer, måltidet og en mængde, der kan justeres, før den logges. Kendes
+varen ikke, siger overlayet det, og "Opret varen selv" fører til den fulde formular for en egen
+vare med stregkoden (3.1-6a → 3.0), så næste scanning finder den.
 
 ```html
 <app-barcode-scanner
   [open]="scannerOpen()"
   [kcalRemaining]="kcalRemaining()"
-  [mealLabel]="mealLabel()"
+  [(meal)]="meal"
   (closed)="scannerOpen.set(false)"
   (found)="log($event)"
   (manualRequested)="openSearch()"
-  (noBarcodeRequested)="openNewFood()"
+  (noBarcodeRequested)="openNewFood($event)"
 />
 ```
 
 ## Inputs og outputs
 
-| Input           | Standard | Betydning                                                                                  |
-| --------------- | -------- | ------------------------------------------------------------------------------------------ |
-| `open`          | –        | Krævet. Forælderen ejer tilstanden                                                         |
-| `kcalRemaining` | `null`   | Dagens mål minus det spiste. Bruges til verdict-boksen; `null` skjuler den                 |
-| `mealLabel`     | `''`     | Måltidet varen lægges under. Indgår ikke i teksterne (designet siger blot "Gem og tilføj") |
-| `autoStart`     | `true`   | Åbn kameraet med det samme (kun native). Ellers trykker brugeren "Scan stregkode"          |
+| Input           | Standard | Betydning                                                                                                                                                                                          |
+| --------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `open`          | –        | Krævet. Forælderen ejer tilstanden                                                                                                                                                                 |
+| `kcalRemaining` | `null`   | Dagens mål minus det spiste. Bruges til verdict-boksen; `null` skjuler den                                                                                                                         |
+| `meal`          | `null`   | Måltidet varen logges under (`model`, tovejs). Sat viser resultat-arket måltids-chips, så måltidet ses og kan skiftes før "Tilføj" (3.2); `null` skjuler dem (en samlings kladde har intet måltid) |
+| `autoStart`     | `true`   | Åbn kameraet med det samme (kun native). Ellers trykker brugeren "Scan stregkode"                                                                                                                  |
 
-| Output               | Betydning                                                                                                                     |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `closed`             | Scanneren skal lukkes. **Udsendes til sidst på alle veje ud** – også efter de tre outputs herunder og når kameraet annulleres |
-| `found`              | Den fundne vare skaleret til den valgte mængde, `quantity` fx `'150 g'`, id `off-<stregkode>`                                 |
-| `manualRequested`    | "Indtast manuelt i stedet" (søg i varerne)                                                                                    |
-| `noBarcodeRequested` | "Varen har ingen stregkode" – forælderen åbner vælgerens "Ny egen vare"                                                       |
+| Output               | Betydning                                                                                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `closed`             | Scanneren skal lukkes. **Udsendes til sidst på alle veje ud** – også efter de tre outputs herunder og når kameraet annulleres                                      |
+| `found`              | Den fundne vare skaleret til den valgte mængde, `quantity` fx `'150 g'`, id `off-<stregkode>`                                                                      |
+| `manualRequested`    | "Indtast manuelt i stedet" (søg i varerne)                                                                                                                         |
+| `noBarcodeRequested` | Forælderen åbner vælgerens "Ny egen vare". Efter "ikke fundet" ("Opret varen selv") med stregkoden, som varen gemmes med; "Varen har ingen stregkode" giver `null` |
 
 Fordi `closed` altid kommer sidst, behøver forælderen kun én handler, der sætter `open` til
 `false`. `found` skal ikke selv lukke noget. Forælderen logger varen med
@@ -54,11 +54,16 @@ Fordi `closed` altid kommer sidst, behøver forælderen kun én handler, der sæ
      Stregkodefeltet står under beskeden i alle tilfælde, så tallene altid kan indtastes.
 3. **Opslag.** Indtastet stregkode valideres først (8–14 cifre, fejlen vises efter "Slå op").
    Under opslaget vises `UiSpinner` og _Slår varen op…_, og feltet skjules. Hvert opslag
-   tæller én scanning (`recordScan()`) til "10 scans"-badget.
+   tæller én scanning (`recordScan()`) til "10 scans"-badget. `BarcodeFlowService.lookup` spørger
+   først brugerens katalog (`FoodLogService.foods`, en vare med samme stregkode – scannet før
+   eller oprettet efter "ikke fundet") og først derefter Open Food Facts. En katalogvare vises
+   pr. 100 g (100 ml med en ml-serving) og logges under sit eget id; en vare pr. stk/portion
+   vises som sin syntetiske portion på 100 g (`// ponytail:`).
 4. **Resultat** (`ProductLookupResult`):
    - `found` → resultat-arket.
-   - `not-found` → _Varen blev ikke fundet._ (rød) over "Indtast manuelt i stedet" og "Varen har
-     ingen stregkode" (6a); stregkodefeltet og "Scan stregkode" står der stadig.
+   - `not-found` → _Varen blev ikke fundet._ (rød) over "Indtast manuelt i stedet" og "Opret
+     varen selv" (6a, i stedet for "Varen har ingen stregkode" – varen har jo en), som sender
+     stregkoden med; stregkodefeltet og "Scan stregkode" står der stadig.
    - `error` → _Vi kunne ikke slå varen op …_ + "Prøv igen", der slår samme stregkode op igen.
 5. "Scan igen" – og luk på resultat-arket – går tilbage til overlayet; native åbnes kameraet
    igen efter 300 ms.
@@ -68,9 +73,11 @@ når komponenten destrueres og ved hver genstart (`scanRun` gør et sent kameras
 
 ## Resultat-arket
 
-`UiSheet` (lag `top`) med varens navn som titel, `brand · mængde`, "Hvor meget tog du?" med
-mængdefliser, et felt "Mængde (g)" (eller "Mængde (ml)" for væsker), fire nøgletal og
-verdict-boksen.
+`UiSheet` (lag `top`) med varens navn som titel, `brand · mængde`, "Hvilket måltid?" med de
+fire måltids-chips (når `meal` er sat), "Hvor meget tog du?" med mængdefliser, et felt
+"Mængde (g)" (eller "Mængde (ml)" for væsker), fire nøgletal og verdict-boksen. Måltidet er
+forælderens (Mad-sidens `addMeal`, det samme som arket "Tilføj mad" står på), så varen aldrig
+logges under et skjult måltid.
 
 - Open Food Facts' tal er pr. 100 g (100 ml for væsker; mængder vises da i ml). Fliserne er pakkens portion (`Portion`, fx `50 g · 200 kcal`)
   når den kendes i gram, og forvalgene 50 / 100 / 200 g (`SCAN_AMOUNT_PRESETS_GRAMS`, uden det
@@ -110,7 +117,8 @@ under `shared.barcodeScanner.verdict*` i oversættelsesfilerne.
   mens kameraet er åbent og under opslaget.
 - **Mængdefliserne er egne knapper**, ikke `UiChip`: de har to linjer (etiket + kcal).
 - **Ingen "Ukendt vare"-formular** (plan-v2 P12): dens fire felter var en ringere udgave af
-  vælgerens "Ny egen vare" (3.0), som "Varen har ingen stregkode" allerede åbner.
+  vælgerens "Ny egen vare" (3.0), som "Opret varen selv" åbner – med stregkoden, så varen
+  gemmes med den.
 - Escape lukker overlayet, når det ligger øverst; ligger et ark ovenpå, håndterer `UiSheet`
   Escape.
 - **Tab holdes inde i overlayet** (`role="dialog" aria-modal="true"`) med `FOCUSABLE_SELECTOR`

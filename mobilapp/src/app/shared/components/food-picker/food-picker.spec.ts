@@ -5,7 +5,13 @@ import { FoodItem } from '../../../core/models/food';
 import { FoodDto } from '../../../core/models/food-api';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { flushTestFoodLog, testFood } from '../../../core/testing/fixtures';
-import { FoodPicker, FoodPickerCtaVerb, FoodPickerSelection, FoodPickerStep } from './food-picker';
+import {
+  FoodPicker,
+  FoodPickerCtaVerb,
+  FoodPickerSelection,
+  FoodPickerStartStep,
+  FoodPickerStep,
+} from './food-picker';
 import { provideComponentTestEnvironment } from '../../../core/testing/test-providers';
 
 /**
@@ -67,6 +73,8 @@ function seedOwnFoods(): void {
   template: `
     <app-food-picker
       [initialQuery]="initialQuery()"
+      [startStep]="startStep()"
+      [barcode]="barcode()"
       [editItem]="editItem()"
       [ctaVerb]="ctaVerb()"
       [showScan]="showScan()"
@@ -82,6 +90,8 @@ function seedOwnFoods(): void {
 })
 class Host {
   readonly initialQuery = signal('');
+  readonly startStep = signal<FoodPickerStartStep>('search');
+  readonly barcode = signal<string | null>(null);
   readonly editItem = signal<FoodItem | null>(null);
   readonly ctaVerb = signal<FoodPickerCtaVerb>('Tilføj');
   readonly showScan = signal(true);
@@ -186,6 +196,15 @@ describe('FoodPicker', () => {
       expect(text('.food-picker__result-kcal')).toBe('370 kcal');
       expect(text('.food-picker__create-title')).toBe('Opret en vare selv');
       expect(text('.food-picker__create-sub')).toBe('Ingen stregkode nødvendig');
+    });
+
+    it('shows a catalogue food with decimals in whole numbers', async () => {
+      const { text } = await setup({
+        prepare: () => flushTestFoodLog([own(8, 'Yoghurt', [61.5, 2.67, 4.5, 3.49])]),
+      });
+
+      expect(text('.food-picker__result-meta')).toBe('100 g · P 3 · K 5 · F 3');
+      expect(text('.food-picker__result-kcal')).toBe('62 kcal');
     });
 
     it('shows only the matching foods for a search', async () => {
@@ -324,6 +343,28 @@ describe('FoodPicker', () => {
       expect(field()?.value).toBe('5');
     });
 
+    it('scales a catalogue food from its own values, so it rounds only once', async () => {
+      const { host, root, click, typeInto, text, texts } = await setup({
+        prepare: () => flushTestFoodLog([own(8, 'Yoghurt', [61.5, 2.67, 4.5, 3.49])]),
+      });
+
+      await click('.food-picker__result');
+      expect(text('.food-picker__subtitle')).toBe('Standard: 100 g · 62 kcal');
+      await typeInto(root.querySelector<HTMLInputElement>('.food-picker__amount-field'), '150');
+
+      // 150 g × 2.67 / 100 = 4.005 g protein – not 1.5 × the rounded 3 g.
+      expect(texts('.food-picker__stat-value')).toEqual(['92', '4', '7', '5']);
+      await click('.food-picker__confirm');
+      expect(host.picked[0]?.item).toMatchObject({
+        id: '8',
+        quantity: '150 g',
+        kcal: 92,
+        protein: 4,
+        carbs: 7,
+        fat: 5,
+      });
+    });
+
     it('goes back to the search from the back button when not editing', async () => {
       const { host, root, click } = await setup({ prepare: seedOwnFoods });
 
@@ -357,6 +398,35 @@ describe('FoodPicker', () => {
       carbs: 20,
       fat: 10,
     };
+
+    it('previews a new amount from the food itself, not from the rounded row', async () => {
+      const cola = own(
+        3,
+        'Coca Cola',
+        [42, 0, 10.6, 0],
+        [{ foodServingId: 1, unit: 'Milliliter', gramsPerUnit: 1 }],
+      );
+      const { root, typeInto, texts } = await setup({
+        prepare: () => flushTestFoodLog([cola]),
+        // The logged row: 330 ml with 34.98 g carbs, shown as 35.
+        configure: (h) =>
+          h.editItem.set({
+            id: '3',
+            name: 'Coca Cola',
+            quantity: '330 ml',
+            kcal: 139,
+            protein: 0,
+            carbs: 35,
+            fat: 0,
+          }),
+      });
+
+      expect(texts('.food-picker__stat-value')).toEqual(['139', '0', '35', '0']);
+      await typeInto(root.querySelector<HTMLInputElement>('.food-picker__amount-field'), '30000');
+
+      // What the API logs: 30000 ml × 10.6 / 100 – not 35 × 30000 / 330 = 3182.
+      expect(texts('.food-picker__stat-value')).toEqual(['12600', '0', '3180', '0']);
+    });
 
     it('only changes the amount – there are no macro fields', async () => {
       const { root } = await setup({ configure: (h) => h.editItem.set(SALAD) });
@@ -405,6 +475,19 @@ describe('FoodPicker', () => {
       return Array.from(root.querySelectorAll<HTMLInputElement>('.food-picker__fields input'));
     }
 
+    /** The message under the field with `label` (`Navn`, `Portion`, `Kalorier`, `Protein (g)` …). */
+    function fieldError(root: HTMLElement, label: string): string | null {
+      const field = Array.from(root.querySelectorAll('.food-picker__field')).find(
+        (candidate) =>
+          normalize(candidate.querySelector('.food-picker__label')?.textContent) === label,
+      );
+      if (!field) {
+        throw new Error(`Intet felt med etiketten "${label}"`);
+      }
+      const error = field.querySelector('app-ui-form-error');
+      return error ? normalize(error.textContent) : null;
+    }
+
     /** Opens "Ny egen vare" (with carbs and fat) and fills name, amount and kcal. */
     async function openFilled(setupResult: Setup, amount: string, kcal: string): Promise<void> {
       const { root, click, typeInto } = setupResult;
@@ -424,11 +507,8 @@ describe('FoodPicker', () => {
       await typeInto(formFields(root)[1] ?? null, '100');
       await typeInto(formFields(root)[2] ?? null, '100');
 
-      expect(root.querySelector('app-ui-form-error')?.textContent).toContain(
-        'allerede en egen vare med det navn',
-      );
-      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(true);
-      expect(buttonByText('Gem uden at logge')?.disabled).toBe(true);
+      expect(fieldError(root, 'Navn')).toBe('Du har allerede en egen vare med det navn.');
+      buttonByText('Gem uden at logge')?.click();
       root
         .querySelector('form')!
         .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -437,46 +517,138 @@ describe('FoodPicker', () => {
       expect(host.picked).toEqual([]);
 
       await typeInto(formFields(root)[0] ?? null, 'Havregryn med mælk');
-      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(false);
+      expect(fieldError(root, 'Navn')).toBeNull();
+      buttonByText('Gem og log under morgenmad')?.click();
+      await settle();
+      expect(host.picked).toHaveLength(1);
     });
 
-    it.each([3, 4, 5])(
-      'rejects a negative macro in field %i, including direct form submission',
-      async (index) => {
+    it.each<[number, string]>([
+      [3, 'Protein (g)'],
+      [4, 'Kulhydrat (g)'],
+      [5, 'Fedt (g)'],
+    ])(
+      'rejects a negative macro in field %i under that field, including direct form submission',
+      async (index, label) => {
         const setupResult = await setup();
         const { host, root, typeInto, buttonByText, settle } = setupResult;
         await openFilled(setupResult, '100', '100');
         await typeInto(formFields(root)[index] ?? null, '-20');
-        expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(true);
-        expect(buttonByText('Gem uden at logge')?.disabled).toBe(true);
+        expect(fieldError(root, label)).toBe('Skal være 0 eller større.');
+        buttonByText('Gem og log under morgenmad')?.click();
+        buttonByText('Gem uden at logge')?.click();
         root
           .querySelector('form')!
           .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
         await settle();
         expect(host.picked).toEqual([]);
-        expect(root.textContent).toContain('skal være 0 eller større');
+        expect(host.created).toEqual([]);
         await typeInto(formFields(root)[index] ?? null, '0');
+        expect(fieldError(root, label)).toBeNull();
         buttonByText('Gem og log under morgenmad')?.click();
         await settle();
         expect(host.picked).toHaveLength(1);
       },
     );
 
-    it.each<[string, string, string, number, string]>([
-      ['more than 9999 kcal', '1', 'stk', 2, '10000'],
-      ['more than 999 g of a macro', '1', 'stk', 3, '1000'],
-      ['more than 900 kcal per 100 g', '50', 'g', 2, '451'],
-      ['more macros than the amount weighs', '50', 'g', 4, '51'],
-    ])('rejects %s, which the API could not store', async (_, amount, unit, index, value) => {
-      const setupResult = await setup();
-      const { root, typeInto, buttonByText, text } = setupResult;
-      await openFilled(setupResult, amount, '100');
-      buttonByText(unit)?.click();
-      await typeInto(formFields(root)[index] ?? null, value);
+    it.each<[string, string, string, number, string, string, string]>([
+      ['more than 9999 kcal', '1', 'stk', 2, '10000', 'Kalorier', 'Højst 9999 kcal pr. portion.'],
+      [
+        'more than 999 g of a macro',
+        '1',
+        'stk',
+        3,
+        '1000',
+        'Protein (g)',
+        'Højst 999 g pr. portion.',
+      ],
+      [
+        'more than 900 kcal per 100 g',
+        '50',
+        'g',
+        2,
+        '451',
+        'Portion',
+        'Portionen er for lille til så mange kalorier eller makroer.',
+      ],
+      [
+        'more macros than the amount weighs',
+        '50',
+        'g',
+        4,
+        '51',
+        'Portion',
+        'Portionen er for lille til så mange kalorier eller makroer.',
+      ],
+    ])(
+      'rejects %s, which the API could not store, under the field it is about',
+      async (_, amount, unit, index, value, label, message) => {
+        const setupResult = await setup();
+        const { host, root, typeInto, buttonByText, settle, texts } = setupResult;
+        await openFilled(setupResult, amount, '100');
+        buttonByText(unit)?.click();
+        await typeInto(formFields(root)[index] ?? null, value);
 
-      expect(text('.food-picker__step app-ui-form-error')).toBe('Værdien er for stor.');
-      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(true);
-      expect(buttonByText('Gem uden at logge')?.disabled).toBe(true);
+        expect(fieldError(root, label)).toBe(message);
+        expect(texts('app-ui-form-error')).toEqual([message]);
+        buttonByText('Gem og log under morgenmad')?.click();
+        buttonByText('Gem uden at logge')?.click();
+        await settle();
+        expect(host.picked).toEqual([]);
+        expect(host.created).toEqual([]);
+      },
+    );
+
+    it('says what is missing under the field when an incomplete form is saved (3.0-7a)', async () => {
+      const { host, root, click, typeInto, buttonByText, settle } = await setup();
+      await click('.food-picker__create');
+      await typeInto(formFields(root)[0] ?? null, '   ');
+      await typeInto(formFields(root)[1] ?? null, '150');
+
+      // Nothing is wrong yet – the required fields only speak up on save.
+      expect(root.querySelector('app-ui-form-error')).toBeNull();
+      buttonByText('Gem og log under morgenmad')?.click();
+      await settle();
+
+      expect(host.picked).toEqual([]);
+      expect(fieldError(root, 'Navn')).toBe('Skriv varens navn.');
+      expect(fieldError(root, 'Kalorier')).toBe('Skriv kalorierne for portionen.');
+      expect(fieldError(root, 'Portion')).toBeNull();
+
+      await typeInto(formFields(root)[0] ?? null, 'Skyr');
+      await typeInto(formFields(root)[2] ?? null, '120');
+      expect(root.querySelector('app-ui-form-error')).toBeNull();
+      buttonByText('Gem uden at logge')?.click();
+      await settle();
+      expect(host.created).toHaveLength(1);
+    });
+
+    it('asks for the amount when an empty one (1 g) cannot hold the kcal', async () => {
+      const { root, click, typeInto } = await setup();
+      await click('.food-picker__create');
+      await typeInto(formFields(root)[0] ?? null, 'Skyr');
+      await typeInto(formFields(root)[2] ?? null, '120');
+
+      expect(fieldError(root, 'Portion')).toBe('Skriv portionens størrelse.');
+      expect(fieldError(root, 'Kalorier')).toBeNull();
+
+      await typeInto(formFields(root)[1] ?? null, '150');
+      expect(fieldError(root, 'Portion')).toBeNull();
+    });
+
+    it('unfolds carbs and fat when one of them is wrong on save', async () => {
+      const setupResult = await setup();
+      const { root, click, typeInto, buttonByText, settle } = setupResult;
+      await openFilled(setupResult, '100', '100');
+      await typeInto(formFields(root)[4] ?? null, '-1');
+      await click('.food-picker__more');
+      expect(formFields(root)).toHaveLength(4);
+
+      buttonByText('Gem og log under morgenmad')?.click();
+      await settle();
+
+      expect(formFields(root)).toHaveLength(6);
+      expect(fieldError(root, 'Kulhydrat (g)')).toBe('Skal være 0 eller større.');
     });
 
     it('accepts large values per piece and a plausible food in grams', async () => {
@@ -496,23 +668,26 @@ describe('FoodPicker', () => {
 
     it('rejects too few kcal, an amount below 1 and a name over 150 characters', async () => {
       const setupResult = await setup();
-      const { root, typeInto, buttonByText, text } = setupResult;
+      const { host, root, typeInto, buttonByText, settle } = setupResult;
       await openFilled(setupResult, '100', '0');
 
-      expect(text('.food-picker__step app-ui-form-error')).toBe('Kalorier skal være mindst 1.');
-      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(true);
+      expect(fieldError(root, 'Kalorier')).toBe('Kalorier skal være mindst 1.');
 
       await typeInto(formFields(root)[2] ?? null, '100');
       await typeInto(formFields(root)[1] ?? null, '0');
-      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(true);
+      expect(fieldError(root, 'Kalorier')).toBeNull();
+      expect(fieldError(root, 'Portion')).toBe('Portionen skal være mindst 1.');
 
       await typeInto(formFields(root)[1] ?? null, '100');
       await typeInto(formFields(root)[0] ?? null, 'x'.repeat(151));
-      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(true);
+      expect(fieldError(root, 'Navn')).toBe('Navnet må højst have 150 tegn.');
       expect(formFields(root)[0]?.maxLength).toBe(150);
+      buttonByText('Gem og log under morgenmad')?.click();
+      await settle();
+      expect(host.picked).toEqual([]);
     });
 
-    it('opens from the create row with the query as name and a disabled save button', async () => {
+    it('opens from the create row with the query as name and no errors yet', async () => {
       const { host, root, typeInto, click, text, buttonByText } = await setup();
 
       await typeInto(searchField(root), 'Mormors frikadeller');
@@ -522,7 +697,8 @@ describe('FoodPicker', () => {
       expect(text('.food-picker__title')).toBe('Ny egen vare');
       expect(text('.food-picker__subtitle')).toBe('Gemmes under Mine varer');
       expect(formFields(root)[0]?.value).toBe('Mormors frikadeller');
-      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(true);
+      expect(root.querySelector('app-ui-form-error')).toBeNull();
+      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(false);
       expect(buttonByText('Gem uden at logge')).toBeDefined();
       expect(formFields(root)).toHaveLength(4);
 
@@ -611,8 +787,8 @@ describe('FoodPicker', () => {
       // A retry would reuse the food by name and log the first values, so the name is taken now.
       await typeInto(formFields(root)[2] ?? null, '600');
 
-      expect(root.textContent).toContain('allerede en egen vare med det navn');
-      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(true);
+      expect(fieldError(root, 'Navn')).toBe('Du har allerede en egen vare med det navn.');
+      buttonByText('Gem og log under morgenmad')?.click();
       root
         .querySelector('form')!
         .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -648,6 +824,30 @@ describe('FoodPicker', () => {
       await settle();
 
       expect(host.steps).toEqual(['new-food', 'search']);
+    });
+
+    it('puts the barcode on the food from the form the scanner opened, not on a later one', async () => {
+      const { host, root, click, typeInto, buttonByText, settle } = await setup({
+        configure: (h) => {
+          h.startStep.set('new-food');
+          h.barcode.set('5799999999991');
+        },
+      });
+      await typeInto(formFields(root)[0] ?? null, 'Ukendt bar');
+      await typeInto(formFields(root)[1] ?? null, '40');
+      await typeInto(formFields(root)[2] ?? null, '180');
+      buttonByText('Gem og log under morgenmad')?.click();
+      await settle();
+
+      expect(host.picked[0]?.item).toMatchObject({ name: 'Ukendt bar', barcode: '5799999999991' });
+
+      await click('.food-picker__back');
+      await click('.food-picker__create');
+      await typeInto(formFields(root)[0] ?? null, 'Andet');
+      await typeInto(formFields(root)[2] ?? null, '1');
+      buttonByText('Gem uden at logge')?.click();
+      await settle();
+      expect(host.created[0]?.barcode).toBeUndefined();
     });
 
     it('emits only picked, once, for the save-and-log button and keeps the form', async () => {

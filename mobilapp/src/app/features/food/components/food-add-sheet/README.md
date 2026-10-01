@@ -9,6 +9,11 @@ Varer/Samlinger og enten `app-food-picker` eller listen over samlinger.
   også bliver stående på portionstrinnet (designets `showMealPicks`). Begge dele skjules i
   "Ny egen vare" og under redigering.
 - Indholdet ligger bag `@if (open())`, så vælgeren starter forfra ved hver åbning.
+- `barcode` (scannerens "ikke fundet"-stregkode) går videre til vælgeren, så den nye egne vare
+  gemmes med den (3.1-6a).
+- `.food-add-sheet__scroll` har `--space-1` indvendig luft i siderne (givet tilbage med negativ
+  margin): vælgerens formularfelter rækker ud i den med deres egen negative margin for at give
+  fokusringen plads, og inden for paddingen kan scroll-området ikke flytte sig sidelæns.
 - **Fanen "Samlinger"** viser brugerens samlinger (navn, varernes navne, afrundet kcal). Et tryk
   logger samlingen under det valgte måltid med `CollectionsService.log()` – ét kald, én række pr.
   vare (P13). Imens er rækkerne slået fra (`aria-busy`); bagefter udsender arket `closed`. En

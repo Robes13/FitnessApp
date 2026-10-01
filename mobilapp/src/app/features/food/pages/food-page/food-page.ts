@@ -130,6 +130,8 @@ export class FoodPage {
   protected readonly addMeal = signal<MealId>(DEFAULT_MEAL);
   protected readonly editEntry = signal<LoggedFood | null>(null);
   protected readonly pickerStartStep = signal<FoodPickerStartStep>('search');
+  /** The barcode the scanner didn't find, for the new-food form it opened (3.1-6a). */
+  protected readonly newFoodBarcode = signal<string | null>(null);
   protected readonly scannerOpen = signal(false);
   /** The entry the removal confirmation (3.4) asks about. */
   protected readonly removeTarget = signal<LoggedFood | null>(null);
@@ -145,9 +147,6 @@ export class FoodPage {
     const failure = this.failure();
     return failure === null ? null : this.t(failure.key, failure.params);
   });
-
-  /** The meal the scanner saves under – the text belongs to the scanner's CTA. */
-  protected readonly scannerMealLabel = computed(() => this.view.mealLabel(this.addMeal()));
 
   constructor() {
     effect(() => {
@@ -194,6 +193,7 @@ export class FoodPage {
     this.editEntry.set(entry);
     this.addMeal.set(entry.meal);
     this.pickerStartStep.set('search');
+    this.newFoodBarcode.set(null);
     this.addOpen.set(true);
   }
 
@@ -250,7 +250,10 @@ export class FoodPage {
     this.scannerOpen.set(true);
   }
 
-  /** The scanner closes itself; a scanned product becomes the user's own food as it is logged. */
+  /**
+   * The scanner closes itself; a scanned product becomes the user's own food as it is logged –
+   * under the meal picked on the scanner's result sheet (`[(meal)]`, the sheet's meal too).
+   */
   protected onScanFound(item: FoodItem): void {
     this.run(this.foodLog.add(item, this.addMeal()), SAVE_ERROR_KEY, () => this.closeAdd());
   }
@@ -259,20 +262,24 @@ export class FoodPage {
     this.startAdd(this.addMeal(), 'search');
   }
 
-  /** "Varen har ingen stregkode" – also the way on after "ikke fundet" (3.1-6a → 3.0). */
-  protected onScanNoBarcode(): void {
-    this.startAdd(this.addMeal(), 'new-food');
+  /**
+   * "Varen har ingen stregkode" – or "Opret varen selv" after "ikke fundet", with the barcode the
+   * new food is saved with (3.1-6a → 3.0).
+   */
+  protected onScanNoBarcode(barcode: string | null): void {
+    this.startAdd(this.addMeal(), 'new-food', barcode);
   }
 
   protected onScannerClosed(): void {
     this.scannerOpen.set(false);
   }
 
-  private startAdd(meal: MealId, step: FoodPickerStartStep): void {
+  private startAdd(meal: MealId, step: FoodPickerStartStep, barcode: string | null = null): void {
     this.failure.set(null);
     this.editEntry.set(null);
     this.addMeal.set(meal);
     this.pickerStartStep.set(step);
+    this.newFoodBarcode.set(barcode);
     this.addOpen.set(true);
   }
 

@@ -30,32 +30,21 @@
         @if (hasNoMatches()) {
           <app-ui-empty-state class="food-picker__empty" [message]="emptyMessage()" />
         } @else {
-          @for (item of results(); track item.id) {
-            <button type="button" class="food-picker__result" (click)="pick(item)">
+          @for (row of resultRows(); track row.item.id) {
+            <button type="button" class="food-picker__result" (click)="pick(row.item)">
               <span class="food-picker__result-main">
                 <span class="food-picker__result-name">
-                  {{ item.name }}
-                  @if (item.isCustom) {
+                  {{ row.item.name }}
+                  @if (row.item.isCustom) {
                     <span class="food-picker__own">{{
                       'shared.foodPicker.ownFood' | translate
                     }}</span>
                   }
                 </span>
-                <span class="food-picker__result-meta">
-                  {{
-                    'shared.foodPicker.resultMeta'
-                      | translate
-                        : {
-                            quantity: item.quantity,
-                            protein: item.protein,
-                            carbs: item.carbs,
-                            fat: item.fat,
-                          }
-                  }}
-                </span>
+                <span class="food-picker__result-meta">{{ row.meta }}</span>
               </span>
               <span class="food-picker__result-kcal">
-                {{ 'shared.foodPicker.kcalAmount' | translate: { kcal: item.kcal } }}
+                {{ row.kcal }}
                 <span class="food-picker__result-add"><app-ui-icon name="plus" size="sm" /></span>
               </span>
             </button>
@@ -76,9 +65,6 @@
 
   @case ('new-food') {
     <form class="food-picker__step" [formGroup]="form" (ngSubmit)="saveNewFoodAndLog()">
-      @if (valueError()) {
-        <app-ui-form-error tone="negative" [message]="valueError()" />
-      }
       <div class="food-picker__heading">
         <button
           app-ui-icon-button
@@ -106,10 +92,10 @@
             autocomplete="off"
             [maxLength]="nameMaxLength"
             [placeholder]="'shared.foodPicker.namePlaceholder' | translate"
-            [invalid]="nameInvalid()"
+            [invalid]="errors().name !== null"
           />
-          @if (nameError()) {
-            <app-ui-form-error tone="negative" [message]="nameError()" />
+          @if (errors().name; as message) {
+            <app-ui-form-error tone="negative" [message]="message" />
           }
         </label>
 
@@ -123,6 +109,7 @@
               inputMode="numeric"
               placeholder="1"
               [ariaLabel]="'shared.foodPicker.amount' | translate"
+              [invalid]="errors().amount !== null"
             />
             <div class="food-picker__units">
               @for (unit of units; track unit.id) {
@@ -137,6 +124,9 @@
               }
             </div>
           </div>
+          @if (errors().amount; as message) {
+            <app-ui-form-error tone="negative" [message]="message" />
+          }
         </div>
 
         <div class="food-picker__grid">
@@ -147,7 +137,11 @@
               type="number"
               inputMode="numeric"
               placeholder="420"
+              [invalid]="errors().kcal !== null"
             />
+            @if (errors().kcal; as message) {
+              <app-ui-form-error tone="negative" [message]="message" />
+            }
           </label>
           <label class="food-picker__field">
             <span class="food-picker__label">{{
@@ -158,7 +152,11 @@
               type="number"
               inputMode="numeric"
               placeholder="28"
+              [invalid]="errors().protein !== null"
             />
+            @if (errors().protein; as message) {
+              <app-ui-form-error tone="negative" [message]="message" />
+            }
           </label>
         </div>
 
@@ -183,7 +181,11 @@
                 type="number"
                 inputMode="numeric"
                 placeholder="30"
+                [invalid]="errors().carbs !== null"
               />
+              @if (errors().carbs; as message) {
+                <app-ui-form-error tone="negative" [message]="message" />
+              }
             </label>
             <label class="food-picker__field">
               <span class="food-picker__label">{{ 'shared.foodPicker.fatLabel' | translate }}</span>
@@ -192,14 +194,18 @@
                 type="number"
                 inputMode="numeric"
                 placeholder="18"
+                [invalid]="errors().fat !== null"
               />
+              @if (errors().fat; as message) {
+                <app-ui-form-error tone="negative" [message]="message" />
+              }
             </label>
           </div>
         }
       </div>
 
       <div class="food-picker__actions">
-        <button app-ui-button type="submit" block [disabled]="!canSaveNewFood()" [loading]="busy()">
+        <button app-ui-button type="submit" block [loading]="busy()">
           {{ saveAndLogLabel() }}
         </button>
         <button
@@ -209,7 +215,7 @@
           size="sm"
           block
           class="food-picker__save-only"
-          [disabled]="!canSaveNewFood() || busy()"
+          [disabled]="busy()"
           (click)="saveNewFood()"
         >
           {{ 'shared.foodPicker.saveWithoutLogging' | translate }}

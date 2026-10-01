@@ -204,6 +204,19 @@
     margin: var(--space-1-5) 0 0;
   }
 
+  /* Like the add sheet's meal chips: four of equal width, wrapping instead of overlapping. */
+  &__meals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1-5);
+  }
+
+  &__meal {
+    flex: 1 1 0;
+    min-width: max-content;
+    padding-inline: var(--space-1);
+  }
+
   &__portions {
     display: grid;
     grid-auto-columns: minmax(0, 1fr);

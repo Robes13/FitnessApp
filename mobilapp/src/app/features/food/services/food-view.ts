@@ -112,11 +112,6 @@ export class FoodViewService {
       };
     });
   });
-
-  mealLabel(id: MealId): string {
-    const meal = MEALS.find((candidate) => candidate.id === id);
-    return meal ? this.t(meal.labelKey) : '';
-  }
 }
 
 const PERCENT = 100;
