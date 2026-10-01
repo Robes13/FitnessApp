@@ -10,6 +10,7 @@ import {
   effect,
   inject,
   input,
+  model,
   output,
   signal,
   untracked,
@@ -37,11 +38,14 @@ import {
   ScannedProduct,
 } from '../../../core/models/barcode';
 import { exceedsFoodLogCap } from '../../../core/constants/food';
+import { MEALS } from '../../../core/constants/meals';
 import { FoodItem } from '../../../core/models/food';
+import { MealId } from '../../../core/models/meal';
 import { BarcodeFlowService, formatAmount } from '../../../core/services/barcode-flow/barcode-flow';
 import { KeyboardService } from '../../../core/services/keyboard/keyboard';
 import { Translate, injectTranslate } from '../../../core/services/language/translate';
 import { UiButton } from '../ui-button/ui-button';
+import { UiChip } from '../ui-chip/ui-chip';
 import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiIcon } from '../ui-icon/ui-icon';
 import { UiIconButton } from '../ui-icon-button/ui-icon-button';
@@ -155,6 +159,15 @@ const OUTCOME_STATUS: Readonly<
   unavailable: 'idle',
 };
 
+/**
+ * The button to the new-food form: after "not found" it creates the scanned item (3.1-6a),
+ * otherwise an item without a barcode.
+ */
+const NEW_FOOD_LABEL_KEY = {
+  notFound: 'shared.barcodeScanner.createOwn',
+  default: 'shared.barcodeScanner.noBarcode',
+} as const;
+
 /** Design's `verdict`: ≥ 15 g protein counts as a good protein source. */
 const HIGH_PROTEIN_GRAMS = 15;
 
@@ -190,8 +203,8 @@ export function buildScanVerdict(t: Translate, kcalRemaining: number, item: Food
  * up and shows the product with an adjustable amount. All domain work (camera, lookup, scan
  * count, scaling) goes through the core facade `BarcodeFlowService`; the component holds only
  * presentation and form state. An unknown product says so on the overlay, whose "Enter
- * manually" and "The item has no barcode" lead to the picker (the latter to its full new-food
- * form). In the browser – and after a failed scan – the barcode can be typed instead.
+ * manually" and "Create it yourself" lead to the picker (the latter to its full new-food form,
+ * with the barcode). In the browser – and after a failed scan – the barcode can be typed instead.
  *
  * The parent owns `open`. Every way out of the scanner ultimately emits `closed` – even after
  * `found`, `manualRequested` and `noBarcodeRequested` – so the parent only needs one handler
@@ -202,6 +215,7 @@ export function buildScanVerdict(t: Translate, kcalRemaining: number, item: Food
   imports: [
     ReactiveFormsModule,
     UiButton,
+    UiChip,
     UiFormError,
     UiIcon,
     UiIconButton,
@@ -224,8 +238,12 @@ export class BarcodeScanner {
   readonly open = input.required<boolean>();
   /** Today's remaining calories (goal − eaten). `null` hides the verdict box. */
   readonly kcalRemaining = input<number | null>(null);
-  /** The meal the item is logged under. Not part of the texts (the design just says "Save and add"). */
-  readonly mealLabel = input('');
+  /**
+   * The meal the item is logged under (spec 3.2). When it's set, the result sheet shows the meal
+   * chips, so the meal can be seen and changed before "Add" (two-way). `null` hides them – e.g. a
+   * collection's draft has no meal.
+   */
+  readonly meal = model<MealId | null>(null);
   /** Open the camera automatically when the overlay opens (native only). Otherwise the user taps "Scan". */
   readonly autoStart = input(true, { transform: booleanAttribute });
 
@@ -234,8 +252,11 @@ export class BarcodeScanner {
   readonly found = output<FoodItem>();
   /** "Enter manually instead". */
   readonly manualRequested = output<void>();
-  /** "The item has no barcode". */
-  readonly noBarcodeRequested = output<void>();
+  /**
+   * The full new-food form: "Create it yourself" after "not found" carries the barcode (3.1-6a),
+   * so the food is saved with it and the next scan finds it; "The item has no barcode" is `null`.
+   */
+  readonly noBarcodeRequested = output<string | null>();
 
   private readonly flow = inject(BarcodeFlowService);
   private readonly document = inject(DOCUMENT);
@@ -255,6 +276,7 @@ export class BarcodeScanner {
   protected readonly barWeights = BARCODE_BAR_WEIGHTS;
   protected readonly canScan = this.flow.canScan;
   protected readonly barcodeMaxLength = BARCODE_MAX_DIGITS;
+  protected readonly mealOptions = MEALS;
 
   protected readonly screen = signal<BarcodeScannerScreen>('scanner');
   protected readonly status = signal<BarcodeScannerStatus>('idle');
@@ -292,6 +314,10 @@ export class BarcodeScanner {
   );
   protected readonly isLookingUp = computed(() => this.status() === 'looking-up');
   protected readonly hasError = computed(() => ERROR_STATUSES.includes(this.status()));
+  protected readonly isNotFound = computed(() => this.status() === 'not-found');
+  protected readonly newFoodLabelKey = computed(() =>
+    this.isNotFound() ? NEW_FOOD_LABEL_KEY.notFound : NEW_FOOD_LABEL_KEY.default,
+  );
   protected readonly isPermissionDenied = computed(() => this.status() === 'permission-denied');
   protected readonly isLookupError = computed(() => this.status() === 'lookup-error');
   protected readonly showScanButton = computed(
@@ -328,6 +354,7 @@ export class BarcodeScanner {
   protected readonly hasBarcodeError = computed(() => this.barcodeError() !== null);
 
   protected readonly isResultOpen = computed(() => this.screen() === 'result');
+  protected readonly showMeals = computed(() => this.meal() !== null);
 
   /** The chosen amount in grams, or `null` while the field is invalid. */
   private readonly validGrams = computed(() => {
@@ -520,8 +547,12 @@ export class BarcodeScanner {
   }
 
   protected requestNoBarcode(): void {
-    this.noBarcodeRequested.emit();
+    this.noBarcodeRequested.emit(this.isNotFound() ? this.barcode() : null);
     this.finish();
+  }
+
+  protected pickMeal(meal: MealId): void {
+    this.meal.set(meal);
   }
 
   protected close(): void {

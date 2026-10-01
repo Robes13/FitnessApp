@@ -115,6 +115,8 @@ export class FoodAddSheet {
   readonly editEntry = input<LoggedFood | null>(null);
   /** The picker's starting step – the scanner can send the user straight to "New custom food". */
   readonly startStep = input<FoodPickerStartStep>('search');
+  /** The barcode the scanner didn't find – the new custom food is saved with it (3.1-6a). */
+  readonly barcode = input<string | null>(null);
   /** The page is saving the selection. */
   readonly busy = input(false, { transform: booleanAttribute });
   /** Why the last save failed (translated), or `null`. */

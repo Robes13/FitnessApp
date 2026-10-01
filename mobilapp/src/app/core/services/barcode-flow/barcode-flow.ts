@@ -1,9 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, defer } from 'rxjs';
-import { PRODUCT_BASE_GRAMS } from '../../constants/barcode';
+import { Observable, defer, of } from 'rxjs';
+import { PRODUCT_BASE_GRAMS, PRODUCT_BASE_UNIT } from '../../constants/barcode';
 import { BarcodeScanOutcome, ProductLookupResult, ScannedProduct } from '../../models/barcode';
 import { FoodItem } from '../../models/food';
+import { FoodDto } from '../../models/food-api';
 import { BarcodeScannerService } from '../barcode-scanner/barcode-scanner';
+import { FoodLogService } from '../food-log/food-log';
 import { NutritionCalculator } from '../nutrition-calculator/nutrition-calculator';
 import { ProductLookupService } from '../product-lookup/product-lookup';
 
@@ -19,6 +21,7 @@ import { ProductLookupService } from '../product-lookup/product-lookup';
 export class BarcodeFlowService {
   private readonly scanner = inject(BarcodeScannerService);
   private readonly productLookup = inject(ProductLookupService);
+  private readonly foodLog = inject(FoodLogService);
   private readonly calculator = inject(NutritionCalculator);
 
   /** `false` in the browser: the UI offers typing the barcode instead. */
@@ -32,11 +35,18 @@ export class BarcodeFlowService {
     return this.scanner.openSettings();
   }
 
-  /** Counts the scan when subscribed, then looks the barcode up. Never errors. */
+  /**
+   * Counts the scan when subscribed, then looks the barcode up: first in the user's own
+   * catalogue (a food scanned before, or one created for a barcode Open Food Facts doesn't
+   * know – 3.1-6a), then in Open Food Facts. Never errors.
+   */
   lookup(barcode: string): Observable<ProductLookupResult> {
     return defer(() => {
       this.scanner.recordScan();
-      return this.productLookup.lookup(barcode);
+      const own = this.foodLog.foods().find((food) => food.barcode === barcode);
+      return own
+        ? of<ProductLookupResult>({ status: 'found', product: toCatalogueProduct(barcode, own) })
+        : this.productLookup.lookup(barcode);
     });
   }
 
@@ -53,4 +63,36 @@ export class BarcodeFlowService {
 /** `'150 g'`, or `'150 ml'` for a liquid – the unit of the product's base portion. */
 export function formatAmount(product: ScannedProduct, amount: number): string {
   return `${Math.round(amount)} ${product.unit}`;
+}
+
+/**
+ * A catalogue food as a scanned product: the API's values per 100 g, or per 100 ml when the food
+ * has a millilitre serving. The item keeps the food's id, so logging it reuses the food.
+ *
+ * ponytail: a food entered per piece/portion is per unit with a synthetic 100 g serving
+ * (`SERVING_GRAMS_PER_UNIT`), so the scanner offers that unit as its "Portion" of 100 g. Upgrade
+ * path: a nutrition basis per food in the API (api-gaps).
+ */
+function toCatalogueProduct(barcode: string, food: FoodDto): ScannedProduct {
+  const unit = food.servings.some((serving) => serving.unit === 'Milliliter')
+    ? PRODUCT_BASE_UNIT.MILLILITRES
+    : PRODUCT_BASE_UNIT.GRAMS;
+  const perUnit = food.servings.find(
+    (serving) => serving.unit === 'Piece' || serving.unit === 'Serving',
+  );
+  return {
+    barcode,
+    unit,
+    item: {
+      id: String(food.foodId),
+      name: food.name,
+      quantity: `${PRODUCT_BASE_GRAMS} ${unit}`,
+      kcal: food.caloriesPer100,
+      protein: food.proteinPer100,
+      carbs: food.carbohydratesPer100,
+      fat: food.fatPer100,
+      isCustom: true,
+    },
+    servingGrams: perUnit?.gramsPerUnit ?? null,
+  };
 }

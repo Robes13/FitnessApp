@@ -105,10 +105,4 @@ describe('FoodViewService', () => {
     expect(view.kcalProgress()).toBe(1);
     expect(view.macroCards()[1]?.percentLabel).toBe('100%');
   });
-
-  it('names a meal from its id', () => {
-    const { view } = setup();
-
-    expect(view.mealLabel('aften')).toBe('Aftensmad');
-  });
 });

@@ -51,13 +51,13 @@ describe('food-log-mapping', () => {
     const base = { foodId: 12, name: 'Havregryn', caloriesPer100: 370, proteinPer100: 13.3 };
 
     it.each<[ApiQuantityUnit | null, number, string, number, number]>([
-      [null, 1, '100 g', 370, 13],
-      ['Milliliter', 1, '100 ml', 370, 13],
-      ['Piece', 100, '1 stk', 370, 13],
-      ['Serving', 100, '1 portion', 370, 13],
-      ['Serving', 40, '1 portion', 148, 5],
+      [null, 1, '100 g', 370, 13.3],
+      ['Milliliter', 1, '100 ml', 370, 13.3],
+      ['Piece', 100, '1 stk', 370, 13.3],
+      ['Serving', 100, '1 portion', 370, 13.3],
+      ['Serving', 40, '1 portion', 148, 5.32],
     ])(
-      'shows a food with a %s serving of %d g as "%s"',
+      'shows a food with a %s serving of %d g as "%s", unrounded (the picker rounds once)',
       (unit, gramsPerUnit, quantity, kcal, protein) => {
         const servings = unit === null ? [] : [{ foodServingId: 1, unit, gramsPerUnit }];
 

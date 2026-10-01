@@ -63,8 +63,13 @@ viser spinner på knappen og blokerer et nyt kald, og en fejl vises i arket (og 
 - **Scanneren er en søskende til arket, ikke en del af det.** `app-barcode-scanner` udsender
   altid `closed` til sidst, så siden lukker overlayet ét sted og håndterer resultatet
   (`found`, `manualRequested`, `noBarcodeRequested`) for sig. En scannet vare bliver brugerens
-  egen vare, når den logges (`FoodLogService.add` → `ensureFood`). "Ikke fundet" →
-  "Varen har ingen stregkode" åbner vælgerens fulde "Ny egen vare" (3.1-6a → 3.0).
+  egen vare, når den logges (`FoodLogService.add` → `ensureFood`), under det måltid,
+  scannerens resultat-ark viser og lader brugeren skifte (`[(meal)]="addMeal"` – samme måltid
+  som arket). "Ikke fundet" → "Opret varen selv" åbner vælgerens fulde "Ny egen vare" med
+  stregkoden (`newFoodBarcode` → arkets `barcode`), så varen gemmes med den, og næste scanning
+  finder den i kataloget (3.1-6a → 3.0).
+- **Et forkert måltid rettes ved at fjerne og logge igen.** Redigering ændrer kun mængden
+  (spec 3.3, plan-v2 P12; `PATCH me/food-logs` beholder `mealType`).
 - **Fjern kræver bekræftelse** (3.4) i det fælles `shared/components/ui-confirm-sheet`, der ikke
   kan lukkes med et tryk på baggrunden. Er varen allerede væk (404), fjernes den alligevel, og
   siden skriver _Varen findes ikke længere._

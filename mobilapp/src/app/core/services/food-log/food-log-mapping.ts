@@ -34,10 +34,12 @@ export function toApiUnit(token: string): ApiQuantityUnit {
 /**
  * A catalogue food as a picker item. Its base portion comes from the servings the app creates:
  * `Serving` → `'1 portion'`, `Piece` → `'1 stk'`, `Milliliter` → `'100 ml'`, else `'100 g'`.
+ * The macros keep the API's 2 decimals – the picker rounds once, when it scales the portion
+ * (and when it shows the base), so its numbers match what the API logs.
  */
 export function toFoodItem(food: FoodDto): FoodItem {
   const [unit, amount, grams] = basePortion(food);
-  const scale = (per100: number): number => Math.round((per100 * grams) / PER_100);
+  const scale = (per100: number): number => roundTo((per100 * grams) / PER_100, PER_100_DECIMALS);
   return {
     id: String(food.foodId),
     name: food.name,

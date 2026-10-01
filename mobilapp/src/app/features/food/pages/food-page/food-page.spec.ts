@@ -57,12 +57,17 @@ const SALAT: FoodItem = {
   carbs: 18,
   fat: 22,
 };
+/** In the catalogue with its barcode – a scan finds it there before Open Food Facts. */
+const HAVREGRYN_BARCODE = '5701234567890';
 const HAVREGRYN = testFood({
   foodId: 3,
   name: 'Havregryn',
+  barcode: HAVREGRYN_BARCODE,
   caloriesPer100: 370,
   proteinPer100: 13,
 });
+/** A barcode Open Food Facts doesn't know. */
+const UNKNOWN_BARCODE = '5799999999991';
 
 function normalize(value: string | null | undefined): string {
   return (value ?? '').replace(/\s+/g, ' ').trim();
@@ -104,6 +109,23 @@ describe('FoodPage', () => {
       Array.from(page.querySelectorAll<HTMLButtonElement>('button')).find(
         (button) => normalize(button.textContent) === label,
       );
+    const typeInto = async (field: HTMLInputElement | null | undefined, value: string) => {
+      if (!field) {
+        throw new Error('Feltet findes ikke.');
+      }
+      field.value = value;
+      field.dispatchEvent(new Event('input'));
+      await settle();
+    };
+    /** Opens the scanner from the round button and looks `barcode` up (the browser has no camera). */
+    const lookUp = async (barcode: string): Promise<void> => {
+      await click(page.querySelector('.food-page__scan'));
+      await typeInto(
+        page.querySelector<HTMLInputElement>('input[aria-label="Stregkode"]'),
+        barcode,
+      );
+      await click(buttonByText('Slå op'));
+    };
 
     await settle();
     return {
@@ -112,6 +134,8 @@ describe('FoodPage', () => {
       settle,
       click,
       buttonByText,
+      typeInto,
+      lookUp,
       text: (selector: string) => normalize(page.querySelector(selector)?.textContent),
       texts: (selector: string) =>
         Array.from(page.querySelectorAll(selector)).map((node) => normalize(node.textContent)),
@@ -325,6 +349,67 @@ describe('FoodPage', () => {
     await settle();
 
     expect(normalize(page.querySelector('.ui-sheet__title')?.textContent)).toBe('Tilføj aftensmad');
+  });
+
+  it('logs a scanned item under the meal picked on the scanner, not a hidden one', async () => {
+    const { page, click, buttonByText, lookUp, settle } = await setup();
+
+    await lookUp(HAVREGRYN_BARCODE);
+    const selected = page.querySelector('.barcode-scanner__meal.ui-chip--selected');
+    expect(normalize(selected?.textContent)).toBe('Morgenmad');
+    await click(buttonByText('Frokost'));
+    await click(buttonByText('Tilføj'));
+
+    const request = http.expectOne({ method: 'POST', url: FOOD_LOGS_URL });
+    expect(request.request.body).toMatchObject({
+      foodId: 3,
+      quantity: 100,
+      unit: 'Gram',
+      mealType: 'Lunch',
+    });
+    request.flush({
+      ...testFoodLog({ ...SKYR_BOWL, name: 'Havregryn', quantity: '100 g' }, 'frokost'),
+      foodId: 3,
+    });
+    await settle();
+
+    const lunchGroup = page.querySelectorAll('app-food-meal-group')[1];
+    expect(normalize(lunchGroup?.textContent)).toContain('Havregryn');
+  });
+
+  it('creates a barcode Open Food Facts does not know as the user own food with it', async () => {
+    const { page, click, buttonByText, typeInto, lookUp, settle, texts } = await setup();
+
+    await lookUp(UNKNOWN_BARCODE);
+    http
+      .expectOne((request) => request.url.endsWith(`/product/${UNKNOWN_BARCODE}.json`))
+      .flush({ status: 0 }, { status: 404, statusText: 'Not Found' });
+    await settle();
+    expect(normalize(page.querySelector('.barcode-scanner__hint')?.textContent)).toBe(
+      'Varen blev ikke fundet.',
+    );
+    await click(buttonByText('Opret varen selv'));
+
+    expect(page.querySelector('.barcode-scanner__overlay')).toBeNull();
+    const fields = () =>
+      Array.from(page.querySelectorAll<HTMLInputElement>('.food-picker__fields input'));
+    await typeInto(fields()[0], 'Ukendt bar');
+    await typeInto(fields()[1], '40');
+    await typeInto(fields()[2], '180');
+    await click(buttonByText('Gem og log under morgenmad'));
+
+    const create = http.expectOne({ method: 'POST', url: '/api/v1/foods' });
+    expect(create.request.body).toMatchObject({ name: 'Ukendt bar', barcode: UNKNOWN_BARCODE });
+    create.flush(testFood({ foodId: 9, name: 'Ukendt bar', barcode: UNKNOWN_BARCODE }));
+    const log = http.expectOne({ method: 'POST', url: FOOD_LOGS_URL });
+    expect(log.request.body).toMatchObject({ foodId: 9, quantity: 40, mealType: 'Breakfast' });
+    log.flush({ ...testFoodLog({ ...SKYR_BOWL, name: 'Ukendt bar' }, 'morgen'), foodId: 9 });
+    await settle();
+
+    // The next scan finds it in the catalogue – no Open Food Facts request.
+    await lookUp(UNKNOWN_BARCODE);
+    expect(page.querySelector('.barcode-scanner__result')).not.toBeNull();
+    expect(texts('.ui-sheet__title')).toContain('Ukendt bar');
   });
 
   it('opens the scanner from the round scan button', async () => {

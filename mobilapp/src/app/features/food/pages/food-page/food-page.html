@@ -114,6 +114,7 @@
   [(meal)]="addMeal"
   [editEntry]="editEntry()"
   [startStep]="pickerStartStep()"
+  [barcode]="newFoodBarcode()"
   [busy]="pending()"
   [error]="notice()"
   (closed)="closeAdd()"
@@ -125,10 +126,10 @@
 <app-barcode-scanner
   [open]="scannerOpen()"
   [kcalRemaining]="view.kcalRemaining()"
-  [mealLabel]="scannerMealLabel()"
+  [(meal)]="addMeal"
   (found)="onScanFound($event)"
   (manualRequested)="onScanManual()"
-  (noBarcodeRequested)="onScanNoBarcode()"
+  (noBarcodeRequested)="onScanNoBarcode($event)"
   (closed)="onScannerClosed()"
 />
 

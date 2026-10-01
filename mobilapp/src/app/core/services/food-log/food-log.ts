@@ -338,8 +338,13 @@ export class FoodLogService implements SessionDataStore {
     );
   }
 
+  /** With the barcode the scanner didn't find, so the next scan finds the food (3.1-6a). */
   private createOwnFood(input: CustomFoodInput, quantity: ParsedQuantity): Observable<FoodDto> {
-    return this.createFood({ name: foodName(input.name), ...toPer100({ ...input, ...quantity }) });
+    return this.createFood({
+      name: foodName(input.name),
+      ...(input.barcode ? { barcode: input.barcode } : {}),
+      ...toPer100({ ...input, ...quantity }),
+    });
   }
 
   /** `POST foods`; a 409 becomes `DuplicateCustomFoodNameError`. The new food goes first. */

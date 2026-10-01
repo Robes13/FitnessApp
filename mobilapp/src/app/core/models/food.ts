@@ -13,6 +13,8 @@ export interface FoodItem extends Macros {
   /** The portion the macros apply to, e.g. `'250 g'` or `'1 portion'`. */
   quantity: string;
   brand?: string;
+  /** A new custom food's barcode – the scanner didn't find it (3.1-6a), so it's saved with the food. */
+  barcode?: string;
   isCustom?: boolean;
 }
 

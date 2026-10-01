@@ -304,6 +304,28 @@ describe('FoodLogService', () => {
     expect(service.customFoods()[0]).toMatchObject({ id: '40', quantity: '1 stk', kcal: 155 });
   });
 
+  it('saves the barcode the scanner did not find with the new food (3.1-6a)', async () => {
+    const service = setup();
+    await load(service);
+    const input = {
+      name: 'Ukendt bar',
+      quantity: '40 g',
+      kcal: 180,
+      protein: 8,
+      carbs: 20,
+      fat: 6,
+      barcode: '5799999999991',
+    };
+
+    const saved = firstValueFrom(service.addCustomFood(input));
+    const create = http.expectOne({ method: 'POST', url: URL.FOODS });
+    expect(create.request.body).toMatchObject({ name: 'Ukendt bar', barcode: '5799999999991' });
+    create.flush(testFood({ foodId: 51, name: 'Ukendt bar', barcode: '5799999999991' }));
+    await saved;
+
+    expect(service.foods()[0]?.barcode).toBe('5799999999991');
+  });
+
   it('heals a catalogue food that lacks the serving of the logged unit', async () => {
     const service = setup();
     await load(service, [testFood({ foodId: 41, name: 'Proteinbar', caloriesPer100: 200 })]);
