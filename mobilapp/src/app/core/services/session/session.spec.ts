@@ -1,6 +1,6 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { DOCUMENT, Provider } from '@angular/core';
+import { DOCUMENT, Provider, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { EMPTY, firstValueFrom } from 'rxjs';
@@ -24,6 +24,7 @@ import {
   SessionDataService,
   SessionDataStore,
 } from '../session-data/session-data';
+import { BarcodeScannerService } from '../barcode-scanner/barcode-scanner';
 import { UserProfileService } from '../user-profile/user-profile';
 import { SessionService } from './session';
 
@@ -392,6 +393,29 @@ describe('SessionService', () => {
       expect(storage.getItem(STORAGE_KEY.SCAN_COUNT)).toBeNull();
       expect(storage.getItem(STORAGE_KEY.THEME)).toBe('"dark"');
       expect(stored()).toMatchObject({ status: 'pending-verification', userId: 2 });
+    });
+
+    it('starts the scan count over for another account, in memory too', async () => {
+      const { session, http } = setup(AUTHENTICATED_SESSION, [
+        { provide: SESSION_DATA_STORES, useFactory: () => [inject(BarcodeScannerService)] },
+      ]);
+      TestBed.inject(SessionDataService);
+      TestBed.tick();
+      const scanner = TestBed.inject(BarcodeScannerService);
+      expect(scanner.scanCount()).toBe(3);
+
+      const logout = firstValueFrom(session.logout());
+      http.expectOne(LOGOUT).flush(null, NO_CONTENT);
+      await logout;
+      TestBed.tick();
+      const login = firstValueFrom(session.login('sara@nutrify.dk', PASSWORD));
+      http.expectOne(LOGIN).flush(OTHER_ACCOUNT);
+      await login;
+      TestBed.tick();
+
+      expect(scanner.scanCount()).toBe(0);
+      scanner.recordScan();
+      expect(storage.getItem(STORAGE_KEY.SCAN_COUNT)).toBe('1');
     });
   });
 
