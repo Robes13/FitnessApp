@@ -66,7 +66,8 @@ describe('FoodViewService', () => {
     expect(view.kcalTarget()).toBe(KCAL_TARGET);
     expect(view.kcalEaten()).toBe(830);
     expect(view.kcalRemaining()).toBe(1170);
-    expect(view.kcalLeft()).toBe(1170);
+    expect(view.kcalLeftText()).toBe('1.170');
+    expect(view.eatenOfGoalText()).toBe('830 spist · mål 2.000');
     expect(view.kcalProgress()).toBeCloseTo(0.415, 5);
   });
 
@@ -101,9 +102,11 @@ describe('FoodViewService', () => {
 
     expect(view.kcalEaten()).toBe(2830);
     expect(view.kcalRemaining()).toBe(-830);
-    expect(view.kcalLeft()).toBe(0);
+    expect(view.kcalLeftText()).toBe('0');
+    expect(view.eatenOfGoalText()).toBe('2.830 spist · mål 2.000');
     expect(view.kcalProgress()).toBe(1);
     expect(view.macroCards()[1]?.percentLabel).toBe('100%');
+    expect(view.mealGroups()[3]?.kcalText).toBe('2.000 kcal');
   });
 
   it("sums the API's exact values and rounds them once for the screen", () => {

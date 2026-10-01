@@ -38,6 +38,7 @@ import { CUSTOM_FOOD_ID_PREFIX, FoodLogService } from '../../../core/services/fo
 import { FoodSearchService } from '../../../core/services/food-search/food-search';
 import { injectTranslate } from '../../../core/services/language/translate';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
+import { formatInteger } from '../../../core/utils/date-format';
 import { normalizeName } from '../../../core/utils/name';
 import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiButton } from '../ui-button/ui-button';
@@ -91,7 +92,8 @@ interface ResultRow {
 
 interface PortionStat {
   readonly label: string;
-  readonly value: number;
+  /** Whole number as shown, `'1.600'`. */
+  readonly value: string;
   readonly accent: boolean;
 }
 
@@ -314,7 +316,7 @@ export class FoodPicker {
         carbs: Math.round(item.carbs),
         fat: Math.round(item.fat),
       }),
-      kcal: this.t('shared.foodPicker.kcalAmount', { kcal: Math.round(item.kcal) }),
+      kcal: this.t('shared.foodPicker.kcalAmount', { kcal: formatInteger(item.kcal) }),
     })),
   );
   protected readonly hasNoMatches = computed(() => this.results().length === 0);
@@ -396,7 +398,7 @@ export class FoodPicker {
         return this.t(FIELD_ERROR_KEY.kcalMin);
       }
       return kcal.hasError('max')
-        ? this.t(FIELD_ERROR_KEY.kcalTooLarge, { max: FOOD_LOG_MAX_KCAL })
+        ? this.t(FIELD_ERROR_KEY.kcalTooLarge, { max: formatInteger(FOOD_LOG_MAX_KCAL) })
         : null;
     };
     const macroError = (control: FormControl<number | null>): string | null => {
@@ -465,7 +467,7 @@ export class FoodPicker {
       ? this.t('shared.foodPicker.baseLabel', {
           quantity: item.quantity,
           // A logged row being edited has the API's exact values.
-          kcal: Math.round(item.kcal),
+          kcal: formatInteger(item.kcal),
         })
       : '';
   });
@@ -505,10 +507,14 @@ export class FoodPicker {
   protected readonly stats = computed<readonly PortionStat[]>(() => {
     const macros = this.scaled();
     return [
-      { label: this.t(STAT_LABEL_KEY.kcal), value: macros.kcal, accent: true },
-      { label: this.t(STAT_LABEL_KEY.protein), value: macros.protein, accent: false },
-      { label: this.t(STAT_LABEL_KEY.carbs), value: macros.carbs, accent: false },
-      { label: this.t(STAT_LABEL_KEY.fat), value: macros.fat, accent: false },
+      { label: this.t(STAT_LABEL_KEY.kcal), value: formatInteger(macros.kcal), accent: true },
+      {
+        label: this.t(STAT_LABEL_KEY.protein),
+        value: formatInteger(macros.protein),
+        accent: false,
+      },
+      { label: this.t(STAT_LABEL_KEY.carbs), value: formatInteger(macros.carbs), accent: false },
+      { label: this.t(STAT_LABEL_KEY.fat), value: formatInteger(macros.fat), accent: false },
     ];
   });
   protected readonly chipValues = computed<readonly number[]>(() => {

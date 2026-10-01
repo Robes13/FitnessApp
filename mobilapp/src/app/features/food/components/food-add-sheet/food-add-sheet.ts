@@ -20,7 +20,7 @@ import { CollectionsService } from '../../../../core/services/collections/collec
 import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { toApiError } from '../../../../core/utils/api';
-import { formatGrams } from '../../../../core/utils/date-format';
+import { formatGrams, formatInteger } from '../../../../core/utils/date-format';
 import {
   FoodPicker,
   FoodPickerCtaVerb,
@@ -74,7 +74,8 @@ interface CollectionRowView {
   readonly name: string;
   /** The design's `ac.sub`: the names of the foods in the collection. */
   readonly subtitle: string;
-  readonly kcal: number;
+  /** Whole kcal as shown, `'1.600'`. */
+  readonly kcal: string;
   readonly kcalLabel: string;
   /** Spec 3.2 "vis næring": kcal, protein, carbs and fat – shown before the collection is logged. */
   readonly totalsLabel: string;
@@ -215,7 +216,7 @@ export class FoodAddSheet {
   );
   protected readonly logLabel = computed(() =>
     this.t(LOG_COLLECTION_KEY, {
-      kcal: this.chosen()?.kcal ?? 0,
+      kcal: this.chosen()?.kcal ?? formatInteger(0),
       mealName: this.mealLabel().toLowerCase(),
     }),
   );
@@ -273,7 +274,7 @@ export class FoodAddSheet {
   /** A collection always has 1–50 items (the API's rule). */
   private toRow(collection: FoodCollection): CollectionRowView {
     const totals = this.collections.collectionTotals(collection);
-    const kcal = Math.round(totals.kcal);
+    const kcal = formatInteger(totals.kcal);
     return {
       id: collection.id,
       name: collection.name,

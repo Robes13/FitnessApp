@@ -207,6 +207,19 @@ describe('FoodPicker', () => {
       expect(text('.food-picker__result-kcal')).toBe('62 kcal');
     });
 
+    it('writes kcal from 1000 up with a thousands separator, in the list and the portion', async () => {
+      const { click, text, texts } = await setup({
+        prepare: () => flushTestFoodLog([own(9, 'Festmåltid', [1600, 85, 120, 60], PIECE)]),
+      });
+
+      expect(text('.food-picker__result-kcal')).toBe('1.600 kcal');
+
+      await click('.food-picker__result');
+
+      expect(text('.food-picker__subtitle')).toBe('Standard: 1 stk · 1.600 kcal');
+      expect(texts('.food-picker__stat-value')).toEqual(['1.600', '85', '120', '60']);
+    });
+
     it('shows only the matching foods for a search', async () => {
       const { root, typeInto, texts, text } = await setup({ prepare: seedOwnFoods });
 
@@ -425,7 +438,7 @@ describe('FoodPicker', () => {
       await typeInto(root.querySelector<HTMLInputElement>('.food-picker__amount-field'), '30000');
 
       // What the API logs: 30000 ml × 10.6 / 100 – not 35 × 30000 / 330 = 3182.
-      expect(texts('.food-picker__stat-value')).toEqual(['12600', '0', '3180', '0']);
+      expect(texts('.food-picker__stat-value')).toEqual(['12.600', '0', '3.180', '0']);
     });
 
     it('only changes the amount – there are no macro fields', async () => {
@@ -552,7 +565,7 @@ describe('FoodPicker', () => {
     );
 
     it.each<[string, string, string, number, string, string, string]>([
-      ['more than 9999 kcal', '1', 'stk', 2, '10000', 'Kalorier', 'Højst 9999 kcal pr. portion.'],
+      ['more than 9999 kcal', '1', 'stk', 2, '10000', 'Kalorier', 'Højst 9.999 kcal pr. portion.'],
       [
         'more than 999 g of a macro',
         '1',

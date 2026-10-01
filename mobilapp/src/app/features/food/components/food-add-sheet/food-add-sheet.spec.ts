@@ -154,7 +154,7 @@ describe('FoodAddSheet', () => {
   describe('the Samlinger tab', () => {
     const LOG_URL = '/api/v1/me/meal-collections/3/log';
 
-    async function openTab(): Promise<Setup> {
+    async function openTab([first, second] = [60, 40]): Promise<Setup> {
       const result = await setup(undefined, [], () => {
         flushTestFoodLog([
           testFood({
@@ -168,8 +168,8 @@ describe('FoodAddSheet', () => {
         ]);
         flushTestCollections([
           testCollection(3, 'Meal prep', [
-            { foodId: 1, foodName: 'Havregryn', quantity: 60, unit: 'Gram' },
-            { foodId: 1, foodName: 'Havregryn', quantity: 40, unit: 'Gram' },
+            { foodId: 1, foodName: 'Havregryn', quantity: first, unit: 'Gram' },
+            { foodId: 1, foodName: 'Havregryn', quantity: second, unit: 'Gram' },
           ]),
         ]);
       });
@@ -213,6 +213,17 @@ describe('FoodAddSheet', () => {
         '370 kcal · 13 g protein · 60 g kulhydrat · 7 g fedt',
       );
       expect(sheet.text('.food-add-sheet__confirm-log')).toBe('Log 370 kcal under morgenmad');
+    });
+
+    it('writes kcal from 1000 up with a thousands separator', async () => {
+      const sheet = await openTab([600, 400]);
+
+      expect(sheet.texts('.food-add-sheet__collection-end')).toEqual(['3.700 kcal']);
+      await choose(sheet);
+      expect(sheet.text('.food-add-sheet__confirm-totals')).toBe(
+        '3.700 kcal · 130 g protein · 600 g kulhydrat · 70 g fedt',
+      );
+      expect(sheet.text('.food-add-sheet__confirm-log')).toBe('Log 3.700 kcal under morgenmad');
     });
 
     it('goes back to the list without logging on "Fortryd"', async () => {

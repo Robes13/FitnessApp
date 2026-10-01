@@ -61,6 +61,19 @@ describe('CollectionsViewService', () => {
     ]);
   });
 
+  it('writes kcal from 1000 up with a thousands separator', () => {
+    flushTestFoodLog([
+      testFood({ foodId: 1, name: 'Tunsalat', caloriesPer100: 120, proteinPer100: 14 }),
+    ]);
+    flushTestCollections([
+      testCollection(4, 'Fest', [
+        { foodId: 1, foodName: 'Tunsalat', quantity: 1000, unit: 'Gram' },
+      ]),
+    ]);
+
+    expect(view.entries()[0]?.macrosText).toBe('1.200 kcal · 140 g protein');
+  });
+
   it('looks up a bundle id and sums its items', () => {
     loadMealPrep();
 

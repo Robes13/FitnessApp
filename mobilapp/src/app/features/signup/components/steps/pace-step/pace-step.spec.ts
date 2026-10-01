@@ -70,6 +70,6 @@ describe('PaceStep', () => {
     cards()[2]?.click();
     fixture.detectChanges();
 
-    expect(summary()).toBe('Hurtigt · 1 kg/uge svarer til ca. 1100 kcal ekstra om dagen.');
+    expect(summary()).toBe('Hurtigt · 1 kg/uge svarer til ca. 1.100 kcal ekstra om dagen.');
   });
 });

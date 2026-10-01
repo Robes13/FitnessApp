@@ -96,7 +96,8 @@ logges under et skjult måltid.
 | Ellers                        | neutral (`surface-2`)        | _Passer fint ind. N kcal tilbage bagefter._                                                 |
 
 `buildScanVerdict(t, kcalRemaining, item)` er eksporteret og testet for sig; teksterne ligger
-under `shared.barcodeScanner.verdict*` i oversættelsesfilerne.
+under `shared.barcodeScanner.verdict*` i oversættelsesfilerne. N, fliserne, nøgletallene og
+grænsen i mængdefejlen skrives med `formatInteger` (`'2.245 kcal'`, `'… mellem 1 og 5.000 g.'`).
 
 ## Beslutninger
 

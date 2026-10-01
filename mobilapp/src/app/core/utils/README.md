@@ -33,6 +33,12 @@ følger appens sprog via signalet `numberLocale`, som `LanguageService` sætter 
 tal, genberegnes ved sprogskift. Kun det typografiske minus i `formatSignedDecimal` sættes
 bagefter, fordi `Intl` bruger en almindelig bindestreg. Eksemplerne ovenfor er på dansk.
 
+Hele tal, der vises – kcal, skridt og grænserne i fejlbeskeder (`'Højst 9.999 kcal pr.
+portion.'`, `'… mellem 0 og 50.000 skridt.'`) – går altid gennem `formatInteger` (den afrunder
+selv), også når de sendes som parameter til en oversættelse, så tusindtalsseparatoren er ens på
+alle skærme. Undtagelsen er en vares `quantity` (`'1500 g'`): den er data, som
+`NutritionCalculator.parseQuantity` læser tilbage, og formateres derfor ikke.
+
 ## `api.ts`
 
 Det fælles HTTP-lag for alle domæner:

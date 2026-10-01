@@ -265,7 +265,7 @@ export class HistoryService {
           kind: 'mad',
           title: food.name,
           subtitle: mealLabel(this.t, meal),
-          value: this.t('history.entries.mealValue', { kcal: Math.round(food.kcal) }),
+          value: this.t('history.entries.mealValue', { kcal: formatInteger(food.kcal) }),
           food,
           meal,
         };
