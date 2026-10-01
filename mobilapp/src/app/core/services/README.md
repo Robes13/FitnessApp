@@ -23,7 +23,7 @@ Hver service har sin egen mappe med implementering og tests. Tilhørende adapter
 | `barcode-scanner/barcode-scanner.ts`           | `BarcodeScannerService` + `BARCODE_SCANNER_PLATFORM`   | Kameraet via `@capacitor-mlkit/barcode-scanning` bag interfacet `BarcodeScannerPlatform`. `scan()` kaster aldrig, men giver et `BarcodeScanOutcome` (`scanned`, `cancelled`, `permission-denied`, `unreadable`, `module-installing`, `unavailable`). `canScan` er `false` i browseren. `openSettings()`, og `recordScan()` tæller opslag til badget.                                               |
 | `product-lookup/product-lookup.ts`             | `ProductLookupService`                                 | `lookup(barcode)` → `ProductLookupResult` (`found` / `not-found` / `error`). Open Food Facts API v2 via `HttpClient`, timeout `PRODUCT_LOOKUP_TIMEOUT_MS`, mapper `OpenFoodFactsProductResponse` til `ScannedProduct` (makroer pr. 100 g, `servingGrams`). Cacher fundne varer lokalt og spørger cachen først.                                                                                     |
 | `barcode-flow/barcode-flow.ts`                 | `BarcodeFlowService`                                   | Facade for stregkodescanneren i `shared/`: `scan`, `lookup` (tæller én scanning pr. opslag), `scale` (varen skaleret til en mængde i dens egen enhed). Holder domænelogikken ude af den delte komponent. Logges en scannet vare, opretter `FoodLogService.ensureFood` den.                                                                                                                         |
-| `weight-log/weight-log.ts`                     | `WeightLogService`                                     | Vejninger nyeste først, `latest`, `weighedToday`, `add`/`update`/`remove` (højst én pr. dag), `entriesWithin`, grafens punkter (`seriesFor`). Holder profilens vægt lig seneste vejning.                                                                                                                                                                                                           |
+| `weight-log/weight-log.ts`                     | `WeightLogService`                                     | Vejningerne fra API'et (`SessionDataStore`, `status`): nyeste først, `latest`, `weighedToday`, `add` (`POST`; 409 → `{ kind: 'exists', id }`), `update` (`PATCH`), `remove` (`DELETE`), `entriesWithin`, grafens punkter (`seriesFor`). Holder profilens vægt lig nyeste vejning og genindlæser målet efter hver ændring.                                                                          |
 | `reminders/reminders.ts`                       | `ReminderService`                                      | Brugerens påmindelser (morgenmad, frokost, aftensmad, vejning, dagens madlog): `settings`, `update`, `setMasterEnabled`, `requestPermission`, `permission`, `isDelivering`, `sync`. Planlægger lokale notifikationer via `REMINDER_NOTIFIER`.                                                                                                                                                      |
 | `reminders/reminder-notifier.ts`               | `REMINDER_NOTIFIER` + `CapacitorReminderNotifier`      | Tynd adapter om `@capacitor/local-notifications` bag interfacet `ReminderNotifier`, så `ReminderService` kan testes med en fake. Utilgængelig i browseren. Planlægger altid med `isExactNotification: false` (se "Påmindelser").                                                                                                                                                                   |
 | `keyboard/keyboard.ts`                         | `KeyboardService`                                      | Skærmtastaturets tilstand: `isOpen` og `inset`. Skriver `--keyboard-inset` og `data-keyboard="open"` på `<html>`, så app-roden krymper over tastaturet i stedet for at WebView'et skubbes, og scroller det fokuserede felt frem i sit eget scroll-område. Se "Tastaturet" i rod-README'en.                                                                                                         |
@@ -38,7 +38,7 @@ Hver service har sin egen mappe med implementering og tests. Tilhørende adapter
 SessionService ──► AuthApi ──► HttpClient (+ authInterceptor ──► SessionService, ved kald)
       └──────────► UserProfileService ──► HttpClient, NutritionCalculator
 SessionDataService ► SessionService, SESSION_DATA_STORES
-WeightLogService ► UserProfileService
+WeightLogService ► HttpClient, UserProfileService
 FoodLogService ► HttpClient, ProductLookupService, NutritionCalculator
 FoodSearchService ► FoodLogService
 BarcodeFlowService ► BarcodeScannerService, ProductLookupService, NutritionCalculator
@@ -78,8 +78,17 @@ stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under
   `hasCustomFoodNamed` først; `DuplicateCustomFoodNameError` er reserven. `addCustomFood`
   genbruger en katalogvare med samme navn (som `ensureFood`), så et nyt forsøg efter en fejlet
   serving kun opretter servingen.
-- **Højst én vejning pr. dag.** `add` på en dag med vejninger genbruger den nyeste vejnings id
-  og fjerner alle andre fra samme dag (ældre data kan have flere).
+- **Vejninger** (plan-v2 P16). `load()` henter kun listen (`GET me/weight-logs?limit=100`, nyeste
+  først, ikke `latest`) og følger `nextCursor` med `fetchAllPages`, så Hjems målfremskridt og
+  "kg tabt"-præstationerne har den allerførste vejning – ét kald, til brugeren har over 100;
+  `weightKg` sætter profilens `load()`. API'et tillader én vejning pr. kalenderdag i profilens
+  tidszone: `add(kg)` sender altid `POST { weight, recordedAt: nu }` og svarer ved 409
+  `{ kind: 'exists', id }` ud fra `existingWeightLogId` (læst med `readProblemBody`, så også
+  CapacitorHttps streng-body virker) – der overskrives **aldrig** automatisk; skærmen spørger og
+  kalder `update(id, kg, nu)`. Pessimistisk: listen ændres først efter API'ets svar. Efter hver
+  ændring sættes `weightKg` til den nyeste vejning (ingen tilbage → `GET me/weight-logs/latest` =
+  startvægten), og `reloadGoal()` henter målet, API'et har genberegnet. `reset()` rydder kun
+  hukommelsen.
 - **`AuthApi` er en tynd HTTP-klient.** Én metode pr. endpoint i `AUTH_ENDPOINT`, bodies som
   `models/auth.ts`, og `mapApiError(resolver)` gør alle fejl til en `ApiError` med en
   oversættelsesnøgle (fx 409 → "brugernavn/e-mail optaget", skelnet på API'ets engelske

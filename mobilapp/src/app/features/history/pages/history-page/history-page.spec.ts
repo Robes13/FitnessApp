@@ -1,8 +1,13 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
-import { TEST_FOOD, testFood, testFoodLog, weighEntry } from '../../../../core/testing/fixtures';
+import {
+  TEST_FOOD,
+  flushTestWeighIns,
+  testFood,
+  testFoodLog,
+  weightLogDto,
+} from '../../../../core/testing/fixtures';
 import {
   TEST_NOW,
   provideComponentTestEnvironment,
@@ -12,8 +17,8 @@ import { HistoryPage } from './history-page';
 
 /**
  * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`,
- * a frozen `NOW`. The app doesn't seed anything itself, so storage is filled here with the
- * weigh-ins, and the meal is put into the food log.
+ * a frozen `NOW`. The app doesn't seed anything itself, so the weigh-ins (via the API) and
+ * the meal are given to the stores here.
  */
 
 function rootOf(fixture: ComponentFixture<HistoryPage>): HTMLElement {
@@ -28,19 +33,18 @@ function textsOf(fixture: ComponentFixture<HistoryPage>, selector: string): read
 
 describe('HistoryPage', () => {
   beforeEach(() => {
-    resetComponentTestStorage({
-      [STORAGE_KEY.WEIGHT_LOG]: [
-        weighEntry('w-1', 75, 0, TEST_NOW),
-        weighEntry('w-2', 75.6, 1, TEST_NOW),
-        weighEntry('w-3', 76.1, 3, TEST_NOW),
-      ],
-    });
+    resetComponentTestStorage();
   });
 
   function setup(): ComponentFixture<HistoryPage> {
     TestBed.configureTestingModule({
       providers: provideComponentTestEnvironment(),
     });
+    flushTestWeighIns([
+      weightLogDto(1, 75, 0, TEST_NOW),
+      weightLogDto(2, 75.6, 1, TEST_NOW),
+      weightLogDto(3, 76.1, 3, TEST_NOW),
+    ]);
     TestBed.inject(FoodLogService).addLogs([testFoodLog(TEST_FOOD, 'aften')]);
     const fixture = TestBed.createComponent(HistoryPage);
     fixture.detectChanges();

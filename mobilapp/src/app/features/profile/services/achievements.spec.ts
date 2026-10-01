@@ -1,10 +1,13 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { addDays } from '../../../core/utils/date-format';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
-import { WeightLogService } from '../../../core/services/weight-log/weight-log';
-import { flushTestGoal, testFoodLog } from '../../../core/testing/fixtures';
+import {
+  flushTestGoal,
+  flushTestWeighIns,
+  testFoodLog,
+  weightLogDto,
+} from '../../../core/testing/fixtures';
 import { TEST_NOW, provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { Achievement, AchievementsService } from './achievements';
 
@@ -23,14 +26,12 @@ describe('AchievementsService', () => {
     achievements: AchievementsService;
     profiles: UserProfileService;
     foodLog: FoodLogService;
-    weightLog: WeightLogService;
   } {
     TestBed.configureTestingModule({ providers: provideCoreTestEnvironment() });
     return {
       achievements: TestBed.inject(AchievementsService),
       profiles: TestBed.inject(UserProfileService),
       foodLog: TestBed.inject(FoodLogService),
-      weightLog: TestBed.inject(WeightLogService),
     };
   }
 
@@ -54,11 +55,11 @@ describe('AchievementsService', () => {
   });
 
   it('marks the first weigh-in as missing until the user has weighed', () => {
-    const { achievements, weightLog } = setup();
+    const { achievements } = setup();
 
     expect(badge(achievements.achievements(), 'first-weigh').progressLabel).toBe('Mangler');
 
-    weightLog.add(74.2);
+    flushTestWeighIns([weightLogDto(1, 74.2, 0, TEST_NOW)]);
     const weigh = badge(achievements.achievements(), 'first-weigh');
 
     expect(weigh.complete).toBe(true);
@@ -88,13 +89,13 @@ describe('AchievementsService', () => {
   });
 
   it('starts the kilo badges at nothing lost and writes kilos with a Danish comma', () => {
-    const { achievements, weightLog } = setup();
+    const { achievements, profiles } = setup();
 
     expect(badge(achievements.achievements(), 'lost-2').progressLabel).toBe('0/2 kg');
 
-    // One weigh-in per day: yesterday's 76 kg and today's 74.8 kg.
-    weightLog.add(76, addDays(TEST_NOW, -1));
-    weightLog.add(74.8);
+    // One weigh-in per day: yesterday's 76 kg and today's 74.8 kg – the profile's weight.
+    flushTestWeighIns([weightLogDto(2, 74.8, 0, TEST_NOW), weightLogDto(1, 76, 1, TEST_NOW)]);
+    profiles.update({ weightKg: 74.8 });
 
     expect(badge(achievements.achievements(), 'lost-2').progressLabel).toBe('1,2/2 kg');
     expect(badge(achievements.achievements(), 'lost-5').progressLabel).toBe('1,2/5 kg');

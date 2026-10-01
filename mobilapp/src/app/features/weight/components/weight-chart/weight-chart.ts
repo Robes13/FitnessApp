@@ -37,9 +37,9 @@ export class WeightChart {
   readonly seriesKg = input.required<readonly number[]>();
   readonly goalWeightKg = input.required<number>();
   readonly goalWeightText = input.required<string>();
-  /** `'Sidste 4 uger'`. */
+  /** `'Sidste 3 uger'`. */
   readonly rangeLabel = input.required<string>();
-  /** `'-4 uger'` – the footer's left-hand label. */
+  /** `'-3 uger'` – the footer's left-hand label. */
   readonly rangeStartLabel = input.required<string>();
   /** `'−2,6 kg'`. */
   readonly deltaText = input.required<string>();
