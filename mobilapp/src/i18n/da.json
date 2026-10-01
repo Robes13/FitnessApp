@@ -412,7 +412,9 @@
       "toGoal": "Til mål"
     },
     "page": {
-      "profileAriaLabel": "Profil"
+      "profileAriaLabel": "Profil",
+      "loadError": "Dine data kunne ikke hentes.",
+      "retry": "Prøv igen"
     },
     "summary": {
       "dayTitle": {
@@ -444,12 +446,11 @@
         "weighTitle": "Husk at veje dig i dag"
       },
       "weekNote": {
-        "empty": "Ingen dage logget i denne uge endnu.",
+        "empty": "Ingen dage logget de seneste 7 dage.",
         "solid": "Solid uge. Protein er det, der løfter resten.",
         "strong": "Stærk uge – bliv ved.",
         "uneven": "Ujævn uge. Sæt et enkelt mål: ram protein i morgen."
-      },
-      "weekProgress": "Dag {{dayNumber}} af 7"
+      }
     },
     "todoCard": {
       "caption": "Næste skridt"
@@ -467,13 +468,19 @@
     },
     "weekCard": {
       "averageKcal": "kcal i snit",
-      "caption": "Denne uge",
+      "caption": "Seneste 7 dage",
       "daysOnTarget": "dage i mål",
       "proteinHit": "protein ramt",
       "streak": "streak"
     },
     "weekRings": {
-      "ariaLabel": "Ugens dage"
+      "ariaLabel": "De seneste 7 dage"
+    },
+    "monthSheet": {
+      "kcal": "{{eaten}} / {{goal}} kcal",
+      "macros": "P {{protein}} g · K {{carbs}} g · F {{fat}} g",
+      "open": "Se de seneste 30 dage",
+      "title": "Seneste 30 dage"
     }
   },
   "weight": {

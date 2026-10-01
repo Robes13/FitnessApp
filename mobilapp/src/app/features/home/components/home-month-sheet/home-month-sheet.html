@@ -1,0 +1,21 @@
+<app-ui-sheet
+  [open]="open()"
+  [title]="'home.monthSheet.title' | translate"
+  maxHeight="medium"
+  scrollable
+  (closed)="closed.emit()"
+>
+  <ul class="home-month-sheet__days">
+    @for (row of rows(); track row.id) {
+      <li class="home-month-sheet__day">
+        <span class="home-month-sheet__label">{{ row.label }}</span>
+        <span class="home-month-sheet__values">
+          <span class="home-month-sheet__kcal">{{ row.kcalText }}</span>
+          @if (row.macroText) {
+            <span class="home-month-sheet__macros">{{ row.macroText }}</span>
+          }
+        </span>
+      </li>
+    }
+  </ul>
+</app-ui-sheet>

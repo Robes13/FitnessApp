@@ -81,10 +81,6 @@
     font-weight: var(--font-weight-medium);
     color: var(--color-text-secondary);
 
-    &--future {
-      color: var(--color-text-inactive);
-    }
-
     &--selected {
       font-weight: var(--font-weight-bold);
       color: var(--color-text);

@@ -3,7 +3,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { UiCard } from '../../../../shared/components/ui-card/ui-card';
 import { WeekSummary } from '../../services/home-summary';
 
-/** "Denne uge": days on target, average kcal, protein hit, and streak – plus a short summary. */
+/** "Seneste 7 dage": days on target, average kcal, protein hit, and streak – plus a short summary. */
 @Component({
   selector: 'app-home-week-card',
   imports: [UiCard, TranslatePipe],

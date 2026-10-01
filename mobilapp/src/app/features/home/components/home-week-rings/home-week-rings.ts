@@ -10,8 +10,8 @@ import { injectTranslate } from '../../../../core/services/language/translate';
 import { WeekRing } from '../../services/home-summary';
 
 /**
- * The week's seven day rings. Each ring shows the day's share of the calorie goal; today
- * has an orange dot in the center, and the selected day gets a thin orange outer ring.
+ * The last seven days' rings, today last. Each ring shows the day's share of the calorie
+ * goal; today has an orange dot in the center, and the selected day gets a thin orange outer ring.
  * When the daily goal is celebrated, today's ring closes with a pop and a green halo.
  */
 @Component({
