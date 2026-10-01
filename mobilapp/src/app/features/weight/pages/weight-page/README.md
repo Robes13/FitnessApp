@@ -11,8 +11,9 @@
 
 ## Opbygning
 
-1. Overskrift "Registrér **vægt**" og "Sidst vejet …" (uden vejninger: "Startvægt fra
-   registreringen") til højre. Mens vejningerne eller profilen indlæses, står der kun en spinner
+1. Overskrift "Registrér **vægt**" og "Sidst vejet i dag" / "… i går" / "… 18. sep" (ældre
+   vejninger med dato, som i sletteadvarslen; uden vejninger: "Startvægt fra registreringen") til
+   højre. Mens vejningerne eller profilen indlæses, står der kun en spinner
    under overskriften; fejler en af dem, en besked og "Prøv igen".
 2. Kladdevægten som stort orange tal (mindre trin fra 100 kg) med nøgletallene
    "Siden sidst" og "Til mål" under sig – og badevægt-scenen til højre.

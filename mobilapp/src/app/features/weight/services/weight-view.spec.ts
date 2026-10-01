@@ -60,7 +60,7 @@ describe('WeightViewService', () => {
     expect(view.deltaTone()).toBe('muted');
     expect(view.goalWeightKg()).toBe(70);
     expect(view.toGoalText()).toBe('5,0');
-    expect(view.lastWeighLabel()).toBe('Sidst vejet 3 dage siden');
+    expect(view.lastWeighLabel()).toBe('Sidst vejet 18. sep');
     expect(view.loadStatus()).toBe('ready');
   });
 
