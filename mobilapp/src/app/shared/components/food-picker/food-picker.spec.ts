@@ -445,7 +445,7 @@ describe('FoodPicker', () => {
         [42, 0, 10.6, 0],
         [{ foodServingId: 1, unit: 'Milliliter', gramsPerUnit: 1 }],
       );
-      const { root, typeInto, texts } = await setup({
+      const { root, typeInto, text, texts } = await setup({
         prepare: () => flushTestFoodLog([cola]),
         // The logged row: 330 ml with 34.98 g carbs, shown as 35.
         configure: (h) =>
@@ -461,6 +461,8 @@ describe('FoodPicker', () => {
       });
 
       expect(texts('.food-picker__stat-value')).toEqual(['139', '0', '35', '0']);
+      // "Standard" is the food's own portion, not the logged amount.
+      expect(text('.food-picker__subtitle')).toBe('Standard: 100 ml · 42 kcal');
       await typeInto(root.querySelector<HTMLInputElement>('.food-picker__amount-field'), '30000');
 
       // What the API logs: 30000 ml × 10.6 / 100 – not 35 × 30000 / 330 = 3182.

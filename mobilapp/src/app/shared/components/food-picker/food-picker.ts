@@ -473,12 +473,12 @@ export class FoodPicker {
     return amount == null ? '' : String(amount);
   });
   protected readonly portionName = computed(() => this.portionItem()?.name ?? '');
+  /** "Standard": the food's own portion from the catalogue – also when a logged row is edited. */
   protected readonly baseLabel = computed(() => {
-    const item = this.portionItem();
+    const item = this.scaleBase();
     return item
       ? this.t('shared.foodPicker.baseLabel', {
           quantity: formatQuantity(this.t, item.quantity),
-          // A logged row being edited has the API's exact values.
           kcal: formatInteger(item.kcal),
         })
       : '';
