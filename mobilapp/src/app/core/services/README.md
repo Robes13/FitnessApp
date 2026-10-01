@@ -198,8 +198,9 @@ stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under
 `StorageService.write()` returnerer, om lagringen lykkedes.
 
 `SessionService.deleteAccount()` (GDPR) sletter først kontoen i API'et (`DELETE /me`). **Kun
-efter et 204** kalder den `StorageService.clearAll()` og genindlæser appen på login med
-`document.location.replace`; ved en fejl slettes intet lokalt. `withdrawConsent()` (spec 9.2-3b)
+efter et 204** kalder den `StorageService.clearAll(DEVICE_STORAGE_KEYS)` – tema og sprog er
+enhedsindstillinger (plan-v2 P9) og bevares, så login-skærmen beholder brugerens sprog – og
+genindlæser appen på login med `document.location.replace`; ved en fejl slettes intet lokalt. `withdrawConsent()` (spec 9.2-3b)
 gør det samme efter `POST me/consents/Terms/withdraw`: vilkårene omfatter behandlingen af
 sundheds- og profildata, så API'et sletter og anonymiserer kontoen. Begge deler `wipeAndRestart()`. Genindlæsningen starter alle
 root-stores forfra som gæst på én gang. Sessionen ændres bevidst ikke i hukommelsen først: så
