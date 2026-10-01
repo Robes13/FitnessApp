@@ -78,7 +78,8 @@ let nextFoodLogId = 1;
 
 /**
  * `food` logged under `meal` as the API returns it: `quantity` and the macros as consumed.
- * Put it into the store with `FoodLogService.addLogs()`. Every row gets its own `foodLogId`.
+ * Put it into the store with `FoodLogService.addLogs()`. Every row gets its own `foodLogId`; read
+ * it from the row, never assume a number – the counter is shared by all spec files (non-isolated).
  */
 export function testFoodLog(
   food: FoodItem,

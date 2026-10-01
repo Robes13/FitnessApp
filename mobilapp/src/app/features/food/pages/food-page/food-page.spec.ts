@@ -217,7 +217,10 @@ describe('FoodPage', () => {
 
     await click(page.querySelector('.food-meal-group__remove'));
     await click(buttonByText('Ja, fjern varen'));
-    const request = http.expectOne({ method: 'DELETE', url: `${FOOD_LOGS_URL}/1` });
+    const request = http.expectOne({
+      method: 'DELETE',
+      url: `${FOOD_LOGS_URL}/${breakfast.foodLogId}`,
+    });
     expect(buttonByText('Ja, fjern varen')?.getAttribute('aria-busy')).toBe('true');
     request.flush(null, { status: 204, statusText: 'No Content' });
     await settle();
@@ -232,7 +235,7 @@ describe('FoodPage', () => {
     await click(page.querySelector('.food-meal-group__remove'));
     await click(buttonByText('Ja, fjern varen'));
     http
-      .expectOne({ method: 'DELETE', url: `${FOOD_LOGS_URL}/1` })
+      .expectOne({ method: 'DELETE', url: `${FOOD_LOGS_URL}/${breakfast.foodLogId}` })
       .flush(null, { status: 404, statusText: 'Not Found' });
     await settle();
 
@@ -296,14 +299,14 @@ describe('FoodPage', () => {
     await click(page.querySelectorAll('.food-picker__stepper')[1]);
     await click(page.querySelector('.food-picker__confirm'));
 
-    const request = http.expectOne({ method: 'PATCH', url: `${FOOD_LOGS_URL}/2` });
+    const request = http.expectOne({ method: 'PATCH', url: `${FOOD_LOGS_URL}/${lunch.foodLogId}` });
     expect(request.request.body).toEqual({ quantity: 2, unit: 'Serving' });
     request.flush({ ...lunch, quantity: 2, caloriesConsumed: 900 });
     await settle();
 
     const entry = TestBed.inject(FoodLogService)
       .entries()
-      .find((candidate) => candidate.logId === '2');
+      .find((candidate) => candidate.logId === String(lunch.foodLogId));
     expect(entry).toMatchObject({ quantity: '2 portion', kcal: 900, meal: 'frokost' });
   });
 
