@@ -15,12 +15,13 @@ afbrydes den. Servicen oprettes af en app initializer i `app.config.ts`.
 
 `SESSION_DATA_STORES` indeholder som standard:
 
-| Store                | Status                                                            |
-| -------------------- | ----------------------------------------------------------------- |
-| `UserProfileService` | API-baseret (profil, mål, indstillinger, seneste vægt)            |
-| `WeightLogService`   | No-op-stub (`load()` = `of(undefined)`) – API-baseret fra bølge 2 |
-| `FoodLogService`     | API-baseret (katalog og madlog for 90 dage)                       |
-| `CollectionsService` | API-baseret (samlinger; næringen fra madloggens katalog)          |
+| Store                   | Status                                                             |
+| ----------------------- | ------------------------------------------------------------------ |
+| `UserProfileService`    | API-baseret (profil, mål, indstillinger, seneste vægt)             |
+| `WeightLogService`      | No-op-stub (`load()` = `of(undefined)`) – API-baseret fra bølge 2  |
+| `FoodLogService`        | API-baseret (katalog og madlog for 90 dage)                        |
+| `CollectionsService`    | API-baseret (samlinger; næringen fra madloggens katalog)           |
+| `BarcodeScannerService` | Lokal (scanningstælleren til badget; læses fra storage i `load()`) |
 
 `ReminderService` er bevidst **ikke** med: den oprettes efter sprogets app initializer.
 

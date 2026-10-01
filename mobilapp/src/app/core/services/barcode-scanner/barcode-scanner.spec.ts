@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom } from 'rxjs';
 import { BARCODE_PLUGIN_ERROR } from '../../constants/barcode';
 import { STORAGE_KEY } from '../../constants/storage-key';
 import { BarcodeScannerPlatform, CameraPermission } from '../../models/barcode';
@@ -138,14 +139,28 @@ describe('BarcodeScannerService', () => {
     expect(platform.calls).toEqual(['settings']);
   });
 
-  it('counts and persists the scans, continuing the stored count', () => {
+  it('counts and persists the scans, continuing the count stored when it loads', async () => {
     storage.setItem(STORAGE_KEY.SCAN_COUNT, '1');
     const scanner = setup();
+    // Read on `load()` (the session is authenticated), not at construction.
+    expect(scanner.scanCount()).toBe(0);
+    await firstValueFrom(scanner.load());
 
     scanner.recordScan();
     scanner.recordScan();
 
     expect(scanner.scanCount()).toBe(3);
     expect(storage.getItem(STORAGE_KEY.SCAN_COUNT)).toBe('3');
+  });
+
+  it('forgets the count in memory on reset and leaves the stored one alone', async () => {
+    storage.setItem(STORAGE_KEY.SCAN_COUNT, '6');
+    const scanner = setup();
+    await firstValueFrom(scanner.load());
+
+    scanner.reset();
+
+    expect(scanner.scanCount()).toBe(0);
+    expect(storage.getItem(STORAGE_KEY.SCAN_COUNT)).toBe('6');
   });
 });

@@ -1,5 +1,6 @@
 import { Injectable, InjectionToken, effect, inject, untracked } from '@angular/core';
 import { Observable } from 'rxjs';
+import { BarcodeScannerService } from '../barcode-scanner/barcode-scanner';
 import { CollectionsService } from '../collections/collections';
 import { FoodLogService } from '../food-log/food-log';
 import { SessionService } from '../session/session';
@@ -34,6 +35,7 @@ export const SESSION_DATA_STORES = new InjectionToken<readonly SessionDataStore[
       inject(WeightLogService),
       inject(FoodLogService),
       inject(CollectionsService),
+      inject(BarcodeScannerService),
     ],
   },
 );
