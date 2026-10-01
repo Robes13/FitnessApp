@@ -38,3 +38,10 @@ tomt eller halvt indtastet tidspunkt ignoreres, så det sidst gyldige bliver st�
 
 Slår brugeren en påmindelse til, spørger `ReminderService` selv om lov, hvis det ikke er
 besvaret. Fejl fra planlægningen vises med `app-ui-form-error`.
+
+"Slå notifikationer til" gemmer hovedkontakten i API'et (`ReminderService.setMasterEnabled(true)`
+= `PUT me/settings/Notifications`). Knappen viser en spinner, mens kaldet kører; fejler det,
+bliver beskeden stående, og fejlen vises i samme `app-ui-form-error`.
+
+Valgene er bevidst kun gemt på enheden (se "Påmindelser" i
+[`core/services/README.md`](../../../../core/services/README.md)).

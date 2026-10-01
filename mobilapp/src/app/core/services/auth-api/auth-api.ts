@@ -1,7 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { AUTH_ENDPOINT, ME_ENDPOINT } from '../../constants/auth';
+import {
+  AUTH_ENDPOINT,
+  DATA_EXPORT_TOKEN_ENDPOINT,
+  ME_ENDPOINT,
+  WITHDRAW_TERMS_CONSENT_ENDPOINT,
+} from '../../constants/auth';
 import {
   AuthResponse,
   IdentifierRequest,
@@ -70,5 +75,19 @@ export class AuthApi {
   /** Irreversibly anonymises the account and all its data. */
   deleteAccount(): Observable<void> {
     return this.http.delete<void>(this.url(ME_ENDPOINT)).pipe(mapApiError());
+  }
+
+  /** A token (valid 5 minutes) for `GET data-export?token=…`, which downloads the user's data. */
+  createDataExportToken(): Observable<{ token: string }> {
+    return this.http
+      .post<{ token: string }>(this.url(DATA_EXPORT_TOKEN_ENDPOINT), null)
+      .pipe(mapApiError());
+  }
+
+  /** 204: the consent is withdrawn – and, as the terms are required, the account is deleted. */
+  withdrawTermsConsent(): Observable<void> {
+    return this.http
+      .post<void>(this.url(WITHDRAW_TERMS_CONSENT_ENDPOINT), null)
+      .pipe(mapApiError());
   }
 }

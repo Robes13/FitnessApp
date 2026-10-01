@@ -1,11 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   input,
   output,
+  signal,
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -27,6 +29,7 @@ import { ReminderService } from '../../../../core/services/reminders/reminders';
 import { formatClockTime, parseClockTime } from '../../../../core/utils/clock-time';
 import { DAY_NAME_LONG_KEYS, DAY_NAME_SHORT_KEYS } from '../../../../core/utils/date-format';
 import { Translate, injectTranslate } from '../../../../core/services/language/translate';
+import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
@@ -120,12 +123,20 @@ export class ProfileRemindersSheet {
 
   private readonly reminders = inject(ReminderService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly t = injectTranslate();
 
   protected readonly timeForm: TimeForm = this.formBuilder.group(
     timeValues(this.reminders.settings()),
   );
-  protected readonly error = this.reminders.error;
+  /** "Slå notifikationer til" is saving the master switch in the API. */
+  protected readonly enablingMaster = signal(false);
+  /** Why saving the master switch failed – a key, so it follows the language. */
+  private readonly masterErrorKey = signal<string | null>(null);
+  protected readonly error = computed(() => {
+    const key = this.masterErrorKey();
+    return key === null ? this.reminders.error() : this.t(key);
+  });
 
   /** Switches can't be used: the master switch is off or the phone said no. */
   protected readonly locked = computed(
@@ -189,9 +200,10 @@ export class ProfileRemindersSheet {
     // Start from the saved times each time the sheet opens.
     effect(() => {
       if (this.open()) {
-        untracked(() =>
-          this.timeForm.setValue(timeValues(this.reminders.settings()), { emitEvent: false }),
-        );
+        untracked(() => {
+          this.timeForm.setValue(timeValues(this.reminders.settings()), { emitEvent: false });
+          this.masterErrorKey.set(null);
+        });
       }
     });
 
@@ -215,7 +227,7 @@ export class ProfileRemindersSheet {
   protected runNoticeAction(): void {
     switch (this.notice()?.action) {
       case 'enable-master':
-        this.reminders.setMasterEnabled(true);
+        this.enableMaster();
         break;
       case 'request-permission':
         void this.reminders.requestPermission();
@@ -223,6 +235,25 @@ export class ProfileRemindersSheet {
       default:
         break;
     }
+  }
+
+  /** Pessimistic, like the profile's switch: the notice stays until the API has saved it. */
+  private enableMaster(): void {
+    if (this.enablingMaster()) {
+      return;
+    }
+    this.enablingMaster.set(true);
+    this.masterErrorKey.set(null);
+    this.reminders
+      .setMasterEnabled(true)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.enablingMaster.set(false),
+        error: (error: unknown) => {
+          this.enablingMaster.set(false);
+          this.masterErrorKey.set(toApiError(error).messageKey);
+        },
+      });
   }
 
   /** An empty or half-typed time is ignored – the last valid time stays saved. */

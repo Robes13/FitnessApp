@@ -538,6 +538,39 @@ describe('SessionService', () => {
     });
   });
 
+  describe('withdrawConsent', () => {
+    const WITHDRAW = '/api/v1/me/consents/Terms/withdraw';
+
+    it('clears every app key and reloads at login only after the 204', async () => {
+      seed(STORAGE_KEY.REMINDERS, {});
+      const { session, http } = setup(AUTHENTICATED_SESSION);
+
+      const done = firstValueFrom(session.withdrawConsent());
+      const request = http.expectOne({ method: 'POST', url: WITHDRAW });
+      expect(request.request.headers.get('Authorization')).toBe('Bearer test-access-token');
+      expect(storage.data.size).toBe(2);
+      expect(replace).not.toHaveBeenCalled();
+      request.flush(null, NO_CONTENT);
+      await done;
+
+      expect(storage.data.size).toBe(0);
+      expect(replace).toHaveBeenCalledWith('https://localhost/login');
+    });
+
+    it('clears nothing when the API fails', async () => {
+      const { session, http } = setup(AUTHENTICATED_SESSION);
+
+      const done = firstValueFrom(session.withdrawConsent());
+      http
+        .expectOne(WITHDRAW)
+        .flush({ title: 'Not Found', status: 404 }, { status: 404, statusText: 'Not Found' });
+
+      await expect(done).rejects.toEqual({ messageKey: 'common.error.requestFailed', status: 404 });
+      expect(stored()).toEqual(AUTHENTICATED_SESSION);
+      expect(replace).not.toHaveBeenCalled();
+    });
+  });
+
   describe('tokens', () => {
     it('hands out a valid access token without refreshing', async () => {
       const { session } = setup(AUTHENTICATED_SESSION);

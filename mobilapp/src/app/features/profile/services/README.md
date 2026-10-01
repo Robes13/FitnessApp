@@ -8,6 +8,7 @@ disse services har egen state.
 | `profile-rows.ts` | `ProfileRowsService` – rækkerne under "Min plan" og "Konto" samt de tre nøgletal (vægt, højde, BMI). Designets `profileRows` / `accountRows`.               |
 | `profile-edit.ts` | `ProfileEditService` – definitionerne bag "Rediger profil"-arket (titel, felttype, grænser, hjælpetekst) og handlingerne, der gemmer. Designets `editDefs`. |
 | `achievements.ts` | `AchievementsService` – de 12 præstationer. Designets `badges`.                                                                                             |
+| `privacy.ts`      | `PrivacyService` – "Download mine data" (9.1): henter et eksport-token og navigerer til `data-export?token=…`. Leveres af profilsiden, ikke `root`.         |
 
 ## Betingede rækker
 

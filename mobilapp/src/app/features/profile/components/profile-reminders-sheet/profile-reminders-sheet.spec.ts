@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import {
@@ -15,6 +16,8 @@ import {
 } from '../../../../core/testing/test-providers';
 import { AUTHENTICATED_SESSION } from '../../../../core/testing/fixtures';
 import { ProfileRemindersSheet } from './profile-reminders-sheet';
+
+const NOTIFICATIONS_SETTING = '/api/v1/me/settings/Notifications';
 
 class FakeNotifier implements ReminderNotifier {
   available = true;
@@ -62,6 +65,7 @@ describe('ProfileRemindersSheet', () => {
   });
 
   afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
     localStorage.clear();
   });
 
@@ -81,6 +85,12 @@ describe('ProfileRemindersSheet', () => {
     await fixture.whenStable();
     await TestBed.inject(ReminderService).sync();
     await fixture.whenStable();
+  }
+
+  function enableMaster(host: HTMLElement): void {
+    Array.from(host.querySelectorAll<HTMLButtonElement>('button'))
+      .find((button) => button.textContent?.trim() === 'Slå notifikationer til')
+      ?.click();
   }
 
   function switchFor(host: HTMLElement, label: string): HTMLButtonElement | null {
@@ -178,13 +188,36 @@ describe('ProfileRemindersSheet', () => {
     expect(host.textContent).toContain('Notifikationer er slået fra');
     expect(switchFor(host, 'Påmindelse om frokost')?.disabled).toBe(true);
 
-    Array.from(host.querySelectorAll<HTMLButtonElement>('button'))
-      .find((button) => button.textContent?.trim() === 'Slå notifikationer til')
-      ?.click();
+    enableMaster(host);
+    await fixture.whenStable();
+    expect(switchFor(host, 'Påmindelse om frokost')?.disabled).toBe(true);
+    const request = TestBed.inject(HttpTestingController).expectOne({
+      method: 'PUT',
+      url: NOTIFICATIONS_SETTING,
+    });
+    expect(request.request.body).toEqual({ value: 'true' });
+    request.flush({ settingKey: 'Notifications', settingValue: 'true', updatedAt: '' });
     await settle(fixture);
 
     expect(switchFor(host, 'Påmindelse om frokost')?.disabled).toBe(false);
     expect(notifier.pending.has(1005)).toBe(true);
+  });
+
+  it('keeps the notice and shows why when the master switch could not be saved', async () => {
+    const { fixture, host } = await setup();
+    TestBed.inject(UserProfileService).update({ notificationsEnabled: false });
+    await settle(fixture);
+
+    enableMaster(host);
+    TestBed.inject(HttpTestingController)
+      .expectOne(NOTIFICATIONS_SETTING)
+      .error(new ProgressEvent('error'));
+    await settle(fixture);
+
+    expect(host.textContent).toContain('Notifikationer er slået fra');
+    expect(host.querySelector('app-ui-form-error')?.textContent?.trim()).toBe(
+      'Ingen forbindelse. Tjek dit internet, og prøv igen.',
+    );
   });
 
   it('keeps the switches usable in the browser and says reminders need the app', async () => {

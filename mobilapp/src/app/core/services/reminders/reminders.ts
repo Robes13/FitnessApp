@@ -9,6 +9,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { Observable, tap } from 'rxjs';
 import {
   DEFAULT_REMINDER_SETTINGS,
   REMINDER_DEFINITIONS,
@@ -26,6 +27,7 @@ import {
   ScheduledReminder,
   WeekdayIndex,
 } from '../../models/reminder';
+import { SessionStatus } from '../../models/session';
 import { isClockTime } from '../../utils/clock-time';
 import { LanguageService } from '../language/language';
 import { injectTranslate } from '../language/translate';
@@ -41,15 +43,20 @@ const ASKABLE_PERMISSIONS: readonly ReminderPermission[] = ['unknown', 'prompt']
  * The user's reminders and their local notifications.
  *
  * The settings (on/off, time, weekday per kind) are saved in storage. Notifications are
- * delivered only when the user is logged in, the profile's "Notifikationer" master switch
- * (`notificationsEnabled`) is on and the platform permission is granted.
+ * delivered only when the session is authenticated (not while the e-mail waits for its
+ * verification), the profile's "Notifikationer" master switch (`notificationsEnabled`, saved in
+ * the API) is on and the platform permission is granted.
+ *
+ * ponytail: the settings are device-local on purpose – the API's `ReminderType` only knows
+ * LogFood/LogWeight and no weekday, and spec 8.0/8.1 need no sync. Sync them through
+ * `/me/reminders` once the API can hold all five kinds.
  *
  * Scheduling is idempotent: every sync cancels all of the app's fixed notification ids and
  * schedules the enabled ones again. A sync runs on start (the effect's first run), whenever
- * the settings, the master switch, the login state or the language (the notification texts)
+ * the settings, the master switch, the session status or the language (the notification texts)
  * change, after a permission request and when the app returns to the foreground (the user may
- * have changed the permission in the phone's settings). Logging out – and the reload after deleting the account – therefore
- * cancels everything.
+ * have changed the permission in the phone's settings). Logging out – and the reload after
+ * deleting the account – therefore cancels everything.
  *
  * Permission is never requested on its own; only when the user turns a reminder or the
  * master switch on (`update`, `setMasterEnabled`, `requestPermission`).
@@ -81,6 +88,11 @@ export class ReminderService {
   private readonly permissionErrorFor = signal<ReminderPermission | null>(null);
   /** Syncs run one at a time, so a cancel from one can't land after the schedule of the next. */
   private queue: Promise<void> = Promise.resolve();
+  /**
+   * The session status the settings were last aligned with (`followSession`). It starts as the
+   * current one – the settings were just read from storage – so the start schedules only once.
+   */
+  private sessionStatus: SessionStatus = this.session.status();
 
   readonly settings: Signal<ReminderSettings> = this.settingsState.asReadonly();
   readonly permission: Signal<ReminderPermission> = this.permissionState.asReadonly();
@@ -102,12 +114,16 @@ export class ReminderService {
 
   constructor() {
     effect(() => {
-      // Everything that decides which notifications should exist.
+      // Everything that decides which notifications should exist. The status rather than
+      // `isAuthenticated()` alone, so a switch to guest is seen too (`followSession`).
       this.settingsState();
       this.masterEnabled();
-      this.session.isLoggedIn();
+      const status = this.session.status();
       this.language.language();
-      untracked(() => void this.sync());
+      untracked(() => {
+        this.followSession(status);
+        void this.sync();
+      });
     });
 
     const onVisibilityChange = (): void => {
@@ -132,12 +148,19 @@ export class ReminderService {
     }
   }
 
-  /** The profile's "Notifikationer" switch. Turning it on asks for permission, if needed. */
-  setMasterEnabled(enabled: boolean): void {
-    this.profiles.update({ notificationsEnabled: enabled });
-    if (enabled) {
-      void this.requestPermissionIfAskable();
-    }
+  /**
+   * The profile's "Notifikationer" switch, saved as the API's `Notifications` setting
+   * (`PUT me/settings/Notifications`). Pessimistic: the switch changes once the API has answered,
+   * and only then does turning it on ask for permission, if needed. Fails with an `ApiError`.
+   */
+  setMasterEnabled(enabled: boolean): Observable<void> {
+    return this.profiles.save({ notificationsEnabled: enabled }).pipe(
+      tap(() => {
+        if (enabled) {
+          void this.requestPermissionIfAskable();
+        }
+      }),
+    );
   }
 
   /** Shows the platform's permission dialog (once – after that the platform answers directly). */
@@ -200,7 +223,24 @@ export class ReminderService {
   }
 
   private shouldDeliver(permission: ReminderPermission): boolean {
-    return this.session.isLoggedIn() && this.masterEnabled() && permission === 'granted';
+    return this.session.isAuthenticated() && this.masterEnabled() && permission === 'granted';
+  }
+
+  /**
+   * When another account signs in here, `SessionService` clears the previous one's storage – so
+   * the settings are read again once the session is authenticated. As a guest they are reset in
+   * memory only: storage keeps them for the next login of the same account.
+   */
+  private followSession(status: SessionStatus): void {
+    if (status === this.sessionStatus) {
+      return;
+    }
+    this.sessionStatus = status;
+    if (status === 'authenticated') {
+      this.settingsState.set(this.restore());
+    } else if (status === 'guest') {
+      this.settingsState.set(DEFAULT_REMINDER_SETTINGS);
+    }
   }
 
   private dueReminders(): readonly ScheduledReminder[] {

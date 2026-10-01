@@ -35,6 +35,18 @@ export const ANONYMOUS_AUTH_ENDPOINTS: readonly AuthEndpoint[] = [
 /** The signed-in user's account (`GET`/`PATCH`/`DELETE`), relative to `API_BASE_URL`. */
 export const ME_ENDPOINT = 'me';
 
+/** `POST`: a short-lived (5 min) token for downloading the user's data export (GDPR). */
+export const DATA_EXPORT_TOKEN_ENDPOINT = 'me/data-export/token';
+
+/**
+ * `GET ?token=…` (anonymous): the data export as a JSON attachment. The token goes in the query
+ * string, never in the path – the API logs the path of a failed request.
+ */
+export const DATA_EXPORT_ENDPOINT = 'data-export';
+
+/** `POST`: withdraws the consent to the terms, which deletes and anonymises the account. */
+export const WITHDRAW_TERMS_CONSENT_ENDPOINT = 'me/consents/Terms/withdraw';
+
 /** The API's rules for a username (checked before trimming). */
 export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 50;

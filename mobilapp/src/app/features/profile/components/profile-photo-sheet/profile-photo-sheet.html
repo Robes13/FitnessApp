@@ -65,6 +65,8 @@
         shape="rounded"
         block
         class="profile-photo-sheet__action profile-photo-sheet__action--remove"
+        [loading]="removing()"
+        [disabled]="uploading()"
         (click)="removePhoto()"
       >
         {{ 'profile.photoSheet.remove' | translate }}
@@ -80,12 +82,20 @@
         (change)="onFileChange($event)"
       />
     </label>
-    <button app-ui-button type="button" block class="profile-photo-sheet__use" (click)="onClose()">
+    <button
+      app-ui-button
+      type="button"
+      block
+      class="profile-photo-sheet__use"
+      [loading]="uploading()"
+      [disabled]="removing()"
+      (click)="usePhoto()"
+    >
       {{ 'profile.photoSheet.use' | translate }}
     </button>
   } @else {
     <div class="profile-photo-sheet__editor">
-      <app-profile-avatar size="lg" [photo]="null" [initial]="initial()" />
+      <app-profile-avatar size="lg" [photo]="savedPhoto()" [initial]="initial()" />
     </div>
     <label class="profile-photo-sheet__pick">
       <app-ui-icon name="image" size="md" />
@@ -99,5 +109,20 @@
       />
     </label>
     <p class="profile-photo-sheet__hint">{{ 'profile.photoSheet.cropLaterHint' | translate }}</p>
+    @if (savedPhoto()) {
+      <button
+        app-ui-button
+        type="button"
+        variant="surface"
+        size="sm"
+        shape="rounded"
+        block
+        class="profile-photo-sheet__action profile-photo-sheet__action--remove profile-photo-sheet__action--saved"
+        [loading]="removing()"
+        (click)="removePhoto()"
+      >
+        {{ 'profile.photoSheet.remove' | translate }}
+      </button>
+    }
   }
 </app-ui-sheet>

@@ -114,9 +114,13 @@
       <app-ui-switch
         [ariaLabel]="'profile.page.notifications' | translate"
         [checked]="notificationsEnabled()"
+        [disabled]="notificationsBusy()"
         (checkedChange)="setNotifications($event)"
       />
     </div>
+    @if (notificationsError(); as message) {
+      <app-ui-form-error tone="negative" [message]="message" />
+    }
     <button
       app-ui-row-button
       [label]="'profile.page.reminders' | translate"
@@ -128,6 +132,25 @@
   <section class="profile-page__section">
     <h2 class="profile-page__section-title">{{ 'profile.page.achievements' | translate }}</h2>
     <app-achievements [achievements]="achievements()" />
+  </section>
+
+  <section class="profile-page__section">
+    <h2 class="profile-page__section-title">{{ 'profile.page.privacy' | translate }}</h2>
+    <button
+      app-ui-row-button
+      [label]="'profile.page.downloadData' | translate"
+      [disabled]="downloadingData()"
+      (click)="downloadData()"
+    ></button>
+    @if (downloadError(); as message) {
+      <app-ui-form-error tone="negative" [message]="message" />
+    }
+    <button
+      app-ui-row-button
+      [label]="'profile.page.termsConsent' | translate"
+      [value]="'profile.page.consentWithdraw' | translate"
+      (click)="askWithdrawConsent()"
+    ></button>
   </section>
 
   <button
@@ -166,6 +189,7 @@
   [open]="deleteAccountOpen()"
   [busy]="deletingAccount()"
   [errorMessage]="deleteError()"
+  [bodyKey]="deleteBodyKey()"
   (closed)="closeDeleteAccount()"
   (confirmed)="deleteAccount()"
 />

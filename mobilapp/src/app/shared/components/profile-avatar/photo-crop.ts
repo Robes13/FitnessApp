@@ -31,6 +31,13 @@ export function photoZoomPercent(zoom: number): number {
   return Math.round(zoom * PERCENT);
 }
 
+/**
+ * `dataUrl` is a data URL while cropping, otherwise the API's `profileImageUrl` – relative in
+ * Development (`/api/v1/dev-images/…`): the browser resolves it on the page's origin, and the dev
+ * proxy forwards `/api` to the API.
+ * ponytail: a native dev build resolves it on the WebView's own origin and shows no photo, while
+ * production URLs are absolute; prefix the native API origin if native dev photos are ever needed.
+ */
 export function photoBackgroundImage(photo: ProfilePhoto | null): string {
   return photo ? `url("${photo.dataUrl}")` : 'none';
 }
@@ -46,6 +53,35 @@ export function photoBackgroundSize(photo: ProfilePhoto | null): string {
 
 export function photoBackgroundPosition(photo: ProfilePhoto | null): string {
   return photo ? `${photo.x}% ${photo.y}%` : `${CENTERED_CROP.x}% ${CENTERED_CROP.y}%`;
+}
+
+/** The side, in pixels, of the square photo that is baked from the crop and uploaded. */
+export const BAKED_PHOTO_SIZE = 512;
+
+/** Where the whole image is drawn on the square canvas, in canvas pixels. */
+export interface PhotoDrawRect {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * Where to draw the image on a `size` × `size` canvas, so the canvas shows exactly the crop the
+ * avatar shows: the cover sizing of `photoBackgroundSize` (the short side is `zoom` × the canvas)
+ * and the offset of `photoBackgroundPosition` (`x`/`y` percent of the overflow).
+ */
+export function photoDrawRect(photo: ProfilePhoto, size = BAKED_PHOTO_SIZE): PhotoDrawRect {
+  const shortSide = (size * photoZoomPercent(photo.zoom)) / PERCENT;
+  const landscape = photo.aspectRatio >= 1;
+  const width = landscape ? shortSide * photo.aspectRatio : shortSide;
+  const height = landscape ? shortSide : shortSide / photo.aspectRatio;
+  return {
+    x: ((size - width) * photo.x) / PERCENT,
+    y: ((size - height) * photo.y) / PERCENT,
+    width,
+    height,
+  };
 }
 
 /** Pixels per 100% offset. The further zoomed in, the further the finger has to move. */

@@ -41,7 +41,7 @@ export const INTENSITY_FROM_API: Readonly<Record<ApiTrainingIntensity, Intensity
 };
 
 /** The uploaded photo is already a square crop: shown as it is, centred and unzoomed. */
-const UPLOADED_PHOTO_CROP: Omit<ProfilePhoto, 'dataUrl'> = {
+export const UPLOADED_PHOTO_CROP: Omit<ProfilePhoto, 'dataUrl'> = {
   aspectRatio: 1,
   zoom: 1,
   x: 50,

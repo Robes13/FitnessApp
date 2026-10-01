@@ -1,15 +1,18 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { REMINDER_ERROR_KEY } from '../../constants/reminders';
+import { firstValueFrom } from 'rxjs';
+import { DEFAULT_REMINDER_SETTINGS, REMINDER_ERROR_KEY } from '../../constants/reminders';
 import { STORAGE_KEY } from '../../constants/storage-key';
+import { AuthResponse } from '../../models/auth';
 import { ReminderNotifier, ReminderPermission, ScheduledReminder } from '../../models/reminder';
 import { FakeStorage, createFakeStorage } from '../../testing/fake-document';
-import { AUTHENTICATED_SESSION } from '../../testing/fixtures';
+import { AUTHENTICATED_SESSION, TEST_AUTH_RESPONSE } from '../../testing/fixtures';
 import { injectTranslate } from '../language/translate';
 import { provideCoreTestEnvironment } from '../../testing/test-providers';
 import { REMINDER_NOTIFIER } from './reminder-notifier';
 import { ReminderService } from './reminders';
 import { SessionService } from '../session/session';
+import { UserProfileService } from '../user-profile/user-profile';
 
 /** In-memory stand-in for the platform's local notifications. */
 class FakeNotifier implements ReminderNotifier {
@@ -63,6 +66,17 @@ function translate(key: string): string {
   return TestBed.runInInjectionContext(() => injectTranslate())(key);
 }
 
+const NOTIFICATIONS_SETTING = '/api/v1/me/settings/Notifications';
+const LOGIN = '/api/v1/auth/login';
+const MORNING_ON = {
+  ...DEFAULT_REMINDER_SETTINGS,
+  morgen: { ...DEFAULT_REMINDER_SETTINGS.morgen, enabled: true },
+};
+const OTHER_ACCOUNT: AuthResponse = {
+  ...TEST_AUTH_RESPONSE,
+  user: { ...TEST_AUTH_RESPONSE.user, userId: 2, email: 'sara@nutrify.dk', username: 'sara' },
+};
+
 const DAILY_LOG_ID = 1005;
 const BREAKFAST_ID = 1001;
 const WEIGH_IN_ID = 1004;
@@ -87,9 +101,32 @@ describe('ReminderService', () => {
     await service.sync();
   }
 
+  function http(): HttpTestingController {
+    return TestBed.inject(HttpTestingController);
+  }
+
+  /** Flips the master switch the way the API answers it. */
+  async function setMaster(service: ReminderService, enabled: boolean): Promise<void> {
+    const done = firstValueFrom(service.setMasterEnabled(enabled));
+    http()
+      .expectOne(NOTIFICATIONS_SETTING)
+      .flush({ settingKey: 'Notifications', settingValue: String(enabled), updatedAt: '' });
+    await done;
+  }
+
+  async function login(response: AuthResponse): Promise<void> {
+    const done = firstValueFrom(TestBed.inject(SessionService).login('mads', 'hemmelig1234'));
+    http().expectOne(LOGIN).flush(response);
+    await done;
+  }
+
   beforeEach(() => {
     storage = createFakeStorage({ [STORAGE_KEY.SESSION]: AUTHENTICATED_SESSION });
     notifier = new FakeNotifier();
+  });
+
+  afterEach(() => {
+    http().verify();
   });
 
   it('schedules the default evening reminder on start', async () => {
@@ -142,14 +179,42 @@ describe('ReminderService', () => {
     const service = setup();
     await settle(service);
 
-    service.setMasterEnabled(false);
+    await setMaster(service, false);
     await settle(service);
     expect(notifier.pendingIds()).toEqual([]);
     expect(service.isDelivering()).toBe(false);
 
-    service.setMasterEnabled(true);
+    await setMaster(service, true);
     await settle(service);
     expect(notifier.pendingIds()).toEqual([DAILY_LOG_ID]);
+  });
+
+  it('saves the master switch with PUT me/settings/Notifications – pessimistically', async () => {
+    const service = setup();
+    await settle(service);
+
+    const done = firstValueFrom(service.setMasterEnabled(false));
+    const request = http().expectOne({ method: 'PUT', url: NOTIFICATIONS_SETTING });
+    expect(request.request.body).toEqual({ value: 'false' });
+    expect(service.masterEnabled()).toBe(true);
+    request.flush({ settingKey: 'Notifications', settingValue: 'false', updatedAt: '' });
+    await done;
+
+    expect(service.masterEnabled()).toBe(false);
+  });
+
+  it('keeps the master switch and asks for nothing when saving it fails', async () => {
+    notifier.permission = 'prompt';
+    const service = setup();
+    TestBed.inject(UserProfileService).update({ notificationsEnabled: false });
+    await settle(service);
+
+    const done = firstValueFrom(service.setMasterEnabled(true));
+    http().expectOne(NOTIFICATIONS_SETTING).flush(null, { status: 500, statusText: 'x' });
+
+    await expect(done).rejects.toEqual({ messageKey: 'common.error.server', status: 500 });
+    expect(service.masterEnabled()).toBe(false);
+    expect(notifier.requests).toBe(0);
   });
 
   it('cancels everything on log out and schedules nothing while logged out', async () => {
@@ -157,10 +222,60 @@ describe('ReminderService', () => {
     await settle(service);
 
     TestBed.inject(SessionService).logout().subscribe();
-    TestBed.inject(HttpTestingController).expectOne('/api/v1/auth/logout').flush(null);
+    http().expectOne('/api/v1/auth/logout').flush(null);
     await settle(service);
 
     expect(notifier.pendingIds()).toEqual([]);
+  });
+
+  it('schedules nothing while the e-mail waits for its verification', async () => {
+    storage = createFakeStorage();
+    const service = setup();
+    const session = TestBed.inject(SessionService);
+
+    session.login('mads', 'hemmelig1234').subscribe();
+    http()
+      .expectOne(LOGIN)
+      .flush({ title: 'Forbidden', status: 403 }, { status: 403, statusText: 'Forbidden' });
+    await settle(service);
+
+    expect(session.status()).toBe('pending-verification');
+    expect(service.isDelivering()).toBe(false);
+    expect(notifier.pendingIds()).toEqual([]);
+  });
+
+  it('forgets the settings in memory only as a guest and brings them back on the next login', async () => {
+    storage.setItem(STORAGE_KEY.REMINDERS, JSON.stringify(MORNING_ON));
+    const service = setup();
+    await settle(service);
+    expect(service.settings().morgen.enabled).toBe(true);
+
+    TestBed.inject(SessionService).logout().subscribe();
+    http().expectOne('/api/v1/auth/logout').flush(null);
+    await settle(service);
+
+    expect(service.settings()).toEqual(DEFAULT_REMINDER_SETTINGS);
+    expect(JSON.parse(storage.getItem(STORAGE_KEY.REMINDERS) ?? '{}')).toEqual(MORNING_ON);
+
+    await login(TEST_AUTH_RESPONSE);
+    await settle(service);
+    expect(service.settings().morgen.enabled).toBe(true);
+  });
+
+  it('starts from the defaults once another account is authenticated', async () => {
+    storage.setItem(STORAGE_KEY.REMINDERS, JSON.stringify(MORNING_ON));
+    const service = setup();
+    await settle(service);
+
+    TestBed.inject(SessionService).logout().subscribe();
+    http().expectOne('/api/v1/auth/logout').flush(null);
+    await settle(service);
+    await login(OTHER_ACCOUNT);
+    await settle(service);
+
+    expect(service.settings()).toEqual(DEFAULT_REMINDER_SETTINGS);
+    expect(storage.getItem(STORAGE_KEY.REMINDERS)).toBeNull();
+    expect(notifier.pendingIds()).toEqual([DAILY_LOG_ID]);
   });
 
   it('asks for permission when a reminder is turned on and schedules once granted', async () => {

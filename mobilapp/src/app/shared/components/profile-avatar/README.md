@@ -24,5 +24,16 @@ regnet i pixels, ville beskæringen fra editoren ikke passe på avataren.
 træk i pixels til en ny position i procent. Trækket regnes altid fra beskæringen, som den var,
 da fingeren blev sat — ikke skridt for skridt — så positionen ikke driver af afrunding.
 
+`photoDrawRect()` er de samme formler i pixels: hvor hele billedet skal tegnes på et kvadratisk
+canvas (`BAKED_PHOTO_SIZE` = 512 px), så canvasset viser præcis avatarens udsnit – fyld efter den
+korte side gange zoom, og `x`/`y` procent af overskuddet. Fotoarket bager dermed beskæringen ind i
+den JPEG, der uploades (plan-v2 P10).
+
+`photo.dataUrl` er enten en data-URL (et valgt billede under beskæring) eller API'ets
+`profileImageUrl`. I Development er den relativ (`/api/v1/dev-images/<guid>.jpg`) og virker
+uændret i `url("…")`, fordi browseren slår den op på sidens egen origin, og dev-proxyen sender
+`/api` videre til API'et. Bevidst genvej: i native dev-builds peger en relativ URL på WebView'ets
+egen server, så dér vises intet billede; produktionens Azure-URL'er er absolutte.
+
 Avataren er dekorativ (`aria-hidden`): navnet står ved siden af, og i fotoarket bærer den
 omkringliggende knap etiketten.

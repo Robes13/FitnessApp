@@ -179,12 +179,17 @@ export class SessionService {
    * it and could write to storage again before the page is gone. On an error nothing is deleted.
    */
   deleteAccount(): Observable<void> {
-    return this.authApi.deleteAccount().pipe(
-      map(() => {
-        this.storage.clearAll();
-        this.document.location.replace(new URL(APP_ROUTE.LOGIN, this.document.baseURI).href);
-      }),
-    );
+    return this.authApi.deleteAccount().pipe(map(() => this.wipeAndRestart()));
+  }
+
+  /**
+   * Spec 9.2-3b: withdraws the consent to the terms (which include processing the health and
+   * profile data). The app can't be used without it, so the API deletes and anonymises the
+   * account – and, like `deleteAccount()`, only after its 204 the device is wiped and the app
+   * reloaded at login. On an error nothing is cleared.
+   */
+  withdrawConsent(): Observable<void> {
+    return this.authApi.withdrawTermsConsent().pipe(map(() => this.wipeAndRestart()));
   }
 
   /**
@@ -269,6 +274,12 @@ export class SessionService {
           : throwError(() => error),
       ),
     );
+  }
+
+  /** The account is gone in the API: remove every app key and start over at login. */
+  private wipeAndRestart(): void {
+    this.storage.clearAll();
+    this.document.location.replace(new URL(APP_ROUTE.LOGIN, this.document.baseURI).href);
   }
 
   private authenticate({ user, ...tokens }: AuthResponse): void {
