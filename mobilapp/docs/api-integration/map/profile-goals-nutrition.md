@@ -1,5 +1,7 @@
 # Mapping: profil, mål, ernæringsmål og indstillinger
 
+> **Baggrund fra før integrationen.** Beslutningerne står i `../plan-v2.md`, som går forud for denne fil; status i `../README.md`.
+
 Domæne: `UserProfile` i appen ↔ `ProfileController`, `MeController`, `GoalsController`,
 `NutritionController`, `SettingsController`, `MetadataController` (+ `WeightLogsController/latest`
 for den aktuelle vægt).

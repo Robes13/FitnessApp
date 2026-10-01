@@ -1,5 +1,7 @@
 # Vægt (vejninger): mapning mellem app og API
 
+> **Baggrund fra før integrationen.** Beslutningerne står i `../plan-v2.md`, som går forud for denne fil; status i `../README.md`.
+
 Kilder, læst direkte i koden:
 
 - API: `API/Controllers/WeightLogsController.cs`, `API/DTOs/Weights/*.cs`,

@@ -1,5 +1,7 @@
 # Samlinger / opskrifter: app ↔ API-mapning
 
+> **Baggrund fra før integrationen.** Beslutningerne står i `../plan-v2.md`, som går forud for denne fil; status i `../README.md`.
+
 Domæne: måltidssamlinger ("Samling"-fanen, opskriftsskærmen, "Ny/Rediger samling"-arket,
 "Samlinger"-fanen i "Tilføj mad"-arket).
 

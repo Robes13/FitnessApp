@@ -1,5 +1,7 @@
 # Påmindelser og push-enheder: mapning mellem app og API
 
+> **Baggrund fra før integrationen.** Beslutningerne står i `../plan-v2.md`, som går forud for denne fil; status i `../README.md`.
+
 Domæne: `ReminderService` / `reminder-notifier` / `profile-reminders-sheet` / signup `notifications-step`
 mod `RemindersController`, `DevicesController`, `ReminderNotificationWorker` og Firebase.
 

@@ -1,5 +1,7 @@
 # Mad-domænet: app ↔ API (madvarer, søgning, stregkode, madlog)
 
+> **Baggrund fra før integrationen.** Beslutningerne står i `../plan-v2.md`, som går forud for denne fil; status i `../README.md`.
+
 Kilde: læst C#-kode i `/Users/janick/Documents/GitHub/FitnessApp/API` (Controllers, DTOs, Services,
 Domain, Utilities, Data/FitnessAppDbContext.cs, Program.cs) og app-koden i
 `/Users/janick/Documents/GitHub/FitnessApp/mobilapp/src/app`. Ruter og skemaer er bekræftet mod

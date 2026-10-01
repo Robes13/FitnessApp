@@ -1,5 +1,7 @@
 # Auth, session, signup og kontolivscyklus – app ↔ API-mapping
 
+> **Baggrund fra før integrationen.** Beslutningerne står i `../plan-v2.md`, som går forud for denne fil; status i `../README.md`.
+
 Domæne: login, oprettelse (signup), e-mailbekræftelse, glemt adgangskode, token/session,
 log ud, slet konto.
 Kilder: `mobilapp/src/app/core/**`, `features/auth/**`, `features/signup/**`,

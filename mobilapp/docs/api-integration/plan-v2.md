@@ -1,8 +1,13 @@
 # Integrationsplan v2 – app + API mod kravspec (bindende)
 
-Erstatter `plan.md`. Kravene står i `kravspec.md`. Hvor `plan.md`, `map/*.md`, `map/critic.md`,
-`api-gaps.md` eller `wave1-workflow.js` siger noget andet end dette dokument, gælder dette dokument.
-`map/*.md` er stadig nyttig baggrund om den nuværende kode, men ikke om beslutningerne.
+> **Status 2026-10-01: implementeret.** Alle bølger og UI-testen er færdige og merget på
+> `feat/api-integration`. Status, tests, åbne beslutninger og "før produktion" står i `README.md`, de
+> resterende API-mangler i `api-gaps.md`. Afsnittene nedenfor er planen, som den blev fulgt.
+
+Kravene står i `kravspec.md`. Hvor `map/*.md`, `map/critic.md` eller `api-gaps.md` siger noget andet
+end dette dokument, gælder dette dokument. `map/*.md` er baggrund om koden fra før integrationen, men
+ikke om beslutningerne. (Den første plan, `plan.md`, og `wave1-workflow.js` er slettet; de ligger i
+git-historikken.)
 
 ## 0. Rammer
 
@@ -41,59 +46,57 @@ Erstatter `plan.md`. Kravene står i `kravspec.md`. Hvor `plan.md`, `map/*.md`, 
 
 API ✔ = findes i dag. `A<n>` = API-ændring i §3. Domæner: se §4.
 
-| UC | Emne | API | App-domæne (bølge) | Note |
-| --- | --- | --- | --- | --- |
-| 1.0 | Registrér | ✔ + A1 (brugernavn uden `@`) | auth (2), profile (1: `MIN_AGE`) | Alder 13–100 (P8) |
-| 1.1 | Validér e-mail via link, modal lukker selv | A2, A1 (403) | auth (2) | Login-polling (P1) |
-| 1.2 | Log ind: brugernavn/e-mail, aktiv, lockout | A1 | auth (2) | 5 forsøg / 15 min |
-| 1.3 | Log ud | ✔ | – | Token markeres `Revoked` (P22) |
-| 1.4 | Glemt adgangskode: e-mail/brugernavn, link til side | A3 | auth (2) | Side hostes af API'et (P4) |
-| 1.5 | Forny refresh token ved app-start, ikke hvis udstedt i dag | A4 | auth (2) | UTC-dag (P3) |
-| 1.5b | Forny access token | ✔ | ✔ (bølge 0) | Kun kommentarer rettes |
-| 2.0 | Opdatér e-mail | A5 | profile (1) | Gammel adresse aktiv til linket (P5) |
-| 2.1–2.3, 2.5, 2.7, 2.8 | Profilfelter + mål | ✔ | profile (1) | Genberegning på serveren |
-| 2.4 | Profilbillede | A10 (kun Development) | profile-extras (3) | Beskæring bages ind; 4a = filen kan ikke læses (P10) |
-| 2.6 | Skridt fra Health Connect/Apple Health | – | – | **Springes over** (P23) |
-| 3.0 | Manuel madvare | ✔ (+A6) | food (2) | Portion → per 100 i appen, loft pr. logning (P12) |
-| 3.1 | Stregkode | ✔ (OFF i klienten) | food (2) | "Ikke fundet" → 3.0-formularen |
-| 3.2 | Log madvare/samling + måltidstype | A6 | food (2), collections (3) | `mealType` (P11) |
-| 3.3 | Redigér mængde | ✔ | food (2) | Kun mængde – makroredigering slettes (P12) |
-| 3.4 | Fjern med bekræftelse | ✔ | food (2) | Fælles `ui-confirm-sheet` |
-| 4.0–4.2 | Madsamlinger | ✔ | collections (3) | Min. 1 vare, redigering som diff (P13) |
-| 5.0 | Kaloriemål | ✔ (GoalCalculator) | profile (1) | Kun API-målet; månedlig = ved app-åbning (P7) |
-| 5.1 | Makromål | ✔ (30/40/30) | profile (1) | |
-| 5.2–5.5 | Hjem: i dag, 7 dage, "hele måneden" | ✔ | home (3) | Rullende 7 dage + ark med seneste 30 dage (P15) |
-| 6.0 | Registrér vægt, spørg ved overskrivning | ✔ (409 + id) | weight (2) | (P16) |
-| 6.1–6.3 | Seneste vægt, redigér, graf 1u/3u/3m | ✔ | weight (2) | 3 uger (P16) |
-| 7.0 | Historik med løbende indlæsning | A7 | history (3) | `/me/history`; registreringsmålet skjules (P17) |
-| 8.0–8.1 | Påmindelser | – (bruges ikke) | profile-extras (3) | Lokale notifikationer (P18) |
-| 9.0 | Slet konto | ✔ | ✔ (bølge 0) | |
-| 9.1 | Download mine data | A8 | profile-extras (3) | Kortlivet download-link (P19) |
-| 9.2 | Træk samtykke tilbage | ✔ | profile-extras (3) | Én statisk række; 3a springes over; 3b = slet konto (P20) |
-| NFR | Dansk og engelsk | mails/sider tosprogede (A2, A3) | alle | i18n-nøgler |
-| NFR | Forståelige fejlbeskeder | status + felter (ingen koder) | alle | Status/felt → i18n (P6) |
-| NFR | Ingen uventet udlogning på 30 dage | ✔ + A4 | auth (2) | |
-| NFR | Stregkode ≤ 2 s, API ≤ 300–500 ms | ✔ (målt 1–40 ms) | – | Manuel måling i UI-test |
-| NFR | Migrations | én ny migration (§3) | – | |
-| NFR | Ingen logning af følsomme data | regler i §0/§3 | – | `Microsoft.AspNetCore` bliver på Warning |
-| NFR | Lagdelt, kodestandarder | A11 (døde klasser slettes) | – | Postgres-navneafvigelser dokumenteres (P22) |
-| Accept | Konto-acceptkriterier | ✔ | auth (2) | |
+| UC                     | Emne                                                       | API                             | App-domæne (bølge)               | Note                                                      |
+| ---------------------- | ---------------------------------------------------------- | ------------------------------- | -------------------------------- | --------------------------------------------------------- |
+| 1.0                    | Registrér                                                  | ✔ + A1 (brugernavn uden `@`)    | auth (2), profile (1: `MIN_AGE`) | Alder 13–100 (P8)                                         |
+| 1.1                    | Validér e-mail via link, modal lukker selv                 | A2, A1 (403)                    | auth (2)                         | Login-polling (P1)                                        |
+| 1.2                    | Log ind: brugernavn/e-mail, aktiv, lockout                 | A1                              | auth (2)                         | 5 forsøg / 15 min                                         |
+| 1.3                    | Log ud                                                     | ✔                               | –                                | Token markeres `Revoked` (P22)                            |
+| 1.4                    | Glemt adgangskode: e-mail/brugernavn, link til side        | A3                              | auth (2)                         | Side hostes af API'et (P4)                                |
+| 1.5                    | Forny refresh token ved app-start, ikke hvis udstedt i dag | A4                              | auth (2)                         | UTC-dag (P3)                                              |
+| 1.5b                   | Forny access token                                         | ✔                               | ✔ (bølge 0)                      | Kun kommentarer rettes                                    |
+| 2.0                    | Opdatér e-mail                                             | A5                              | profile (1)                      | Gammel adresse aktiv til linket (P5)                      |
+| 2.1–2.3, 2.5, 2.7, 2.8 | Profilfelter + mål                                         | ✔                               | profile (1)                      | Genberegning på serveren                                  |
+| 2.4                    | Profilbillede                                              | A10 (kun Development)           | profile-extras (3)               | Beskæring bages ind; 4a = filen kan ikke læses (P10)      |
+| 2.6                    | Skridt fra Health Connect/Apple Health                     | –                               | –                                | **Springes over** (P23)                                   |
+| 3.0                    | Manuel madvare                                             | ✔ (+A6)                         | food (2)                         | Portion → per 100 i appen, loft pr. logning (P12)         |
+| 3.1                    | Stregkode                                                  | ✔ (OFF i klienten)              | food (2)                         | "Ikke fundet" → 3.0-formularen                            |
+| 3.2                    | Log madvare/samling + måltidstype                          | A6                              | food (2), collections (3)        | `mealType` (P11)                                          |
+| 3.3                    | Redigér mængde                                             | ✔                               | food (2)                         | Kun mængde – makroredigering slettes (P12)                |
+| 3.4                    | Fjern med bekræftelse                                      | ✔                               | food (2)                         | Fælles `ui-confirm-sheet`                                 |
+| 4.0–4.2                | Madsamlinger                                               | ✔                               | collections (3)                  | Min. 1 vare, redigering som diff (P13)                    |
+| 5.0                    | Kaloriemål                                                 | ✔ (GoalCalculator)              | profile (1)                      | Kun API-målet; månedlig = ved app-åbning (P7)             |
+| 5.1                    | Makromål                                                   | ✔ (30/40/30)                    | profile (1)                      |                                                           |
+| 5.2–5.5                | Hjem: i dag, 7 dage, "hele måneden"                        | ✔                               | home (3)                         | Rullende 7 dage + ark med seneste 30 dage (P15)           |
+| 6.0                    | Registrér vægt, spørg ved overskrivning                    | ✔ (409 + id)                    | weight (2)                       | (P16)                                                     |
+| 6.1–6.3                | Seneste vægt, redigér, graf 1u/3u/3m                       | ✔                               | weight (2)                       | 3 uger (P16)                                              |
+| 7.0                    | Historik med løbende indlæsning                            | A7                              | history (3)                      | `/me/history`; registreringsmålet skjules (P17)           |
+| 8.0–8.1                | Påmindelser                                                | – (bruges ikke)                 | profile-extras (3)               | Lokale notifikationer (P18)                               |
+| 9.0                    | Slet konto                                                 | ✔                               | ✔ (bølge 0)                      |                                                           |
+| 9.1                    | Download mine data                                         | A8                              | profile-extras (3)               | Kortlivet download-link (P19)                             |
+| 9.2                    | Træk samtykke tilbage                                      | ✔                               | profile-extras (3)               | Én statisk række; 3a springes over; 3b = slet konto (P20) |
+| NFR                    | Dansk og engelsk                                           | mails/sider tosprogede (A2, A3) | alle                             | i18n-nøgler                                               |
+| NFR                    | Forståelige fejlbeskeder                                   | status + felter (ingen koder)   | alle                             | Status/felt → i18n (P6)                                   |
+| NFR                    | Ingen uventet udlogning på 30 dage                         | ✔ + A4                          | auth (2)                         |                                                           |
+| NFR                    | Stregkode ≤ 2 s, API ≤ 300–500 ms                          | ✔ (målt 1–40 ms)                | –                                | Manuel måling i UI-test                                   |
+| NFR                    | Migrations                                                 | én ny migration (§3)            | –                                |                                                           |
+| NFR                    | Ingen logning af følsomme data                             | regler i §0/§3                  | –                                | `Microsoft.AspNetCore` bliver på Warning                  |
+| NFR                    | Lagdelt, kodestandarder                                    | A11 (døde klasser slettes)      | –                                | Postgres-navneafvigelser dokumenteres (P22)               |
+| Accept                 | Konto-acceptkriterier                                      | ✔                               | auth (2)                         |                                                           |
 
 ## 2. Produktbeslutninger
 
 Defaults – Janick kan ændre dem (åbne spørgsmål i §7).
 
 - **P1 E-mailverifikation.** Mailen har et link til en API-side (`GET`), der verificerer og siger
-  "gå tilbage til appen". Mens modalen er åben, logger appen ind med adgangskoden i hukommelsen hvert
-  5. sekund og ved `visibilitychange` (visible). 200 lukker modalen. "Send mail igen" = den
+  "gå tilbage til appen". Mens modalen er åben, logger appen ind med adgangskoden i hukommelsen hvert 5. sekund og ved `visibilitychange` (visible). 200 lukker modalen. "Send mail igen" = den
   eksisterende resend, som ugyldiggør ældre links. Ventetilstanden gemmes kun i hukommelsen: efter en
   genstart er brugeren gæst, logger ind, får 403 og ser modalen igen (6a). Token-indsætning og "Tjek
-  igen" slettes. *Hvorfor:* ingen deep links (native opsætning, ikke browser-testbart) og intet
+  igen" slettes. _Hvorfor:_ ingen deep links (native opsætning, ikke browser-testbart) og intet
   status-endpoint (åbner for enumeration). Vi genbruger login.
 - **P2 Login.** Ét felt, "E-mail eller brugernavn". Indeholder værdien `@`, er det en e-mail
   (små bogstaver); ellers et brugernavn (præcis match, som det unikke indeks). Brugernavne må derfor
-  ikke indeholde `@`. Adgangskoden tjekkes før aktiveringen. Rigtig adgangskode + ikke verificeret →
-  403. Lockout: højst 5 forsøg pr. 15-minutters vindue (fast vindue fra første forsøg), pr. konto
+  ikke indeholde `@`. Adgangskoden tjekkes før aktiveringen. Rigtig adgangskode + ikke verificeret → 403. Lockout: højst 5 forsøg pr. 15-minutters vindue (fast vindue fra første forsøg), pr. konto
   (ukendte identifikatorer pr. værdi); det 6. afvises med 429, også med rigtig adgangskode. Hvert
   forsøg tælles **atomisk før** adgangskodetjekket (`Interlocked` på en `StrongBox<int>` i
   `IMemoryCache`) – et læs-så-skriv-tal lader parallelle forsøg (hvert ~50 ms PBKDF2) snyde sig forbi.
@@ -107,10 +110,10 @@ Defaults – Janick kan ændre dem (åbne spørgsmål i §7).
   skrumper til ét felt + "Send link" + den neutrale besked. Ingen JavaScript på siden.
 - **P5 E-mailskift.** Den nye adresse gemmes på verifikations-tokenet (`NewEmail`). Den gamle
   adresse og sessionen er aktive, indtil linket i mailen til den nye adresse trykkes; så skiftes
-  adressen. *Hvorfor:* i dag deaktiverer et skift hele kontoen, og en tastefejl låser brugeren ude af
+  adressen. _Hvorfor:_ i dag deaktiverer et skift hele kontoen, og en tastefejl låser brugeren ude af
   sine data for altid (datatab). Spec'en kræver kun, at den nye adresse er ikke-verificeret, til den er
   valideret.
-- **P6 Fejlbeskeder uden fejlkoder.** Spec'en kræver *forståelige fejlbeskeder*, ikke koder, så API'et
+- **P6 Fejlbeskeder uden fejlkoder.** Spec'en kræver _forståelige fejlbeskeder_, ikke koder, så API'et
   får ingen `code`. Appen mapper status + valideringsfelter (+ endpoint) til i18n. Den eneste
   tvetydighed – de to 409'ere fra `POST auth/register` og `PATCH me` – skelnes som i dag på
   `detail`-teksten (`/username/i` i `registerErrorKey`, testet); API-teksterne "That username is
@@ -153,7 +156,7 @@ Defaults – Janick kan ændre dem (åbne spørgsmål i §7).
   `shared/components/ui-confirm-sheet` og bruges til 3.4 og 4.2.
 - **P15 Hjem.** "Seneste 7 dage" = rullende (i dag − 6 … i dag). "Åbn mere" = et ark med de **seneste
   30 dage** (rullende som ugen, nyeste øverst, dag · kcal/mål · P/K/F), ingen månedsnavigation.
-  *Hvorfor ikke kalendermåneden:* d. 1.–6. ville arket vise færre dage end ugen. Data fra
+  _Hvorfor ikke kalendermåneden:_ d. 1.–6. ville arket vise færre dage end ugen. Data fra
   `FoodLogService.dailyTotals` (90 dage indlæst). I dag viser 0, når madloggen er indlæst. Fejler mad-,
   vægt- eller profil-storen → besked + "Prøv igen". Fejringen starter først, når mad og profil er
   indlæst (ellers fejres et allerede nået mål ved hver app-start).
@@ -218,13 +221,13 @@ fra `Request.Host` (`AllowedHosts` er `*` → host-header-forgiftning af reset-l
 { "emailOrUsername": "string (1–320)", "password": "string (1–200)" }
 ```
 
-| Status | Hvornår |
-| --- | --- |
-| 200 | `AuthResponse` (uændret) |
-| 400 | valideringsfejl (`errors.EmailOrUsername` / `errors.Password`) |
-| 401 | ukendt identifikator, slettet konto, forkert adgangskode, inaktiv konto (samme tekst – siger ikke hvad) |
-| 403 | rigtig adgangskode, e-mail ikke verificeret (`UnauthorizedAccessException`). Ingen tokens, tæller ikke som fejl |
-| 429 | 6. forsøg inden for 15-minutters vinduet (fast fra første forsøg). Tælles **før** adgangskoden, så også rigtig adgangskode afvises |
+| Status | Hvornår                                                                                                                            |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 200    | `AuthResponse` (uændret)                                                                                                           |
+| 400    | valideringsfejl (`errors.EmailOrUsername` / `errors.Password`)                                                                     |
+| 401    | ukendt identifikator, slettet konto, forkert adgangskode, inaktiv konto (samme tekst – siger ikke hvad)                            |
+| 403    | rigtig adgangskode, e-mail ikke verificeret (`UnauthorizedAccessException`). Ingen tokens, tæller ikke som fejl                    |
+| 429    | 6. forsøg inden for 15-minutters vinduet (fast fra første forsøg). Tælles **før** adgangskoden, så også rigtig adgangskode afvises |
 
 - Opslag (`FindByIdentifierAsync`, genbruges af A2/A3): trim; indeholder `@` → `Email == lower`,
   ellers `Username == trimmed` (præcis).
@@ -260,35 +263,35 @@ fra `Request.Host` (`AllowedHosts` er `*` → host-header-forgiftning af reset-l
 - `POST /api/v1/auth/password/forgot`: body `{ "emailOrUsername": "string (1–320)" }` → altid 204.
   Mail kun til en eksisterende, aktiv, verificeret, ikke-slettet konto (2a). Ældre reset-tokens
   revokeres (6a); nyt token gælder 1 time. Mail: emne `Nulstil din adgangskode · Reset your password –
-  Nutrify`, tosproget, link `{PublicBaseUrl}/api/v1/auth/password/reset?token=…`.
+Nutrify`, tosproget, link `{PublicBaseUrl}/api/v1/auth/password/reset?token=…`.
 - `GET /api/v1/auth/password/reset?token=…` (anonym) → `200 text/html` formular eller `400 text/html`
   ugyldigt link (7a; tekst nedenfor).
   GET **forbruger ikke** tokenet (mail-scannere prefetcher). Ny `IAuthService.IsPasswordResetTokenActiveAsync`.
   Formularen: `<form method="post" action="reset">` (relativ), skjult `token`, `newPassword` og
   `newPasswordConfirmation` (`type=password required minlength=10 maxlength=200
-  autocomplete=new-password`), teksten "Mindst 10 tegn · At least 10 characters" (9a), knap "Gem · Save".
+autocomplete=new-password`), teksten "Mindst 10 tegn · At least 10 characters" (9a), knap "Gem · Save".
 - `POST /api/v1/auth/password/reset` (`application/x-www-form-urlencoded`: `token`, `newPassword`,
   `newPasswordConfirmation`, bundet som nullable `[FromForm] string?` og valideret i controlleren, så
   `[ApiController]`'s automatiske JSON-400 aldrig rammer en browser og alle udfald er HTML) → `200
-  text/html` succes; `400 text/html` formularen igen med mismatch- (9b) eller længde-teksten; `400
-  text/html` ugyldigt link. Succes: tokenet `Used`, alle refresh-tokens `Revoked` (uændret), login-lockout
+text/html` succes; `400 text/html` formularen igen med mismatch- (9b) eller længde-teksten; `400
+text/html` ugyldigt link. Succes: tokenet `Used`, alle refresh-tokens `Revoked` (uændret), login-lockout
   for kontoen fjernet. JSON-varianten fjernes.
 - Adgangskoderegel overalt: 10–200 tegn, ingen sammensætningskrav. `ResetPasswordRequest` og
   `ChangePasswordRequest` får `MaxLength(200)`; `EnsureMatchingPasswords` tjekker også max 200.
 
 **Tekster i mails og på sider (præcis, med æ/ø/å; da-linje og en-linje):**
 
-| Hvor | Tekst |
-| --- | --- |
-| Verifikationsmail | "Tryk på linket for at bekræfte din e-mail til Nutrify. Linket gælder i 24 timer." / "Tap the link to confirm your e-mail for Nutrify. The link is valid for 24 hours." · link · "Har du ikke oprettet en konto eller skiftet e-mail, kan du ignorere mailen." / "If you didn't create an account or change your e-mail, you can ignore this mail." |
-| Reset-mail | "Tryk på linket for at vælge en ny adgangskode til Nutrify. Linket gælder i 1 time." / "Tap the link to choose a new password for Nutrify. The link is valid for 1 hour." · link · "Har du ikke bedt om det, kan du ignorere mailen." / "If you didn't ask for this, you can ignore this mail." |
-| Verify 200 | titel "E-mail bekræftet · E-mail confirmed"; "Din e-mail er bekræftet. Gå tilbage til Nutrify-appen." / "Your e-mail is confirmed. Go back to the Nutrify app." |
-| Verify 400 | titel "Ugyldigt link · Invalid link"; "Linket er ugyldigt, udløbet eller allerede brugt. Tryk på 'Send mail igen' i appen, eller log ind, hvis din e-mail allerede er bekræftet. Skiftede du e-mail? Skift den igen under Profil." / "The link is invalid, expired or already used. Tap 'Send e-mail again' in the app, or log in if your e-mail is already confirmed. Changed your e-mail? Change it again under Profile." |
-| Reset-formular | titel "Ny adgangskode · New password"; "Vælg en ny adgangskode til Nutrify." / "Choose a new password for Nutrify."; felter "Ny adgangskode · New password", "Gentag adgangskode · Repeat password"; "Mindst 10 tegn · At least 10 characters"; knap "Gem · Save" |
-| Reset mismatch | "Adgangskoderne er ikke ens · The passwords do not match" |
-| Reset længde | "Adgangskoden skal være 10–200 tegn · The password must be 10–200 characters" |
-| Reset 400 link | titel "Ugyldigt link · Invalid link"; "Linket er ugyldigt, udløbet eller allerede brugt. Bed om et nyt under 'Glemt adgangskode' i appen." / "The link is invalid, expired or already used. Ask for a new one under 'Forgot password' in the app." |
-| Reset 200 | titel "Adgangskode skiftet · Password changed"; "Din adgangskode er skiftet. Gå tilbage til Nutrify, og log ind." / "Your password has been changed. Go back to Nutrify and log in." |
+| Hvor              | Tekst                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Verifikationsmail | "Tryk på linket for at bekræfte din e-mail til Nutrify. Linket gælder i 24 timer." / "Tap the link to confirm your e-mail for Nutrify. The link is valid for 24 hours." · link · "Har du ikke oprettet en konto eller skiftet e-mail, kan du ignorere mailen." / "If you didn't create an account or change your e-mail, you can ignore this mail."                                                                         |
+| Reset-mail        | "Tryk på linket for at vælge en ny adgangskode til Nutrify. Linket gælder i 1 time." / "Tap the link to choose a new password for Nutrify. The link is valid for 1 hour." · link · "Har du ikke bedt om det, kan du ignorere mailen." / "If you didn't ask for this, you can ignore this mail."                                                                                                                             |
+| Verify 200        | titel "E-mail bekræftet · E-mail confirmed"; "Din e-mail er bekræftet. Gå tilbage til Nutrify-appen." / "Your e-mail is confirmed. Go back to the Nutrify app."                                                                                                                                                                                                                                                             |
+| Verify 400        | titel "Ugyldigt link · Invalid link"; "Linket er ugyldigt, udløbet eller allerede brugt. Tryk på 'Send mail igen' i appen, eller log ind, hvis din e-mail allerede er bekræftet. Skiftede du e-mail? Skift den igen under Profil." / "The link is invalid, expired or already used. Tap 'Send e-mail again' in the app, or log in if your e-mail is already confirmed. Changed your e-mail? Change it again under Profile." |
+| Reset-formular    | titel "Ny adgangskode · New password"; "Vælg en ny adgangskode til Nutrify." / "Choose a new password for Nutrify."; felter "Ny adgangskode · New password", "Gentag adgangskode · Repeat password"; "Mindst 10 tegn · At least 10 characters"; knap "Gem · Save"                                                                                                                                                           |
+| Reset mismatch    | "Adgangskoderne er ikke ens · The passwords do not match"                                                                                                                                                                                                                                                                                                                                                                   |
+| Reset længde      | "Adgangskoden skal være 10–200 tegn · The password must be 10–200 characters"                                                                                                                                                                                                                                                                                                                                               |
+| Reset 400 link    | titel "Ugyldigt link · Invalid link"; "Linket er ugyldigt, udløbet eller allerede brugt. Bed om et nyt under 'Glemt adgangskode' i appen." / "The link is invalid, expired or already used. Ask for a new one under 'Forgot password' in the app."                                                                                                                                                                          |
+| Reset 200         | titel "Adgangskode skiftet · Password changed"; "Din adgangskode er skiftet. Gå tilbage til Nutrify, og log ind." / "Your password has been changed. Go back to Nutrify and log in."                                                                                                                                                                                                                                        |
 
 ### A4 Refresh: samme UTC-dag → samme refresh-token
 
@@ -315,7 +318,7 @@ ubrugte verifikations-tokens brugt, opret et token med `NewEmail` (24 timer) og 
   → 201 `FoodLogDto`. Manglende/`0` → 400 `detail: "Meal type is invalid."`; ukendt navn → 400
   `errors["$.mealType"]`.
 - `FoodLogDto` = `{ foodLogId, foodId, foodName, quantity, unit, caloriesConsumed, proteinConsumed,
-  carbohydratesConsumed, fatConsumed, consumedAt, mealType }` – overalt, hvor den bruges (food-logs,
+carbohydratesConsumed, fatConsumed, consumedAt, mealType }` – overalt, hvor den bruges (food-logs,
   collection-log, nutrition history, data-export, historik-payload).
 - `PATCH /api/v1/me/food-logs/{id}` uændret (beholder `mealType`).
 - `POST /api/v1/me/meal-collections/{id}/log { consumedAt, mealType, multiplier? = 1 }` → 200
@@ -365,44 +368,47 @@ Slet de 7 tomme klasser i `API/Controllers` (`AchivementController`, `DashboardC
 
 ### Statuskoder, appen mapper (resumé)
 
-| Endpoint | Svar, appen skelner |
-| --- | --- |
-| `POST auth/register` | 201 · 400 felter · 409 (`detail` skelner brugernavn/e-mail) |
-| `POST auth/login` | 200 · 400 · 401 · 403 (→ modal) · 429 |
-| `POST auth/email/resend-verification`, `POST auth/password/forgot` | 204 (400 kun ved tomt felt) |
-| `POST auth/refresh` | 200 · 401 (→ login) |
-| `PATCH me` | 200 · 400 · 409 (som register) |
-| `PATCH me/profile` | 200 · 400 (felt/alder) |
-| `POST me/goals` | 201 · 400 · 409 (identisk mål = succes) |
-| `PUT me/settings/Notifications { value: "true" \| "false" }` | 200 |
-| `POST me/weight-logs` | 201 · 409 `existingWeightLogId` (→ overskrivningsark) |
-| `POST foods` | 201 · 409 (navn findes) · 400 |
-| `POST me/food-logs` | 201 · 400 · 404 (madvare) |
-| `DELETE me/food-logs/{id}` | 204 · 404 (→ "findes ikke længere") |
-| `POST/PATCH/DELETE me/meal-collections[/…]` | 201/200/204 · 400 (fx sidste vare) · 404 |
-| `GET me/history` | 200 · 400 |
-| `PUT me/profile/image` | 200 `{ profileImageUrl }` · 400 (krav) · `DELETE` 204/404 (= succes) |
-| `POST me/data-export/token` · `GET data-export?token=` | 200 `{ token }` · 200 attachment / 404 |
-| `POST me/consents/{type}/withdraw` | 204 (Terms/HealthDataProcessing = konto slettet) · 404 |
+| Endpoint                                                           | Svar, appen skelner                                                  |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `POST auth/register`                                               | 201 · 400 felter · 409 (`detail` skelner brugernavn/e-mail)          |
+| `POST auth/login`                                                  | 200 · 400 · 401 · 403 (→ modal) · 429                                |
+| `POST auth/email/resend-verification`, `POST auth/password/forgot` | 204 (400 kun ved tomt felt)                                          |
+| `POST auth/refresh`                                                | 200 · 401 (→ login)                                                  |
+| `PATCH me`                                                         | 200 · 400 · 409 (som register)                                       |
+| `PATCH me/profile`                                                 | 200 · 400 (felt/alder)                                               |
+| `POST me/goals`                                                    | 201 · 400 · 409 (identisk mål = succes)                              |
+| `PUT me/settings/Notifications { value: "true" \| "false" }`       | 200                                                                  |
+| `POST me/weight-logs`                                              | 201 · 409 `existingWeightLogId` (→ overskrivningsark)                |
+| `POST foods`                                                       | 201 · 409 (navn findes) · 400                                        |
+| `POST me/food-logs`                                                | 201 · 400 · 404 (madvare)                                            |
+| `DELETE me/food-logs/{id}`                                         | 204 · 404 (→ "findes ikke længere")                                  |
+| `POST/PATCH/DELETE me/meal-collections[/…]`                        | 201/200/204 · 400 (fx sidste vare) · 404                             |
+| `GET me/history`                                                   | 200 · 400                                                            |
+| `PUT me/profile/image`                                             | 200 `{ profileImageUrl }` · 400 (krav) · `DELETE` 204/404 (= succes) |
+| `POST me/data-export/token` · `GET data-export?token=`             | 200 `{ token }` · 200 attachment / 404                               |
+| `POST me/consents/{type}/withdraw`                                 | 204 (Terms/HealthDataProcessing = konto slettet) · 404               |
 
 ### Bevidst uændret i API'et
 
-Logout (`Revoked`), achievements, reminders, devices/push, CORS, `force:true` ved genberegning,
-Postgres-navne, hemmeligheder i `appsettings.json` (ops, §7), SAS i `profileImageUrl` (ops, §7),
+Logout (`Revoked`), achievements, reminders, devices/push, CORS, Postgres-navne, hemmeligheder i `appsettings.json` (ops, §7), SAS i `profileImageUrl` (ops, §7),
 `consumedAt`-guard, 23505 → 409, idempotens. Nye fund skrives i `api-gaps.md`.
+
+Senere ændret (efter beslutning): `force:true` ved genberegning er slettet sammen med parameteren
+(`4f1e827`), så en vejning eller profilændring kun giver en ny målrække, når tallene ændres. Og
+madværdier, der ville løbe over `numeric(7,2)`/`numeric(9,2)`, afvises med 400 (`c2ad5e4`).
 
 ## 4. App: bølger, domæner, filejerskab og kontrakter
 
 ### 4.1 Bølger
 
-| Bølge | Domæner (parallelt) | Afhænger af |
-| --- | --- | --- |
-| 1 | `api` (API-agent, §3 + docs) · `profile` (inkl. den fælles app-forberedelse) | – |
-| 2 | `auth` · `food` · `weight` | `profile` merget (ikke `api`) |
-| 3 | `collections` · `home` · `history` · `profile-extras` | bølge 2 merget |
-| UI-test | browser-test af alle use cases (§5.4) | bølge 3 + `api` merget, Docker genstartet |
+| Bølge   | Domæner (parallelt)                                                          | Afhænger af                               |
+| ------- | ---------------------------------------------------------------------------- | ----------------------------------------- |
+| 1       | `api` (API-agent, §3 + docs) · `profile` (inkl. den fælles app-forberedelse) | –                                         |
+| 2       | `auth` · `food` · `weight`                                                   | `profile` merget (ikke `api`)             |
+| 3       | `collections` · `home` · `history` · `profile-extras`                        | bølge 2 merget                            |
+| UI-test | browser-test af alle use cases (§5.4)                                        | bølge 3 + `api` merget, Docker genstartet |
 
-*Hvorfor `profile` alene først:* den sletter `STORAGE_KEY.PROFILE`-persistensen, `kcalOverride`, den
+_Hvorfor `profile` alene først:_ den sletter `STORAGE_KEY.PROFILE`-persistensen, `kcalOverride`, den
 adaptive justering og enhederne, som specs i auth, food, weight, home og reminders seeder. Kørte den
 parallelt med dem, ville flere domæner omskrive de samme spec-linjer (konflikter eller et rødt træ efter
 merge). Den fælles forberedelse (tidligere `core-contracts`) er lagt ind i `profile`, så bølge 1 stadig
@@ -413,16 +419,16 @@ endpoints testes live først i UI-testen; app-agenterne bruger hverken browseren
 
 ### 4.2 Filejerskab (hvem må røre hvad)
 
-| Domæne | Ejer |
-| --- | --- |
-| `profile` (1) | Forberedelse: `core/models/api.ts` (`StoreStatus`), `core/utils/api.ts` (+spec, README: `readProblemBody`), `core/constants/storage-key.ts` (kun `STORAGE_KEY_PREFIX`), `core/services/storage/*`, `core/services/session-data/*`, stubs i `weight-log.ts`, `food-log.ts`, `collections.ts`. Profil: `core/models/profile.ts`, `core/models/nutrition.ts`, nye `core/models/profile-api.ts` + `core/constants/profile.ts`, `core/constants/nutrition.ts`, `core/constants/profile-defaults.ts`, `core/services/user-profile/*`, `core/services/nutrition-calculator/*`, `core/services/adaptive-goal/` (slettes), `features/profile/**` undtagen photo-sheet/reminders-sheet/delete-sheet (photo-sheet kun så den kompilerer), `shared/components/ui-text-input` (`'date'`), kald-linjerne for kcal/makro-mål i `features/home/services/home-summary.ts`, `features/food/services/food-view.ts`, `features/profile/services/achievements.ts`, `toProfile` + `updatePersisted`-kald i `features/signup/**`, **og de linjer i andre specs, der knækker af dens ændringer** (seeder `STORAGE_KEY.PROFILE`, bruger `kcalOverride`/`AdaptiveGoalService`/enheder – fx `session.spec.ts`, `signup-state.spec.ts`, `food-page.spec.ts`, `food-view.spec.ts`, `weight-view.spec.ts`, `weight-page.spec.ts`, `home-summary.spec.ts`, `reminders.spec.ts`, `storage.spec.ts`), i18n `profile.page/rows/edit/editSheet`, `core.nutrition` |
-| `auth` (2) | `core/models/auth.ts`, `core/constants/auth.ts`, `core/services/auth-api/*`, `core/services/session/*`, `core/interceptors/README.md`, `app.config.ts` (én linje), `features/auth/**`, `features/home/components/verify-email-sheet/**`, `features/signup/**` (undtagen `toProfile`), i18n `core.auth`, `auth`, `home.verifyEmail`, `signup.*` |
-| `food` (2) | nye `core/models/food-api.ts`, `core/constants/food.ts`, `core/services/food-log/*` (+ ny `food-log-mapping.ts`), `core/services/food-search/*`, `core/services/barcode-flow/*`, `core/constants/meals.ts`, `core/testing/test-providers.ts` (`FOOD_SEARCH_DELAY_MS` væk), `shared/components/food-picker/**`, `shared/components/barcode-scanner/**`, ny `shared/components/ui-confirm-sheet/**` (flyttet fra `features/collections/components/delete-collection-sheet`), `features/food/**` undtagen kcal-linjerne i `food-view.ts`; minimale kaldstilpasninger i `features/history/services/history.ts`, `features/collections/**` og `food-add-sheet` så build er grønt; i18n `food.*`, `shared.foodPicker`, `shared.barcodeScanner`, `core.barcode` |
-| `weight` (2) | `core/services/weight-log/*`, `core/models/weight.ts`, `core/constants/weight.ts`, `features/weight/**`, i18n `weight.*`, `core.weight` |
-| `collections` (3) | `core/services/collections/*`, collection-typer i `core/models/food.ts` og `core/models/food-api.ts`, `core/constants/collection-icons.ts`, `features/collections/**`, samlingsfanen i `features/food/components/food-add-sheet/**`, én linje i `achievements.ts`, oprydning i `core/constants/storage-key.ts` (slet alle ubrugte nøgler), i18n `collections.*`, `core.collectionIcons` |
-| `home` (3) | `features/home/**` undtagen `verify-email-sheet`, i18n `home.*` undtagen `home.verifyEmail` |
-| `history` (3) | `features/history/**`, i18n `history.*` |
-| `profile-extras` (3) | `features/profile/components/profile-photo-sheet/**`, `profile-delete-account-sheet/**`, `profile-reminders-sheet/**`, ny `features/profile/services/privacy.ts`, privatlivssektionen i `profile-page`, `shared/components/profile-avatar/photo-crop.ts`, `uploadPhoto/deletePhoto` i `user-profile.ts`, `core/services/reminders/*`, `withdrawConsent` i `session.ts`, privatlivskald i `core/services/auth-api/auth-api.ts` + endpoints i `core/constants/auth.ts`, `ios/App/App/Info.plist` (`NSCameraUsageDescription`), i18n `profile.photoSheet/remindersSheet/deleteAccountSheet/consents`, nye nøgler i `profile.page`, `core.reminders`, `signup.summaryStep.termsEnd` |
+| Domæne               | Ejer                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `profile` (1)        | Forberedelse: `core/models/api.ts` (`StoreStatus`), `core/utils/api.ts` (+spec, README: `readProblemBody`), `core/constants/storage-key.ts` (kun `STORAGE_KEY_PREFIX`), `core/services/storage/*`, `core/services/session-data/*`, stubs i `weight-log.ts`, `food-log.ts`, `collections.ts`. Profil: `core/models/profile.ts`, `core/models/nutrition.ts`, nye `core/models/profile-api.ts` + `core/constants/profile.ts`, `core/constants/nutrition.ts`, `core/constants/profile-defaults.ts`, `core/services/user-profile/*`, `core/services/nutrition-calculator/*`, `core/services/adaptive-goal/` (slettes), `features/profile/**` undtagen photo-sheet/reminders-sheet/delete-sheet (photo-sheet kun så den kompilerer), `shared/components/ui-text-input` (`'date'`), kald-linjerne for kcal/makro-mål i `features/home/services/home-summary.ts`, `features/food/services/food-view.ts`, `features/profile/services/achievements.ts`, `toProfile` + `updatePersisted`-kald i `features/signup/**`, **og de linjer i andre specs, der knækker af dens ændringer** (seeder `STORAGE_KEY.PROFILE`, bruger `kcalOverride`/`AdaptiveGoalService`/enheder – fx `session.spec.ts`, `signup-state.spec.ts`, `food-page.spec.ts`, `food-view.spec.ts`, `weight-view.spec.ts`, `weight-page.spec.ts`, `home-summary.spec.ts`, `reminders.spec.ts`, `storage.spec.ts`), i18n `profile.page/rows/edit/editSheet`, `core.nutrition` |
+| `auth` (2)           | `core/models/auth.ts`, `core/constants/auth.ts`, `core/services/auth-api/*`, `core/services/session/*`, `core/interceptors/README.md`, `app.config.ts` (én linje), `features/auth/**`, `features/home/components/verify-email-sheet/**`, `features/signup/**` (undtagen `toProfile`), i18n `core.auth`, `auth`, `home.verifyEmail`, `signup.*`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `food` (2)           | nye `core/models/food-api.ts`, `core/constants/food.ts`, `core/services/food-log/*` (+ ny `food-log-mapping.ts`), `core/services/food-search/*`, `core/services/barcode-flow/*`, `core/constants/meals.ts`, `core/testing/test-providers.ts` (`FOOD_SEARCH_DELAY_MS` væk), `shared/components/food-picker/**`, `shared/components/barcode-scanner/**`, ny `shared/components/ui-confirm-sheet/**` (flyttet fra `features/collections/components/delete-collection-sheet`), `features/food/**` undtagen kcal-linjerne i `food-view.ts`; minimale kaldstilpasninger i `features/history/services/history.ts`, `features/collections/**` og `food-add-sheet` så build er grønt; i18n `food.*`, `shared.foodPicker`, `shared.barcodeScanner`, `core.barcode`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `weight` (2)         | `core/services/weight-log/*`, `core/models/weight.ts`, `core/constants/weight.ts`, `features/weight/**`, i18n `weight.*`, `core.weight`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `collections` (3)    | `core/services/collections/*`, collection-typer i `core/models/food.ts` og `core/models/food-api.ts`, `core/constants/collection-icons.ts`, `features/collections/**`, samlingsfanen i `features/food/components/food-add-sheet/**`, én linje i `achievements.ts`, oprydning i `core/constants/storage-key.ts` (slet alle ubrugte nøgler), i18n `collections.*`, `core.collectionIcons`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `home` (3)           | `features/home/**` undtagen `verify-email-sheet`, i18n `home.*` undtagen `home.verifyEmail`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `history` (3)        | `features/history/**`, i18n `history.*`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `profile-extras` (3) | `features/profile/components/profile-photo-sheet/**`, `profile-delete-account-sheet/**`, `profile-reminders-sheet/**`, ny `features/profile/services/privacy.ts`, privatlivssektionen i `profile-page`, `shared/components/profile-avatar/photo-crop.ts`, `uploadPhoto/deletePhoto` i `user-profile.ts`, `core/services/reminders/*`, `withdrawConsent` i `session.ts`, privatlivskald i `core/services/auth-api/auth-api.ts` + endpoints i `core/constants/auth.ts`, `ios/App/App/Info.plist` (`NSCameraUsageDescription`), i18n `profile.photoSheet/remindersSheet/deleteAccountSheet/consents`, nye nøgler i `profile.page`, `core.reminders`, `signup.summaryStep.termsEnd`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 Fælles filer (`src/i18n/*.json`, `core/services/README.md`, `core/models/README.md`,
 `core/constants/README.md`): kun små, lokale indsættelser/ændringer i egne afsnit.
@@ -568,7 +574,8 @@ eksport-token round-trip + "garbage" → 404.
 
 Efter `docker compose … up -d --build` fra API-worktreet: curl-scenarier for hvert punkt i §3 med
 engangsbrugere (`<navn>+<random>@example.test`, slettes med `DELETE /api/v1/me` bagefter), links
-læses fra outboxen. `curl -sI` på de fire HTML-sider viser `Content-Type: text/html; charset=utf-8`;
+læses fra outboxen. `curl -s -D - -o /dev/null` (GET; HEAD giver 405) på de fire HTML-sider viser
+`Content-Type: text/html; charset=utf-8`;
 `PATCH me {"username":"a@b"}` → 400 `errors.Username`. Swagger regenereres til
 `docs/api-integration/docker/swagger.json`.
 
@@ -637,7 +644,7 @@ brugt eksport-token); `DELETE me/profile/image` 404; 401 på `/me/**` lige før 
     `nutrify.session` via `javascript_tool`) → grupperet pr. dag, nyeste øverst; scroll til bunden →
     næste side (`GET me/history` med `cursor`); filtre; fejl med API stoppet → besked + retry.
 14. **8.0:** slå en påmindelse til, sæt tid → genindlæs → holder; hovedkontakt → `PUT
-    me/settings/Notifications`; browseren viser "understøttes ikke"-noten.
+me/settings/Notifications`; browseren viser "understøttes ikke"-noten.
 15. **9.1:** "Download mine data" → `POST me/data-export/token` 200 og `GET data-export?token=…` 200 med
     `Content-Disposition: attachment`.
 16. **Sprog:** skift til engelsk → forkert login og glemt-besked på engelsk.
@@ -648,13 +655,10 @@ Fejl rapporteres med trin, forventet/faktisk og netværks-/konsoluddrag. UI-test
 
 ## 6. Bølge-0-fund
 
-Alle 24 fund i `wave0-open-review-findings.md` er **rettet** i `f1e2d55` (gennemgået ét for ét af
-auth-mapperen og stikprøvekontrolleret: login-guard, `console.error` i `toApiError`, `NO_RETRY_ENDPOINTS`,
-`isEmailVerified` og `ValidationProblemDetails` væk, 16 specs med `verify()`, refresh-specs,
-`forgetOtherAccount`). Ingen skal rettes igen. Med de nye flows bliver koden bag fire af dem forældet
-og slettes af `auth`: login efter reset på glemt-siden (`forgot-password-page.ts:320` ×2),
-`checkVerification` efter genstart (`VERIFICATION_UNCHECKABLE`) og `verified`-flaget i `session.ts`.
-`auth` sletter også `fillProfileFrom` (profilens load henter brugernavn og e-mail). API-agenten sætter en statuslinje øverst i `wave0-open-review-findings.md` og retter `README.md`.
+Alle 24 review-fund fra bølge 0 er **rettet** i `f1e2d55`. `auth` har siden slettet koden bag de fire,
+som de nye flows gjorde forældede (login efter reset på glemt-siden, `checkVerification` efter
+genstart med `VERIFICATION_UNCHECKABLE`, `verified`-flaget i `session.ts`), og `fillProfileFrom`.
+Fundlisten (`wave0-open-review-findings.md`) er slettet; den ligger i git-historikken.
 
 ## 7. Risici og åbne spørgsmål
 
@@ -666,13 +670,13 @@ atomar), og den kan bruges til at låse et kendt brugernavn i op til 15 min (en 
 løfter den). 409-skelnen i appen afhænger af API'ets `detail`-tekst (P6) – ændres teksten, viser appen
 "e-mail i brug" for begge. Mail-scannere kan trykke verify-links (ved
 e-mailskift er brugeren stadig logget ind og kan rette). Ukendte identifikatorer springer hashing over
-(timing, eksisterende). Første billede efter kold start viser defaults, til profilen er hentet
-(loading-tilstande kræves). Samlingsredigering er ikke atomar (genindlæs + fejl, intet datatab). Ingen
+(timing, eksisterende). Første billede efter kold start viste defaults, til profilen var hentet
+(løst: loading-tilstande, ingen gættede tal før storene er hentet). Samlingsredigering er ikke atomar (genindlæs + fejl, intet datatab). Ingen
 idempotens: CTA'er deaktiveres under kald. Dev-billeder forsvinder, når containeren genskabes. Committede
 hemmeligheder (`Jwt:SigningKey`, Azure-SAS i `appsettings.json` og i `profileImageUrl`) skal roteres af
-ops før enhver rigtig udrulning.
+ops før enhver rigtig udrulning (se `README.md` "Før produktion").
 
-Åbne spørgsmål til Janick:
+Åbne spørgsmål til Janick (stadig åbne; appen er bygget med standardvalgene i §2, se `README.md`):
 
 1. Aldersgrænse 13 (API) eller 16 (oprindeligt design)?
 2. OK at kaloriemålet skifter til API'ets formel (240–370 kcal fra appens gamle) og at manuelt mål +
@@ -681,7 +685,9 @@ ops før enhver rigtig udrulning.
    makroredigering af egne madvarer under redigering af en logning slettes?
 4. Graf 3 uger, rullende 7 dage og "hele måneden" som de seneste 30 dage (spec'en tolket) frem for
    designets 4 uger, kalenderuge og kalendermåned?
-5. OK at hver vejning/profilændring giver en "Mål opdateret"-række i historikken?
+5. ~~OK at hver vejning/profilændring giver en "Mål opdateret"-række i historikken?~~ Delvist løst
+   (`4f1e827`): kun når tallene ændres. Tilbage: OK at en ændring, der flytter kaloriemålet, giver en
+   række?
 6. Hvem roterer hemmelighederne og fjerner SAS fra `profileImageUrl` før produktion?
 7. "Frokost" eller spec'ens "middagsmad" som label?
 8. OK at samtykkeoversigten kun er én række (vilkår inkl. sundheds- og profildata), så længe

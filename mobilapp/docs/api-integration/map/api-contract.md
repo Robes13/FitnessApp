@@ -1,5 +1,7 @@
 # FitnessApp API – cross-cutting contract reference (for the mobile app)
 
+> **Baggrund fra før integrationen.** Beslutningerne står i `../plan-v2.md`, som går forud for denne fil; status i `../README.md`.
+
 Source of truth: `/Users/janick/Documents/GitHub/FitnessApp/API` (ASP.NET Core, .NET 10, EF Core + Npgsql).
 Every statement below was read from the C# code; everything marked **(verified)** was also confirmed
 live against the dev stack running in Docker at `http://localhost:5210` on 2026-09-30

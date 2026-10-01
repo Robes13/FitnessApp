@@ -1,5 +1,7 @@
 # Mapping: Hjem, Historik og Præstationer ↔ FitnessApp API
 
+> **Baggrund fra før integrationen.** Beslutningerne står i `../plan-v2.md`, som går forud for denne fil; status i `../README.md`.
+
 Omfang: `features/home/**`, `features/history/**`, `features/profile/services/achievements.ts`
 
 - `components/achievements/*`, `core/services/adaptive-goal/*` mod API'ets

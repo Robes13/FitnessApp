@@ -1,5 +1,7 @@
 # Kritik af mapping-rapporterne: dækning, modsigelser og stikprøver
 
+> **Baggrund fra før integrationen.** Beslutningerne står i `../plan-v2.md`, som går forud for denne fil; status i `../README.md`.
+
 Læst: alle otte rapporter i `docs/api-integration/map/` (`api-contract`, `auth-session-signup`,
 `profile-goals-nutrition`, `weight`, `food`, `collections`, `reminders`,
 `home-history-achievements`). Kontrolleret mod C#-koden i `API/` og app-koden i
