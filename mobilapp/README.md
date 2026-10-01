@@ -91,10 +91,11 @@ npm start                           # http://localhost:4200 – /api går videre
   (`src/app/core/constants/api.ts`) er `http://10.0.2.2:5210/api/v1` på Android-emulatoren og
   `http://localhost:5210/api/v1` i iOS-simulatoren. En fysisk enhed skal bruge Mac'ens LAN-IP,
   og en produktions-URL findes ikke endnu.
-- **Android og `http://`:** Android blokerer klartekst-HTTP som standard, og
-  `AndroidManifest.xml` er **ikke** ændret. For at ramme dev-API'et fra emulatoren skal en
-  dev-build have `android:usesCleartextTraffic="true"` (eller en network-security-config for
-  `10.0.2.2`). iOS tillader `localhost`; en LAN-IP kræver en ATS-undtagelse.
+- **Android og `http://`:** Android blokerer klartekst-HTTP som standard. Kun **debug**-buildet
+  har en network-security-config (`android/app/src/debug/res/xml/network_security_config.xml`),
+  der tillader klartekst til `10.0.2.2` og `localhost` – dev-API'et. Release-buildet er uden
+  klartekst. **iOS** har `NSAllowsLocalNetworking` i `Info.plist`, så `http://localhost:5210` må
+  kaldes; en LAN-IP kræver en egen ATS-undtagelse.
 - **Mails i dev:** API'et sender ingen rigtige mails i Development, men skriver dem som
   `.txt`-filer i outbox-mappen (første linje `To: <e-mail>`). Bekræftelses- og nulstillingsmailen
   har et link til en side på API'et, som åbnes i browseren.
@@ -141,10 +142,14 @@ cd ios/App
 xcodebuild -project App.xcodeproj -scheme App \
   -configuration Debug -sdk iphonesimulator \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-  -derivedDataPath build CODE_SIGNING_ALLOWED=NO
+  -derivedDataPath build
 xcrun simctl install booted build/Build/Products/Debug-iphonesimulator/App.app
 xcrun simctl launch booted dk.meploy.fitnessapp
 ```
+
+Byg **uden** `CODE_SIGNING_ALLOWED=NO`: simulator-buildet signeres "Sign to Run Locally" (intet
+team nødvendigt), og kun sådan kommer HealthKit-entitlementet med – ellers kan appen ikke læse
+skridt (se "Skridt fra Apple Sundhed / Health Connect").
 
 Åbn projektet i Xcode med `npm run ios:open`.
 
@@ -251,6 +256,113 @@ npm run sync   # ng build + cap sync
   opslaget kører som i appen – så hele forløbet kan testes med `npm start`.
 - Fundne varer gemmes lokalt pr. stregkode (`nutrify.product-cache`, højst 100), så en vare,
   der er scannet før, også virker offline.
+
+## Skridt fra Apple Sundhed / Health Connect
+
+Spec 2.6 og 9.2-3a: Profil → Privatliv har på en telefon rækken "Skridt fra Apple Sundhed" (iOS) /
+"Skridt fra Health Connect" (Android). Slået til læser appen én gang om måneden skridtene for de
+seneste 30 hele dage og sender kun gennemsnittet (`PUT me/profile/activity`); slået fra trækkes
+samtykket tilbage. Logikken: `core/services/step-sync/` (se `src/app/core/services/README.md`).
+Pluginet er `@capgo/capacitor-health` (v8, HealthKit + Health Connect, SPM); kun
+`core/services/step-sync/health-platform.ts` kalder det. Efter `npm install`: `npm run sync`.
+
+- **Android:**
+  - `minSdkVersion` er **26** (`android/variables.gradle`), Health Connects minimum (Android 8).
+    Android 7 understøttes derfor ikke længere. Health Connect er indbygget fra Android 14; ældre
+    telefoner skal hente "Health Connect" i Play Butik.
+  - Pluginets manifest erklærer ~48 sundhedstilladelser. `app/src/main/AndroidManifest.xml` fjerner
+    dem alle med `tools:node="remove"` undtagen `android.permission.health.READ_STEPS`. Tjek det
+    flettede manifest efter et build:
+    `android/app/build/intermediates/merged_manifest/<variant>/process<Variant>MainManifest/AndroidManifest.xml`.
+  - Health Connect viser kun sin tilladelsesdialog, når appen har "privatlivspolitik"-indgangene.
+    Pluginets manifest leverer dem: `PermissionsRationaleActivity`
+    (`androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE`, Android ≤ 13) og aliasset
+    `ViewPermissionUsageActivity` (`VIEW_PERMISSION_USAGE` + `HEALTH_PERMISSIONS`, Android 14+).
+    Linket "privatlivspolitik" i dialogen åbner `public/privatliv.html` fra web-buildet
+    (`health_connect_privacy_policy_url` i `res/values/strings.xml` =
+    `file:///android_asset/public/privatliv.html`).
+  - **Kun debug** (`android/app/src/debug/`): `WRITE_STEPS`, så testere kan lægge skridt ind på
+    emulatoren, og network-security-configen til dev-API'et. Release har kun `READ_STEPS`.
+- **iOS:**
+  - HealthKit-capability: `ios/App/App/App.entitlements` (`com.apple.developer.healthkit` = true,
+    `com.apple.developer.healthkit.access` = tom), sat som `CODE_SIGN_ENTITLEMENTS` for Debug og
+    Release i `App.xcodeproj`. En rigtig enhed kræver et team med HealthKit i provisioning-profilen.
+  - `Info.plist`: `NSHealthShareUsageDescription` (dansk). Kun læsning – der er ingen
+    `NSHealthUpdateUsageDescription`, og pluginet virker uden.
+  - HealthKit siger aldrig, om læsning er nægtet: efter dialogen er svaret altid "givet", og en
+    nægtet læsning giver bare ingen data. Appen viser da "Ikke nok skridtdata endnu", ikke "ingen
+    adgang".
+- **Browser:** rækken vises ikke, og intet hentes.
+
+### Testskridt og kørsel på emulatorerne
+
+Brug en engangskonto (opret i appen, eller med curl: `POST /api/v1/auth/register` → linket fra
+outboxen `docs/api-integration/docker/outbox/*.txt` med `curl` → log ind i appen). Kun hele dage
+før i dag tæller, og der skal være skridt på mindst 7 af de seneste 30 dage.
+
+**Android** (debug-build på `emulator-5554`, `adb` i `~/Library/Android/sdk/platform-tools`):
+
+```bash
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n dk.meploy.fitnessapp/.MainActivity
+adb forward tcp:9222 localabstract:webview_devtools_remote_$(adb shell pidof dk.meploy.fitnessapp)
+node scripts/android-webview-eval.mjs 'location.pathname'   # JavaScript i appens WebView (CDP)
+```
+
+1. Giv appen læse- og skriveadgang (kun debug kan skrive). Kaldet venter på dialogen, så resultatet
+   gemmes på `window`, og dialogen godkendes med `uiautomator` + `input tap` (koordinaterne står i
+   dumpet; første gang kommer "Get started" før dialogen, og "Allow all" + "Allow" godkender):
+
+   ```bash
+   node scripts/android-webview-eval.mjs 'Capacitor.Plugins.Health.requestAuthorization({ read: ["steps"], write: ["steps"] }).then(r => window.auth = r); "ok"'
+   adb shell uiautomator dump /sdcard/ui.xml && adb shell cat /sdcard/ui.xml | grep -o 'text="[^"]*"[^>]*bounds="[^"]*"'
+   adb shell input tap <x> <y>
+   node scripts/android-webview-eval.mjs 'window.auth'
+   ```
+
+2. Læg én prøve pr. dag ind for de 10 dage før i dag (gennemsnit 8.300):
+
+   ```bash
+   node scripts/android-webview-eval.mjs '(async () => { const steps = [8000, 9000, 7000, 10000, 6000, 8500, 9500, 7500, 11000, 6500]; for (let i = 0; i < steps.length; i++) { const start = new Date(); start.setDate(start.getDate() - (i + 1)); start.setHours(10, 0, 0, 0); const end = new Date(start); end.setHours(11); await Capacitor.Plugins.Health.saveSample({ dataType: "steps", value: steps[i], startDate: start.toISOString(), endDate: end.toISOString() }); } return "seeded"; })()'
+   ```
+
+3. Log ind, Profil → Privatliv → slå "Skridt fra Health Connect" til. Har appen allerede
+   læseadgang fra trin 1, kommer der ingen dialog. For at se den (og for 2.6-4a, når samtykket er
+   givet) fjernes læseadgangen – det lukker appen, så start den igen bagefter:
+
+   ```bash
+   adb shell pm revoke dk.meploy.fitnessapp android.permission.health.READ_STEPS
+   ```
+
+   Kaldene ses i `adb logcat | grep "CapacitorHttp fetch"`.
+
+Tryk ikke på `KEYCODE_BACK` for at lukke tastaturet: tilbageknappen minimerer appen, og en app i
+baggrunden må ikke åbne Health Connects dialog ("Background activity launch blocked").
+
+**iOS** (simulatoren `Nutrify iPhone 17 Pro`): åbn Sundhed (`xcrun simctl launch <udid>
+com.apple.Health`) → Oversigt → Skridt (eller Gennemse → Aktivitet → Skridt) → "+" (Tilføj data) →
+Dato (kalenderen; forrige måned med "<"), Skridt → ✓. Gentag for mindst 7 forskellige dage før i
+dag (fx 24.–30. sep. med 11.000, 5.000, 6.000, 10.000, 9.000, 8.000 og 7.000 = gennemsnit 8.000).
+Appen styres med tryk i simulatoren; tekst sættes ind via simulatorens udklipsholder
+(`xcrun simctl pbcopy <udid>`, tryk i feltet og vælg "Paste"/"Indsæt"). Første gang rækken slås til, viser iOS HealthKits ark
+("Slå alle til" → "Tillad"). Adgangen fjernes igen i Indstillinger → Sundhed → Dataadgang og
+enheder → Nutrify.
+
+**Den månedlige grænse** gemmes på enheden under `nutrify.step-sync` =
+`{ "syncedAt": "<ISO>", "dailySteps": 8300 }`. Sæt `syncedAt` 31 dage tilbage og genstart appen,
+så synkroniseres der én gang ved start. Android: `localStorage.setItem(…)` via
+`android-webview-eval.mjs`, **vent ~10 s** (WebView'et skriver `localStorage` til disk med
+forsinkelse) og genstart med `adb shell am force-stop` + `am start`. iOS: luk appen
+(`xcrun simctl terminate`), ret rækken i WebKits `localstorage.sqlite3` under
+`$(xcrun simctl get_app_container <udid> dk.meploy.fitnessapp data)/Library/WebKit/…/LocalStorage/`
+(tabellen `ItemTable`; værdien er en **UTF-16LE**-blob, fx med Pythons `sqlite3` og
+`json.dumps(…).encode('utf-16-le')`), og start appen igen.
+
+**Kendte begrænsninger i dev:** På Android-emulatoren vises dev-profilbilleder ikke: de serveres
+over `http://10.0.2.2:5210`, og WebView'et (`https://localhost`) blokerer dem som mixed content –
+også med `MIXED_CONTENT_ALWAYS_ALLOW` (afprøvet på WebView 124). iOS-simulatoren viser dem.
+Produktion (HTTPS) er ikke berørt. Debug-builds logger Capacitors plugin-kald i logcat, også
+`CapacitorHttp`-headere med `Authorization` – det gør release-builds ikke.
 
 ---
 

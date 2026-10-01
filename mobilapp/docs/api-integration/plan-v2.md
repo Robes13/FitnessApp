@@ -58,7 +58,7 @@ API ✔ = findes i dag. `A<n>` = API-ændring i §3. Domæner: se §4.
 | 2.0                    | Opdatér e-mail                                             | A5                              | profile (1)                      | Gammel adresse aktiv til linket (P5)                      |
 | 2.1–2.3, 2.5, 2.7, 2.8 | Profilfelter + mål                                         | ✔                               | profile (1)                      | Genberegning på serveren                                  |
 | 2.4                    | Profilbillede                                              | A10 (kun Development)           | profile-extras (3)               | Beskæring bages ind; 4a = filen kan ikke læses (P10)      |
-| 2.6                    | Skridt fra Health Connect/Apple Health                     | –                               | –                                | **Springes over** (P23)                                   |
+| 2.6                    | Skridt fra Health Connect/Apple Health                     | ✔ (`StepsIntegration`)          | step-sync (senere)               | Bygget senere (`tasks/health.md`)                         |
 | 3.0                    | Manuel madvare                                             | ✔ (+A6)                         | food (2)                         | Portion → per 100 i appen, loft pr. logning (P12)         |
 | 3.1                    | Stregkode                                                  | ✔ (OFF i klienten)              | food (2)                         | "Ikke fundet" → 3.0-formularen                            |
 | 3.2                    | Log madvare/samling + måltidstype                          | A6                              | food (2), collections (3)        | `mealType` (P11)                                          |
@@ -191,8 +191,9 @@ Defaults – Janick kan ændre dem (åbne spørgsmål i §7).
   CapacitorHttp på native; de nye sider er same-origin). Postgres-afvigelserne
   (`REFRESH_TOKEN.TokenId` = jti, `PASSWORD_RESET_TOKEN.TokenId` = hash, `FOOD.CreatedByUserId` =
   rollebaseret FK) dokumenteres og omdøbes ikke.
-- **P23 Springes over:** 2.6 og 9.2-3a (Health Connect/Apple Health: nye native pakker, ikke
-  browser-testbart), push/Firebase, deep links, offline-kø, idempotens-nøgler, tidszone-sync,
+- **P23 Springes over:** ~~2.6 og 9.2-3a (Health Connect/Apple Health: nye native pakker, ikke
+  browser-testbart)~~ – senere bygget efter beslutning (`tasks/health.md`, ét plugin:
+  `@capgo/capacitor-health`; API'et uændret), push/Firebase, deep links, offline-kø, idempotens-nøgler, tidszone-sync,
   makrofordeling pr. måltype, rotation af committede hemmeligheder og SAS i `profileImageUrl`
   (ops-opgaver, se §7), lockout på forgot/resend.
 

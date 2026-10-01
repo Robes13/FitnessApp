@@ -82,8 +82,9 @@ Fra plan-v2 §7. Appen er bygget med standardvalget i parentes.
    historikken? (**Ja**; uændrede tal giver ingen række siden `4f1e827`.)
 6. Hvem roterer hemmelighederne og fjerner SAS fra `profileImageUrl`? (Se "Før produktion".)
 7. "Frokost" eller spec'ens "middagsmad"? (**Frokost**.)
-8. Samtykkeoversigten som én række (vilkår inkl. sundheds- og profildata), så længe Health
-   Connect/Apple Health er sprunget over? (**Ja**, P20.)
+8. Samtykkeoversigten som én række (vilkår inkl. sundheds- og profildata)? (**Ja**, P20.) Skridt
+   fra Apple Sundhed / Health Connect (2.6, 9.2-3a) er siden bygget som en egen række med kontakt
+   (`tasks/health.md`).
 
 ## Før produktion
 
@@ -96,13 +97,17 @@ Fra plan-v2 §7. Appen er bygget med standardvalget i parentes.
   dag 500, efter at kontoen er oprettet (`api-gaps.md`).
 - **Native API-URL:** `core/constants/api.ts` har kun dev-URL'er (Android-emulator `10.0.2.2`,
   iOS-simulator `localhost`). En fysisk telefon kræver Mac'ens LAN-IP (og `App__PublicBaseUrl` med
-  samme adresse), produktion en HTTPS-URL. Android-cleartext er ikke slået til. Dev-billed-URL'er er
-  relative og vises ikke i en native dev-build.
+  samme adresse), produktion en HTTPS-URL. Klartekst-HTTP er kun tilladt i Android-debug-buildet
+  (til `10.0.2.2`/`localhost`) og på iOS for lokale adresser (`NSAllowsLocalNetworking`). Relative
+  dev-billed-URL'er gøres absolutte mod API'et; Android-WebView'et blokerer dem alligevel som mixed
+  content (http i en https-side), iOS viser dem.
 - **Test på en enhed:** kamera- og notifikationstilladelser, eksport via systembrowseren og
   `visibilitychange` i verifikationsmodalen.
 - **Servicevilkår og privatlivspolitik** findes ikke som side; signup-teksten ligner links, men kan
   ikke åbnes. Samtykke til sundhedsdata kræver normalt, at vilkårene kan læses.
-- **Sprunget over (P23):** Health Connect/Apple Health (2.6 og 9.2-3a). Push/Firebase bruges ikke;
+- **Skridt (2.6, 9.2-3a)** er bygget med `@capgo/capacitor-health` (se `mobilapp/README.md`). En
+  rigtig iPhone kræver et team med HealthKit i provisioning-profilen, og Google Play kræver en
+  godkendt erklæring for Health Connect-tilladelsen `READ_STEPS`. Push/Firebase bruges ikke;
   påmindelser er lokale notifikationer, og appen registrerer ingen enheder.
 - Login-lockouten ligger i hukommelsen pr. API-instans og skal flyttes, hvis API'et skaleres ud.
 
