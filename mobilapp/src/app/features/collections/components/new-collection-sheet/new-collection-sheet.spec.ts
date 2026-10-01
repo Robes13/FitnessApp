@@ -286,6 +286,52 @@ describe('NewCollectionSheet', () => {
     ).toContain('allerede en egen vare med navnet');
   });
 
+  it('saves a food created after a not-found scan with its barcode (3.1-6a)', async () => {
+    const barcode = '5799999999992';
+    const http = TestBed.inject(HttpTestingController);
+    const typeInto = async (field: HTMLInputElement | null | undefined, value: string) => {
+      if (!field) {
+        throw new Error('Feltet findes ikke.');
+      }
+      field.value = value;
+      field.dispatchEvent(new Event('input'));
+      await settle();
+    };
+
+    const lookUp = async (): Promise<void> => {
+      await click(buttonByText('Scan'));
+      await typeInto(
+        root.querySelector<HTMLInputElement>('input[aria-label="Stregkode"]'),
+        barcode,
+      );
+      await click(buttonByText('Slå op'));
+    };
+
+    await lookUp();
+    http
+      .expectOne((request) => request.url.endsWith(`/product/${barcode}.json`))
+      .flush({ status: 0 }, { status: 404, statusText: 'Not Found' });
+    await settle();
+    await click(buttonByText('Opret varen selv'));
+
+    const fields = Array.from(
+      root.querySelectorAll<HTMLInputElement>('.food-picker__fields input'),
+    );
+    await typeInto(fields[0], 'UI Samlingsscan');
+    await typeInto(fields[1], '100');
+    await typeInto(fields[2], '150');
+    await click(buttonByText('Gem kun under Mine varer'));
+
+    const create = http.expectOne({ method: 'POST', url: '/api/v1/foods' });
+    expect(create.request.body).toMatchObject({ name: 'UI Samlingsscan', barcode });
+    create.flush(testFood({ foodId: 17, name: 'UI Samlingsscan', barcode }));
+    await settle();
+
+    // The next scan finds it in the user's own catalogue – no Open Food Facts request.
+    await lookUp();
+    expect(root.querySelector('.barcode-scanner__result')).not.toBeNull();
+  });
+
   it('resets everything when the sheet is reopened', async () => {
     await typeName('Meal prep');
     await addHavregryn();

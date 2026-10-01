@@ -139,6 +139,7 @@
     }
     <app-food-picker
       [startStep]="pickerStartStep()"
+      [barcode]="newFoodBarcode()"
       [editItem]="editItem()"
       [ctaVerb]="editItem() ? 'Gem' : 'Tilføj'"
       [saveAndLogLabel]="saveAndAddLabelKey | translate"
@@ -157,5 +158,5 @@
   (closed)="scannerOpen.set(false)"
   (found)="onScanned($event)"
   (manualRequested)="onManualRequested()"
-  (noBarcodeRequested)="onNoBarcodeRequested()"
+  (noBarcodeRequested)="onNoBarcodeRequested($event)"
 />

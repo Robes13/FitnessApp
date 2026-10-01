@@ -193,6 +193,8 @@ export class NewCollectionSheet {
   /** A custom food is being saved – the picker blocks a second save meanwhile. */
   protected readonly savingCustomFood = signal(false);
   protected readonly pickerStartStep = signal<FoodPickerStartStep>('search');
+  /** The barcode a not-found scan hands the picker's new-food form (3.1-6a); `null` otherwise. */
+  protected readonly newFoodBarcode = signal<string | null>(null);
   protected readonly scannerOpen = signal(false);
   private readonly editIndex = signal<number | null>(null);
   protected readonly editItem = computed<CollectionItem | null>(() => {
@@ -231,12 +233,14 @@ export class NewCollectionSheet {
   protected editAt(index: number): void {
     this.editIndex.set(index);
     this.pickerStartStep.set('search');
+    this.newFoodBarcode.set(null);
     this.pickerOpen.set(true);
   }
 
   protected openSearch(): void {
     this.editIndex.set(null);
     this.pickerStartStep.set('search');
+    this.newFoodBarcode.set(null);
     this.pickerOpen.set(true);
   }
 
@@ -277,9 +281,11 @@ export class NewCollectionSheet {
     this.openSearch();
   }
 
-  protected onNoBarcodeRequested(): void {
+  /** "Opret varen selv" after "not found" carries the barcode, so the next scan finds the food. */
+  protected onNoBarcodeRequested(barcode: string | null): void {
     this.editIndex.set(null);
     this.pickerStartStep.set('new-food');
+    this.newFoodBarcode.set(barcode);
     this.pickerOpen.set(true);
   }
 
