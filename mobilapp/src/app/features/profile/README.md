@@ -125,7 +125,7 @@ Fotoarket beskærer et valgt billede som en kladde og bager udsnittet ind i en 5
 ved "Brug billedet", som uploades med `UserProfileService.uploadPhoto()` (`PUT
 me/profile/image`). Profilen har derefter API'ets `profileImageUrl` som `ProfilePhoto`
 (kvadratisk, centreret, zoom 1) – i Development en relativ URL (`/api/v1/dev-images/…`), der går
-gennem dev-proxyen. Under beskæringen tegnes kladden som `background-size` /
+gennem dev-proxyen i browseren og gøres absolut mod API'et på native. Under beskæringen tegnes kladden som `background-size` /
 `background-position` i **procent**, så 196 px-editoren viser nøjagtig det udsnit, der bages.
 Både avataren og formlerne ligger i `shared/components/profile-avatar/`, fordi Hjem viser den
 samme avatar. Se [`components/profile-photo-sheet/README.md`](components/profile-photo-sheet/README.md).

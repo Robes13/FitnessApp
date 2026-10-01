@@ -16,6 +16,7 @@ import {
   UserProfileDto,
   UserSettingDto,
 } from '../../models/profile-api';
+import { resolveApiUrl } from '../../utils/api';
 
 /** The inverse of `GENDER_TO_API`. The API's "not chosen" values are the app's `null`. */
 export const GENDER_FROM_API: Readonly<Record<ApiGender, Gender | null>> = {
@@ -41,7 +42,7 @@ export const INTENSITY_FROM_API: Readonly<Record<ApiTrainingIntensity, Intensity
 };
 
 /** The uploaded photo is already a square crop: shown as it is, centred and unzoomed. */
-export const UPLOADED_PHOTO_CROP: Omit<ProfilePhoto, 'dataUrl'> = {
+const UPLOADED_PHOTO_CROP: Omit<ProfilePhoto, 'dataUrl'> = {
   aspectRatio: 1,
   zoom: 1,
   x: 50,
@@ -68,11 +69,11 @@ type ProfileFields =
   | 'photo';
 
 /** The whole profile from the API – nothing is kept from the device. */
-export function toUserProfile(parts: ProfileApiParts): UserProfile {
+export function toUserProfile(parts: ProfileApiParts, apiBaseUrl: string): UserProfile {
   return {
     username: parts.user.username,
     email: parts.user.email,
-    ...toProfileFields(parts.profile),
+    ...toProfileFields(parts.profile, apiBaseUrl),
     weightKg: parts.latest.weight,
     ...toGoalFields(parts.goal),
     notificationsEnabled: notificationsEnabledIn(parts.settings),
@@ -84,7 +85,10 @@ export function toUserProfile(parts: ProfileApiParts): UserProfile {
  * the first N weekdays, the intensity its RPE (3/6/9), and the photo URL a centred crop.
  * Unknown enum values become "not chosen".
  */
-export function toProfileFields(dto: UserProfileDto): Pick<UserProfile, ProfileFields> {
+export function toProfileFields(
+  dto: UserProfileDto,
+  apiBaseUrl: string,
+): Pick<UserProfile, ProfileFields> {
   const intensity = INTENSITY_FROM_API[dto.trainingIntensity];
   return {
     birthday: dto.birthDate,
@@ -94,11 +98,16 @@ export function toProfileFields(dto: UserProfileDto): Pick<UserProfile, ProfileF
     trainingDays: trainingDaysFor(dto.trainingDaysPerWeek),
     trainingMinutes: dto.workoutDurationMinutes,
     trainingRpe: INTENSITIES.find((item) => item.id === intensity)?.rpe ?? null,
-    photo:
-      dto.profileImageUrl === null
-        ? null
-        : { dataUrl: dto.profileImageUrl, ...UPLOADED_PHOTO_CROP },
+    photo: toProfilePhoto(dto.profileImageUrl, apiBaseUrl),
   };
+}
+
+/**
+ * The API's `profileImageUrl` as the profile's photo: a centred, unzoomed square. A relative URL
+ * (Development) is resolved against `API_BASE_URL`, so the native apps load it from the API.
+ */
+export function toProfilePhoto(url: string | null, apiBaseUrl: string): ProfilePhoto | null {
+  return url === null ? null : { dataUrl: resolveApiUrl(url, apiBaseUrl), ...UPLOADED_PHOTO_CROP };
 }
 
 /**

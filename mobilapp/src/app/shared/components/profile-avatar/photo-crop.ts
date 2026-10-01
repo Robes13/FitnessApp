@@ -32,11 +32,11 @@ export function photoZoomPercent(zoom: number): number {
 }
 
 /**
- * `dataUrl` is a data URL while cropping, otherwise the API's `profileImageUrl` – relative in
- * Development (`/api/v1/dev-images/…`): the browser resolves it on the page's origin, and the dev
- * proxy forwards `/api` to the API.
- * ponytail: a native dev build resolves it on the WebView's own origin and shows no photo, while
- * production URLs are absolute; prefix the native API origin if native dev photos are ever needed.
+ * `dataUrl` is a data URL while cropping, otherwise the API's `profileImageUrl`. In Development it
+ * is relative (`/api/v1/dev-images/…`): in the browser it stays so and the dev proxy forwards
+ * `/api` to the API; on native the profile mapping (`toProfilePhoto`) has made it absolute
+ * against the API. (The Android emulator's https WebView still blocks that http image as mixed
+ * content; iOS shows it. Production URLs are https.)
  */
 export function photoBackgroundImage(photo: ProfilePhoto | null): string {
   return photo ? `url("${photo.dataUrl}")` : 'none';

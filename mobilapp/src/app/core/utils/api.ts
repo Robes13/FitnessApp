@@ -27,6 +27,8 @@ export interface ApiProblem {
 export type ApiErrorResolver = (problem: ApiProblem) => string | null;
 
 const JSON_PATH_PREFIX = /^\$\./;
+/** Starts with a scheme (`http:`, `capacitor:`, `data:` …). */
+const ABSOLUTE_URL = /^[a-z][a-z\d+.-]*:/i;
 /** The API sends up to seven fraction digits; `Date` only needs (and reliably parses) three. */
 const EXTRA_FRACTION_DIGITS = /(\.\d{3})\d+/;
 
@@ -78,6 +80,18 @@ export function fetchAllPages<T>(
 export function injectApiUrl(): (endpoint: string) => string {
   const baseUrl = inject(API_BASE_URL);
   return (endpoint) => `${baseUrl}/${endpoint}`;
+}
+
+/**
+ * A URL the API answers relative to its own origin (Development's `/api/v1/dev-images/…`) made
+ * absolute against `API_BASE_URL`. The native apps load the page from their own origin, so a
+ * relative URL would point there. In the browser the base is relative too and the URL stays as it
+ * is (the dev proxy serves it). Absolute and `data:` URLs are returned unchanged.
+ */
+export function resolveApiUrl(url: string, apiBaseUrl: string): string {
+  return ABSOLUTE_URL.test(url) || !ABSOLUTE_URL.test(apiBaseUrl)
+    ? url
+    : new URL(url, apiBaseUrl).href;
 }
 
 /** Parses an API timestamp (UTC with `Z`, 0–7 fraction digits). */

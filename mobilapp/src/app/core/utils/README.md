@@ -63,14 +63,15 @@ vare-vælgeren, Mad-sidens rækker, samlingsarkets kladde og opskriftssiden.
 
 Det fælles HTTP-lag for alle domæner:
 
-| Funktion                      | Brug                                                                                                                                                           |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `injectApiUrl()`              | `const url = injectApiUrl();` → `url('me/weight-logs')` = `'/api/v1/me/weight-logs'` (base-URL fra `API_BASE_URL`).                                            |
-| `toApiError(error, resolve?)` | Enhver fejl → `ApiError { messageKey, status? }`. Læser API'ets tre fejlformer, tom body og status 0. `resolve(problem)` giver en specifik nøgle eller `null`. |
-| `mapApiError(resolve?)`       | `catchError`, der kaster `toApiError(...)` videre – sidste led i en services HTTP-pipe.                                                                        |
-| `fetchAllPages(fetchPage)`    | Følger `nextCursor`, til `hasMore` er `false`, og giver alle `items` i API'ets rækkefølge (nyeste først). `fetchPage(null)` er første side.                    |
-| `parseApiDateTime(value)`     | Et API-tidsstempel (UTC med `Z`, 0–7 decimaler) som `Date`; decimalerne kortes til 3, så også ældre WebViews kan læse det.                                     |
-| `readProblemBody(error)`      | Fejlens body som record – også når CapacitorHttp (Android) giver den som tekst (JSON parses i `try/catch`); tom, ikke-JSON eller `null` → `{}`.                |
+| Funktion                      | Brug                                                                                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `injectApiUrl()`              | `const url = injectApiUrl();` → `url('me/weight-logs')` = `'/api/v1/me/weight-logs'` (base-URL fra `API_BASE_URL`).                                                |
+| `toApiError(error, resolve?)` | Enhver fejl → `ApiError { messageKey, status? }`. Læser API'ets tre fejlformer, tom body og status 0. `resolve(problem)` giver en specifik nøgle eller `null`.     |
+| `mapApiError(resolve?)`       | `catchError`, der kaster `toApiError(...)` videre – sidste led i en services HTTP-pipe.                                                                            |
+| `fetchAllPages(fetchPage)`    | Følger `nextCursor`, til `hasMore` er `false`, og giver alle `items` i API'ets rækkefølge (nyeste først). `fetchPage(null)` er første side.                        |
+| `resolveApiUrl(url, base)`    | En relativ URL fra API'et (`/api/v1/dev-images/…`) gjort absolut mod `API_BASE_URL` på native; i browseren (relativ base) og for absolutte/`data:`-URL'er uændret. |
+| `parseApiDateTime(value)`     | Et API-tidsstempel (UTC med `Z`, 0–7 decimaler) som `Date`; decimalerne kortes til 3, så også ældre WebViews kan læse det.                                         |
+| `readProblemBody(error)`      | Fejlens body som record – også når CapacitorHttp (Android) giver den som tekst (JSON parses i `try/catch`); tom, ikke-JSON eller `null` → `{}`.                    |
 
 `ApiProblem` er det, en resolver får: `{ status, detail, fields }` – `detail` er API'ets engelske
 tekst (matches med et regex), `fields` er nøglerne i en valideringsfejl med små bogstaver og

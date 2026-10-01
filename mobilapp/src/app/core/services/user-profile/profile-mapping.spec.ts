@@ -10,9 +10,14 @@ import {
   paceIdFor,
   toGoalFields,
   toProfileFields,
+  toProfilePhoto,
   toUserProfile,
   trainingDaysFor,
 } from './profile-mapping';
+
+/** `API_BASE_URL` in the browser (relative, through the dev proxy) and on Android. */
+const BROWSER_API = '/api/v1';
+const ANDROID_API = 'http://10.0.2.2:5210/api/v1';
 
 const PROFILE_DTO: UserProfileDto = {
   userProfileId: 3,
@@ -47,16 +52,20 @@ describe('profile mapping', () => {
   it('reads the API\'s "not chosen" genders and unknown values as null', () => {
     expect(GENDER_FROM_API.Unspecified).toBeNull();
     expect(GENDER_FROM_API.PreferNotToSay).toBeNull();
-    expect(toProfileFields({ ...PROFILE_DTO, gender: 'Nope' as ApiGender }).gender).toBeNull();
     expect(
-      toProfileFields({ ...PROFILE_DTO, trainingIntensity: 'Extreme' as ApiTrainingIntensity })
-        .trainingRpe,
+      toProfileFields({ ...PROFILE_DTO, gender: 'Nope' as ApiGender }, BROWSER_API).gender,
+    ).toBeNull();
+    expect(
+      toProfileFields(
+        { ...PROFILE_DTO, trainingIntensity: 'Extreme' as ApiTrainingIntensity },
+        BROWSER_API,
+      ).trainingRpe,
     ).toBeNull();
     expect(toGoalFields({ ...TEST_GOAL, goalType: 'Other' as ApiGoalType }).goal).toBeNull();
   });
 
   it('maps the profile: intensity to its RPE, days to the first weekdays, a photo URL to a crop', () => {
-    expect(toProfileFields(PROFILE_DTO)).toEqual({
+    expect(toProfileFields(PROFILE_DTO, BROWSER_API)).toEqual({
       birthday: '1998-05-16',
       gender: 'mand',
       heightCm: 181.5,
@@ -66,15 +75,40 @@ describe('profile mapping', () => {
       trainingRpe: 6,
       photo: null,
     });
-    expect(toProfileFields({ ...PROFILE_DTO, trainingIntensity: 'Low' }).trainingRpe).toBe(3);
-    expect(toProfileFields({ ...PROFILE_DTO, trainingIntensity: 'High' }).trainingRpe).toBe(9);
-    expect(toProfileFields({ ...PROFILE_DTO, profileImageUrl: 'https://x/y.jpg' }).photo).toEqual({
+    expect(
+      toProfileFields({ ...PROFILE_DTO, trainingIntensity: 'Low' }, BROWSER_API).trainingRpe,
+    ).toBe(3);
+    expect(
+      toProfileFields({ ...PROFILE_DTO, trainingIntensity: 'High' }, BROWSER_API).trainingRpe,
+    ).toBe(9);
+    expect(
+      toProfileFields({ ...PROFILE_DTO, profileImageUrl: 'https://x/y.jpg' }, BROWSER_API).photo,
+    ).toEqual({
       dataUrl: 'https://x/y.jpg',
       aspectRatio: 1,
       zoom: 1,
       x: 50,
       y: 50,
     });
+  });
+
+  it('resolves a relative photo URL against the API on native, and nothing else', () => {
+    const devImage = '/api/v1/dev-images/abc.jpg';
+
+    expect(toProfilePhoto(devImage, ANDROID_API)?.dataUrl).toBe(
+      'http://10.0.2.2:5210/api/v1/dev-images/abc.jpg',
+    );
+    expect(toProfilePhoto(devImage, 'http://localhost:5210/api/v1')?.dataUrl).toBe(
+      'http://localhost:5210/api/v1/dev-images/abc.jpg',
+    );
+    expect(toProfilePhoto(devImage, BROWSER_API)?.dataUrl).toBe(devImage);
+    expect(toProfilePhoto('https://blob.example/a.jpg?sv=1', ANDROID_API)?.dataUrl).toBe(
+      'https://blob.example/a.jpg?sv=1',
+    );
+    expect(toProfilePhoto(null, ANDROID_API)).toBeNull();
+    expect(
+      toProfileFields({ ...PROFILE_DTO, profileImageUrl: devImage }, ANDROID_API).photo?.dataUrl,
+    ).toBe('http://10.0.2.2:5210/api/v1/dev-images/abc.jpg');
   });
 
   it('turns a training-day count into the first N weekdays', () => {
@@ -116,13 +150,16 @@ describe('profile mapping', () => {
   });
 
   it('builds the whole profile: the account names it, the latest weigh-in weighs it', () => {
-    const profile = toUserProfile({
-      user: TEST_AUTH_RESPONSE.user,
-      profile: PROFILE_DTO,
-      goal: TEST_GOAL,
-      settings: [],
-      latest: { weightLogId: null, weight: 80, recordedAt: '', isStartingWeight: true },
-    });
+    const profile = toUserProfile(
+      {
+        user: TEST_AUTH_RESPONSE.user,
+        profile: PROFILE_DTO,
+        goal: TEST_GOAL,
+        settings: [],
+        latest: { weightLogId: null, weight: 80, recordedAt: '', isStartingWeight: true },
+      },
+      BROWSER_API,
+    );
 
     expect(profile).toMatchObject({
       username: 'mads',

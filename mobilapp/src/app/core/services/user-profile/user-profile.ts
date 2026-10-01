@@ -12,6 +12,7 @@ import {
   throwError,
   toArray,
 } from 'rxjs';
+import { API_BASE_URL } from '../../constants/api';
 import { ME_ENDPOINT } from '../../constants/auth';
 import { CALORIE_FLOOR_KCAL, GOALS, PACES } from '../../constants/nutrition';
 import { PROFILE_ENDPOINT } from '../../constants/profile';
@@ -47,12 +48,7 @@ import {
 } from '../auth-api/auth-mapping';
 import { NutritionCalculator } from '../nutrition-calculator/nutrition-calculator';
 import { SessionDataStore } from '../session-data/session-data';
-import {
-  UPLOADED_PHOTO_CROP,
-  toGoalFields,
-  toProfileFields,
-  toUserProfile,
-} from './profile-mapping';
+import { toGoalFields, toProfileFields, toProfilePhoto, toUserProfile } from './profile-mapping';
 
 const NO_TARGETS: Macros = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
 const MAINTAIN_GOAL: GoalId = 'hold';
@@ -79,6 +75,7 @@ const PHOTO_UPLOAD_FILE_NAME = 'avatar.jpg';
 export class UserProfileService implements SessionDataStore {
   private readonly http = inject(HttpClient);
   private readonly url = injectApiUrl();
+  private readonly apiBaseUrl = inject(API_BASE_URL);
   private readonly calculator = inject(NutritionCalculator);
   private readonly now = inject(NOW);
   private readonly state = signal<UserProfile>({ ...DEFAULT_PROFILE });
@@ -146,7 +143,7 @@ export class UserProfileService implements SessionDataStore {
     }).pipe(
       map((parts) => {
         this.goalState.set(parts.goal);
-        this.state.set(toUserProfile(parts));
+        this.state.set(toUserProfile(parts, this.apiBaseUrl));
         this.statusState.set('ready');
       }),
       catchError(() => {
@@ -194,7 +191,8 @@ export class UserProfileService implements SessionDataStore {
   /**
    * Spec 2.4: uploads the baked photo (`PUT me/profile/image`, multipart field `file`) and shows
    * the API's URL – relative in Development (`/api/v1/dev-images/…`, served through the dev
-   * proxy). Pessimistic: the photo changes only once the API has answered.
+   * proxy in the browser and resolved against the API on native). Pessimistic: the photo changes
+   * only once the API has answered.
    */
   uploadPhoto(blob: Blob): Observable<void> {
     const body = new FormData();
@@ -203,7 +201,7 @@ export class UserProfileService implements SessionDataStore {
       .put<{ profileImageUrl: string }>(this.url(PROFILE_ENDPOINT.PROFILE_IMAGE), body)
       .pipe(
         map(({ profileImageUrl }) =>
-          this.update({ photo: { dataUrl: profileImageUrl, ...UPLOADED_PHOTO_CROP } }),
+          this.update({ photo: toProfilePhoto(profileImageUrl, this.apiBaseUrl) }),
         ),
         mapApiError(),
       );
@@ -251,7 +249,7 @@ export class UserProfileService implements SessionDataStore {
 
   private saveProfile(request: PatchUserProfileRequest): Observable<void> {
     return this.http.patch<UserProfileDto>(this.url(PROFILE_ENDPOINT.PROFILE), request).pipe(
-      map((dto) => this.update(toProfileFields(dto))),
+      map((dto) => this.update(toProfileFields(dto, this.apiBaseUrl))),
       mapApiError(),
       switchMap(() => this.reloadGoal()),
     );

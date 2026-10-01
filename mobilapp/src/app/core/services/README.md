@@ -190,7 +190,9 @@ stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under
   træningsdage (→ de første N ugedage) og tre intensiteter (→ RPE 3/6/9). Profilbilledet: `uploadPhoto(blob)`
   sender den bagte JPEG som multipart-feltet `file` (`avatar.jpg`) med `PUT me/profile/image` og
   viser API'ets `profileImageUrl`; `deletePhoto()` = `DELETE me/profile/image` (404 = allerede
-  væk = succes).
+  væk = succes). En relativ `profileImageUrl` (Development: `/api/v1/dev-images/…`) gøres absolut
+  mod `API_BASE_URL` ét sted, `toProfilePhoto()` i `profile-mapping.ts`, så de native apps henter
+  billedet fra API'et og ikke fra WebView'ets egen oprindelse.
 
 - **Persistens sker eksplicit** i hver mutation frem for via `effect()`, så rækkefølgen er
   deterministisk og testbar uden change detection.
