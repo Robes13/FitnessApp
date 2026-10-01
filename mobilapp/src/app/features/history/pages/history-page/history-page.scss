@@ -96,6 +96,10 @@
     &--maal {
       background: var(--color-positive);
     }
+
+    &--konto {
+      background: var(--color-primary);
+    }
   }
 
   &__text {
@@ -128,14 +132,6 @@
     font-weight: var(--font-weight-bold);
     color: var(--color-text);
     white-space: nowrap;
-
-    &--positive {
-      color: var(--color-positive);
-    }
-
-    &--negative {
-      color: var(--color-negative);
-    }
   }
 
   /* Designets 26 px genlog-knap: `UiIconButton` med `4xs`/`ghost` + feature-farverne. */
@@ -152,12 +148,31 @@
     &--done:hover {
       color: var(--color-positive);
     }
+
+    &--failed,
+    &--failed:hover {
+      color: var(--color-negative);
+    }
   }
 
   /* Same width as the re-log button, on rows without one. */
   &__relog-space {
     flex: none;
     width: var(--size-control-4xs);
+  }
+
+  /* Spinner, or the error line + "Prøv igen", at the end of the list. */
+  &__status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3-5);
+    padding: var(--space-6) 0;
+  }
+
+  &__status-message {
+    align-self: stretch;
+    text-align: center;
   }
 
   &__tab-bar-spacer {

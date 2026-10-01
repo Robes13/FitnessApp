@@ -373,10 +373,14 @@
   },
   "history": {
     "entries": {
+      "accountTitle": "Konto oprettet",
       "foodSummary": "{{kcal}} kcal · P {{protein}} g · K {{carbs}} g · F {{fat}} g",
+      "goalTitle": "Mål opdateret",
+      "goalValue": "{{kcal}} kcal",
       "groupLabel": "{{day}} · {{date}}",
       "mealValue": "{{kcal}} kcal",
       "relog": "Log igen i dag",
+      "relogFailed": "Ikke logget – prøv igen",
       "relogged": "Logget i dag",
       "today": "I dag",
       "weighSubtitle": "Vejning registreret",
@@ -393,7 +397,9 @@
     },
     "page": {
       "empty": "Ingen poster endnu.",
+      "error": "Historikken kunne ikke hentes.",
       "filtersAriaLabel": "Filtrér historik",
+      "retry": "Prøv igen",
       "titleAccent": "historik",
       "titleStart": "Din"
     }

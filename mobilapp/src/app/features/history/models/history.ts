@@ -1,13 +1,31 @@
 import { FoodItem } from '../../../core/models/food';
+import { FoodLogDto } from '../../../core/models/food-api';
 import { MealId } from '../../../core/models/meal';
+import { UserGoalDto } from '../../../core/models/profile-api';
+import { WeightLogDto } from '../../../core/models/weight';
 
-/** The design's three entry types in the history. The ids are also the filters' ids. */
-export type HistoryKind = 'vejning' | 'mad' | 'maal';
+/** The API's `HistoryEventType`, serialized by name. */
+export type HistoryEventType =
+  'AccountCreated' | 'GoalUpdated' | 'FoodLogged' | 'WeightRecorded' | 'AchievementCompleted';
 
-export type HistoryFilterId = 'alle' | HistoryKind;
+/**
+ * One event of `GET me/history` (plan-v2 A7). The payload matching `type` is set for
+ * `FoodLogged` / `WeightRecorded` / `GoalUpdated`; the other two types have all three `null`.
+ */
+export interface HistoryEventDto {
+  type: HistoryEventType;
+  /** UTC timestamp. */
+  occurredAt: string;
+  referenceId: number;
+  foodLog: FoodLogDto | null;
+  weightLog: WeightLogDto | null;
+  goal: UserGoalDto | null;
+}
 
-/** The color of the entry's number on the right (the design's `valColor`). */
-export type HistoryValueTone = 'default' | 'positive' | 'negative';
+/** The entry types in the history – they pick the dot's color. */
+export type HistoryKind = 'vejning' | 'mad' | 'maal' | 'konto';
+
+export type HistoryFilterId = 'alle' | Exclude<HistoryKind, 'konto'>;
 
 /** One line in the history. `food` + `meal` are only set on meal entries, which can be re-logged. */
 export interface HistoryEntry {
@@ -16,7 +34,6 @@ export interface HistoryEntry {
   readonly title: string;
   readonly subtitle: string;
   readonly value: string;
-  readonly valueTone: HistoryValueTone;
   /** `'I dag'` · `'I går'` · `'Tir.'` */
   readonly when: string;
   /** `'21. sep'` */
@@ -32,11 +49,16 @@ export interface HistoryGroup {
   readonly id: string;
   readonly label: string;
   readonly entries: readonly HistoryEntry[];
-  /** The day's logged kcal and macros (`'1.970 kcal · P 120 g · K 210 g · F 60 g'`), or `null` without meals. */
+  /**
+   * The day's logged kcal and macros (`'1.970 kcal · P 120 g · K 210 g · F 60 g'`), or `null`
+   * without meals and on the last loaded day while more pages remain.
+   */
   readonly foodSummary: string | null;
 }
 
 export interface HistoryFilter {
   readonly id: HistoryFilterId;
   readonly labelKey: string;
+  /** The `types` query of `GET me/history`: comma-separated `HistoryEventType`s. */
+  readonly types: string;
 }

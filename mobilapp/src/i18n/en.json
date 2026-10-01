@@ -373,10 +373,14 @@
   },
   "history": {
     "entries": {
+      "accountTitle": "Account created",
       "foodSummary": "{{kcal}} kcal · P {{protein}} g · C {{carbs}} g · F {{fat}} g",
+      "goalTitle": "Goal updated",
+      "goalValue": "{{kcal}} kcal",
       "groupLabel": "{{day}} · {{date}}",
       "mealValue": "{{kcal}} kcal",
       "relog": "Log again today",
+      "relogFailed": "Not logged – try again",
       "relogged": "Logged today",
       "today": "Today",
       "weighSubtitle": "Weigh-in recorded",
@@ -393,7 +397,9 @@
     },
     "page": {
       "empty": "No entries yet.",
+      "error": "Your history couldn't be loaded.",
       "filtersAriaLabel": "Filter history",
+      "retry": "Try again",
       "titleAccent": "history",
       "titleStart": "Your"
     }
