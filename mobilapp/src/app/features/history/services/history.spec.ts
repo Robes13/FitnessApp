@@ -227,6 +227,17 @@ describe('HistoryService', () => {
       expect(history.isEmpty()).toBe(true);
       expect(history.groups()).toEqual([]);
     });
+
+    it('beholder de hentede sider, når det valgte filter vælges igen', () => {
+      const today = weighEvent(weightLogDto(1, 75, 0, TEST_NOW));
+      open([today], 'c2');
+
+      history.setFilter(filterOf('alle'));
+
+      http.expectNone(() => true);
+      expect(history.events()).toEqual([today]);
+      expect(history.status()).toBe('ready');
+    });
   });
 
   describe('poster', () => {
@@ -410,6 +421,49 @@ describe('HistoryService', () => {
 
         vi.advanceTimersByTime(RELOGGED_DURATION_MS);
         expect(history.relogState(entry)).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('logger hvert måltid én gang og viser det sidste svar i hele 2,6 sekunder, når to gen-logs overlapper', () => {
+      vi.useFakeTimers();
+      try {
+        const logs = [
+          testFoodLog(TEST_FOOD, 'aften', daysAgo(1)),
+          testFoodLog(TEST_FOOD, 'frokost', daysAgo(1)),
+        ];
+        flushTestFoodLog([testFood({ foodId: 1, name: TEST_FOOD.name })]);
+        open(logs.map(foodEvent));
+        const [first, second] = history.entries();
+        if (!first || !second) {
+          throw new Error('Forventede to måltider.');
+        }
+
+        history.relog(first);
+        history.relog(second);
+        history.relog(first);
+        const posts = http.match({ method: 'POST', url: '/api/v1/me/food-logs' });
+        expect(posts).toHaveLength(2);
+        const [postFirst, postSecond] = posts;
+        expect(history.relogState(first)).toBe('pending');
+
+        postFirst?.flush({ ...logs[0], foodLogId: 1001 });
+        expect(history.relogState(first)).toBe('logged');
+        expect(history.relogState(second)).toBe('pending');
+        history.relog(second);
+        http.expectNone({ method: 'POST', url: '/api/v1/me/food-logs' });
+
+        vi.advanceTimersByTime(1000);
+        postSecond?.flush({ ...logs[1], foodLogId: 1002 });
+        expect(history.relogState(first)).toBeNull();
+        expect(history.relogState(second)).toBe('logged');
+
+        vi.advanceTimersByTime(RELOGGED_DURATION_MS - 1);
+        expect(history.relogState(second)).toBe('logged');
+        vi.advanceTimersByTime(1);
+        expect(history.relogState(second)).toBeNull();
+        expect(vi.getTimerCount()).toBe(0);
       } finally {
         vi.useRealTimers();
       }

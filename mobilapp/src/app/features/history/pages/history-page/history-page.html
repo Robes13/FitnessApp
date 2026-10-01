@@ -60,7 +60,11 @@
                 [title]="relogLabel(entry)"
                 (click)="relog(entry)"
               >
-                <app-ui-icon name="redo" size="xs" [strokeWidth]="relogIconStrokeWidth" />
+                <app-ui-icon
+                  [name]="relogState(entry) === 'failed' ? 'close' : 'redo'"
+                  size="xs"
+                  [strokeWidth]="relogIconStrokeWidth"
+                />
               </button>
             } @else if (reservesRelogSpace()) {
               <span class="history-page__relog-space" aria-hidden="true"></span>

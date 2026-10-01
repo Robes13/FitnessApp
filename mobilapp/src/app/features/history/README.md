@@ -53,7 +53,8 @@ dag får ingen opsummering, så længe der er flere sider – dagen kan fortsæt
   gen-log-status hører til skærmen og nulstilles, når man forlader fanen. `DestroyRef` dropper
   en side på vej og rydder 2,6-sekunders-timeren.
 - **Gen-log** (`redo`-ikonet) kalder `FoodLogService.add(food, meal)`; historikken genindlæses
-  ikke. Tryk, mens kaldet kører, ignoreres (ét tryk = én logning), og knappen bliver grøn
-  (`Logget i dag`) eller rød (`Ikke logget – prøv igen`) i 2,6 sekunder. Teksten står i
+  ikke. Tryk på et måltid, mens dets kald kører, ignoreres – også når et andet måltid gen-logges
+  imens (ét tryk = én logning). Knappen bliver grøn (`Logget i dag`) eller rød med et kryds
+  (`Ikke logget – prøv igen`) i 2,6 sekunder; kun det seneste svar vises. Teksten står i
   `aria-label` og `title` som i designet.
 - **Tal formateres dansk** med `formatInteger` / `formatDecimal`.

@@ -38,7 +38,8 @@ chipsene kan scrolle helt ud til skærmkanten som i designet.
 - **Gen-log-knappen** vises kun på måltidsposter. Det er `UiIconButton` med `size="4xs"`
   (26 px som i designet) og `tone="ghost"`; siden farver kun ikonet. Tryk, mens API'et gemmer,
   ignoreres af servicen (knappen deaktiveres ikke, så fokus bliver på den). Teksten (`Logget i dag` / `Ikke logget – prøv igen`) står i `aria-label` og
-  `title`; visuelt skifter ikonet til grønt eller rødt.
+  `title`; visuelt bliver ikonet grønt, eller rødt og et kryds (`close`), så en fejl ikke kun
+  vises med farve.
 - **Værdierne flugter:** har en synlig række en gen-log-knap, får rækkerne uden knap en tom
   plads af samme bredde (`.history-page__relog-space`), så alle værdier slutter i samme kolonne.
 - Rækkens lodrette padding er `--space-2-25` (designets 9 px).

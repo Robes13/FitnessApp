@@ -1,5 +1,6 @@
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { CursorPage } from '../../../../core/models/api';
 import { TEST_FOOD, testFood, testFoodLog, weightLogDto } from '../../../../core/testing/fixtures';
 import {
@@ -7,6 +8,7 @@ import {
   provideComponentTestEnvironment,
   resetComponentTestStorage,
 } from '../../../../core/testing/test-providers';
+import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { HistoryEventDto } from '../../models/history';
 import { HISTORY_LOAD_MORE_THRESHOLD_PX, HistoryPage } from './history-page';
 
@@ -192,6 +194,31 @@ describe('HistoryPage', () => {
     expect(updated?.classList.contains('history-page__relog--done')).toBe(true);
 
     // The page's service clears the 2.6-second timer when the page closes.
+    fixture.destroy();
+  });
+
+  it('skifter gen-log-ikonet til et kryds, når logningen fejler', () => {
+    const fixture = setup();
+    expectPage().flush(page(EVENTS));
+    fixture.detectChanges();
+    const icon = (): string =>
+      fixture.debugElement
+        .query(By.css('.history-page__relog app-ui-icon'))
+        .injector.get(UiIcon)
+        .name();
+    expect(icon()).toBe('redo');
+
+    rootOf(fixture).querySelector<HTMLButtonElement>('.history-page__relog')?.click();
+    http
+      .expectOne({ method: 'POST', url: '/api/v1/foods' })
+      .flush(null, { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+
+    const relog = rootOf(fixture).querySelector<HTMLButtonElement>('.history-page__relog');
+    expect(relog?.getAttribute('aria-label')).toBe('Ikke logget – prøv igen');
+    expect(relog?.classList.contains('history-page__relog--failed')).toBe(true);
+    expect(icon()).toBe('close');
+
     fixture.destroy();
   });
 });

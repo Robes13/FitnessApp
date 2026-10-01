@@ -95,6 +95,9 @@ export class HistoryService {
   private readonly nextCursorState = signal<string | null>(null);
   private readonly hasMoreState = signal(true);
   private readonly statusState = signal<StoreStatus>('idle');
+  /** The meals whose relog is on its way – each is ignored until its answer is in. */
+  private readonly relogsInFlight = signal<ReadonlySet<string>>(new Set());
+  /** The latest relog answer, shown for 2.6 seconds. */
   private readonly relogSlot = signal<{ readonly id: string; readonly state: RelogState } | null>(
     null,
   );
@@ -169,8 +172,14 @@ export class HistoryService {
     }
   }
 
-  /** Switches the filter and starts over from the first page; a page still on its way is dropped. */
+  /**
+   * Switches the filter and starts over from the first page; a page still on its way is dropped.
+   * The filter already chosen keeps its loaded pages.
+   */
   setFilter(filter: HistoryFilter): void {
+    if (filter.id === this.filterState().id) {
+      return;
+    }
     this.request?.unsubscribe();
     this.filterState.set(filter);
     this.eventsState.set([]);
@@ -180,6 +189,9 @@ export class HistoryService {
   }
 
   relogState(entry: HistoryEntry): RelogState | null {
+    if (this.relogsInFlight().has(entry.id)) {
+      return 'pending';
+    }
     const relog = this.relogSlot();
     return relog?.id === entry.id ? relog.state : null;
   }
@@ -192,15 +204,15 @@ export class HistoryService {
   /**
    * Adds the meal back to today's log (the food log store updates itself; the history isn't
    * reloaded) and shows "Logget i dag" – or that it failed – for 2.6 seconds. Ignored while that
-   * meal's relog is on its way, so a double tap logs it once.
+   * meal's relog is on its way, so a double tap logs it once – also when another meal is relogged
+   * in between.
    */
   relog(entry: HistoryEntry): void {
     const { food, meal } = entry;
-    if (!food || !meal || this.relogState(entry) === 'pending') {
+    if (!food || !meal || this.relogsInFlight().has(entry.id)) {
       return;
     }
-    this.clearReloggedTimer();
-    this.relogSlot.set({ id: entry.id, state: 'pending' });
+    this.relogsInFlight.update((ids) => new Set(ids).add(entry.id));
     this.foodLog.add(food, meal).subscribe({
       next: () => this.showRelogResult(entry.id, 'logged'),
       error: () => this.showRelogResult(entry.id, 'failed'),
@@ -315,6 +327,8 @@ export class HistoryService {
   }
 
   private showRelogResult(id: string, state: Exclude<RelogState, 'pending'>): void {
+    this.relogsInFlight.update((ids) => new Set([...ids].filter((inFlight) => inFlight !== id)));
+    this.clearReloggedTimer();
     this.relogSlot.set({ id, state });
     this.reloggedTimer = setTimeout(() => {
       this.reloggedTimer = null;
