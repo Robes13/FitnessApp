@@ -82,9 +82,10 @@ logges under et skjult måltid.
 - Open Food Facts' tal er pr. 100 g (100 ml for væsker; mængder vises da i ml). Fliserne er pakkens portion (`Portion`, fx `50 g · 200 kcal`)
   når den kendes i gram, og forvalgene 50 / 100 / 200 g (`SCAN_AMOUNT_PRESETS_GRAMS`, uden det
   forvalg der er lig portionen). Startmængden er portionen, ellers 100 g.
-- Feltet er en typed reactive form (1–5000 g). Ændres mængden, genberegnes tal og verdict med
-  `BarcodeFlowService.scale` (8a). Ugyldig mængde viser `UiFormError`, skjuler tallene
-  og slår "Tilføj" fra. Det samme loft pr. logning som i vælgeren (`exceedsFoodLogCap`, spec
+- Feltet er en typed reactive form (1–5000 g, eller ml for en væske). Ændres mængden,
+  genberegnes tal og verdict med `BarcodeFlowService.scale` (8a). Ugyldig mængde viser
+  `UiFormError` i varens enhed ligesom feltets label (`'… mellem 1 og 5.000 ml.'` for en væske),
+  skjuler tallene og slår "Tilføj" fra. Det samme loft pr. logning som i vælgeren (`exceedsFoodLogCap`, spec
   3.2-5a) gælder også her: Open Food Facts' tal er ikke til at stole på (fx kJ skrevet som
   kcal), så over 9999 kcal eller 999 g af en makro viser `shared.foodPicker.amountTooLarge` og
   slår "Tilføj" fra – ellers svarer API'et 500.

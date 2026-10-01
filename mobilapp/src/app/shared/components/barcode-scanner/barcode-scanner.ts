@@ -367,19 +367,20 @@ export class BarcodeScanner {
       ? grams
       : null;
   });
+  /** Grams, or millilitres for a liquid. */
+  private readonly amountUnit = computed(() => this.product()?.unit ?? PRODUCT_BASE_UNIT.GRAMS);
   protected readonly amountError = computed(() => {
     if (this.validGrams() === null) {
       const { minGrams, maxGrams } = BARCODE_SCANNER_TEXT_PARAMS.INVALID_AMOUNT;
       return this.t(BARCODE_SCANNER_TEXT_KEY.INVALID_AMOUNT, {
         minGrams: formatInteger(minGrams),
         maxGrams: formatInteger(maxGrams),
+        unit: this.amountUnit(),
       });
     }
     return this.exceedsLogCap() ? this.t(AMOUNT_TOO_LARGE_KEY) : null;
   });
   protected readonly hasAmountError = computed(() => this.amountError() !== null);
-  /** Grams, or millilitres for a liquid. */
-  private readonly amountUnit = computed(() => this.product()?.unit ?? PRODUCT_BASE_UNIT.GRAMS);
   protected readonly amountLabel = computed(() =>
     this.t(BARCODE_SCANNER_TEXT_KEY.AMOUNT_LABEL, { unit: this.amountUnit() }),
   );

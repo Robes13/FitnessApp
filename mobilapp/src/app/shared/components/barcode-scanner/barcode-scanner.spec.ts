@@ -364,6 +364,23 @@ describe('BarcodeScanner', () => {
     expect(buttonByText('Tilføj').disabled).toBe(true);
   });
 
+  it('names a liquid’s unit in the invalid-amount message, as the label does', async () => {
+    const cola: ScannedProduct = {
+      ...PRODUCT,
+      unit: 'ml',
+      item: { ...PRODUCT.item, quantity: '100 ml' },
+      servingGrams: null,
+    };
+    await scanAndRespond({ status: 'found', product: cola });
+
+    typeInto('Mængde i milliliter', '6000');
+
+    expect(
+      root.querySelector('.barcode-scanner__field .barcode-scanner__label')?.textContent?.trim(),
+    ).toBe('Mængde (ml)');
+    expect(formErrors()).toEqual(['Angiv en mængde mellem 1 og 5.000 ml.']);
+  });
+
   it('blocks one log over the per-log cap, which untrusted product data can reach', async () => {
     // kJ typed as kcal: 2500 "kcal" per 100 g.
     const wrong = { ...PRODUCT, item: { ...PRODUCT.item, kcal: 2500 } };
