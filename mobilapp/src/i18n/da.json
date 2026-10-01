@@ -685,6 +685,7 @@
       "chooseAnother": "Vælg et andet foto",
       "use": "Brug billedet",
       "choose": "Vælg foto",
+      "takePhoto": "Tag et foto",
       "cropLaterHint": "Du beskærer billedet, når det er valgt.",
       "saveError": "Billedet kunne ikke gemmes. Prøv igen.",
       "readError": "Billedet kan ikke bruges – vælg et andet (fx JPEG, PNG eller WebP)."

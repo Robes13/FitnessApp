@@ -134,6 +134,32 @@ describe('ProfilePhotoSheet', () => {
     expect(closed).toHaveBeenCalledOnce();
   });
 
+  it('offers the camera next to the gallery (Android only opens it with capture)', async () => {
+    await setup();
+    const camera = host.querySelector<HTMLInputElement>('input[type=file][capture]');
+    expect(camera?.getAttribute('capture')).toBe('user');
+    expect(camera?.accept).toBe('image/*');
+
+    await selectPhoto();
+    expect(host.querySelector('input[type=file][capture]')).not.toBeNull();
+  });
+
+  it("can't be closed and takes no new file while the upload runs", async () => {
+    await setup();
+    await selectPhoto();
+
+    await click('Brug billedet');
+    const request = TestBed.inject(HttpTestingController).expectOne(PROFILE_IMAGE);
+    expect(host.querySelector('.ui-sheet__close')).toBeNull();
+    decodes = false;
+    await selectPhoto();
+    expect(error()).toBe('');
+
+    request.flush({ profileImageUrl: DEV_IMAGE_URL });
+    await fixture.whenStable();
+    expect(closed).toHaveBeenCalledOnce();
+  });
+
   it('shows the save error and keeps the draft when the upload fails', async () => {
     await setup();
     await selectPhoto();

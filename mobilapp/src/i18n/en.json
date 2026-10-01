@@ -685,6 +685,7 @@
       "chooseAnother": "Choose another photo",
       "use": "Use photo",
       "choose": "Choose photo",
+      "takePhoto": "Take a photo",
       "cropLaterHint": "You'll crop the photo once it's chosen.",
       "saveError": "The photo couldn't be saved. Try again.",
       "readError": "This image can't be used – choose another one (e.g. JPEG, PNG or WebP)."

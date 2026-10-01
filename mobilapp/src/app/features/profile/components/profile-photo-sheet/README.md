@@ -13,11 +13,12 @@
 ## Tilstande
 
 **Intet nyt billede:** 132 px cirkel med det gemte foto (API'ets `profileImageUrl`) eller
-forbogstavet, den orange "Vælg foto"-knap og teksten "Du beskærer billedet, når det er valgt."
+forbogstavet, den orange "Vælg foto"-knap, "Tag et foto" og teksten "Du beskærer billedet, når det
+er valgt."
 Er der et gemt foto, står "Fjern foto" under teksten.
 
 **Valgt billede (kladde):** 196 px cirkel, man kan trække i, en zoom-slider (100–300 %),
-"Centrér igen" / "Fjern foto", "Vælg et andet foto" og "Brug billedet".
+"Centrér igen" / "Fjern foto", "Vælg et andet foto", "Tag et foto" og "Brug billedet".
 
 ## Kladde, bagning og upload
 
@@ -33,6 +34,9 @@ uploadede fil er præcis det udsnit, editoren viste. Filen sendes med
 `avatar.jpg`). Imens viser knappen en spinner; når API'et har svaret, viser profilen API'ets URL,
 og arket lukker. Fejler upload eller bagning, står "Billedet kunne ikke gemmes. Prøv igen." i
 arket, og kladden bliver.
+
+Mens upload eller fjernelse kører, kan arket ikke lukkes (`hideClose`), og et nyvalgt billede
+ignoreres – ellers kunne et sent svar lukke et genåbnet ark eller smide en nyere kladde væk.
 
 "Fjern foto" kalder `UserProfileService.deletePhoto()` (`DELETE me/profile/image`; 404 = allerede
 væk = succes) og kasserer kladden. Fejl giver samme gem-fejl.
@@ -55,8 +59,11 @@ skærmlæsere og ændrer ikke designets tekst.
 
 ## Filvalg
 
-Et `<input type="file" accept="image/*">` tilbyder selv galleri og kamera på telefonen (iOS'
-`NSCameraUsageDescription` nævner profilbilledet) – ingen Capacitor Camera-pakke. Inputtet kan
+To `<input type="file" accept="image/*">` – ingen Capacitor Camera-pakke: "Vælg foto" åbner
+galleriet, og "Tag et foto" har `capture="user"`, fordi Android-WebView'et (Capacitors
+`BridgeWebChromeClient`) kun åbner kameraet, når inputtet har `capture` (tilladelsen `CAMERA` står
+i `AndroidManifest.xml`). iOS tilbyder også kameraet fra "Vælg foto" (`NSCameraUsageDescription`
+nævner profilbilledet), og desktop-browsere ignorerer `capture`. Inputtet kan
 kun åbnes af brugerens eget klik, så knapperne er `<label>`-elementer med et gennemsigtigt input
 ovenpå – ikke `app-ui-button`. Filen læses med `FileReader` til en data-URL, nedskaleres til højst
 768 pixels på længste led, og billedformatet måles, fordi det afgør, om beskæringen skalerer efter

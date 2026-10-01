@@ -68,8 +68,9 @@ const KEY_STEP_LARGE_PX = 24;
 type PhotoSaveAction = 'upload' | 'remove';
 
 /**
- * The "Profilbillede" bottom sheet: pick an image (the file input offers the gallery and the
- * camera) and crop it by dragging and zooming within the circle.
+ * The "Profilbillede" bottom sheet: pick an image from the gallery or take one with the camera
+ * (`capture` – Android's WebView only opens the camera with it) and crop it by dragging and
+ * zooming within the circle.
  *
  * The picked image is a **draft** – nothing is saved while cropping. "Brug billedet" bakes the
  * crop into a 512 × 512 JPEG and uploads it; closing the sheet without it discards the draft
@@ -100,8 +101,12 @@ export class ProfilePhotoSheet {
   /** The saved photo, shown while no new image is picked. */
   protected readonly savedPhoto = computed(() => this.profiles.profile().photo);
   protected readonly initial = this.profiles.initial;
-  /** The call in progress, if any – the buttons show which. */
-  private readonly busy = signal<PhotoSaveAction | null>(null);
+  /**
+   * The call in progress, if any – the buttons show which. While it runs, the sheet can't be
+   * closed and no new file is taken, so a late answer can't close a reopened sheet or drop a newer
+   * draft.
+   */
+  protected readonly busy = signal<PhotoSaveAction | null>(null);
   protected readonly uploading = computed(() => this.busy() === 'upload');
   protected readonly removing = computed(() => this.busy() === 'remove');
   protected readonly zoomPercent = computed(() => {
@@ -133,7 +138,7 @@ export class ProfilePhotoSheet {
     const file = input.files?.[0];
     // The field is reset so the same image can be selected again after "Fjern foto".
     input.value = '';
-    if (!file) {
+    if (!file || this.busy() !== null) {
       return;
     }
     this.errorKey.set(null);
