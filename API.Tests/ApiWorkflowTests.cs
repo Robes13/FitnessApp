@@ -650,6 +650,15 @@ public sealed class ApiWorkflowTests
     }
 
     [Fact]
+    public void NutritionThatWouldOverflowItsColumnIsAValidationError()
+    {
+        var food = new Food { Name = "Dense", CaloriesPer100 = 50_000m };
+        Assert.Equal(99_999.99m, FoodNutritionCalculator.Calculate(food, 199.99998m, QuantityUnit.Gram).Calories);
+        Assert.Throws<BusinessValidationException>(() => FoodNutritionCalculator.Calculate(food, 200m, QuantityUnit.Gram));
+        Assert.Throws<BusinessValidationException>(() => FoodNutritionCalculator.Calculate(food, 10_000_000m, QuantityUnit.Gram));
+    }
+
+    [Fact]
     public async Task HistoryEventsCarryTheirPayload()
     {
         await using var database = await TestDatabase.CreateAsync();
