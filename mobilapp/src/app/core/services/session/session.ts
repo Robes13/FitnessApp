@@ -174,9 +174,10 @@ export class SessionService {
 
   /**
    * Deletes the account (GDPR) with `DELETE /me`. Only after the API has confirmed it, every app
-   * key in storage is removed and the app is reloaded at login, which starts every service over
-   * as a guest. The session is deliberately not changed in memory first: stores would react to
-   * it and could write to storage again before the page is gone. On an error nothing is deleted.
+   * key in storage but the device settings (theme, language) is removed and the app is reloaded
+   * at login, which starts every service over as a guest. The session is deliberately not changed
+   * in memory first: stores would react to it and could write to storage again before the page is
+   * gone. On an error nothing is deleted.
    */
   deleteAccount(): Observable<void> {
     return this.authApi.deleteAccount().pipe(map(() => this.wipeAndRestart()));
@@ -276,9 +277,12 @@ export class SessionService {
     );
   }
 
-  /** The account is gone in the API: remove every app key and start over at login. */
+  /**
+   * The account is gone in the API: remove every app key except the device settings (theme,
+   * language – plan-v2 P9) and start over at login.
+   */
   private wipeAndRestart(): void {
-    this.storage.clearAll();
+    this.storage.clearAll(DEVICE_STORAGE_KEYS);
     this.document.location.replace(new URL(APP_ROUTE.LOGIN, this.document.baseURI).href);
   }
 

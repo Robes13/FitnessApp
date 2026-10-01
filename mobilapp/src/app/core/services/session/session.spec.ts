@@ -6,7 +6,7 @@ import { Router, provideRouter } from '@angular/router';
 import { EMPTY, firstValueFrom } from 'rxjs';
 import { DEFAULT_PROFILE } from '../../constants/profile-defaults';
 import { authInterceptor } from '../../interceptors/auth.interceptor';
-import { STORAGE_KEY } from '../../constants/storage-key';
+import { DEVICE_STORAGE_KEYS, STORAGE_KEY } from '../../constants/storage-key';
 import { AuthResponse } from '../../models/auth';
 import { UserProfile } from '../../models/profile';
 import { SessionState } from '../../models/session';
@@ -496,7 +496,7 @@ describe('SessionService', () => {
   });
 
   describe('deleteAccount', () => {
-    it('clears every app key and reloads at login only after the API has deleted it', async () => {
+    it('clears every account key and reloads at login only after the API has deleted it', async () => {
       for (const key of Object.values(STORAGE_KEY)) {
         seed(key, 'x');
       }
@@ -519,7 +519,8 @@ describe('SessionService', () => {
       await done;
       TestBed.tick();
 
-      expect(storage.data.size).toBe(0);
+      // Theme and language are device settings: the login screen keeps the user's language.
+      expect([...storage.data.keys()].sort()).toEqual([...DEVICE_STORAGE_KEYS].sort());
       expect(replace).toHaveBeenCalledWith('https://localhost/login');
     });
 
@@ -541,19 +542,20 @@ describe('SessionService', () => {
   describe('withdrawConsent', () => {
     const WITHDRAW = '/api/v1/me/consents/Terms/withdraw';
 
-    it('clears every app key and reloads at login only after the 204', async () => {
+    it('clears every account key and reloads at login only after the 204', async () => {
       seed(STORAGE_KEY.REMINDERS, {});
+      seed(STORAGE_KEY.LANGUAGE, 'en');
       const { session, http } = setup(AUTHENTICATED_SESSION);
 
       const done = firstValueFrom(session.withdrawConsent());
       const request = http.expectOne({ method: 'POST', url: WITHDRAW });
       expect(request.request.headers.get('Authorization')).toBe('Bearer test-access-token');
-      expect(storage.data.size).toBe(2);
+      expect(storage.data.size).toBe(3);
       expect(replace).not.toHaveBeenCalled();
       request.flush(null, NO_CONTENT);
       await done;
 
-      expect(storage.data.size).toBe(0);
+      expect([...storage.data.keys()]).toEqual([STORAGE_KEY.LANGUAGE]);
       expect(replace).toHaveBeenCalledWith('https://localhost/login');
     });
 
