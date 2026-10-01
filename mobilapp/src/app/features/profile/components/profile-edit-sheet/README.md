@@ -41,11 +41,28 @@ det, bliver arket åbent med en `UiFormError`:
 | E-mail, 409 / 400        | `core.auth.error.emailTaken` / `invalidEmail`            |
 | Alt andet                | `profile.edit.saveFailed`                                |
 
-Fødselsdatoen har samme regel lokalt (`isBirthdayValid`), så "Gem" er slået fra og teksten
-vises, før noget sendes; datovælgeren får samme grænser som native `min`/`max`. En gemt e-mail
-lukker ikke arket, men viser `profile.edit.emailSent` ("Vi har sendt et bekræftelseslink til …")
-og en "Luk"-knap – adressen skifter først, når linket er trykket. Er adressen den nuværende
-(uanset store/små bogstaver), sender API'et ingen mail, så arket lukker bare uden kald. At lukke arket uden at gemme er fortryd: intet er ændret.
+Fejlen hører til den værdi, der blev sendt, så den forsvinder, så snart værdien ændres. En gemt
+e-mail lukker ikke arket, men viser `profile.edit.emailSent` ("Vi har sendt et bekræftelseslink
+til …") og en "Luk"-knap – adressen skifter først, når linket er trykket. Er adressen den
+nuværende (uanset store/små bogstaver), sender API'et ingen mail, så arket lukker bare uden kald.
+At lukke arket uden at gemme er fortryd: intet er ændret.
+
+## Ugyldige værdier markeres (spec 2.x)
+
+Bryder værdien feltets regel, er "Gem" slået fra, feltet får rød ramme (`invalid` på
+`app-ui-text-input`, `profile-edit-sheet__number--invalid` på talfeltet), og
+`app-ui-form-error` siger hvorfor – før noget sendes:
+
+| Felt        | Regel                              | Tekst                                                  |
+| ----------- | ---------------------------------- | ------------------------------------------------------ |
+| Tal         | Uden for definitionens `min`–`max` | `profile.edit.numberRange` ("… mellem 120 og 230 cm.") |
+| Målvægt     | `goalWeightError` (se nedenfor)    | Målvægtens egne tekster                                |
+| Fødselsdato | `isBirthdayValid` (API'ets regel)  | `profile.edit.birthdayInvalid`                         |
+| E-mail      | `isValidEmail`                     | `core.auth.error.invalidEmail`                         |
+
+Et tomt felt slår kun "Gem" fra – ingen tekst, ingen rød ramme. API'ets afvisning af en
+fødselsdato eller e-mail (tabellen ovenfor) markerer også feltet; en fejlet gemning gør ikke, for
+værdien er i orden. Datovælgeren får fødselsdatoens grænser som native `min`/`max`.
 
 ## Målvægt og skift af mål
 

@@ -42,7 +42,10 @@
         >
           <app-ui-icon name="minus" size="lg" />
         </button>
-        <div class="profile-edit-sheet__number">
+        <div
+          class="profile-edit-sheet__number"
+          [class.profile-edit-sheet__number--invalid]="invalid()"
+        >
           <input
             class="profile-edit-sheet__number-input"
             type="number"
@@ -81,6 +84,7 @@
         [ariaLabel]="date.title"
         [min]="date.min"
         [max]="date.max"
+        [invalid]="invalid()"
         formControlName="value"
       />
       <app-ui-form-error tone="negative" [message]="formError()" />
@@ -106,6 +110,7 @@
           [ariaLabel]="'profile.editSheet.email' | translate"
           formControlName="value"
           [placeholder]="text.placeholder"
+          [invalid]="invalid()"
         />
         <app-ui-form-error tone="negative" [message]="formError()" />
         <button app-ui-button type="submit" block [loading]="saving()" [disabled]="!canSaveText()">

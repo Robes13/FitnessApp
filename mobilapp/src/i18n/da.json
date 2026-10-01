@@ -625,7 +625,7 @@
       "intensityTitle": "Intensitet",
       "heightTitle": "Højde",
       "stepsTitle": "Skridt om dagen",
-      "stepsHint": "Dit typiske dagligt niveau",
+      "stepsHint": "Dit typiske daglige niveau",
       "stepsUnit": "skridt",
       "trainFreqTitle": "Træningsdage",
       "trainFreqHint": "Faste træninger om ugen",
@@ -643,6 +643,7 @@
       "goalWeightBelowCurrent": "Målvægten skal være under din nuværende vægt ({{currentKg}} kg).",
       "goalWeightAboveCurrent": "Målvægten skal være over din nuværende vægt ({{currentKg}} kg).",
       "goalWeightRange": "Vælg en målvægt mellem {{min}} og {{max}} kg.",
+      "numberRange": "Vælg en værdi mellem {{min}} og {{max}} {{unit}}.",
       "saveFailed": "Ændringen kunne ikke gemmes. Prøv igen."
     },
     "editSheet": {

@@ -22,6 +22,7 @@ import {
 } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Observable, finalize, map } from 'rxjs';
+import { AUTH_ERROR_MESSAGE_KEY } from '../../../../core/constants/auth';
 import { MAX_AGE, MIN_AGE } from '../../../../core/constants/nutrition';
 import { ApiError } from '../../../../core/models/api-error';
 import { GoalId } from '../../../../core/models/profile';
@@ -55,6 +56,7 @@ interface TextForm {
 
 const SAVE_FAILED_KEY = 'profile.edit.saveFailed';
 const BIRTHDAY_INVALID_KEY = 'profile.edit.birthdayInvalid';
+const NUMBER_RANGE_KEY = 'profile.edit.numberRange';
 const EMAIL_SENT_KEY = 'profile.edit.emailSent';
 /** `birthdayInvalid` interpolates the API's age range; the other keys ignore it. */
 const AGE_RANGE = { min: MIN_AGE, max: MAX_AGE } as const;
@@ -71,6 +73,9 @@ const AGE_RANGE = { min: MIN_AGE, max: MAX_AGE } as const;
  * are disabled, so nothing is sent twice. On an error the sheet stays open with a message; on
  * success it closes. Closing without saving changes nothing; a running save can't be closed
  * away, so its result never lands on another row.
+ *
+ * A value that breaks the field's rule (outside the bounds, a birthday outside the age rule, an
+ * e-mail without the right format) keeps "Gem" disabled, marks the field and says why.
  *
  * The parent owns which row is open (`row`); `null` means closed.
  *
@@ -107,11 +112,6 @@ export class ProfileEditSheet {
   private readonly t = injectTranslate();
 
   protected readonly saving = signal(false);
-  /** A key, so a shown error follows a language switch. Cleared when another row opens. */
-  private readonly errorKey = linkedSignal<ProfileEditRowId | null, string | null>({
-    source: this.row,
-    computation: () => null,
-  });
   /** The new address after a successful e-mail change. Cleared when another row opens. */
   private readonly emailSentTo = linkedSignal<ProfileEditRowId | null, string | null>({
     source: this.row,
@@ -169,21 +169,51 @@ export class ProfileEditSheet {
   private readonly numberValue = toSignal(this.numberForm.controls.value.valueChanges, {
     initialValue: null,
   });
+  private readonly textValue = toSignal(this.textForm.controls.value.valueChanges, {
+    initialValue: '',
+  });
   private readonly dateValue = toSignal(this.dateForm.controls.value.valueChanges, {
     initialValue: '',
   });
-  /** The rule the current value breaks (goal weight, birthday), else the failed save's error. */
-  protected readonly formError = computed(() => {
-    const number = this.numberValue();
-    const numberError = number === null ? null : this.goalWeightErrorFor(number);
-    const date = this.dateValue();
-    const dateError =
-      this.dateDefinition() !== null && date !== '' && !this.editor.isBirthdayValid(date)
-        ? this.t(BIRTHDAY_INVALID_KEY, AGE_RANGE)
-        : null;
-    const key = this.errorKey();
-    return numberError ?? dateError ?? (key === null ? null : this.t(key, AGE_RANGE));
+  /**
+   * The failed save's error – a key, so it follows a language switch. It was about the value that
+   * was sent, so it is cleared when another row opens and as soon as the value changes.
+   */
+  private readonly errorKey = linkedSignal({
+    source: () => [this.row(), this.numberValue(), this.textValue(), this.dateValue()],
+    computation: (): string | null => null,
   });
+  /** The rule the open field's value breaks; an empty field is only "Gem" disabled. */
+  private readonly fieldError = computed(() => {
+    const number = this.numberDefinition();
+    const value = this.numberValue();
+    if (number !== null && value !== null) {
+      const { min, max, unit } = number;
+      const outOfRange = value < min || value > max;
+      return (
+        this.goalWeightErrorFor(value) ??
+        (outOfRange ? this.t(NUMBER_RANGE_KEY, { min, max, unit }) : null)
+      );
+    }
+    const date = this.dateValue();
+    if (this.dateDefinition() !== null && date !== '' && !this.editor.isBirthdayValid(date)) {
+      return this.t(BIRTHDAY_INVALID_KEY, AGE_RANGE);
+    }
+    const email = this.textValue().trim();
+    if (this.textDefinition() !== null && email !== '' && !this.calculator.isValidEmail(email)) {
+      return this.t(AUTH_ERROR_MESSAGE_KEY.INVALID_EMAIL);
+    }
+    return null;
+  });
+  /** The broken rule, else the failed save's error. */
+  protected readonly formError = computed(() => {
+    const key = this.errorKey();
+    return this.fieldError() ?? (key === null ? null : this.t(key, AGE_RANGE));
+  });
+  /** The field is marked for a broken rule or a value the API rejected – not a failed save. */
+  protected readonly invalid = computed(
+    () => this.fieldError() !== null || (this.errorKey() ?? SAVE_FAILED_KEY) !== SAVE_FAILED_KEY,
+  );
 
   private readonly numberStatus = toSignal(
     this.numberForm.statusChanges.pipe(map(() => this.numberForm.valid)),

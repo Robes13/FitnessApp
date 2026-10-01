@@ -124,6 +124,33 @@ describe('ProfileEditSheet', () => {
     expect(profiles.profile().heightCm).toBe(178);
   });
 
+  it('shows the row hint', async () => {
+    const { host } = await open('steps');
+
+    expect(host.querySelector('.profile-edit-sheet__hint')?.textContent?.trim()).toBe(
+      'Dit typiske daglige niveau',
+    );
+  });
+
+  it('marks a number outside the row bounds and says which values are allowed', async () => {
+    const { fixture, host } = await open('height');
+    const field = host.querySelector<HTMLInputElement>('input[type="number"]');
+    const box = host.querySelector('.profile-edit-sheet__number');
+    const save = button(host, 'Gem');
+
+    setValue(field, '50');
+    await fixture.whenStable();
+    expect(save.disabled).toBe(true);
+    expect(host.textContent).toContain('Vælg en værdi mellem 120 og 230 cm.');
+    expect(box?.classList).toContain('profile-edit-sheet__number--invalid');
+
+    setValue(field, '180');
+    await fixture.whenStable();
+    expect(save.disabled).toBe(false);
+    expect(host.textContent).not.toContain('Vælg en værdi');
+    expect(box?.classList).not.toContain('profile-edit-sheet__number--invalid');
+  });
+
   it('never steps past the bounds of the row', async () => {
     const { fixture, host } = await open('trainFreq');
     const minus = button(host, 'Mindre');
@@ -252,20 +279,48 @@ describe('ProfileEditSheet', () => {
     expect(result.host.textContent).toContain('Du skal være mellem 13 og 100 år.');
   });
 
-  it('keeps Gem disabled for an invalid e-mail', async () => {
+  it('marks an invalid e-mail, says why and keeps Gem disabled', async () => {
     const { fixture, host } = await open('email');
     const field = host.querySelector<HTMLInputElement>('input');
+    const input = host.querySelector('app-ui-text-input');
     const save = button(host, 'Gem');
 
+    // The empty field is only disabled, not an error.
     expect(save.disabled).toBe(true);
+    expect(host.textContent).not.toContain('Skriv en gyldig e-mail.');
 
-    setValue(field, 'ikke-en-mail');
+    setValue(field, 'ui@example');
     await fixture.whenStable();
     expect(save.disabled).toBe(true);
+    expect(host.textContent).toContain('Skriv en gyldig e-mail.');
+    expect(input?.classList).toContain('ui-text-input--invalid');
 
     setValue(field, 'mads@mail.dk');
     await fixture.whenStable();
     expect(save.disabled).toBe(false);
+    expect(host.textContent).not.toContain('Skriv en gyldig e-mail.');
+    expect(input?.classList).not.toContain('ui-text-input--invalid');
+  });
+
+  it('drops the API error as soon as the e-mail is changed', async () => {
+    const result = await open('email');
+    const field = result.host.querySelector<HTMLInputElement>('input');
+
+    setValue(field, 'ui@@x.dk');
+    await result.fixture.whenStable();
+    submit(result.host);
+    http
+      .expectOne('/api/v1/me')
+      .flush(
+        { status: 400, errors: { Email: ['The Email field is not a valid e-mail address.'] } },
+        { status: 400, statusText: 'Bad Request' },
+      );
+    await result.fixture.whenStable();
+    expect(result.host.textContent).toContain('Skriv en gyldig e-mail.');
+
+    setValue(field, 'ny@mail.dk');
+    await result.fixture.whenStable();
+    expect(result.host.textContent).not.toContain('Skriv en gyldig e-mail.');
   });
 
   it('says where the confirmation link went after an e-mail change', async () => {
