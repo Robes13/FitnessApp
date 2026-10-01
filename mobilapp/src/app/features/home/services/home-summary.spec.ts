@@ -13,6 +13,7 @@ import { FakeStorage, createFakeStorage } from '../../../core/testing/fake-docum
 import { FoodLogDto } from '../../../core/models/food-api';
 import {
   TEST_FOOD,
+  flushTestFoodLog,
   flushTestGoal,
   flushTestWeighIns,
   testFoodLog,
@@ -20,6 +21,7 @@ import {
   weightLogDto,
 } from '../../../core/testing/fixtures';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
+import { NOW } from '../../../core/utils/now';
 import { HOME_HISTORY_DAYS, HomeSummaryService, TODAY_INDEX } from './home-summary';
 
 /** Thursday, September 24, 2026 – the rolling week runs from Friday the 18th to today. */
@@ -94,14 +96,15 @@ describe('HomeSummaryService', () => {
     flushTestWeighIns([weightLogDto(1, 74.2, 0, THURSDAY)]);
   }
 
-  function setup(): HomeSummaryService {
+  /** Every store loaded from the API, as after sign-in. */
+  function setup(now: () => Date = () => new Date(THURSDAY)): HomeSummaryService {
     TestBed.configureTestingModule({
-      providers: provideCoreTestEnvironment({ storage, now: THURSDAY }),
+      providers: [...provideCoreTestEnvironment({ storage }), { provide: NOW, useValue: now }],
     });
     flushTestGoal();
     flushTestWeighIns(weighIns);
     TestBed.inject(UserProfileService).update(profilePatch);
-    TestBed.inject(FoodLogService).addLogs(foodLogs);
+    flushTestFoodLog([], foodLogs);
     return TestBed.inject(HomeSummaryService);
   }
 
@@ -221,8 +224,7 @@ describe('HomeSummaryService', () => {
   it('shows a dash for every day without data', () => {
     const service = setup();
 
-    // The food log hasn't loaded: even today has no data to show.
-    for (const day of [1, 3, TODAY_INDEX]) {
+    for (const day of [1, 3, WEDNESDAY_INDEX]) {
       service.selectDay(day);
       const summary = service.daySummary();
 
@@ -264,6 +266,36 @@ describe('HomeSummaryService', () => {
 
     service.selectDay(TUESDAY_INDEX);
     expect(service.daySummary().weightText).toBe('–');
+  });
+
+  it('claims no numbers, next steps or goal card until the stores have loaded', () => {
+    TestBed.configureTestingModule({
+      providers: provideCoreTestEnvironment({ storage, now: THURSDAY }),
+    });
+    TestBed.inject(FoodLogService).addLogs([testFoodLog(SKYR, 'morgen', THURSDAY)]);
+    const service = TestBed.inject(HomeSummaryService);
+
+    expect(service.weekSummary()).toEqual({
+      hitText: '–',
+      proteinHitText: '–',
+      streakText: '–',
+      averageKcalText: '–',
+      note: '',
+    });
+    expect(service.daySummary().kcalTargetText).toBe('–');
+    expect(service.daySummary().macros[0]?.text).toBe('32 / – g');
+    expect(service.dayRows()[0]?.kcalText).toBe('380 / – kcal');
+    expect(service.todos()).toEqual([]);
+    expect(service.showGoalCard()).toBe(false);
+  });
+
+  it('averages the real kcal, also on days above the goal', () => {
+    storeFoodDays({
+      '2026-09-22': [{ ...TEST_FOOD, kcal: 3200 }],
+      '2026-09-23': [{ ...TEST_FOOD, kcal: 1000 }],
+    });
+
+    expect(setup().weekSummary().averageKcalText).toBe('2.100');
   });
 
   it('counts only the days that have data in the week card', () => {
@@ -345,6 +377,24 @@ describe('HomeSummaryService', () => {
     expect(service.todos()).toEqual([]);
     expect(service.nextTodo()).toBeNull();
     expect(service.todoCountLabel()).toBe('Kun én');
+  });
+
+  it('asks for a weigh-in again once the day has moved on', () => {
+    vi.useFakeTimers();
+    try {
+      let now = new Date(THURSDAY);
+      const service = setup(() => new Date(now));
+      weighInToday();
+      expect(service.nextTodo()?.title).toBe('Log din morgenmad');
+
+      const midnight = new Date(2026, 8, 25);
+      now = midnight;
+      vi.advanceTimersByTime(midnight.getTime() - THURSDAY.getTime());
+
+      expect(service.nextTodo()?.title).toBe('Husk at veje dig i dag');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('celebrates when the day reaches the calorie target', () => {

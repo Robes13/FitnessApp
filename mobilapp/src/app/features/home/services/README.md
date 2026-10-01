@@ -13,8 +13,8 @@ templates.
 | `weekRings`                           | Syv ringe, i dag sidst: forkortelse, andel, farve, prik, markering  |
 | `daySummary`                          | Den valgte dags titel, bjælke, kalorier, vægt og makroer            |
 | `weekSummary`                         | Dage i mål, kcal i snit, protein ramt, streak og opsamlingen        |
-| `todos`, `nextTodo`, `todoCountLabel` | Manglende vejning og måltider som "Næste skridt"                    |
-| `showGoalCard`, `goalSummary`         | Målkortet (skjult ved målet `hold`)                                 |
+| `todos`, `nextTodo`, `todoCountLabel` | Manglende vejning og måltider som "Næste skridt" (hentede stores)   |
+| `showGoalCard`, `goalSummary`         | Målkortet (skjult, til målet er hentet, og ved målet `hold`)        |
 | `goalReached`                         | Dagens kalorier har nået målet – udløser fejrings-toasten           |
 | `ready`                               | Madlog og profil er hentet – fejringens udgangspunkt                |
 | `loadFailed`, `reload()`              | En af de tre stores fejlede; `reload()` henter kun dem igen         |
@@ -32,7 +32,14 @@ giver `null` for dage uden poster. `dayParts` (andel af kaloriemålet), ringene 
 (inkl. "protein ramt" for hver dag) bygger alle på `dayTotals`. `null` giver tom ring, `–` i
 dagskortet og ingen andel i nøgletallene. Gennemsnittet er `–`, ikke 0, når ingen dage tæller med.
 Kun dagskortet viser i dag som 0 kcal og 0 g, når madloggen er `ready` (spec 5.2) – mens den
-indlæses, står der `–`, og nøgletallene tæller stadig kun dage med poster.
+indlæses, står der `–`, og nøgletallene tæller stadig kun dage med poster. "kcal i snit" er de
+loggede kalorier, også over målet.
+
+**Før data er hentet:** målet (kcal og makroer, også i `dayRows`) er `–`, til
+`UserProfileService.goal` er hentet – aldrig et tavst 0 (5.3). `weekSummary` er `–` uden
+opsamling, til madloggen er `ready` og målet hentet. `todos` foreslår kun vejning, når
+vejningerne er `ready`, og måltider, når madloggen er `ready`. Vejningen sammenlignes med Hjems
+egen dag (`FoodLogService.today`), så "Husk at veje dig i dag" kommer igen efter midnat.
 
 **Seneste 30 dage:** `dayRows` er `dailyTotals(i dag − 29, i dag)` vendt om: `id` (ISO-dato),
 `label` (`Tor. 24. sep`), `kcalText` (`1.850 / 2.100 kcal`, `–` uden poster) og `macroText`

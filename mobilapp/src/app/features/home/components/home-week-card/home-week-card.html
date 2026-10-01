@@ -20,5 +20,7 @@
       <div class="home-week-card__label">{{ 'home.weekCard.streak' | translate }}</div>
     </div>
   </div>
-  <p class="home-week-card__note">{{ summary().note }}</p>
+  @if (summary().note) {
+    <p class="home-week-card__note">{{ summary().note }}</p>
+  }
 </app-ui-card>

@@ -5,5 +5,5 @@ fremdriften og en kort vejledning ud fra det valgte tempo. Bygget på `app-ui-ca
 (`tone="accent"`) og `app-ui-progress-bar` (`tone="inverse"`, den mørke bjælke på det orange
 kort).
 
-Input `summary` fra `HomeSummaryService.goalSummary()`. Siden skjuler hele kortet, når
-profilens mål er `hold`.
+Input `summary` fra `HomeSummaryService.goalSummary()`. Siden skjuler hele kortet, til API'ets mål
+er hentet, og når profilens mål er `hold`.

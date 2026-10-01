@@ -98,7 +98,18 @@ describe('HomePage', () => {
   });
 
   it('renders the week rings, the next step and the day, goal and week cards', async () => {
-    const { page } = await setup();
+    const { settle, page } = await setup();
+
+    // Nothing has loaded: no guessed next step and no goal card from the sign-up defaults.
+    expect(page.querySelector('app-home-todo-card')).toBeNull();
+    expect(page.querySelector('app-home-goal-card')).toBeNull();
+
+    loadProfile();
+    TestBed.inject(WeightLogService).load().subscribe();
+    TestBed.inject(HttpTestingController)
+      .expectOne(WEIGHT_LOGS_URL)
+      .flush({ items: [], nextCursor: null, hasMore: false });
+    await settle();
 
     expect(page.querySelectorAll('.home-week-rings__day')).toHaveLength(7);
     expect(page.querySelector('.home-todo-card__title')?.textContent?.trim()).toBe(
@@ -106,7 +117,7 @@ describe('HomePage', () => {
     );
     expect(page.querySelector('app-home-day-card')).not.toBeNull();
     expect(page.querySelector('app-home-week-card')).not.toBeNull();
-    // The default profile has no goal selected, so the goal card isn't hidden.
+    // The API's goal is to lose weight, so the goal card shows.
     expect(page.querySelector('app-home-goal-card')).not.toBeNull();
   });
 

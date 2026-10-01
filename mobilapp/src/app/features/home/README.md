@@ -31,6 +31,9 @@ storene, når sessionen er logget ind (use case 5.2–5.5, P15 i `plan-v2.md`).
 - **Dage uden poster** er `null` hele vejen igennem: tom ring, `–` i dagskortet og arket og ingen
   andel i nøgletallene. Skærmen påstår aldrig, at en dag var uden mad. Kun **i dag** viser 0 kcal
   og 0 g makroer – men først når madloggen er hentet (`–`, mens den indlæses).
+- **Før data er hentet** gætter skærmen ikke: kalorie- og makromålet er `–`, til API'ets mål er
+  hentet, 7-dageskortet viser `–` uden opsamling, til madloggen og målet er hentet, og "Næste
+  skridt" foreslår kun vejning og måltider ud fra hentede stores. Målkortet venter på målet.
 - **Fejl:** fejler mad-, vægt- eller profil-storen, viser siden "Dine data kunne ikke hentes." med
   `app-ui-form-error` og "Prøv igen" over ringene. Knappen genindlæser kun de stores, der fejlede.
   Profilen tæller med, fordi en fejlet profil ellers ville vise et tavst kaloriemål på 0 (5.3).
@@ -49,6 +52,7 @@ Bekræftelses-arket viser sine egne fejl med `app-ui-form-error`.
 
 ## Målkortet
 
-Det orange "Til mål"-kort er **skjult**, når profilens mål er `hold`: der er ingen afstand at
-tælle ned. Fremdriften måles fra den ældste vejning til målvægten og bundes ved 4 %, som i
-designet, så bjælken aldrig ser helt tom ud.
+Det orange "Til mål"-kort er **skjult**, til API'ets mål er hentet (ellers ville det vise
+tilmeldingens standardtal), og når profilens mål er `hold`: der er ingen afstand at tælle ned.
+Fremdriften måles fra den ældste vejning til målvægten og bundes ved 4 %, som i designet, så
+bjælken aldrig ser helt tom ud.

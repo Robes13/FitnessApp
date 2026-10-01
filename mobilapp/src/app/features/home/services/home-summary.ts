@@ -101,6 +101,14 @@ export interface HomeTodo {
 }
 
 const NO_VALUE = '–';
+/** The week card until the food log and the goal have loaded – no false "0 days". */
+const NO_WEEK: WeekSummary = {
+  hitText: NO_VALUE,
+  averageKcalText: NO_VALUE,
+  proteinHitText: NO_VALUE,
+  streakText: NO_VALUE,
+  note: '',
+};
 const GREETING_KEY = 'home.summary.greeting';
 /** The greeting when a name follows – its own message so a translation can place the comma. */
 const GREETING_BEFORE_NAME_KEY = 'home.summary.greetingBeforeName';
@@ -238,7 +246,7 @@ export class HomeSummaryService {
       progress: part ?? 0,
       progressTone: part === null ? 'muted' : part >= RING_FULL_THRESHOLD ? 'positive' : 'accent',
       kcalEatenText: totals === null ? NO_VALUE : formatWhole(totals.kcal),
-      kcalTargetText: formatWhole(this.kcalTarget()),
+      kcalTargetText: this.goalText(this.kcalTarget()),
       weightText: weightKg === null ? NO_VALUE : formatDecimal(weightKg),
       macros: this.macrosFor(totals),
     };
@@ -250,17 +258,19 @@ export class HomeSummaryService {
   private readonly weekStats = computed(() => {
     const parts = this.dayParts();
     const logged = parts.filter((part): part is number => part !== null);
-    const target = this.kcalTarget();
+    const loggedTotals = this.dayTotals().filter((totals): totals is Macros => totals !== null);
     const proteinGoal = this.proteinGoalPerDay();
 
     const hit = logged.filter((part) => part >= WEEK_HIT_THRESHOLD).length;
+    // The real intake – `parts` stop at the goal.
     const averageKcal =
-      logged.length === 0
+      loggedTotals.length === 0
         ? null
-        : Math.round(logged.reduce((total, part) => total + part * target, 0) / logged.length);
-    const proteinHit = this.dayTotals().filter(
-      (totals) =>
-        totals !== null && proteinGoal > 0 && totals.protein >= proteinGoal * WEEK_HIT_THRESHOLD,
+        : Math.round(
+            loggedTotals.reduce((total, { kcal }) => total + kcal, 0) / loggedTotals.length,
+          );
+    const proteinHit = loggedTotals.filter(
+      (totals) => proteinGoal > 0 && totals.protein >= proteinGoal * WEEK_HIT_THRESHOLD,
     ).length;
 
     let streak = 0;
@@ -276,6 +286,9 @@ export class HomeSummaryService {
   });
 
   readonly weekSummary = computed<WeekSummary>(() => {
+    if (this.foodLog.status() !== 'ready' || this.profileService.goal() === null) {
+      return NO_WEEK;
+    }
     const { loggedDays, hit, averageKcal, proteinHit, streakDays } = this.weekStats();
     return {
       hitText: String(hit),
@@ -288,7 +301,7 @@ export class HomeSummaryService {
 
   /** "Åbn mere": the last `HOME_HISTORY_DAYS` days, newest first (spec 5.4/5.5). */
   readonly dayRows = computed<readonly HomeDayRow[]>(() => {
-    const goal = formatWhole(this.kcalTarget());
+    const goal = this.goalText(this.kcalTarget());
     return this.foodLog
       .dailyTotals(addDays(this.today(), 1 - HOME_HISTORY_DAYS), this.today())
       .map(({ date, totals, entryCount }): HomeDayRow => {
@@ -315,9 +328,13 @@ export class HomeSummaryService {
       .reverse();
   });
 
+  /** Only from loaded stores – a step the user may already have done is never guessed. */
   readonly todos = computed<readonly HomeTodo[]>(() => {
     const todos: HomeTodo[] = [];
-    if (!this.weightLog.weighedToday()) {
+    const latest = this.weightLog.latest();
+    // Against Home's day, not `weighedToday`: that one doesn't move on at midnight.
+    const weighedToday = latest !== null && isSameDay(new Date(latest.at), this.today());
+    if (this.weightLog.status() === 'ready' && !weighedToday) {
       todos.push({
         title: this.t('home.summary.todos.weighTitle'),
         subtitle: this.t('home.summary.todos.weighSubtitle'),
@@ -327,7 +344,7 @@ export class HomeSummaryService {
     }
     const byMeal = this.foodLog.byMeal();
     for (const meal of MEALS) {
-      if ((byMeal.get(meal.id) ?? []).length === 0) {
+      if (this.foodLog.status() === 'ready' && (byMeal.get(meal.id) ?? []).length === 0) {
         todos.push({
           title: this.t('home.summary.todos.mealTitle', {
             meal: this.t(meal.labelKey).toLowerCase(),
@@ -347,8 +364,10 @@ export class HomeSummaryService {
     return count > 1 ? `1 / ${count}` : this.t('home.summary.todoCountSingle');
   });
 
-  /** The goal card is hidden when the goal is to maintain weight. */
-  readonly showGoalCard = computed(() => this.profileService.profile().goal !== 'hold');
+  /** The goal card waits for the API's goal and is hidden when the goal is to maintain weight. */
+  readonly showGoalCard = computed(
+    () => this.profileService.goal() !== null && this.profileService.profile().goal !== 'hold',
+  );
 
   readonly goalSummary = computed<GoalSummary>(() => {
     const { goal, weightKg, goalWeightKg } = this.profileService.profile();
@@ -391,6 +410,11 @@ export class HomeSummaryService {
     }
   }
 
+  /** A goal as a whole number – `–` until the API's goal has loaded, never a silent 0 (5.3). */
+  private goalText(value: number): string {
+    return this.profileService.goal() === null ? NO_VALUE : formatWhole(value);
+  }
+
   private dayName(key: string | undefined): string {
     return key ? this.t(key) : '';
   }
@@ -430,7 +454,7 @@ export class HomeSummaryService {
         tone: macro.tone,
         text: this.t('home.summary.macroText', {
           eaten: hasData ? formatGrams(value) : NO_VALUE,
-          goal,
+          goal: this.goalText(goal),
         }),
       };
     });
