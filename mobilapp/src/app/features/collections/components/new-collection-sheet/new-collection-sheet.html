@@ -43,7 +43,7 @@
           <button type="button" class="new-collection-sheet__item" (click)="editAt(index)">
             <span class="new-collection-sheet__dot" aria-hidden="true"></span>
             <span class="new-collection-sheet__item-name">{{ item.name }}</span>
-            <span class="new-collection-sheet__item-qty">{{ item.quantity }}</span>
+            <span class="new-collection-sheet__item-qty">{{ quantity(item) }}</span>
           </button>
           <span class="new-collection-sheet__row-end">
             <span class="new-collection-sheet__kcal"

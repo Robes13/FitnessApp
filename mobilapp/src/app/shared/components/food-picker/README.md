@@ -86,6 +86,10 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
   Portionstrinnet blokerer en logning over
   `FOOD_LOG_MAX_KCAL` / `FOOD_LOG_MAX_MACRO_GRAMS` (`amountTooLarge`) – det gælder også
   samlingernes varer. Enhederne er stadig g / stk / port.
+- **Enheden vises på brugerens sprog og i flertal** fra 2 (`formatQuantity` /
+  `formatQuantityUnit` i `core/utils/quantity.ts`): "Standard: 1 portion", hurtigvalgene
+  "1 portion · 2 portioner · …", enheden ved tallet og "Tilføj 2 portioner" (engelsk "servings",
+  "pcs"). `picked` og `quantity` beholder tokenet (`'2 portion'`), som API-mapningen læser.
 - **Mængden** er en `linkedSignal` med varen som kilde: hver ny vare nulstiller til dens
   standardportion. `null` betyder, at feltet er tømt under indtastning; knappen er slået
   fra, indtil der står et tal over 0 (designet ville ellers logge "0 g").

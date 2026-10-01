@@ -27,6 +27,21 @@ export const TOKEN_BY_QUANTITY_UNIT: Readonly<Record<ApiQuantityUnit, string>> =
   Teaspoon: 'teaspoon',
 };
 
+/**
+ * Translation keys of the counted units as shown after an amount: for exactly one, and for any
+ * other amount (`'1 portion'`, `'2 portioner'`). `FoodItem.quantity` keeps the token, which
+ * `parseQuantity` reads back; g, ml and the units the app never creates are shown as the token.
+ */
+export const COUNTED_UNIT_LABEL_KEY: Readonly<
+  Record<string, { readonly one: string; readonly other: string }>
+> = {
+  [TOKEN_BY_QUANTITY_UNIT.Piece]: { one: 'core.quantity.piece', other: 'core.quantity.pieces' },
+  [TOKEN_BY_QUANTITY_UNIT.Serving]: {
+    one: 'core.quantity.serving',
+    other: 'core.quantity.servings',
+  },
+};
+
 /** The reverse of `TOKEN_BY_QUANTITY_UNIT`: `g` → `Gram`, `ml` → `Milliliter`, `stk` → `Piece`, `portion` → `Serving`. */
 export const QUANTITY_UNIT_BY_TOKEN: Readonly<Record<string, ApiQuantityUnit>> = Object.fromEntries(
   Object.entries(TOKEN_BY_QUANTITY_UNIT).map(([unit, token]) => [token, unit as ApiQuantityUnit]),

@@ -158,6 +158,12 @@
       "barcodeLabelWeb": "Enter the barcode",
       "unnamedProduct": "Item {{barcode}}"
     },
+    "quantity": {
+      "piece": "pc",
+      "pieces": "pcs",
+      "serving": "serving",
+      "servings": "servings"
+    },
     "weight": {
       "range": {
         "lastWeek": "Last week",

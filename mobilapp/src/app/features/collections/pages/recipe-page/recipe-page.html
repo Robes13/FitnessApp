@@ -39,7 +39,7 @@
       @for (line of recipe.contents; track $index) {
         <li class="recipe-page__line">
           <span>{{ line.name }}</span>
-          <span class="recipe-page__line-qty">{{ line.quantity }}</span>
+          <span class="recipe-page__line-qty">{{ quantity(line) }}</span>
         </li>
       }
     </ul>

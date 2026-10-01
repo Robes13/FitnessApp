@@ -158,6 +158,12 @@
       "barcodeLabelWeb": "Indtast stregkoden",
       "unnamedProduct": "Vare {{barcode}}"
     },
+    "quantity": {
+      "piece": "stk",
+      "pieces": "stk",
+      "serving": "portion",
+      "servings": "portioner"
+    },
     "weight": {
       "range": {
         "lastWeek": "Sidste uge",

@@ -52,6 +52,8 @@ Alle faste værdier, appen deler. Ingen strengliteraler eller magiske tal andre 
   `QUANTITY_UNIT_BY_TOKEN` (`g`/`ml`/`stk`/`portion` → API-enheden) og `TOKEN_BY_QUANTITY_UNIT`
   (andre API-enheder vises med små bogstaver). `SERVING_GRAMS_PER_UNIT` giver stk/portion en
   syntetisk enhed på 100 g (`// ponytail:`), så en egen vares per 100 dér betyder pr. enhed.
+  `COUNTED_UNIT_LABEL_KEY` er nøglerne, stk/portion vises med efter et tal (ental for præcis 1,
+  ellers flertal: `'2 portioner'`, `'2 servings'`) – se `formatQuantity` i `core/utils`.
 - **Endpoints er relative** til `API_BASE_URL` (`'auth/login'`, `'me'`), og hvert domæne har
   sine i sin egen konstantfil – ingen `/api/v1`-præfiks andre steder.
 - **Profilbilledet** er `PROFILE_ENDPOINT.PROFILE_IMAGE` (`me/profile/image`: `PUT` multipart og
