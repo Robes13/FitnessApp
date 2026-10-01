@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { injectTranslate } from '../language/translate';
 import {
   ACTIVITY_LEVELS,
   DEFAULT_QUANTITY_UNIT,
@@ -12,15 +11,13 @@ import {
   KCAL_PER_STEP_PER_KG,
   KM_PER_STEP,
   PACES,
-  PASSWORD_MIN_LENGTH,
-  PASSWORD_STRONG_LENGTH,
   RPE_MAX,
   RPE_MIN,
   STEPS_MAX,
   STEPS_MIN,
 } from '../../constants/nutrition';
 import { Macros } from '../../models/food';
-import { GoalWeightBounds, ParsedQuantity, PasswordStrength } from '../../models/nutrition';
+import { GoalWeightBounds, ParsedQuantity } from '../../models/nutrition';
 import {
   ActivityLevel,
   GoalId,
@@ -32,35 +29,16 @@ import { clamp, roundTo } from '../../utils/math';
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})/;
 const EMAIL_PATTERN = /\S+@\S+\.\S+/;
-const UPPERCASE_PATTERN = /[A-ZÆØÅ]/;
-const DIGIT_PATTERN = /\d/;
 const LEADING_NUMBER_PATTERN = /^[\d.,\s]+/;
 const CM_PER_M = 100;
 
-/** Indexed by score. */
-const PASSWORD_STRENGTHS: readonly (Omit<PasswordStrength, 'label'> & { labelKey: string })[] = [
-  { score: 0, percent: 30, labelKey: 'core.passwordStrength.weak', tone: 'negative' },
-  { score: 1, percent: 30, labelKey: 'core.passwordStrength.weak', tone: 'negative' },
-  { score: 2, percent: 55, labelKey: 'core.passwordStrength.ok', tone: 'accent' },
-  { score: 3, percent: 80, labelKey: 'core.passwordStrength.good', tone: 'warning' },
-  { score: 4, percent: 100, labelKey: 'core.passwordStrength.strong', tone: 'positive' },
-];
-const EMPTY_PASSWORD_STRENGTH: PasswordStrength = {
-  score: 0,
-  percent: 0,
-  label: '',
-  tone: 'muted',
-};
-
 /**
  * Pure calculations from the design's `renderVals()`: age, BMI, activity level, training,
- * goal weight, password strength and portion scaling. No state. The calorie and macro targets
+ * goal weight and portion scaling. No state. The calorie and macro targets
  * come from the API (`UserProfileService.targets`), never from the app.
  */
 @Injectable({ providedIn: 'root' })
 export class NutritionCalculator {
-  private readonly t = injectTranslate();
-
   /** Completed years as of `today`. 0 if the date is missing or invalid. */
   ageFromBirthday(isoDate: string | null, today: Date): number {
     const birthday = parseIsoDate(isoDate);
@@ -132,24 +110,6 @@ export class NutritionCalculator {
       default:
         return true;
     }
-  }
-
-  /** The design's `fpScore`: length ≥ 8, length ≥ 12, an uppercase letter and a digit each give one point. */
-  passwordStrength(password: string): PasswordStrength {
-    if (password.length === 0) {
-      return EMPTY_PASSWORD_STRENGTH;
-    }
-    const score =
-      Number(password.length >= PASSWORD_MIN_LENGTH) +
-      Number(password.length >= PASSWORD_STRONG_LENGTH) +
-      Number(UPPERCASE_PATTERN.test(password)) +
-      Number(DIGIT_PATTERN.test(password));
-    const strength = PASSWORD_STRENGTHS[score];
-    if (!strength) {
-      return EMPTY_PASSWORD_STRENGTH;
-    }
-    const { labelKey, ...rest } = strength;
-    return { ...rest, label: this.t(labelKey) };
   }
 
   isValidEmail(value: string): boolean {

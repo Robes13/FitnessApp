@@ -135,49 +135,6 @@ describe('NutritionCalculator', () => {
     });
   });
 
-  describe('passwordStrength', () => {
-    it('is empty for an empty password', () => {
-      expect(calculator.passwordStrength('')).toEqual({
-        score: 0,
-        percent: 0,
-        label: '',
-        tone: 'muted',
-      });
-    });
-
-    it('scores length, a capital letter and a digit', () => {
-      expect(calculator.passwordStrength('abc')).toMatchObject({ score: 0, label: 'Svag' });
-      expect(calculator.passwordStrength('abcdefghij')).toMatchObject({
-        score: 1,
-        percent: 30,
-        label: 'Svag',
-        tone: 'negative',
-      });
-      expect(calculator.passwordStrength('Abcdefghij')).toMatchObject({
-        score: 2,
-        percent: 55,
-        label: 'OK',
-        tone: 'accent',
-      });
-      expect(calculator.passwordStrength('Abcdefghi1')).toMatchObject({
-        score: 3,
-        percent: 80,
-        label: 'God',
-        tone: 'warning',
-      });
-      expect(calculator.passwordStrength('Abcdefghijk1')).toMatchObject({
-        score: 4,
-        percent: 100,
-        label: 'Stærk',
-        tone: 'positive',
-      });
-    });
-
-    it('accepts Danish capital letters', () => {
-      expect(calculator.passwordStrength('Æbleflæsk1').score).toBe(3);
-    });
-  });
-
   it('isValidEmail matches the design pattern', () => {
     expect(calculator.isValidEmail('dig@mail.dk')).toBe(true);
     expect(calculator.isValidEmail('dig@mail')).toBe(false);

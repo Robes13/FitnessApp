@@ -176,12 +176,6 @@
         "editRow": "Edit weigh-in {{date}} at {{time}}, {{kg}} kg"
       }
     },
-    "passwordStrength": {
-      "weak": "Weak",
-      "ok": "OK",
-      "good": "Good",
-      "strong": "Strong"
-    },
     "date": {
       "today": "Today",
       "yesterday": "Yesterday",

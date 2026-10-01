@@ -152,7 +152,6 @@ export const MAX_AGE = 100;
 /** The API's password rule (register, reset, change): 10–200 characters, no complexity rules. */
 export const PASSWORD_MIN_LENGTH = 10;
 export const PASSWORD_MAX_LENGTH = 200;
-export const PASSWORD_STRONG_LENGTH = 12;
 
 /**
  * The API's safe minimum for the daily calorie target: it lifts the target to exactly this

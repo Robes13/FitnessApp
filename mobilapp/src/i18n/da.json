@@ -176,12 +176,6 @@
         "editRow": "Ret vejning {{date}} kl. {{time}}, {{kg}} kg"
       }
     },
-    "passwordStrength": {
-      "weak": "Svag",
-      "ok": "OK",
-      "good": "God",
-      "strong": "Stærk"
-    },
     "date": {
       "today": "I dag",
       "yesterday": "I går",
