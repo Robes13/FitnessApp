@@ -1,3 +1,4 @@
+import { Macros } from '../models/food';
 import { ApiQuantityUnit } from '../models/food-api';
 
 /** Food endpoints, relative to `API_BASE_URL`. */
@@ -48,6 +49,14 @@ export const SERVING_GRAMS_PER_UNIT: Readonly<Partial<Record<ApiQuantityUnit, nu
 export const FOOD_LOG_MAX_KCAL = 9999;
 /** Keeps every consumed value of one log inside FOOD_LOG numeric(7,2). */
 export const FOOD_LOG_MAX_MACRO_GRAMS = 999;
+
+/** One log of `macros` would pass `FOOD_LOG_MAX_KCAL` / `FOOD_LOG_MAX_MACRO_GRAMS` (spec 3.2-5a: split it up). */
+export function exceedsFoodLogCap({ kcal, protein, carbs, fat }: Macros): boolean {
+  return (
+    kcal > FOOD_LOG_MAX_KCAL ||
+    [protein, carbs, fat].some((grams) => grams > FOOD_LOG_MAX_MACRO_GRAMS)
+  );
+}
 
 /** The most kcal 100 g can hold (pure fat) – a larger value for a food in grams is a typo. */
 export const MAX_KCAL_PER_100_GRAMS = 900;

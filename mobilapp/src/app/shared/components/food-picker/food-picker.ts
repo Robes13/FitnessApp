@@ -12,7 +12,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { newId } from '../../../core/utils/id';
 import {
   AbstractControl,
@@ -30,6 +30,7 @@ import {
   FOOD_LOG_MAX_MACRO_GRAMS,
   FOOD_NAME_MAX_LENGTH,
   MAX_KCAL_PER_100_GRAMS,
+  exceedsFoodLogCap,
 } from '../../../core/constants/food';
 import { DEFAULT_QUANTITY_UNIT } from '../../../core/constants/nutrition';
 import { FoodItem, Macros } from '../../../core/models/food';
@@ -312,17 +313,19 @@ export class FoodPicker {
     initialValue: this.form.valid,
   });
   /**
-   * The new food last sent to the parent. Its name isn't "taken": a save that failed after the
-   * food was created can be retried (`ensureFood` reuses it). After "Save without logging"
-   * (`leave`) the form stays until the food is in the catalogue, so a failed save keeps what was typed.
+   * The new food last sent to the parent, until the form changes. Its name isn't "taken": an
+   * unchanged save that failed after the food was created can be retried (`ensureFood` /
+   * `addCustomFood` reuse it by name – so a changed form must not be exempt, or the first values
+   * would be logged). After "Save without logging" (`leave`) the form stays until the food is in
+   * the catalogue with its unit, so a failed save keeps what was typed.
    */
-  private readonly submitted = signal<{ readonly name: string; readonly leave: boolean } | null>(
+  private readonly submitted = signal<{ readonly item: FoodItem; readonly leave: boolean } | null>(
     null,
   );
   /** Case-insensitive, trimmed match against the user's own foods. */
   protected readonly nameError = computed(() => {
     const name = normalizeName(this.formValue().name);
-    const retry = name === normalizeName(this.submitted()?.name ?? '');
+    const retry = name === normalizeName(this.submitted()?.item.name ?? '');
     return !retry && this.foodLog.hasCustomFoodNamed(name)
       ? this.t(DUPLICATE_NAME_ERROR_KEY)
       : null;
@@ -389,13 +392,7 @@ export class FoodPicker {
     return item ? this.calculator.scaleMacros(item, this.ratio()) : EMPTY_MACROS;
   });
   /** Spec 3.2-5a: one log may not overflow the API's `numeric(7,2)` – split it up instead. */
-  private readonly exceedsLogCap = computed(() => {
-    const { kcal, protein, carbs, fat } = this.scaled();
-    return (
-      kcal > FOOD_LOG_MAX_KCAL ||
-      [protein, carbs, fat].some((grams) => grams > FOOD_LOG_MAX_MACRO_GRAMS)
-    );
-  });
+  private readonly exceedsLogCap = computed(() => exceedsFoodLogCap(this.scaled()));
   protected readonly amountError = computed(() =>
     this.exceedsLogCap() ? this.t(AMOUNT_TOO_LARGE_KEY) : null,
   );
@@ -431,13 +428,11 @@ export class FoodPicker {
     effect(() => {
       this.queryControl.setValue(this.initialQuery());
     });
+    // Only an unchanged form is a retry of the food already sent (see `submitted`).
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.submitted.set(null));
     effect(() => {
       const submitted = this.submitted();
-      if (
-        submitted?.leave &&
-        this.step() === 'new-food' &&
-        this.foodLog.hasCustomFoodNamed(submitted.name)
-      ) {
+      if (submitted?.leave && this.step() === 'new-food' && this.isSaved(submitted.item)) {
         untracked(() => this.finishNewFood());
       }
     });
@@ -489,7 +484,7 @@ export class FoodPicker {
     if (!item || this.busy()) {
       return;
     }
-    this.submitted.set({ name: item.name, leave: true });
+    this.submitted.set({ item, leave: true });
     this.customFoodCreated.emit(item);
   }
 
@@ -504,7 +499,7 @@ export class FoodPicker {
       return;
     }
     const { amount, unit } = this.calculator.parseQuantity(item.quantity);
-    this.submitted.set({ name: item.name, leave: false });
+    this.submitted.set({ item, leave: false });
     this.picked.emit({ item, amount, unit });
   }
 
@@ -589,6 +584,22 @@ export class FoodPicker {
     }
     this.step.set(step);
     this.stepChange.emit(step);
+  }
+
+  /**
+   * The catalogue has the food under its name and in its unit. A food whose serving failed shows
+   * as `100 g`, so the form stays and the same save can heal it.
+   */
+  private isSaved(item: FoodItem): boolean {
+    const name = normalizeName(item.name);
+    const { unit } = this.calculator.parseQuantity(item.quantity);
+    return this.foodLog
+      .customFoods()
+      .some(
+        (food) =>
+          normalizeName(food.name) === name &&
+          this.calculator.parseQuantity(food.quantity).unit === unit,
+      );
   }
 
   /** After "Save without logging": back to an empty search, where the saved food shows up. */

@@ -61,9 +61,12 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
 - **Trinnet bliver stående efter `picked`.** Begge forældre (Mad-arket og "Ny samling")
   lukker vælgeren, når valget er gemt, og `busy` dækker ventetiden. Fejler gemningen, står
   formularen eller portionen der stadig med brugerens tal. "Gem uden at logge" bliver også på
-  formularen, til varen er i kataloget, og går så tilbage til en tom søgning, hvor varen står.
-  Et navn, vælgeren lige har sendt, tæller ikke som taget – blev varen oprettet, men fejlede
-  logningen, kan "Gem og log …" prøves igen (`ensureFood` genbruger varen).
+  formularen, til varen er i kataloget med sin enhed (fejlede dens serving, vises den som
+  `100 g`, og samme tryk heler den), og går så tilbage til en tom søgning, hvor varen står.
+  Et navn, vælgeren lige har sendt, tæller ikke som taget, så længe formularen er uændret – blev
+  varen oprettet, men fejlede logningen, kan samme tryk prøves igen (`ensureFood` /
+  `addCustomFood` genbruger varen ud fra navnet). Ændres formularen bagefter, er navnet taget:
+  varen findes allerede med de første tal, og de nye ville ellers blive logget med dem.
 - **Søgningen** er en `toObservable(request) → switchMap(search)`-kæde med søgeteksten og
   kataloget (`FoodLogService.foods`) som kilde, så en ny tekst afbryder den forrige, og en ny
   egen vare vises, så snart den er gemt. Søgningen svarer straks, så der er ingen spinner.

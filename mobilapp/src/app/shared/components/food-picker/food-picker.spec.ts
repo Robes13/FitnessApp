@@ -595,6 +595,61 @@ describe('FoodPicker', () => {
       expect(host.picked).toHaveLength(2);
     });
 
+    it('treats the name as taken once the form changes after a failed save-and-log', async () => {
+      const { host, root, click, typeInto, buttonByText, settle } = await setup();
+
+      await click('.food-picker__create');
+      await typeInto(formFields(root)[0] ?? null, 'Proteinpandekage');
+      await typeInto(formFields(root)[1] ?? null, '100');
+      await typeInto(formFields(root)[2] ?? null, '310');
+      buttonByText('Gem og log under morgenmad')?.click();
+      await settle();
+      // The parent's add() created the food with these values; its log failed.
+      flushTestFoodLog([testFood({ foodId: 9, name: 'Proteinpandekage', caloriesPer100: 310 })]);
+      await settle();
+
+      // A retry would reuse the food by name and log the first values, so the name is taken now.
+      await typeInto(formFields(root)[2] ?? null, '600');
+
+      expect(root.textContent).toContain('allerede en egen vare med det navn');
+      expect(buttonByText('Gem og log under morgenmad')?.disabled).toBe(true);
+      root
+        .querySelector('form')!
+        .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      await settle();
+      expect(host.picked).toHaveLength(1);
+    });
+
+    it('stays on the form after "Gem uden at logge" until the food has its unit', async () => {
+      const { host, root, click, typeInto, buttonByText, settle } = await setup();
+
+      await click('.food-picker__create');
+      await typeInto(formFields(root)[0] ?? null, 'Kiks');
+      await typeInto(formFields(root)[1] ?? null, '1');
+      buttonByText('stk')?.click();
+      await typeInto(formFields(root)[2] ?? null, '80');
+      buttonByText('Gem uden at logge')?.click();
+      await settle();
+      expect(host.created).toHaveLength(1);
+
+      // POST foods succeeded, but the piece serving failed: the food shows as 100 g.
+      flushTestFoodLog([testFood({ foodId: 9, name: 'Kiks', caloriesPer100: 80 })]);
+      await settle();
+      expect(host.steps).toEqual(['new-food']);
+      expect(root.textContent).not.toContain('allerede en egen vare med det navn');
+
+      // The same tap again: the parent's addCustomFood only adds the serving.
+      buttonByText('Gem uden at logge')?.click();
+      await settle();
+      expect(host.created).toHaveLength(2);
+      flushTestFoodLog([
+        testFood({ foodId: 9, name: 'Kiks', caloriesPer100: 80, servings: PIECE }),
+      ]);
+      await settle();
+
+      expect(host.steps).toEqual(['new-food', 'search']);
+    });
+
     it('emits only picked, once, for the save-and-log button and keeps the form', async () => {
       const { host, root, click, typeInto, buttonByText, settle } = await setup();
 

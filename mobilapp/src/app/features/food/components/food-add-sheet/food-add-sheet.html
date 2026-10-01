@@ -60,6 +60,8 @@
             <button
               type="button"
               class="food-add-sheet__collection"
+              [disabled]="busy()"
+              [attr.aria-busy]="busy() || null"
               (click)="onCollectionPicked(row)"
             >
               <span class="food-add-sheet__collection-main">

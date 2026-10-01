@@ -36,6 +36,7 @@ import {
   ProductLookupResult,
   ScannedProduct,
 } from '../../../core/models/barcode';
+import { exceedsFoodLogCap } from '../../../core/constants/food';
 import { FoodItem } from '../../../core/models/food';
 import { BarcodeFlowService, formatAmount } from '../../../core/services/barcode-flow/barcode-flow';
 import { KeyboardService } from '../../../core/services/keyboard/keyboard';
@@ -95,6 +96,8 @@ interface AmountForm {
 
 /** Design's `retryUnknown`: a brief pause before scanning restarts after the result sheet. */
 const SCAN_RETRY_DELAY_MS = 300;
+/** The picker's text for the same per-log cap (`exceedsFoodLogCap`). */
+const AMOUNT_TOO_LARGE_KEY = 'shared.foodPicker.amountTooLarge';
 /** The line's idle position (design's `scanLine: 50`). */
 const SCAN_LINE_IDLE_PERCENT = 50;
 /** Design's `runScan`: 88% immediately, 14% after 700 ms, 62% after 1500 ms. */
@@ -333,11 +336,15 @@ export class BarcodeScanner {
       ? grams
       : null;
   });
-  protected readonly amountError = computed(() =>
-    this.validGrams() === null
-      ? this.t(BARCODE_SCANNER_TEXT_KEY.INVALID_AMOUNT, BARCODE_SCANNER_TEXT_PARAMS.INVALID_AMOUNT)
-      : null,
-  );
+  protected readonly amountError = computed(() => {
+    if (this.validGrams() === null) {
+      return this.t(
+        BARCODE_SCANNER_TEXT_KEY.INVALID_AMOUNT,
+        BARCODE_SCANNER_TEXT_PARAMS.INVALID_AMOUNT,
+      );
+    }
+    return this.exceedsLogCap() ? this.t(AMOUNT_TOO_LARGE_KEY) : null;
+  });
   protected readonly hasAmountError = computed(() => this.amountError() !== null);
   /** Grams, or millilitres for a liquid. */
   private readonly amountUnit = computed(() => this.product()?.unit ?? PRODUCT_BASE_UNIT.GRAMS);
@@ -413,7 +420,18 @@ export class BarcodeScanner {
     return remaining === null || !item ? null : buildScanVerdict(this.t, remaining, item);
   });
 
-  protected readonly canAddScanned = computed(() => this.scaledItem() !== null);
+  /**
+   * Spec 3.2-5a, as in the picker: one log may not overflow the API's `numeric(7,2)`. Open Food
+   * Facts' values are untrusted (kJ typed as kcal exists), so the 5000 g limit alone isn't enough.
+   */
+  private readonly exceedsLogCap = computed(() => {
+    const item = this.scaledItem();
+    return item !== null && exceedsFoodLogCap(item);
+  });
+
+  protected readonly canAddScanned = computed(
+    () => this.scaledItem() !== null && !this.exceedsLogCap(),
+  );
 
   constructor() {
     effect(() => {
@@ -489,7 +507,7 @@ export class BarcodeScanner {
 
   protected addScanned(): void {
     const item = this.scaledItem();
-    if (!item) {
+    if (!item || !this.canAddScanned()) {
       return;
     }
     this.found.emit(item);

@@ -191,12 +191,33 @@ describe('HistoryService', () => {
     }
   });
 
+  it('viser ikke "Logget i dag", når gen-logningen fejler', () => {
+    const { history } = setup();
+    const logged = testFoodLog(TEST_FOOD, 'aften');
+    flushTestFoodLog([testFood({ foodId: logged.foodId, name: TEST_FOOD.name })], [logged]);
+    const entry = findEntry(history, 'Proteinbar');
+
+    history.relog(entry);
+    expect(history.isRelogged(entry)).toBe(false);
+    TestBed.inject(HttpTestingController)
+      .expectOne({ method: 'POST', url: '/api/v1/me/food-logs' })
+      .flush(null, { status: 500, statusText: 'Error' });
+
+    expect(history.isRelogged(entry)).toBe(false);
+  });
+
   it('rydder "Logget i dag"-timeren, når siden lukkes', () => {
     vi.useFakeTimers();
     try {
-      const { history, foodLog } = setup();
-      foodLog.addLogs([testFoodLog(TEST_FOOD, 'morgen')]);
-      history.relog(findEntry(history, 'Proteinbar'));
+      const { history } = setup();
+      const logged = testFoodLog(TEST_FOOD, 'morgen');
+      flushTestFoodLog([testFood({ foodId: logged.foodId, name: TEST_FOOD.name })], [logged]);
+      const entry = findEntry(history, 'Proteinbar');
+      history.relog(entry);
+      TestBed.inject(HttpTestingController)
+        .expectOne({ method: 'POST', url: '/api/v1/me/food-logs' })
+        .flush({ ...logged, foodLogId: logged.foodLogId + 1000 });
+      expect(history.isRelogged(entry)).toBe(true);
 
       TestBed.resetTestingModule();
 

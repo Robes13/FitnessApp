@@ -261,10 +261,11 @@ describe('NewCollectionSheet', () => {
 
   it('still drafts a new food whose name is taken and explains why it was not saved', async () => {
     await click(buttonByText('Søg vare'));
+    // Taken in the API (e.g. on another device), not in this catalogue – the picker checks that.
     fixture.debugElement.query(By.directive(FoodPicker)).triggerEventHandler('picked', {
       item: {
         id: 'food-new',
-        name: 'Havregryn',
+        name: 'Mysli',
         quantity: '1 stk',
         kcal: 150,
         protein: 5,
@@ -285,7 +286,7 @@ describe('NewCollectionSheet', () => {
       Array.from(root.querySelectorAll('.new-collection-sheet__item-name')).map((el) =>
         normalize(el.textContent),
       ),
-    ).toEqual(['Havregryn']);
+    ).toEqual(['Mysli']);
     expect(
       normalize(root.querySelector('.new-collection-sheet__custom-error')?.textContent),
     ).toContain('allerede en egen vare med navnet');

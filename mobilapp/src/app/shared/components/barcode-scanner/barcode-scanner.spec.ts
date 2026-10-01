@@ -310,6 +310,23 @@ describe('BarcodeScanner', () => {
     expect(buttonByText('Tilføj').disabled).toBe(true);
   });
 
+  it('blocks one log over the per-log cap, which untrusted product data can reach', async () => {
+    // kJ typed as kcal: 2500 "kcal" per 100 g.
+    const wrong = { ...PRODUCT, item: { ...PRODUCT.item, kcal: 2500 } };
+    await scanAndRespond({ status: 'found', product: wrong });
+
+    typeInto('Mængde i gram', '500');
+
+    expect(formErrors()).toEqual(['Det er for meget til én logning – del den op.']);
+    expect(buttonByText('Tilføj').disabled).toBe(true);
+    buttonByText('Tilføj').click();
+    expect(host.found).toEqual([]);
+
+    typeInto('Mængde i gram', '300');
+    expect(formErrors()).toEqual([]);
+    expect(buttonByText('Tilføj').disabled).toBe(false);
+  });
+
   it('says an unknown product was not found and offers the manual form', async () => {
     await scanAndRespond({ status: 'not-found', barcode: BARCODE });
 

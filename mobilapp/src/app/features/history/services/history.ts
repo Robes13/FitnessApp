@@ -92,19 +92,25 @@ export class HistoryService {
     return this.t(this.isRelogged(entry) ? RELOGGED_LABEL_KEY : RELOG_LABEL_KEY);
   }
 
-  /** Adds the meal back to today's log and shows "Logget i dag" for 2.6 seconds. */
+  /** Adds the meal back to today's log and, once the API has saved it, shows "Logget i dag" for 2.6 seconds. */
   relog(entry: HistoryEntry): void {
     const { food, meal } = entry;
     if (!food || !meal) {
       return;
     }
-    this.foodLog.add(food, meal).subscribe();
-    this.reloggedState.set(entry.id);
-    this.clearReloggedTimer();
-    this.reloggedTimer = setTimeout(() => {
-      this.reloggedTimer = null;
-      this.reloggedState.set(null);
-    }, RELOGGED_DURATION_MS);
+    this.foodLog.add(food, meal).subscribe({
+      next: () => {
+        this.reloggedState.set(entry.id);
+        this.clearReloggedTimer();
+        this.reloggedTimer = setTimeout(() => {
+          this.reloggedTimer = null;
+          this.reloggedState.set(null);
+        }, RELOGGED_DURATION_MS);
+      },
+      // ponytail: a failed relog only keeps "Log igen i dag" (nothing was logged); an error line is
+      // the history rework's (wave 3).
+      error: () => undefined,
+    });
   }
 
   private buildEntries(): readonly HistoryEntry[] {
