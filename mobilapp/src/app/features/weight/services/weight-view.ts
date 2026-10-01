@@ -1,16 +1,5 @@
 import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
-import {
-  EMPTY,
-  Observable,
-  catchError,
-  defer,
-  finalize,
-  map,
-  merge,
-  mergeMap,
-  of,
-  throwError,
-} from 'rxjs';
+import { EMPTY, Observable, catchError, defer, finalize, map, merge, mergeMap, of } from 'rxjs';
 import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../core/constants/nutrition';
 import { WEIGHT_LOG_HISTORY_RANGE } from '../../../core/constants/weight';
 import { StoreStatus } from '../../../core/models/api';
@@ -85,7 +74,7 @@ const MAINTAIN_TOLERANCE_KG = 0.5;
 export const COLLAPSED_LOG_ROWS = 6;
 
 const EMPTY_LOG_MESSAGE_KEY = 'weight.view.emptyLog';
-/** The page's save and the overwrite question fail with this text. */
+/** The page's save and the overwrite question fail with this text when the API saved nothing. */
 const SAVE_ERROR_KEY = 'weight.page.saveError';
 const NO_RECENT_LOG_MESSAGE_KEY = 'weight.view.noRecentLog';
 /** Design's `good` for "maintain": the deviation from the goal with a small bonus. */
@@ -363,7 +352,7 @@ export class WeightViewService {
   /**
    * Saves the draft as today's weigh-in and emits once it is saved. Has the day a weigh-in
    * already, nothing is saved: `overwriteId` opens the question, and the observable completes
-   * without a value. A failure shows `saveError`.
+   * without a value. A failure shows `saveError` – "ikke gemt" only when the API saved nothing.
    */
   save(): Observable<void> {
     return this.track(
@@ -409,8 +398,7 @@ export class WeightViewService {
 
   /**
    * Runs `mutation` on the weigh-in open in the edit sheet and closes the sheet when it is done.
-   * On an error the sheet stays open with it – unless the row is already gone (a delete whose
-   * sync after it failed): the sheet has closed then, so the error shows under "Gem vejning".
+   * On an error the sheet stays open with it.
    */
   private editing(mutation: (id: string) => Observable<void>): Observable<void> {
     return this.track(
@@ -419,19 +407,7 @@ export class WeightViewService {
       (error) => toApiError(error).messageKey,
       () => {
         const id = this.editingId();
-        return id === null
-          ? EMPTY
-          : mutation(id).pipe(
-              map(() => this.editingId.set(null)),
-              catchError((error: unknown) => {
-                if (this.editingRow() !== null) {
-                  return throwError(() => error);
-                }
-                this.editingId.set(null);
-                this.saveErrorKey.set(toApiError(error).messageKey);
-                return EMPTY;
-              }),
-            );
+        return id === null ? EMPTY : mutation(id).pipe(map(() => this.editingId.set(null)));
       },
     );
   }
@@ -439,6 +415,8 @@ export class WeightViewService {
   /**
    * One mutation at a time: `busy` while it runs – a second tap does nothing. A failure sets
    * `errorKey` to `keyFor(error)` and completes without a value, so callers never handle errors.
+   * Has the list changed, the API carried the mutation out and only the sync after it failed:
+   * the open sheet closes then, and the API error shows under "Gem vejning".
    */
   private track(
     busy: WritableSignal<boolean>,
@@ -452,9 +430,16 @@ export class WeightViewService {
       }
       busy.set(true);
       errorKey.set(null);
+      const before = this.log.entries();
       return mutation().pipe(
         catchError((error: unknown) => {
-          errorKey.set(keyFor(error));
+          if (this.log.entries() === before) {
+            errorKey.set(keyFor(error));
+          } else {
+            this.overwriteIdState.set(null);
+            this.editingId.set(null);
+            this.saveErrorKey.set(toApiError(error).messageKey);
+          }
           return EMPTY;
         }),
         finalize(() => busy.set(false)),

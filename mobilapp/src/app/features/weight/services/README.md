@@ -42,8 +42,10 @@ værdi, så der kun emittes ved succes. Kører en handling allerede (`saving`/`e
 kald intet. `save()` emitter, når vejningen er gemt; har dagen allerede en vejning (409), sætter
 den `overwriteId` og completer uden værdi – der overskrives først ved `confirmOverwrite()` (`PATCH`
 med kladdens vægt og tiden nu). `cancelOverwrite()` sender intet. `saveEdit`/`removeEditing` lukker
-arket ved succes og lader det stå åbent med `editError` (API-fejlens tekst) ved fejl. `retryLoad()`
-genindlæser kun den eller de stores, der fejlede.
+arket ved succes og lader det stå åbent med `editError` (API-fejlens tekst) ved fejl. Har API'et
+udført ændringen, og fejler kun synkroniseringen bagefter (vægten eller målet), lukker det åbne ark,
+og API-fejlens tekst står i `saveError` – "ikke gemt" (`weight.page.saveError`) vises kun, når
+intet blev gemt. `retryLoad()` genindlæser kun den eller de stores, der fejlede.
 
 `goalWeightKg` følger designet: målet "holde vægten" sigter mod den nuværende vægt, ellers
 bruges profilens målvægt klemt fast mellem 30 og 300 kg.

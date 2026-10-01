@@ -17,6 +17,7 @@ import { COLLAPSED_LOG_ROWS, WeightViewService, weightChangeTone } from './weigh
 const LOGS_URL = '/api/v1/me/weight-logs';
 const LIST_URL = `${LOGS_URL}?limit=100`;
 const SAVE_ERROR = 'Vejningen blev ikke gemt. Prøv igen.';
+const SERVER_ERROR = 'Serveren svarer ikke lige nu. Prøv igen om lidt.';
 
 describe('WeightViewService', () => {
   let http: HttpTestingController;
@@ -222,6 +223,42 @@ describe('WeightViewService', () => {
       expect(view.saving()).toBe(false);
       expect(view.saveError()).toBe(SAVE_ERROR);
       expect(view.logRows()).toHaveLength(3);
+    });
+
+    it('siger ikke "ikke gemt", når kun genindlæsningen af målet fejler efter gem', () => {
+      const view = setup();
+
+      const save = run(view.save());
+      http.expectOne({ method: 'POST', url: LOGS_URL }).flush(weightLogDto(9, 75, 0, TEST_NOW));
+      http
+        .expectOne({ method: 'GET', url: '/api/v1/me/goals/current' })
+        .flush(null, { status: 500, statusText: 'Server Error' });
+
+      expect(save.emitted).toBe(false);
+      expect(view.saving()).toBe(false);
+      expect(view.saveError()).toBe(SERVER_ERROR);
+      expect(view.logRows()[0]?.date).toBe('I dag');
+    });
+
+    it('lukker spørgsmålet, når kun genindlæsningen af målet fejler efter overskrivningen', () => {
+      const view = setup();
+      run(view.save());
+      http
+        .expectOne({ method: 'POST', url: LOGS_URL })
+        .flush({ existingWeightLogId: 42 }, { status: 409, statusText: 'Conflict' });
+
+      run(view.confirmOverwrite());
+      http
+        .expectOne({ method: 'PATCH', url: `${LOGS_URL}/42` })
+        .flush(weightLogDto(42, 75, 0, TEST_NOW));
+      http
+        .expectOne({ method: 'GET', url: '/api/v1/me/goals/current' })
+        .flush(null, { status: 500, statusText: 'Server Error' });
+
+      expect(view.overwriteId()).toBeNull();
+      expect(view.overwriteError()).toBeNull();
+      expect(view.saveError()).toBe(SERVER_ERROR);
+      expect(view.saving()).toBe(false);
     });
 
     it('holder spørgsmålet åbent med en fejl, når overskrivningen fejler', () => {

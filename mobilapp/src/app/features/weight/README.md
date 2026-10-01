@@ -48,14 +48,15 @@ aldrig en række.
   Har profilens kalenderdag allerede en vejning, svarer API'et 409 med `existingWeightLogId`, og
   arket "Overskriv **dagens vejning?**" spørger: "Ja, overskriv" sender `PATCH` med kladdens vægt
   og tiden nu, "Annuller" lukker uden kald. Der overskrives aldrig automatisk. Knapperne viser en
-  spinner, mens der gemmes, så et dobbelttryk ikke sender to gange. Fejler gemningen, står fejlen
-  under knappen (eller i arket); fejler kun genindlæsningen af målet bagefter, er vejningen gemt, og
-  et nyt tryk giver spørgsmålet.
+  spinner, mens der gemmes, så et dobbelttryk ikke sender to gange. Fejler gemningen, står "Vejningen
+  blev ikke gemt" under knappen (eller i arket). Fejler kun genindlæsningen af målet bagefter, er
+  vejningen gemt: arket lukker, fejlen står under knappen uden at påstå, at intet blev gemt, og et
+  nyt tryk giver spørgsmålet.
 - **Ret og slet.** Tryk på en række i listen åbner `WeightEditSheet`. Use casen kræver kun, at den
   seneste vejning kan rettes, men alle viste rækker kan rettes – det koster intet ekstra. Gem og
   slet venter på API'et (spinner, arket kan ikke lukkes imens); fejler de, bliver arket åbent med
-  fejlen. Er vejningen slettet, men fejler hentningen af vægten eller målet bagefter, er arket
-  lukket, og fejlen står under "Gem vejning". Rettes eller slettes den seneste vejning, følger
+  fejlen. Er vejningen rettet eller slettet, men fejler hentningen af vægten eller målet bagefter,
+  er arket lukket, og fejlen står under "Gem vejning". Rettes eller slettes den seneste vejning, følger
   profilens vægt den nye seneste; slettes den eneste, bliver den startvægten fra API'et.
 - **3 uger i stedet for designets 4** (spec 6.3, plan-v2 P16) – også som standardinterval.
 - **Listen viser højst 3 mdr. tilbage** (`WEIGHT_LOG_HISTORY_RANGE`, samme periode som grafens
