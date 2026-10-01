@@ -30,7 +30,7 @@ Hver service har sin egen mappe med implementering og tests. Tilhørende adapter
 | `keyboard/keyboard-platform.ts`                | `KEYBOARD_PLATFORM` + `CapacitorKeyboardPlatform`      | Tynd adapter om `@capacitor/keyboard` bag interfacet `KeyboardPlatform`, så `KeyboardService` kan testes med en fake. Utilgængelig i browseren. `overlaysContent()` er kun sand på iOS; på Android ændrer systemet selv WebView'ets størrelse.                                                                                                                                                     |
 | `back-button/back-button.ts`                   | `BackButtonService` + `BACK_BUTTON_PLATFORM`           | Androids tilbageknap og -gestus via `@capacitor/app`: lukker først det øverste ark eller scanneren (oversat til Escape, som de i forvejen lytter på), går ellers tilbage i historikken og minimerer kun appen, når der ikke er mere at gå tilbage til. Startes fra en app initializer.                                                                                                             |
 | `theme/system-bars-platform.ts`                | `SYSTEM_BARS_PLATFORM` + `CapacitorSystemBarsPlatform` | Tynd adapter om Capacitors indbyggede `SystemBars`: lyse ikoner i mørkt tema, mørke i lyst. Gør intet i browseren. Specs giver en fake.                                                                                                                                                                                                                                                            |
-| `collections/collections.ts`                   | `CollectionsService`                                   | Brugerens egne samlinger: `create`/`update`/`remove` (kun `isBase=false`) og `isNameTaken` (navne er unikke uden hensyn til store/små bogstaver og mellemrum; ellers kastes `DuplicateCollectionNameError`). `recipes` er tom, indtil backenden leverer retter.                                                                                                                                    |
+| `collections/collections.ts`                   | `CollectionsService`                                   | API-baseret `SessionDataStore` (`me/meal-collections`): `status`, `collections` (varerne skaleret fra `FoodLogService.foods`), `collectionById`, `collectionTotals`, `isNameTaken` (kun i appen). Mutationer som `Observable`: `create`, `update` (diff), `remove`, `log(id, måltid)`. Se "Samlingerne".                                                                                           |
 
 ## Afhængigheder mellem services
 
@@ -41,6 +41,7 @@ SessionDataService ► SessionService, SESSION_DATA_STORES
 WeightLogService ► HttpClient, UserProfileService
 FoodLogService ► HttpClient, ProductLookupService, NutritionCalculator
 FoodSearchService ► FoodLogService
+CollectionsService ► HttpClient, FoodLogService, NutritionCalculator
 BarcodeFlowService ► BarcodeScannerService, ProductLookupService, NutritionCalculator
 ReminderService ─► SessionService, UserProfileService, REMINDER_NOTIFIER
 alle stores ─────► StorageService, NOW
@@ -89,6 +90,22 @@ stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under
   ændring sættes `weightKg` til den nyeste vejning (ingen tilbage → `GET me/weight-logs/latest` =
   startvægten), og `reloadGoal()` henter målet, API'et har genberegnet. `reset()` rydder kun
   hukommelsen.
+- **Samlingerne** (plan-v2 P13). `load()` henter alle sider af `GET me/meal-collections?limit=100`
+  og fejler aldrig (`status` `'error'`). `MealItemDto` har ingen næring, så `collections` skalerer
+  hver vare fra sin madvare i `FoodLogService.foods` (`…Per100` × gram / 100 med
+  `NutritionCalculator.scaleMacros` – API'ets egen formel; uden madvaren 0). En vares `id` er
+  `String(foodId)` og `mealItemId` API'ets id. `create` kører `ensureFood` for hver vare i
+  rækkefølge og sender `POST { name, items }`. `update` er en diff: `PATCH` navnet, hvis det er
+  ændret → `POST …/items` for hver vare uden `mealItemId` → `DELETE …/items/{id}` for hver gemt
+  vare, kladden ikke har (efter POST'ene, så der altid er én tilbage) → `GET` samlingen. Den er
+  ikke atomar: fejler et trin, hentes samlingen igen, og fejlen kastes videre. Er alle skrivninger
+  gået igennem, er gemningen lykkedes, også hvis `GET` fejler – så sættes `status` til `'error'`,
+  fordi hukommelsen kan have gamle `mealItemId`'er, og skærmene tilbyder en fuld genindlæsning.
+  `remove` = `DELETE` (404 = allerede væk = fjernet; madlog-rækkerne bliver). `log(id, måltid)` =
+  `POST …/{id}/log` med `{ consumedAt: nu, mealType, multiplier: 1 }` → `FoodLogService.addLogs()`.
+  En 404 på `log` eller under `update` (slettet på en anden enhed) fjerner samlingen fra
+  hukommelsen. Fejl er `ApiError`; den generelle "noget gik galt" bliver til
+  `collections.saveError` / `collections.logError`. Navne er kun unikke i appen (`isNameTaken`).
 - **`AuthApi` er en tynd HTTP-klient.** Én metode pr. endpoint i `AUTH_ENDPOINT`, bodies som
   `models/auth.ts`, og `mapApiError(resolver)` gør alle fejl til en `ApiError` med en
   oversættelsesnøgle (fx 409 → "brugernavn/e-mail optaget", skelnet på API'ets engelske

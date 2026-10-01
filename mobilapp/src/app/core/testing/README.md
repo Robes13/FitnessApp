@@ -10,6 +10,9 @@ funktioner og providers, så de kan kompileres sammen med appen uden vitest-afh�
 | `fixtures.ts`              | Testdata, appen ikke selv leverer: `weighHistory()` / `weightLogDto()` + `flushTestWeighIns()` (vejningerne via `load()`), `TEST_FOOD` til en vare, der kan logges, `testFood()` / `testFoodLog()` (API'ets `FoodDto`/`FoodLogDto`) og `flushTestFoodLog()` (madloggens `load()` besvaret), sessionerne `AUTHENTICATED_SESSION` / `PENDING_SESSION` + `TEST_AUTH_RESPONSE` / `TEST_EMAIL` og `TEST_GOAL` + `flushTestGoal()` (profilens mål og dermed `targets`). |
 | `global-test-providers.ts` | Providers, alle specs får (`providersFile` i `angular.json`): ngx-translate med dansk og `HttpClient` på Angulars testing-backend.                                                                                                                                                                                                                                                                                                                                |
 
+Samlinger: `testCollection()` (API'ets `MealCollectionDto`) og `flushTestCollections()`
+(samlingernes `load()` besvaret) i `fixtures.ts`.
+
 `TEST_NOW` er mandag 21. september 2026 kl. 10:30. Begge miljøer fryser `NOW`.
 
 ## HTTP

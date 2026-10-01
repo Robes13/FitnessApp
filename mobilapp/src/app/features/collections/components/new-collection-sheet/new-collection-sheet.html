@@ -13,6 +13,7 @@
     [placeholder]="'collections.newCollectionSheet.namePlaceholder' | translate"
     [ariaLabel]="'collections.newCollectionSheet.nameLabel' | translate"
     autocomplete="off"
+    [maxLength]="nameMaxLength"
     [invalid]="nameTaken()"
   />
   <app-ui-form-error
@@ -20,46 +21,6 @@
     tone="negative"
     [message]="nameError()"
   />
-
-  <h3 class="new-collection-sheet__caption">
-    {{ 'collections.newCollectionSheet.mealCaption' | translate }}
-  </h3>
-  <app-meal-picker
-    [(value)]="meal"
-    filled
-    [ariaLabel]="'collections.newCollectionSheet.mealCaption' | translate"
-  />
-
-  <div class="new-collection-sheet__caption new-collection-sheet__caption--row">
-    <h3 class="new-collection-sheet__caption-text">
-      {{ 'collections.newCollectionSheet.iconCaption' | translate }}
-    </h3>
-    <button type="button" class="new-collection-sheet__more" (click)="toggleIcons()">
-      {{ moreIconsLabel() }}
-    </button>
-  </div>
-  <div
-    class="new-collection-sheet__icons"
-    role="radiogroup"
-    [attr.aria-label]="'collections.newCollectionSheet.iconCaption' | translate"
-    (keydown)="onIconKeydown($event)"
-  >
-    @for (name of icons(); track name; let index = $index) {
-      <button
-        #iconOption
-        type="button"
-        class="new-collection-sheet__icon"
-        [class.new-collection-sheet__icon--selected]="icon() === name"
-        role="radio"
-        [attr.aria-checked]="icon() === name"
-        [attr.aria-label]="iconLabel(name)"
-        [tabindex]="iconTabIndexFor(index)"
-        (click)="selectIcon(name)"
-      >
-        <app-ui-icon [name]="name" size="xl" [strokeWidth]="1.9" />
-      </button>
-    }
-  </div>
 
   <h3 class="new-collection-sheet__caption">
     {{ 'collections.newCollectionSheet.itemsCaption' | translate }}
@@ -71,9 +32,13 @@
       class="new-collection-sheet__empty"
       [message]="'collections.newCollectionSheet.emptyDraft' | translate"
     />
+    <app-ui-form-error
+      class="new-collection-sheet__min-items"
+      [message]="'collections.newCollectionSheet.minOneItem' | translate"
+    />
   } @else {
     <ul class="new-collection-sheet__draft">
-      @for (item of draft(); track item.id; let index = $index) {
+      @for (item of draft(); track $index; let index = $index) {
         <li class="new-collection-sheet__row">
           <button type="button" class="new-collection-sheet__item" (click)="editAt(index)">
             <span class="new-collection-sheet__dot" aria-hidden="true"></span>
@@ -96,6 +61,7 @@
         </li>
       }
     </ul>
+    <p class="new-collection-sheet__totals">{{ totalsText() }}</p>
   }
 
   <div class="new-collection-sheet__actions">
@@ -106,6 +72,7 @@
       block
       type="button"
       class="new-collection-sheet__action"
+      [disabled]="draftFull()"
       (click)="openSearch()"
     >
       <app-ui-icon name="plus" size="sm" [strokeWidth]="2.4" />
@@ -118,6 +85,7 @@
       block
       type="button"
       class="new-collection-sheet__action"
+      [disabled]="draftFull()"
       (click)="openScanner()"
     >
       <app-ui-icon name="scan" size="md" />
@@ -132,6 +100,13 @@
       [message]="message"
     />
   }
+  @if (error(); as message) {
+    <app-ui-form-error
+      class="new-collection-sheet__save-error"
+      tone="negative"
+      [message]="message"
+    />
+  }
 
   <button
     sheetFooter
@@ -141,6 +116,7 @@
     block
     type="button"
     [disabled]="!canSave()"
+    [loading]="busy()"
     (click)="save()"
   >
     {{ text().submit }}

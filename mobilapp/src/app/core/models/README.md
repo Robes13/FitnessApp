@@ -4,8 +4,8 @@ App-dækkende typer, én fil pr. domæne. Kun typer – ingen logik.
 
 | Fil                  | Typer                                                                                                                                                                                                                                                                          |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `meal.ts`            | `MealId`, `MealDefinition`, `MealTone` (måltidets farve i designets `mealTints`)                                                                                                                                                                                               |
-| `food.ts`            | `Macros`, `FoodItem`, `LoggedFood`, `DailyFoodTotals`, `CustomFoodInput`, `Ingredient`, `Recipe`, `FoodCollection`, `NewCollectionInput`                                                                                                                                       |
+| `meal.ts`            | `MealId`, `MealDefinition`                                                                                                                                                                                                                                                     |
+| `food.ts`            | `Macros`, `FoodItem`, `LoggedFood`, `DailyFoodTotals`, `CustomFoodInput`, `CollectionItem`, `FoodCollection`, `NewCollectionInput`                                                                                                                                             |
 | `profile.ts`         | `Gender`, `GoalId`, `PaceId`, `IntensityId`, `ProfilePhoto`, `UserProfile`, `GoalDefinition`, `PaceDefinition`, `ActivityLevel`, `IntensityDefinition`, `GenderDefinition`                                                                                                     |
 | `weight.ts`          | `WeighEntry`, `WeightRange` (`1u`/`3u`/`3m`), `WeightPoint` og API'ets kontrakt: `WeightLogDto`, `CreateWeightLogRequest`, `UpdateWeightLogRequest`, `WeightSaveResult` (`saved` + vejningen, eller `exists` + id'et på dagens vejning)                                        |
 | `nutrition.ts`       | `GoalWeightBounds`, `ParsedQuantity`, `PasswordStrength` (+ score/label-typer)                                                                                                                                                                                                 |
@@ -34,7 +34,12 @@ App-dækkende typer, én fil pr. domæne. Kun typer – ingen logik.
 - `food-api.ts` er mad-API'ets former: `FoodDto` er brugerens egen vare pr. 100 g med sine
   `servings`, og `FoodLogDto` har de forbrugte værdier og `mealType`. De mappes i
   `food-log/food-log-mapping.ts`.
-- `FoodCollection.icon` er typen `CollectionIconName` fra `constants/collection-icons.ts`.
+- `FoodCollection` er en samling fra API'et: `id` = `String(mealCollectionId)`, `name` og
+  `items: CollectionItem[]` – en `FoodItem` med `mealItemId` (fraværende i en kladde, indtil
+  varen er gemt). Ikon, måltid, faste samlinger og retter findes ikke (P13). Samlingernes
+  API-former ligger i `food-api.ts`: `MealCollectionDto`, `MealItemDto` (uden næring),
+  `NutritionTotalsDto`, `CreateMealCollectionRequest`, `CreateMealItemRequest`,
+  `UpdateMealCollectionRequest` og `LogMealCollectionRequest`.
 - **API-modeller er adskilt fra UI-modeller.** Typerne i `auth.ts`/`api.ts` har API'ets
   camelCase-navne og PascalCase-enums (`'Male'`, `'LoseWeight'`); mapningen til appens egne
   typer (`'mand'`, `'tabe'`) sker i servicelaget (`auth-mapping.ts`, `profile-mapping.ts`). API'ets tidsstempler er

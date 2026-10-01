@@ -5,7 +5,6 @@ import { Router, Routes, provideRouter, withComponentInputBinding } from '@angul
 import { RouterTestingHarness } from '@angular/router/testing';
 import { APP_PATH, APP_ROUTE, QUERY_PARAM } from '../../../../core/constants/app-route';
 import { FoodItem } from '../../../../core/models/food';
-import { CollectionsService } from '../../../../core/services/collections/collections';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import {
@@ -287,40 +286,6 @@ describe('FoodPage', () => {
     await settle();
 
     expect(text('.food-add-sheet__error')).toBe('Serveren svarer ikke lige nu. Prøv igen om lidt.');
-  });
-
-  it('logs a collection from its tab as one row per item, one after the other', async () => {
-    const { page, click, texts, settle } = await setup();
-    const oats = (id: string, grams: number): FoodItem => ({
-      id,
-      name: 'Havregryn',
-      quantity: `${grams} g`,
-      kcal: Math.round(3.7 * grams),
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-    });
-    TestBed.inject(CollectionsService).create({
-      name: 'Morgenmad',
-      icon: 'bag',
-      meal: 'morgen',
-      items: [oats('item-1', 60), oats('item-2', 40)],
-    });
-
-    await click(page.querySelector('.food-page__add'));
-    await click(page.querySelectorAll('.ui-segmented-control__option')[1]);
-    await click(page.querySelector('.food-add-sheet__collection'));
-    for (const grams of [60, 40]) {
-      const request = http.expectOne({ method: 'POST', url: FOOD_LOGS_URL });
-      expect(request.request.body).toMatchObject({ foodId: 3, quantity: grams, unit: 'Gram' });
-      request.flush(testFoodLog(oats('', grams), 'morgen', undefined, 3));
-      await settle();
-    }
-
-    expect(page.querySelector('.food-add-sheet__collection')).toBeNull();
-    expect(
-      texts('.food-meal-group__name-text').filter((name) => name === 'Havregryn'),
-    ).toHaveLength(2);
   });
 
   it('edits only the amount of a logged item', async () => {

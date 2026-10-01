@@ -51,10 +51,10 @@ viser spinner på knappen og blokerer et nyt kald, og en fejl vises i arket (og 
   snart vælgeren går videre til "Ny egen vare" eller portionstrinnet — og altid, når en logget
   vare redigeres. Så er måltidet givet, og arket hedder "Rediger vare" i stedet for
   "Tilføj morgenmad" (designets `addSheetVerb` / `addSheetWhat`).
-- **En samling logges som sine varer** (P13): én række pr. vare under det valgte måltid, i
-  rækkefølge via `FoodLogService.add()`, så hver række kan rettes og fjernes for sig. Samlinger
-  uden varer vises ikke. `// ponytail:` fejler en vare midtvejs, bliver de allerede loggede
-  rækker stående; bølge 3 logger samlingen i ét kald (`POST me/meal-collections/{id}/log`).
+- **En samling logges i ét kald** (P13): fanen "Samlinger" kalder `CollectionsService.log()`
+  (`POST me/meal-collections/{id}/log`), og API'et opretter én række pr. vare under det
+  valgte måltid, så hver række kan rettes og fjernes for sig. Arket lukker, når API'et har svaret;
+  en fejl vises i arket, der bliver åbent.
 - **`?tilfoej=<måltid>`** (fra "Næste skridt" på Hjem) bindes som input via
   `withComponentInputBinding()` og fjernes fra URL'en igen med `replaceUrl`, så et tilbage-tryk
   eller en genindlæsning ikke åbner arket på ny. Angulars compiler kræver en literal i
@@ -68,9 +68,8 @@ viser spinner på knappen og blokerer et nyt kald, og en fejl vises i arket (og 
 - **Fjern kræver bekræftelse** (3.4) i det fælles `shared/components/ui-confirm-sheet`, der ikke
   kan lukkes med et tryk på baggrunden. Er varen allerede væk (404), fjernes den alligevel, og
   siden skriver _Varen findes ikke længere._
-- **Ikonflisen på en samling farves efter måltidet** (morgen orange, frokost grøn, aften blå,
-  snack rød) som designets `mealTints`. Reglen bor i `core/constants/meals.ts` (`MEAL_TONES`),
-  fordi Samlinger-skærmen bruger den samme tabel.
+- **Ikonflisen på en samling** er `utensils` i accent-farven – API'et har hverken ikon eller
+  måltid på en samling (P13), så designets `mealTints` bruges ikke længere.
 - **Arket bruger `UiSheet`s `column`**, ikke `scrollable`: måltids-chips og fanerne
   Varer/Samlinger bliver stående øverst, mens `.food-add-sheet__scroll` ejer scroll-området —
   som i designet.

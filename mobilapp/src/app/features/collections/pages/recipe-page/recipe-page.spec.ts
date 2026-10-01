@@ -8,7 +8,14 @@ import { CollectionsService } from '../../../../core/services/collections/collec
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
 import { COLLECTIONS_ROUTES } from '../../collections.routes';
 import { BUNDLE_ID_PREFIX } from '../../services/collections-view';
-import { flushTestFoodLog, testFood } from '../../../../core/testing/fixtures';
+import {
+  TEST_FOOD,
+  flushTestCollections,
+  flushTestFoodLog,
+  testCollection,
+  testFood,
+  testFoodLog,
+} from '../../../../core/testing/fixtures';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 
 @Component({ template: '' })
@@ -24,21 +31,46 @@ const TEST_PROVIDERS: (Provider | EnvironmentProviders)[] = [
   ...provideComponentTestEnvironment(),
 ];
 
+const COLLECTION_URL = '/api/v1/me/meal-collections/3';
+const BUNDLE_ID = `${BUNDLE_ID_PREFIX}3`;
+const MEAL_PREP = testCollection(3, 'Meal prep', [
+  { foodId: 5, foodName: 'Tunsalat', quantity: 200, unit: 'Gram' },
+]);
+
 function normalize(value: string | null | undefined): string {
   return (value ?? '').replace(/\s+/g, ' ').trim();
 }
 
 describe('RecipePage', () => {
+  let http: HttpTestingController;
+
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({ providers: TEST_PROVIDERS });
+    http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => TestBed.inject(HttpTestingController).verify());
+  afterEach(() => http.verify());
+
+  /** Tunsalat 200 g = 240 kcal, 28 g protein, 6 g carbs, 11 g fat. */
+  function loadMealPrep(): void {
+    flushTestFoodLog([
+      testFood({
+        foodId: 5,
+        name: 'Tunsalat',
+        caloriesPer100: 120,
+        proteinPer100: 14,
+        carbohydratesPer100: 3,
+        fatPer100: 5.5,
+      }),
+    ]);
+    flushTestCollections([MEAL_PREP]);
+  }
 
   async function setup(recipeId: string) {
     const harness = await RouterTestingHarness.create(APP_PATH.recipe(recipeId));
     const page = harness.routeNativeElement as HTMLElement;
+    const text = (selector: string) => normalize(page.querySelector(selector)?.textContent);
     const texts = (selector: string) =>
       Array.from(page.querySelectorAll<HTMLElement>(selector)).map((el) =>
         normalize(el.textContent),
@@ -47,192 +79,181 @@ describe('RecipePage', () => {
       Array.from(page.querySelectorAll<HTMLButtonElement>('button')).find(
         (el) => normalize(el.textContent) === label,
       );
-    const click = async (element: Element | undefined | null) => {
-      (element as HTMLElement | null)?.click();
+    const settle = async () => {
+      await harness.fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve, 0));
       await harness.fixture.whenStable();
     };
-    return { harness, page, texts, button, click };
+    const click = async (element: Element | undefined | null) => {
+      (element as HTMLElement | null)?.click();
+      await settle();
+    };
+    return { harness, page, text, texts, button, settle, click };
   }
 
-  /** A collection with one food – the app has no dishes until the backend provides them. */
-  function createBundle(): string {
-    const created = TestBed.inject(CollectionsService).create({
-      name: 'Meal prep',
-      icon: 'bag',
-      meal: 'frokost',
-      items: [
-        {
-          id: 'item-tun',
-          name: 'Tunsalat',
-          quantity: '200 g',
-          kcal: 240,
-          protein: 28,
-          carbs: 6,
-          fat: 11,
-        },
-      ],
-    });
-    return `${BUNDLE_ID_PREFIX}${created.id}`;
-  }
+  it('shows the macros and items of a collection', async () => {
+    loadMealPrep();
+    const { text, texts } = await setup(BUNDLE_ID);
 
-  it('shows the macros of a bundle', async () => {
-    const { texts } = await setup(createBundle());
-
-    expect(texts('.recipe-page__stat-label')).toEqual(['Kalorier', 'Protein', 'Kulhydrat', 'Fedt']);
+    expect(text('.recipe-page__title')).toBe('Meal prep');
     expect(texts('.recipe-page__stat-value')).toEqual(['240', '28 g', '6 g', '11 g']);
+    expect(texts('.recipe-page__line-qty')).toEqual(['200 g']);
+    expect(text('.recipe-page__log-button')).toBe('Log 240 kcal');
   });
 
-  it('logs each item of the bundle under the chosen meal and switches to Mad', async () => {
-    // The item is the catalogue food of the same name (the collection keeps its own item id).
-    flushTestFoodLog([testFood({ foodId: 5, name: 'Tunsalat', caloriesPer100: 120 })]);
-    const { page, button, click } = await setup(createBundle());
+  it('logs the collection under the chosen meal in one call and switches to Mad', async () => {
+    loadMealPrep();
+    const { page, button, click } = await setup(BUNDLE_ID);
 
     await click(button('Aftensmad'));
     await click(page.querySelector('.recipe-page__log-button'));
     await click(page.querySelector('.recipe-page__log-button'));
-    const log = TestBed.inject(HttpTestingController).expectOne({
-      method: 'POST',
-      url: '/api/v1/me/food-logs',
-    });
-    expect(log.request.body).toMatchObject({
-      foodId: 5,
-      quantity: 200,
-      unit: 'Gram',
-      mealType: 'Dinner',
-    });
-    log.flush({
-      ...log.request.body,
-      foodLogId: 1,
-      foodName: 'Tunsalat',
-      caloriesConsumed: 240,
-      proteinConsumed: 28,
-      carbohydratesConsumed: 6,
-      fatConsumed: 11,
-    });
+    const log = http.expectOne({ method: 'POST', url: `${COLLECTION_URL}/log` });
+    expect(log.request.body).toMatchObject({ mealType: 'Dinner', multiplier: 1 });
+    log.flush([testFoodLog({ ...TEST_FOOD, name: 'Tunsalat', quantity: '200 g' }, 'aften')]);
     await click(null);
 
-    const logged = TestBed.inject(FoodLogService)
-      .entries()
-      .find((entry) => entry.name === 'Tunsalat');
-    expect(logged).toMatchObject({ meal: 'aften', kcal: 240 });
+    expect(TestBed.inject(FoodLogService).entries()).toMatchObject([
+      { name: 'Tunsalat', meal: 'aften' },
+    ]);
     expect(TestBed.inject(Router).url).toBe(APP_PATH.FOOD);
   });
 
   it('stays on the page with a message when the log fails', async () => {
-    flushTestFoodLog([testFood({ foodId: 5, name: 'Tunsalat' })]);
-    const { page, click } = await setup(createBundle());
+    loadMealPrep();
+    const { page, text, click } = await setup(BUNDLE_ID);
 
     await click(page.querySelector('.recipe-page__log-button'));
-    TestBed.inject(HttpTestingController)
-      .expectOne({ method: 'POST', url: '/api/v1/me/food-logs' })
-      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+    http
+      .expectOne({ method: 'POST', url: `${COLLECTION_URL}/log` })
+      .flush(null, { status: 400, statusText: 'Bad Request' });
     await click(null);
 
-    expect(normalize(page.querySelector('app-ui-form-error')?.textContent)).toBe(
-      'Serveren svarer ikke lige nu. Prøv igen om lidt.',
-    );
+    expect(text('app-ui-form-error')).toBe('Samlingen blev ikke logget. Prøv igen.');
     expect(TestBed.inject(FoodLogService).entries()).toEqual([]);
     expect(TestBed.inject(Router).url).not.toBe(APP_PATH.FOOD);
   });
 
-  it('opens a user collection as a bundle', async () => {
-    const created = TestBed.inject(CollectionsService).create({
-      name: 'Meal prep',
-      icon: 'bag',
-      meal: 'frokost',
-      items: [
-        {
-          id: 'item-tun',
-          name: 'Tunsalat',
-          quantity: '200 g',
-          kcal: 240,
-          protein: 28,
-          carbs: 6,
-          fat: 11,
-        },
-      ],
-    });
+  it('shows a spinner while the collections load instead of "not found"', async () => {
+    TestBed.inject(CollectionsService).load().subscribe();
+    const { page, settle } = await setup(BUNDLE_ID);
 
-    const { page, texts } = await setup(`${BUNDLE_ID_PREFIX}${created.id}`);
+    expect(page.querySelector('app-ui-spinner')).not.toBeNull();
+
+    http
+      .expectOne('/api/v1/me/meal-collections?limit=100')
+      .flush({ items: [MEAL_PREP], nextCursor: null, hasMore: false });
+    await settle();
 
     expect(normalize(page.querySelector('.recipe-page__title')?.textContent)).toBe('Meal prep');
-    expect(texts('.recipe-page__line')).toHaveLength(1);
-    expect(
-      normalize(page.querySelector('.recipe-page__line')?.firstElementChild?.textContent),
-    ).toBe('Tunsalat');
-    expect(texts('.recipe-page__line-qty')).toEqual(['200 g']);
-    expect(normalize(page.querySelector('.recipe-page__log-button')?.textContent)).toBe(
-      'Log 240 kcal',
-    );
+  });
+
+  it('shows the load error instead of 0 kcal when the foods failed to load', async () => {
+    flushTestCollections([MEAL_PREP]);
+    TestBed.inject(FoodLogService).load().subscribe();
+    http.expectOne('/api/v1/foods?limit=100').flush(null, { status: 503, statusText: 'Error' });
+    http.expectOne((request) => request.url === '/api/v1/me/food-logs');
+    const { page, text } = await setup(BUNDLE_ID);
+
+    expect(text('app-ui-empty-state')).toBe('Vi kunne ikke hente dine samlinger.');
+    expect(page.querySelector('.recipe-page__log-button')).toBeNull();
+    expect(page.querySelector('[aria-label="Rediger samling"]')).toBeNull();
   });
 
   it('shows an empty state and a way back when the id is unknown', async () => {
-    const { page, button, click } = await setup('findes-ikke');
+    const { page, text, button, click } = await setup('findes-ikke');
 
-    expect(normalize(page.querySelector('app-ui-empty-state')?.textContent)).toBe(
-      'Vi kunne ikke finde den her opskrift.',
-    );
+    expect(text('app-ui-empty-state')).toBe('Vi kunne ikke finde den her opskrift.');
+    expect(page.querySelector('[aria-label="Rediger samling"]')).toBeNull();
+    expect(button('Slet samling')).toBeUndefined();
 
     await click(button('Tilbage til samlinger'));
 
     expect(TestBed.inject(Router).url).toBe(APP_PATH.COLLECTIONS);
   });
 
-  describe('editing and deleting a user collection', () => {
-    async function settle(harness: RouterTestingHarness): Promise<void> {
-      await harness.fixture.whenStable();
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      await harness.fixture.whenStable();
-    }
+  describe('editing and deleting', () => {
+    beforeEach(() => loadMealPrep());
 
-    it('offers no edit or delete on an unknown id', async () => {
-      const { page, button } = await setup('findes-ikke');
-
-      expect(page.querySelector('[aria-label="Rediger samling"]')).toBeNull();
-      expect(button('Slet samling')).toBeUndefined();
-    });
-
-    it('saves the edited collection from the prefilled sheet', async () => {
-      const { harness, page, button, click } = await setup(createBundle());
-
+    async function rename(setupResult: Awaited<ReturnType<typeof setup>>, name: string) {
+      const { page, settle, click, button } = setupResult;
       await click(page.querySelector('[aria-label="Rediger samling"]'));
-      await settle(harness);
       const input = page.querySelector<HTMLInputElement>('.new-collection-sheet__name input');
       expect(input?.value).toBe('Meal prep');
-
       if (input) {
-        input.value = 'Frokostboks';
+        input.value = name;
         input.dispatchEvent(new Event('input'));
       }
-      await settle(harness);
+      await settle();
       await click(button('Gem ændringer'));
-      await settle(harness);
+    }
 
-      expect(TestBed.inject(CollectionsService).userCollections()[0]?.name).toBe('Frokostboks');
-      expect(normalize(page.querySelector('.recipe-page__title')?.textContent)).toBe('Frokostboks');
+    it('saves the edited collection and closes the sheet', async () => {
+      const result = await setup(BUNDLE_ID);
+
+      await rename(result, 'Frokostboks');
+      const patch = http.expectOne({ method: 'PATCH', url: COLLECTION_URL });
+      expect(patch.request.body).toEqual({ name: 'Frokostboks' });
+      patch.flush({ ...MEAL_PREP, name: 'Frokostboks' });
+      http
+        .expectOne({ method: 'GET', url: COLLECTION_URL })
+        .flush({ ...MEAL_PREP, name: 'Frokostboks' });
+      await result.settle();
+
+      expect(result.text('.recipe-page__title')).toBe('Frokostboks');
+      expect(result.page.querySelector('[role="dialog"]')).toBeNull();
+    });
+
+    it('closes the sheet and shows the error after a failed edit', async () => {
+      const result = await setup(BUNDLE_ID);
+
+      await rename(result, 'Frokostboks');
+      http
+        .expectOne({ method: 'PATCH', url: COLLECTION_URL })
+        .flush(null, { status: 503, statusText: 'Unavailable' });
+      http.expectOne({ method: 'GET', url: COLLECTION_URL }).flush(MEAL_PREP);
+      await result.settle();
+
+      expect(result.page.querySelector('[role="dialog"]')).toBeNull();
+      expect(result.text('.recipe-page__title')).toBe('Meal prep');
+      expect(result.text('app-ui-form-error')).toBe(
+        'Serveren svarer ikke lige nu. Prøv igen om lidt.',
+      );
     });
 
     it('keeps the collection when the deletion is cancelled', async () => {
-      const { harness, button, click } = await setup(createBundle());
+      const { button, click } = await setup(BUNDLE_ID);
 
       await click(button('Slet samling'));
-      await settle(harness);
       await click(button('Annuller'));
 
-      expect(TestBed.inject(CollectionsService).userCollections()).toHaveLength(1);
+      expect(TestBed.inject(CollectionsService).collections()).toHaveLength(1);
       expect(TestBed.inject(Router).url).not.toBe(APP_PATH.COLLECTIONS);
     });
 
     it('deletes the collection after confirmation and returns to the list', async () => {
-      const { harness, button, click } = await setup(createBundle());
+      const { button, click, settle } = await setup(BUNDLE_ID);
 
       await click(button('Slet samling'));
-      await settle(harness);
       await click(button('Ja, slet samlingen'));
-      await settle(harness);
+      http.expectOne({ method: 'DELETE', url: COLLECTION_URL }).flush(null);
+      await settle();
 
-      expect(TestBed.inject(CollectionsService).userCollections()).toEqual([]);
+      expect(TestBed.inject(CollectionsService).collections()).toEqual([]);
       expect(TestBed.inject(Router).url).toBe(APP_PATH.COLLECTIONS);
+    });
+
+    it('stays with a message when the deletion fails', async () => {
+      const { page, text, button, click, settle } = await setup(BUNDLE_ID);
+
+      await click(button('Slet samling'));
+      await click(button('Ja, slet samlingen'));
+      http.expectOne({ method: 'DELETE', url: COLLECTION_URL }).error(new ProgressEvent('error'));
+      await settle();
+
+      expect(page.querySelector('[role="dialog"]')).toBeNull();
+      expect(text('app-ui-form-error')).toBe('Ingen forbindelse. Tjek dit internet, og prøv igen.');
+      expect(TestBed.inject(CollectionsService).collections()).toHaveLength(1);
     });
   });
 });

@@ -1,28 +1,36 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { finalize } from 'rxjs';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { NewCollectionInput } from '../../../../core/models/food';
-import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections/collections';
-import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
+import { injectTranslate } from '../../../../core/services/language/translate';
+import { toApiError } from '../../../../core/utils/api';
+import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-icon-button';
+import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
 import { NewCollectionSheet } from '../../components/new-collection-sheet/new-collection-sheet';
 import { CollectionEntry, CollectionsViewService } from '../../services/collections-view';
 
-const DEFAULT_MEAL: MealId = 'morgen';
-const EMPTY_MESSAGE_KEY = 'collections.page.empty';
-
 /**
- * The collections screen: one filter and one list with the user's collections, their foods and
- * the design's dishes. The rows are built by `CollectionsViewService`; the page only keeps track
- * of the selected filter and the "New collection" sheet.
+ * The collections screen: the user's collections and the "New collection" sheet. The rows are
+ * built by `CollectionsViewService`; the page owns the sheet and the running create, which
+ * closes the sheet only once the API has saved the collection (a failure shows in the sheet).
  */
 @Component({
   selector: 'app-collections-page',
-  imports: [NewCollectionSheet, TranslatePipe, UiChip, UiEmptyState, UiIcon, UiIconButton],
+  imports: [
+    NewCollectionSheet,
+    TranslatePipe,
+    UiButton,
+    UiEmptyState,
+    UiIcon,
+    UiIconButton,
+    UiSpinner,
+  ],
   templateUrl: './collections-page.html',
   styleUrl: './collections-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,40 +40,45 @@ export class CollectionsPage {
   private readonly view = inject(CollectionsViewService);
   private readonly collections = inject(CollectionsService);
   private readonly router = inject(Router);
+  private readonly t = injectTranslate();
 
-  /** Id of the selected fixed collection – `null` is "All". */
-  protected readonly selectedId = signal<string | null>(null);
+  protected readonly status = this.view.status;
+  protected readonly entries = computed(() => this.view.entries());
   protected readonly sheetOpen = signal(false);
-  protected readonly emptyMessageKey = EMPTY_MESSAGE_KEY;
-
-  protected readonly chips = computed(() => this.view.chips());
-  protected readonly entries = computed(() => this.view.entriesFor(this.selectedId()));
-  /** The sheet opens on the meal the filter points to (the design's `openNewCol`). */
-  protected readonly defaultMeal = computed<MealId>(() => {
-    const id = this.selectedId();
-    return id === null ? DEFAULT_MEAL : (this.collections.collectionById(id)?.meal ?? DEFAULT_MEAL);
+  /** The create is running – the sheet's button shows a spinner and ignores taps. */
+  protected readonly saving = signal(false);
+  private readonly failureKey = signal<string | null>(null);
+  protected readonly saveError = computed(() => {
+    const key = this.failureKey();
+    return key === null ? null : this.t(key);
   });
 
-  protected select(id: string | null): void {
-    this.selectedId.set(id);
+  protected openSheet(): void {
+    this.failureKey.set(null);
+    this.sheetOpen.set(true);
   }
 
-  protected toneClass(entry: CollectionEntry): string {
-    return `collections-page__card--${entry.tone}`;
+  protected retry(): void {
+    this.view.retry();
   }
 
   protected open(entry: CollectionEntry): void {
     void this.router.navigateByUrl(APP_PATH.recipe(entry.id));
   }
 
-  /**
-   * Creates the collection and switches to the filter it belongs under. The sheet has already
-   * rejected a duplicate name, so `create()` won't throw here.
-   */
+  /** Not cancelled when the page closes, so a save is never lost halfway. */
   protected onCreated(input: NewCollectionInput): void {
-    const created = this.collections.create(input);
-    const base = this.collections.baseCollections().find((c) => c.meal === created.meal);
-    this.selectedId.set(base?.id ?? null);
-    this.sheetOpen.set(false);
+    if (this.saving()) {
+      return;
+    }
+    this.saving.set(true);
+    this.failureKey.set(null);
+    this.collections
+      .create(input)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => this.sheetOpen.set(false),
+        error: (error: unknown) => this.failureKey.set(toApiError(error).messageKey),
+      });
   }
 }

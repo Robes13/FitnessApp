@@ -20,7 +20,7 @@ afbrydes den. Servicen oprettes af en app initializer i `app.config.ts`.
 | `UserProfileService` | API-baseret (profil, mål, indstillinger, seneste vægt)            |
 | `WeightLogService`   | No-op-stub (`load()` = `of(undefined)`) – API-baseret fra bølge 2 |
 | `FoodLogService`     | API-baseret (katalog og madlog for 90 dage)                       |
-| `CollectionsService` | No-op-stub – API-baseret fra bølge 3                              |
+| `CollectionsService` | API-baseret (samlinger; næringen fra madloggens katalog)          |
 
 `ReminderService` er bevidst **ikke** med: den oprettes efter sprogets app initializer.
 

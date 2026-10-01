@@ -8,16 +8,18 @@ import {
   linkedSignal,
   model,
   output,
+  signal,
   viewChild,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
-import { CollectionIconName } from '../../../../core/constants/collection-icons';
-import { MEALS, MEAL_TONES } from '../../../../core/constants/meals';
+import { finalize } from 'rxjs';
+import { MEALS } from '../../../../core/constants/meals';
 import { FoodCollection, FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { injectTranslate } from '../../../../core/services/language/translate';
+import { toApiError } from '../../../../core/utils/api';
 import {
   FoodPicker,
   FoodPickerCtaVerb,
@@ -25,6 +27,7 @@ import {
   FoodPickerStartStep,
   FoodPickerStep,
 } from '../../../../shared/components/food-picker/food-picker';
+import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
@@ -34,6 +37,7 @@ import {
   UiSegmentedControl,
 } from '../../../../shared/components/ui-segmented-control/ui-segmented-control';
 import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
+import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
 
 /** The design's `addTab`: the foods from search or the user's collections. */
 export type AddSheetTab = 'varer' | 'samlinger';
@@ -65,12 +69,9 @@ const COLLECTIONS_EMPTY_MESSAGE_KEY = 'food.addSheet.collectionsEmpty';
 interface CollectionRowView {
   readonly id: string;
   readonly name: string;
-  /** The design's `ac.sub`: the names of the dishes and foods in the collection. */
+  /** The design's `ac.sub`: the names of the foods in the collection. */
   readonly subtitle: string;
   readonly kcalLabel: string;
-  readonly icon: CollectionIconName;
-  readonly toneClass: string;
-  readonly items: readonly FoodItem[];
 }
 
 /**
@@ -82,21 +83,24 @@ interface CollectionRowView {
  * then the meal is given, and the sheet is called "Edit food".
  *
  * The content sits behind `@if (open())`, so the picker starts over every time the sheet opens.
- * The sheet owns no data: everything is passed on to the page via `selected`, `collectionPicked`,
- * `customFoodCreated` and `scanRequested`. While the page saves (`busy`) the picker's button shows a spinner, and a
- * failure (`error`) is shown above the content – the sheet stays open, so nothing typed is lost.
+ * Foods are passed on to the page via `selected`, `customFoodCreated` and `scanRequested`. While
+ * the page saves (`busy`) the picker's button shows a spinner, and a failure (`error`) is shown
+ * above the content – the sheet stays open, so nothing typed is lost. A collection is logged by
+ * the sheet itself (`CollectionsService.log`, one call) and closes it once the API has answered.
  */
 @Component({
   selector: 'app-food-add-sheet',
   imports: [
     FoodPicker,
     TranslatePipe,
+    UiButton,
     UiChip,
     UiEmptyState,
     UiFormError,
     UiIcon,
     UiSegmentedControl,
     UiSheet,
+    UiSpinner,
   ],
   templateUrl: './food-add-sheet.html',
   styleUrl: './food-add-sheet.scss',
@@ -119,8 +123,6 @@ export class FoodAddSheet {
   readonly closed = output<void>();
   /** A finished food from the picker, ready for the log. */
   readonly selected = output<FoodItem>();
-  /** The items of a collection from the "Collections" tab, each ready for the log. */
-  readonly collectionPicked = output<readonly FoodItem[]>();
   readonly customFoodCreated = output<FoodItem>();
   readonly scanRequested = output<void>();
 
@@ -133,6 +135,22 @@ export class FoodAddSheet {
     TAB_LABEL_KEYS.map(({ value, labelKey }) => ({ value, label: this.t(labelKey) })),
   );
   protected readonly emptyMessageKey = COLLECTIONS_EMPTY_MESSAGE_KEY;
+  /** The collections' load state – the tab doesn't claim "no collections" while it isn't known. */
+  protected readonly collectionsStatus = this.collections.status;
+  /** A collection is being logged – the rows are off. */
+  protected readonly logging = signal(false);
+  /** Translation key of the last failed collection log; cleared on every open. */
+  private readonly logErrorKey = linkedSignal<boolean, string | null>({
+    source: this.open,
+    computation: () => null,
+  });
+  /** The page's failure, or else the last failed collection log – shown above the content. */
+  protected readonly notice = computed(() => {
+    const key = this.logErrorKey();
+    return this.error() ?? (key === null ? null : this.t(key));
+  });
+  /** The page saves or a collection is being logged – the collection rows are off. */
+  protected readonly rowsBusy = computed(() => this.busy() || this.logging());
 
   /** Every open (and close) starts over on the Foods tab. */
   protected readonly tab = linkedSignal<boolean, AddSheetTab>({
@@ -175,11 +193,12 @@ export class FoodAddSheet {
   protected readonly showPicker = computed(() => this.isEditing() || this.tab() === 'varer');
 
   protected readonly collectionRows = computed<readonly CollectionRowView[]>(() =>
-    this.collections
-      .collections()
-      .map((collection) => this.toRow(collection))
-      .filter((row): row is CollectionRowView => row !== null),
+    this.collections.collections().map((collection) => this.toRow(collection)),
   );
+
+  protected retryCollections(): void {
+    this.collections.load().subscribe();
+  }
 
   protected onTabChange(tab: AddSheetTab | null): void {
     this.tab.set(tab ?? DEFAULT_TAB);
@@ -189,8 +208,20 @@ export class FoodAddSheet {
     this.selected.emit(selection.item);
   }
 
+  /** One API call logs every item under the chosen meal (P13); the sheet closes on success. */
   protected onCollectionPicked(row: CollectionRowView): void {
-    this.collectionPicked.emit(row.items);
+    if (this.rowsBusy()) {
+      return;
+    }
+    this.logging.set(true);
+    this.logErrorKey.set(null);
+    this.collections
+      .log(row.id, this.meal())
+      .pipe(finalize(() => this.logging.set(false)))
+      .subscribe({
+        next: () => this.closed.emit(),
+        error: (error: unknown) => this.logErrorKey.set(toApiError(error).messageKey),
+      });
   }
 
   private mealLabel(): string {
@@ -199,26 +230,14 @@ export class FoodAddSheet {
     return meal ? this.t(meal.labelKey) : '';
   }
 
-  /** The design's `colsFull`: only collections with items are shown. */
-  private toRow(collection: FoodCollection): CollectionRowView | null {
+  /** A collection always has 1–50 items (the API's rule). */
+  private toRow(collection: FoodCollection): CollectionRowView {
     const totals = this.collections.collectionTotals(collection);
-    if (collection.items.length === 0) {
-      return null;
-    }
-    const titles = [
-      ...collection.recipeIds
-        .map((id) => this.collections.recipeById(id)?.title)
-        .filter((title): title is string => title !== undefined),
-      ...collection.items.map((item) => item.name),
-    ];
     return {
       id: collection.id,
       name: collection.name,
-      subtitle: titles.join(', '),
-      kcalLabel: `${totals.kcal} ${this.t('common.unit.kcal')}`,
-      icon: collection.icon,
-      toneClass: `food-add-sheet__icon--${MEAL_TONES[collection.meal]}`,
-      items: collection.items,
+      subtitle: collection.items.map((item) => item.name).join(', '),
+      kcalLabel: `${Math.round(totals.kcal)} ${this.t('common.unit.kcal')}`,
     };
   }
 }

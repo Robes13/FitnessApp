@@ -19,28 +19,8 @@
     justify-content: center;
     height: var(--size-recipe-hero);
     border-radius: var(--radius-xl);
-    background: var(--collection-tint);
-    color: var(--collection-ink);
-
-    &--accent {
-      --collection-tint: var(--color-accent-soft);
-      --collection-ink: var(--color-accent);
-    }
-
-    &--positive {
-      --collection-tint: var(--color-positive-tint);
-      --collection-ink: var(--color-positive);
-    }
-
-    &--selected {
-      --collection-tint: var(--color-selected-tint-2);
-      --collection-ink: var(--color-selected-text);
-    }
-
-    &--negative {
-      --collection-tint: var(--color-negative-soft);
-      --collection-ink: var(--color-negative);
-    }
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
   }
 
   &__title {
@@ -153,5 +133,17 @@
 
   &__back {
     margin-top: var(--space-4);
+  }
+
+  &__status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3-5);
+    padding: var(--space-6) 0;
+  }
+
+  &__status-message {
+    align-self: stretch;
   }
 }

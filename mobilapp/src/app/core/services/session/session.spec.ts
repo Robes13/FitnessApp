@@ -346,7 +346,7 @@ describe('SessionService', () => {
     };
 
     beforeEach(() => {
-      seed(STORAGE_KEY.FOOD_LOG, { '2026-09-21': [] });
+      seed(STORAGE_KEY.SCAN_COUNT, 3);
       seed(STORAGE_KEY.THEME, 'dark');
       seed(STORAGE_KEY.LANGUAGE, 'en');
     });
@@ -361,7 +361,7 @@ describe('SessionService', () => {
 
       // The profile's load (on `authenticated`) fetches the new account's name and e-mail.
       expect(TestBed.inject(UserProfileService).profile()).toEqual(DEFAULT_PROFILE);
-      expect(storage.getItem(STORAGE_KEY.FOOD_LOG)).toBeNull();
+      expect(storage.getItem(STORAGE_KEY.SCAN_COUNT)).toBeNull();
       // Device settings stay.
       expect(storage.getItem(STORAGE_KEY.THEME)).toBe('"dark"');
       expect(storage.getItem(STORAGE_KEY.LANGUAGE)).toBe('"en"');
@@ -377,7 +377,7 @@ describe('SessionService', () => {
       await done;
 
       expect(TestBed.inject(UserProfileService).profile()).toEqual(LOCAL_PROFILE);
-      expect(storage.getItem(STORAGE_KEY.FOOD_LOG)).not.toBeNull();
+      expect(storage.getItem(STORAGE_KEY.SCAN_COUNT)).not.toBeNull();
     });
 
     it("clears the previous account's local data before a new account is created", async () => {
@@ -389,7 +389,7 @@ describe('SessionService', () => {
       await done;
 
       expect(TestBed.inject(UserProfileService).profile().weightKg).toBe(DEFAULT_PROFILE.weightKg);
-      expect(storage.getItem(STORAGE_KEY.FOOD_LOG)).toBeNull();
+      expect(storage.getItem(STORAGE_KEY.SCAN_COUNT)).toBeNull();
       expect(storage.getItem(STORAGE_KEY.THEME)).toBe('"dark"');
       expect(stored()).toMatchObject({ status: 'pending-verification', userId: 2 });
     });
@@ -503,7 +503,7 @@ describe('SessionService', () => {
       // A store that (against the contract) writes when it is reset must not bring a key back.
       const store: SessionDataStore = {
         load: () => EMPTY,
-        reset: () => seed(STORAGE_KEY.FOOD_LOG, []),
+        reset: () => seed(STORAGE_KEY.SCAN_COUNT, 1),
       };
       const { session, http } = setup(AUTHENTICATED_SESSION, [
         { provide: SESSION_DATA_STORES, useValue: [store] },

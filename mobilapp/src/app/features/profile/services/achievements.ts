@@ -161,7 +161,7 @@ export class AchievementsService {
         id: 'own-collection',
         icon: 'pencil',
         label: t('profile.achievements.ownCollection'),
-        value: this.collections.userCollections().length > 0 ? 1 : 0,
+        value: this.collections.collections().length > 0 ? 1 : 0,
         target: 1,
         unit: '',
         tone: TONE_BY_TARGET.COLLECTION,

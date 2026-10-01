@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
-import { Observable, concatMap, finalize, from, toArray } from 'rxjs';
+import { Observable, finalize } from 'rxjs';
 import { API_ERROR_MESSAGE_KEY } from '../../../../core/constants/api';
 import { QUERY_PARAM } from '../../../../core/constants/app-route';
 import { MEAL_IDS } from '../../../../core/constants/meals';
@@ -207,23 +207,6 @@ export class FoodPage {
     const editing = this.editEntry();
     this.run(
       editing ? this.foodLog.update(editing.logId, item) : this.foodLog.add(item, this.addMeal()),
-      SAVE_ERROR_KEY,
-      () => this.closeAdd(),
-    );
-  }
-
-  /**
-   * A collection from the "Collections" tab: one log row per item, in order (P13).
-   * ponytail: a failure midway keeps the rows logged so far; wave 3 logs them in one call
-   * (`POST me/meal-collections/{id}/log`).
-   */
-  protected onCollectionPicked(items: readonly FoodItem[]): void {
-    const meal = this.addMeal();
-    this.run(
-      from(items).pipe(
-        concatMap((item) => this.foodLog.add(item, meal)),
-        toArray(),
-      ),
       SAVE_ERROR_KEY,
       () => this.closeAdd(),
     );

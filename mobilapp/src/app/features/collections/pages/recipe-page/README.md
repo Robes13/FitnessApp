@@ -1,21 +1,25 @@
 # RecipePage
 
-Designets "Opskrift" (HTML-linje 1281). `UiPageHeader` med "Opskrift", ikon-hero i måltidets
-tint, titel, undertekst, fire makro-fliser, "Indhold" og kortet "Log som spist under".
+Designets "Opskrift" (HTML-linje 1281). `UiPageHeader` med "Opskrift" og en blyant ("Rediger
+samling"), hero med ikonet `utensils`, titel, varernes navne, fire makro-fliser, "Indhold" og
+kortet "Log som spist under" – og nederst "Slet samling".
 
 - `recipeId` bindes fra ruten med `withComponentInputBinding()`. Feltnavnet skal matche
   `ROUTE_PARAM.RECIPE_ID`; Angular kræver en statisk streng som alias, så konstanten kan kun
-  bruges i `collections.routes.ts`. Specen dækker begge sider af den kobling.
-- Id'et kan være en ret, et bundt (`col:<id>`) eller en løs vare — se feature-README'en.
-  Findes intet, vises en tom tilstand og en vej tilbage til listen.
-- Det valgte måltid starter på rettens eget (`linkedSignal`), så et nyt id nulstiller valget.
-- "Log X kcal" logger samlingens varer, én række pr. vare (P13), via `FoodLogService.add()` og
-  skifter til Mad, når API'et har svaret. Imens viser knappen spinner og ignorerer flere tryk; en
-  fejl vises over knappen, og siden bliver stående. Retter og løse varer findes ikke, før bølge 3
-  sletter dem. Midlertidigt, indtil samlingerne er på API'et (bølge 3).
-- **Redigér og slet.** Er id'et en af brugerens egne samlinger (`col:<id>`, se
-  `CollectionsViewService.editableCollectionFor()`), får sidehovedet en blyant ("Rediger
-  samling"), der åbner `NewCollectionSheet` udfyldt, og bunden får "Slet samling". Sletning
-  kræver bekræftelse i det fælles `UiConfirmSheet`; derefter kaldes `CollectionsService.remove()`,
-  og appen går tilbage til `APP_PATH.COLLECTIONS`. Retter og løse varer har ingen af delene.
+  bruges i `collections.routes.ts`. Specen navigerer via ruten og dækker dermed koblingen.
+- Id'et er `col:<id>` (se feature-README'en). Siden viser samlingen først, når både samlingerne
+  og madloggen er hentet (ellers stod alle varer til 0 kcal): imens en spinner, en fejl med "Prøv
+  igen", hvis en af dem ikke kunne hentes, og findes samlingen ikke, en tom tilstand med en vej
+  tilbage.
+- **Log** (spec 3.2): `MealPicker` vælger måltidet (start: morgenmad), og "Log X kcal" kalder
+  `CollectionsService.log(id, måltid)` – ét kald, én madlog-række pr. vare – og skifter til Mad,
+  når API'et har svaret.
+- **Redigér** (spec 4.1) genbruger `NewCollectionSheet` udfyldt; "Gem ændringer" kalder
+  `CollectionsService.update()`. Arket lukker efter svaret – også ved en fejl, for så er
+  samlingen hentet igen og viser, hvad API'et nåede at gemme.
+- **Slet** (spec 4.2) kræver bekræftelse i det fælles `UiConfirmSheet`; derefter
+  `CollectionsService.remove()` og tilbage til `APP_PATH.COLLECTIONS`.
+- Én handling ad gangen (`pending`): log-knappen viser spinner, bekræftelsen og arket er `busy`.
+  En fejl vises over log-knappen, og siden bliver stående. Kaldet afbrydes ikke, når siden
+  forlades.
 - Hero'ens højde er `--size-recipe-hero` (designets 150 px).
