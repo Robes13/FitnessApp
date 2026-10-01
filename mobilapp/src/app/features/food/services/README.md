@@ -12,4 +12,6 @@ med `computed()`, så `FoodPage` kun indeholder præsentation. Den provides på 
 (`FOOD_ROUTES`), fordi værdierne kun bruges af denne feature — ikke `providedIn: 'root'`.
 
 `kcalRemaining` kan være negativ (mål minus spist) og bruges af scannerens verdict;
-`kcalLeft` er den samme værdi klemt fast på 0, som skærmen viser.
+`kcalLeft` er den samme værdi klemt fast på 0, som skærmen viser. Loggen har API'ets præcise
+værdier, så `kcalEaten` og måltidernes kcal er summen afrundet til hele kcal (rækkerne afrundes
+hver for sig i `FoodMealGroup`); makrokortene viser højst én decimal (`formatGrams`).

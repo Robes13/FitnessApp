@@ -450,6 +450,7 @@
         "protein": "Protein"
       },
       "streak": "{{streakDays}} dage",
+      "streakOne": "1 dag",
       "todoCountSingle": "Kun én",
       "todos": {
         "mealSubtitle": "Ikke registreret endnu",

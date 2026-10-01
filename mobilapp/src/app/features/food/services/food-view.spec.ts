@@ -105,4 +105,14 @@ describe('FoodViewService', () => {
     expect(view.kcalProgress()).toBe(1);
     expect(view.macroCards()[1]?.percentLabel).toBe('100%');
   });
+
+  it("sums the API's exact values and rounds them once for the screen", () => {
+    const { view, log } = setup();
+    const bar = { ...SKYR, kcal: 100.4 };
+
+    log.addLogs([testFoodLog(bar, 'snack'), testFoodLog(bar, 'snack')]);
+
+    expect(view.kcalEaten()).toBe(1031);
+    expect(view.mealGroups()[3]?.kcalText).toBe('201 kcal');
+  });
 });

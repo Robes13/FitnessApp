@@ -52,17 +52,20 @@ export function toFoodItem(food: FoodDto): FoodItem {
   };
 }
 
-/** A logged row as the app shows it. The values are rounded per row, so the sums match the rows. */
+/**
+ * A logged row with the API's exact consumed values, so day totals equal the API's sums
+ * (`me/nutrition`, the data export). Screens round when they show a value.
+ */
 export function toLoggedFood(log: FoodLogDto): LoggedFood {
   return {
     logId: String(log.foodLogId),
     id: String(log.foodId),
     name: log.foodName,
     quantity: `${log.quantity} ${TOKEN_BY_QUANTITY_UNIT[log.unit]}`,
-    kcal: Math.round(log.caloriesConsumed),
-    protein: Math.round(log.proteinConsumed),
-    carbs: Math.round(log.carbohydratesConsumed),
-    fat: Math.round(log.fatConsumed),
+    kcal: log.caloriesConsumed,
+    protein: log.proteinConsumed,
+    carbs: log.carbohydratesConsumed,
+    fat: log.fatConsumed,
     meal: MEAL_BY_MEAL_TYPE[log.mealType],
     loggedAt: parseApiDateTime(log.consumedAt).toISOString(),
     isCustom: true,

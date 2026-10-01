@@ -58,10 +58,12 @@ Ingen service kender til `shared/` eller `features/`.
   `GET me/food-logs?from=<lokal dag i dag − 89>&to=<i morgen>&limit=100` parallelt og fejler
   aldrig (`status` `'error'`). Intet gemmes på enheden; lokale data fra før API'et migreres ikke.
   `entries` / `totals` / `byMeal` er dagens (måltidet er rækkens `mealType`); datoskift
-  kontrolleres ved midnat, ved tilbagevenden til appen og før en logning. Værdierne afrundes
-  pr. række (`Math.round`) og summeres i appen, så summen passer til de viste rækker.
-  Katalogets varer (`customFoods`, `toFoodItem`) beholder derimod API'ets decimaler: vælgeren
-  skalerer en portion fra dem og afrunder kun én gang, så forhåndsvisningen er det, API'et logger.
+  kontrolleres ved midnat, ved tilbagevenden til appen og før en logning. Rækkerne beholder
+  API'ets præcise værdier (`numeric(7,2)`), så dagssummerne er de samme som API'ets
+  (`me/nutrition`, dataeksporten). Skærmene afrunder først, når de viser et tal – én gang pr.
+  række eller sum, aldrig før de lægger sammen. Katalogets varer (`customFoods`, `toFoodItem`)
+  beholder ligeledes API'ets decimaler: vælgeren skalerer en portion fra dem og afrunder kun én
+  gang, så forhåndsvisningen er det, API'et logger.
 - **Pessimistiske mutationer.** Hukommelsen ændres først fra API'ets svar, og en fejl er en
   `ApiError` (`toApiError`) – eller `DuplicateCustomFoodNameError`, når `POST foods` giver 409.
   `add(food, meal)` = `ensureFood(food)` → `POST me/food-logs { foodId, quantity, unit,

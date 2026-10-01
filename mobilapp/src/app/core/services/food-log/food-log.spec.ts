@@ -232,7 +232,7 @@ describe('FoodLogService', () => {
     expect(log.request.body).toMatchObject({ foodId: 30, quantity: 250, unit: 'Milliliter' });
     log.flush(logged(log, 91, juice));
 
-    await expect(done).resolves.toMatchObject({ quantity: '250 ml', kcal: 113 });
+    await expect(done).resolves.toMatchObject({ quantity: '250 ml', kcal: 112.5 });
     expect(lookups).toEqual([JUICE.barcode]);
     expect(service.foods()[0]?.servings).toEqual([
       { foodServingId: 4, unit: 'Milliliter', gramsPerUnit: 1 },

@@ -37,7 +37,10 @@ storene, når sessionen er logget ind (use case 5.2–5.5, P15 i `plan-v2.md`).
 - **Fejl:** fejler mad-, vægt- eller profil-storen, viser siden "Dine data kunne ikke hentes." med
   `app-ui-form-error` og "Prøv igen" over ringene. Knappen genindlæser kun de stores, der fejlede.
   Profilen tæller med, fordi en fejlet profil ellers ville vise et tavst kaloriemål på 0 (5.3).
-- **Fejringen** starter først, når både madloggen og profilen er hentet; se
+- **Dagens tal** er summen af API'ets præcise værdier, afrundet én gang til visning (kcal og arket
+  som hele tal, dagskortets makroer med højst én decimal) – samme tal som API'ets egne summer.
+- **Fejringen** starter først, når både madloggen og profilen er hentet, og nås målet på en anden
+  fane, fejres det, når man kommer tilbage til Hjem; se
   [`pages/home-page/README.md`](pages/home-page/README.md).
 
 Tomme tilstande er indbygget i designet: er alt logget og vejet, forsvinder "Næste skridt"-kortet.

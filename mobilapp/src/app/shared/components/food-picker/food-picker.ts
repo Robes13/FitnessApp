@@ -464,14 +464,15 @@ export class FoodPicker {
     return item
       ? this.t('shared.foodPicker.baseLabel', {
           quantity: item.quantity,
+          // A logged row being edited has the API's exact values.
           kcal: Math.round(item.kcal),
         })
       : '';
   });
   /**
    * What the portion is scaled from: the item's food in the catalogue in the same unit (the
-   * API's values, unrounded) – a logged row or a collection item only holds whole numbers, and
-   * scaling those again would round twice. Otherwise the item itself.
+   * API's values, unrounded) – a logged row or a collection item already holds rounded values,
+   * and scaling those again would round twice. Otherwise the item itself.
    */
   private readonly scaleBase = computed<FoodItem | null>(() => {
     const item = this.portionItem();

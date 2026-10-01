@@ -88,16 +88,16 @@ describe('food-log-mapping', () => {
   });
 
   describe('toLoggedFood', () => {
-    it('rounds the consumed values per row and reads the meal and time', () => {
+    it('keeps the exact consumed values and reads the meal and time', () => {
       expect(toLoggedFood(LOG)).toEqual({
         logId: '88',
         id: '12',
         name: 'Skyr',
         quantity: '150 g',
-        kcal: 95,
-        protein: 16,
+        kcal: 94.5,
+        protein: 16.49,
         carbs: 6,
-        fat: 0,
+        fat: 0.3,
         meal: 'frokost',
         loggedAt: '2026-09-21T08:30:00.123Z',
         isCustom: true,

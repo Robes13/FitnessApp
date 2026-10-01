@@ -31,6 +31,11 @@ export class FoodMealGroup {
 
   private readonly t = injectTranslate();
 
+  /** Whole kcal: the log holds the API's exact values. */
+  protected kcal(entry: LoggedFood): number {
+    return Math.round(entry.kcal);
+  }
+
   protected editLabel(entry: LoggedFood): string {
     return this.t('food.mealGroup.editItem', { foodName: entry.name });
   }

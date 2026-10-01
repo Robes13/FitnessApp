@@ -35,7 +35,7 @@ målet kan ligge sidst på én side og kontoen først på den næste – målet 
 hentet. Under "Mål" hentes `AccountCreated` ikke, og det første mål bliver stående.
 
 Hver dag med måltider får under etiketten dagens samlede kalorier og makroer
-(`1.970 kcal · P 120 g · K 210 g · F 60 g`), summeret af måltidernes payload. Den sidste indlæste
+(`1.970 kcal · P 120 g · K 210 g · F 60 g`), summeret af måltidernes præcise payload og afrundet én gang. Den sidste indlæste
 dag får ingen opsummering, så længe der er flere sider – dagen kan fortsætte på næste side.
 
 ## Indlæsning og fejl

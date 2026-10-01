@@ -1,5 +1,5 @@
 import { HttpTestingController } from '@angular/common/http/testing';
-import { Provider } from '@angular/core';
+import { Component, Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -29,6 +29,10 @@ const WEIGHT_LOGS_URL = '/api/v1/me/weight-logs?limit=100';
 /** Today's food at exactly the goal of `TEST_GOAL`. */
 const GOAL_MEAL = testFoodLog({ ...TEST_FOOD, kcal: TEST_GOAL.targetDailyCalories }, 'aften');
 
+/** Another tab: leaving Home destroys `HomePage`, as in the app's shell. */
+@Component({ template: '' })
+class OtherTab {}
+
 describe('HomePage', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -38,11 +42,18 @@ describe('HomePage', () => {
     TestBed.inject(HttpTestingController).verify();
   });
 
-  async function setup(): Promise<{ settle: () => Promise<void>; page: HTMLElement }> {
+  async function setup(): Promise<{
+    settle: () => Promise<void>;
+    page: HTMLElement;
+    harness: RouterTestingHarness;
+  }> {
     TestBed.configureTestingModule({
       providers: [
         ...TEST_PROVIDERS,
-        provideRouter([{ path: APP_ROUTE.HOME, component: HomePage }]),
+        provideRouter([
+          { path: APP_ROUTE.HOME, component: HomePage },
+          { path: APP_ROUTE.FOOD, component: OtherTab },
+        ]),
       ],
     });
     const harness = await RouterTestingHarness.create(APP_PATH.HOME);
@@ -52,7 +63,7 @@ describe('HomePage', () => {
       await harness.fixture.whenStable();
     };
     await settle();
-    return { settle, page: harness.routeNativeElement as HTMLElement };
+    return { settle, page: harness.routeNativeElement as HTMLElement, harness };
   }
 
   /** Loads the profile the way the API answers it: the five calls of `load()`, goal `TEST_GOAL`. */
@@ -161,6 +172,46 @@ describe('HomePage', () => {
     await settle();
 
     expect(page.querySelector('app-home-celebration-toast')).not.toBeNull();
+  });
+
+  it('celebrates on return when the goal was reached on another tab, and only once', async () => {
+    const { settle, harness } = await setup();
+    loadProfile();
+    flushTestFoodLog();
+    await settle();
+
+    // Food is logged on the Mad tab, so Home is gone when the goal is reached.
+    await harness.navigateByUrl(APP_PATH.FOOD);
+    TestBed.inject(FoodLogService).addLogs([GOAL_MEAL]);
+    await settle();
+    await harness.navigateByUrl(APP_PATH.HOME);
+    await settle();
+
+    expect(harness.routeNativeElement?.querySelector('app-home-celebration-toast')).not.toBeNull();
+
+    await harness.navigateByUrl(APP_PATH.FOOD);
+    await harness.navigateByUrl(APP_PATH.HOME);
+    await settle();
+
+    expect(harness.routeNativeElement?.querySelector('app-home-celebration-toast')).toBeNull();
+  });
+
+  it('takes a new baseline when the food log loads again while Home is away', async () => {
+    const { settle, harness } = await setup();
+    loadProfile();
+    flushTestFoodLog();
+    await settle();
+
+    // E.g. signing out on Profile and in as an account that has already reached its goal.
+    await harness.navigateByUrl(APP_PATH.FOOD);
+    TestBed.inject(FoodLogService).reset();
+    await settle();
+    flushTestFoodLog([], [GOAL_MEAL]);
+    await settle();
+    await harness.navigateByUrl(APP_PATH.HOME);
+    await settle();
+
+    expect(harness.routeNativeElement?.querySelector('app-home-celebration-toast')).toBeNull();
   });
 
   it('shows a message and "Prøv igen" above the rings when a store failed to load', async () => {

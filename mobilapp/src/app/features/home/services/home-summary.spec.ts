@@ -320,7 +320,7 @@ describe('HomeSummaryService', () => {
     expect(service.weekSummary()).toMatchObject({
       hitText: '1',
       proteinHitText: '1',
-      streakText: '1 dage',
+      streakText: '1 dag',
       note: 'Stærk uge – bliv ved.',
     });
   });
@@ -438,6 +438,24 @@ describe('HomeSummaryService', () => {
       kcalText: '1.850 / 2.500 kcal',
       macroText: 'P 120 g · K 200 g · F 60 g',
     });
+  });
+
+  it("adds up the API's exact values and rounds each day once", () => {
+    // 3 × 110 g of 12 / 25 / 6 g per 100 g: exactly P 39.6 · K 82.5 · F 19.8 (and 301.2 kcal).
+    const portion = { ...TEST_FOOD, quantity: '110 g', kcal: 100.4, protein: 13.2, carbs: 27.5 };
+    storeFoodLog([1, 2, 3].map(() => ({ ...portion, fat: 6.6, meal: 'frokost' as const })));
+    const service = setup();
+
+    expect(service.dayRows()[0]).toMatchObject({
+      kcalText: '301 / 2.500 kcal',
+      macroText: 'P 40 g · K 83 g · F 20 g',
+    });
+    expect(service.daySummary().kcalEatenText).toBe('301');
+    expect(service.daySummary().macros.map((macro) => macro.text)).toEqual([
+      '39,6 / 188 g',
+      '82,5 / 250 g',
+      '19,8 / 83 g',
+    ]);
   });
 
   for (const [name, store] of STORES) {

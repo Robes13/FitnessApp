@@ -33,10 +33,9 @@ const CELEBRATION_VIBRATION_MS: readonly number[] = [16, 45, 28];
  * load, and the 30-day sheet below), next step, the selected day's card, the goal card, and the
  * week's key figures.
  *
- * The page owns the celebration toast: when today's calories cross the goal, it pops up
- * (with vibration where the device supports it), and the timer is cleared when the page is
- * left. If the goal is already met when the data has loaded, there's no celebration – only the
- * transition counts, as in the design.
+ * The page owns the celebration toast: when `HomeSummaryService.celebrationDue()` says today's
+ * calories crossed the goal (also while Home was on another tab), it pops up with vibration where
+ * the device supports it, and the timer is cleared when the page is left.
  */
 @Component({
   selector: 'app-home-page',
@@ -70,25 +69,14 @@ export class HomePage {
   protected readonly celebrating = signal(false);
   protected readonly monthSheetOpen = signal(false);
 
-  /**
-   * `null` until food log and profile have loaded: the first ready value is the baseline, so a
-   * goal already reached isn't celebrated on every app start (the data arrives asynchronously).
-   */
-  private lastGoalReached: boolean | null = null;
   private celebrationTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     effect(() => {
-      if (!this.summary.ready()) {
-        return;
+      if (this.summary.celebrationDue()) {
+        this.summary.markCelebrated();
+        this.celebrate();
       }
-      const reached = this.summary.goalReached();
-      const previous = this.lastGoalReached;
-      this.lastGoalReached = reached;
-      if (previous !== false || !reached) {
-        return;
-      }
-      this.celebrate();
     });
 
     inject(DestroyRef).onDestroy(() => this.clearCelebrationTimer());
