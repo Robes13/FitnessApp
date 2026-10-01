@@ -70,3 +70,55 @@ export interface UpdateFoodLogRequest {
   quantity?: number;
   unit?: ApiQuantityUnit;
 }
+
+/** An item of a meal collection. It has no nutrition – the app scales its food (api-gaps). */
+export interface MealItemDto {
+  mealItemId: number;
+  foodId: number;
+  foodName: string;
+  quantity: number;
+  unit: ApiQuantityUnit;
+}
+
+/** The API's `NutritionTotalsDto`. */
+export interface NutritionTotalsDto {
+  calories: number;
+  protein: number;
+  carbohydrates: number;
+  fat: number;
+}
+
+/** `GET/POST/PATCH me/meal-collections`. Items in the order they were added. */
+export interface MealCollectionDto {
+  mealCollectionId: number;
+  name: string;
+  createdAt: string;
+  items: MealItemDto[];
+  totals: NutritionTotalsDto;
+}
+
+/** `POST me/meal-collections/{id}/items` and an item of `CreateMealCollectionRequest`. */
+export interface CreateMealItemRequest {
+  foodId: number;
+  quantity: number;
+  /** A unit other than `Gram` needs a serving on the food. */
+  unit: ApiQuantityUnit;
+}
+
+/** `POST me/meal-collections`: `name` 1–100 characters, 1–50 items. Duplicate names are accepted. */
+export interface CreateMealCollectionRequest {
+  name: string;
+  items: CreateMealItemRequest[];
+}
+
+/** `PATCH me/meal-collections/{id}` – only the name. */
+export interface UpdateMealCollectionRequest {
+  name: string;
+}
+
+/** `POST me/meal-collections/{id}/log` → one `FoodLogDto` per item, all with `mealType`. */
+export interface LogMealCollectionRequest {
+  consumedAt: string;
+  mealType: ApiMealType;
+  multiplier?: number;
+}

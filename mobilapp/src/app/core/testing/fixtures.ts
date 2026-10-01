@@ -4,11 +4,12 @@ import { MEAL_TYPE_BY_MEAL } from '../constants/meals';
 import { CursorPage } from '../models/api';
 import { AuthResponse } from '../models/auth';
 import { FoodItem } from '../models/food';
-import { FoodDto, FoodLogDto } from '../models/food-api';
+import { FoodDto, FoodLogDto, MealCollectionDto, MealItemDto } from '../models/food-api';
 import { MealId } from '../models/meal';
 import { UserGoalDto } from '../models/profile-api';
 import { SessionState } from '../models/session';
 import { WeightLogDto } from '../models/weight';
+import { CollectionsService } from '../services/collections/collections';
 import { FoodLogService } from '../services/food-log/food-log';
 import { toApiUnit } from '../services/food-log/food-log-mapping';
 import { UserProfileService } from '../services/user-profile/user-profile';
@@ -117,6 +118,32 @@ export function flushTestFoodLog(
   http
     .expectOne((request) => request.method === 'GET' && request.url === '/api/v1/me/food-logs')
     .flush(page(logs));
+}
+
+/**
+ * A meal collection as the API returns it. Its items get `mealItemId` 1, 2, … unless given; the
+ * nutrition comes from the foods in `FoodLogService.foods`, so `totals` is left at 0.
+ */
+export function testCollection(
+  mealCollectionId: number,
+  name: string,
+  items: readonly (Omit<MealItemDto, 'mealItemId'> & Partial<Pick<MealItemDto, 'mealItemId'>>)[],
+): MealCollectionDto {
+  return {
+    mealCollectionId,
+    name,
+    createdAt: '2026-09-20T08:00:00Z',
+    items: items.map((item, index) => ({ mealItemId: index + 1, ...item })),
+    totals: { calories: 0, protein: 0, carbohydrates: 0, fat: 0 },
+  };
+}
+
+/** Loads `CollectionsService` as the API answers it (one page). */
+export function flushTestCollections(collections: readonly MealCollectionDto[]): void {
+  TestBed.inject(CollectionsService).load().subscribe();
+  TestBed.inject(HttpTestingController)
+    .expectOne({ method: 'GET', url: '/api/v1/me/meal-collections?limit=100' })
+    .flush({ items: [...collections], nextCursor: null, hasMore: false });
 }
 
 /** The account of the auth fixtures below. */

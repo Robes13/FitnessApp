@@ -12,59 +12,57 @@
       tone="accent"
       type="button"
       [attr.aria-label]="'collections.page.create' | translate"
-      (click)="sheetOpen.set(true)"
+      (click)="openSheet()"
     >
       <app-ui-icon name="plus" size="xl" [strokeWidth]="1.9" />
     </button>
   </header>
 
-  <div
-    class="collections-page__chips"
-    role="group"
-    [attr.aria-label]="'collections.page.filter' | translate"
-  >
-    @for (chip of chips(); track chip.id) {
-      <button
-        app-ui-chip
-        size="sm"
-        type="button"
-        class="collections-page__chip"
-        [selected]="selectedId() === chip.id"
-        [attr.aria-pressed]="selectedId() === chip.id"
-        (click)="select(chip.id)"
-      >
-        {{ chip.label }}
-      </button>
+  @switch (status()) {
+    @case ('loading') {
+      <div class="collections-page__status">
+        <app-ui-spinner size="lg" />
+      </div>
     }
-  </div>
-
-  @if (entries().length === 0) {
-    <app-ui-empty-state class="collections-page__empty" [message]="emptyMessageKey | translate" />
-  } @else {
-    <ul class="collections-page__list">
-      @for (entry of entries(); track entry.id) {
-        <li class="collections-page__item">
-          <button
-            type="button"
-            class="collections-page__card"
-            [class]="toneClass(entry)"
-            (click)="open(entry)"
-          >
-            <span class="collections-page__icon">
-              <app-ui-icon [name]="entry.icon" size="3xl" [strokeWidth]="1.9" />
-            </span>
-            <span class="collections-page__body">
-              <span class="collections-page__meta">{{ entry.meta }}</span>
-              <span class="collections-page__card-title">{{ entry.title }}</span>
-              <span class="collections-page__sub">{{ entry.subtitle }}</span>
-              <span class="collections-page__macros">
-                {{ entry.macrosText }}
-              </span>
-            </span>
-          </button>
-        </li>
+    @case ('error') {
+      <div class="collections-page__status">
+        <app-ui-empty-state
+          class="collections-page__status-message"
+          [message]="'collections.page.loadError' | translate"
+        />
+        <button app-ui-button type="button" variant="outline" size="md" (click)="retry()">
+          {{ 'collections.page.retry' | translate }}
+        </button>
+      </div>
+    }
+    @default {
+      @if (entries().length === 0) {
+        <app-ui-empty-state
+          class="collections-page__empty"
+          [message]="'collections.page.empty' | translate"
+        />
+      } @else {
+        <ul class="collections-page__list">
+          @for (entry of entries(); track entry.id) {
+            <li class="collections-page__item">
+              <button type="button" class="collections-page__card" (click)="open(entry)">
+                <span class="collections-page__icon">
+                  <app-ui-icon name="utensils" size="3xl" [strokeWidth]="1.9" />
+                </span>
+                <span class="collections-page__body">
+                  <span class="collections-page__meta">{{ entry.meta }}</span>
+                  <span class="collections-page__card-title">{{ entry.title }}</span>
+                  <span class="collections-page__sub">{{ entry.subtitle }}</span>
+                  <span class="collections-page__macros">
+                    {{ entry.macrosText }}
+                  </span>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
       }
-    </ul>
+    }
   }
 </div>
 
@@ -72,7 +70,8 @@
 
 <app-new-collection-sheet
   [open]="sheetOpen()"
-  [defaultMeal]="defaultMeal()"
+  [busy]="saving()"
+  [error]="saveError()"
   (closed)="sheetOpen.set(false)"
   (created)="onCreated($event)"
 />

@@ -1,127 +1,102 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { FoodItem } from '../../../core/models/food';
+import {
+  flushTestCollections,
+  flushTestFoodLog,
+  testCollection,
+  testFood,
+} from '../../../core/testing/fixtures';
 import { CollectionsService } from '../../../core/services/collections/collections';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
 import { BUNDLE_ID_PREFIX, CollectionsViewService } from './collections-view';
 
-const TUN: FoodItem = {
-  id: 'item-tun',
-  name: 'Tunsalat',
-  quantity: '200 g',
-  kcal: 240,
-  protein: 28,
-  carbs: 6,
-  fat: 11,
-};
-const RUGBROED: FoodItem = {
-  id: 'item-rugbroed',
-  name: 'Rugbrød',
-  quantity: '2 skiver',
-  brand: 'Bagerens',
-  kcal: 180,
-  protein: 6,
-  carbs: 34,
-  fat: 2,
-};
+const COLLECTIONS_URL = '/api/v1/me/meal-collections?limit=100';
+const MEAL_PREP = testCollection(3, 'Meal prep', [
+  { foodId: 1, foodName: 'Tunsalat', quantity: 200, unit: 'Gram' },
+  { foodId: 2, foodName: 'Rugbrød', quantity: 2, unit: 'Piece' },
+]);
 
 describe('CollectionsViewService', () => {
   let view: CollectionsViewService;
-  let collections: CollectionsService;
+  let http: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: provideCoreTestEnvironment() });
     view = TestBed.inject(CollectionsViewService);
-    collections = TestBed.inject(CollectionsService);
+    http = TestBed.inject(HttpTestingController);
   });
 
-  it('har kun "Alle" som filter, indtil backenden leverer faste samlinger', () => {
-    expect(view.chips().map((chip) => chip.label)).toEqual(['Alle']);
-    expect(view.chips().at(0)?.id).toBeNull();
+  afterEach(() => http.verify());
+
+  function loadMealPrep(): void {
+    flushTestFoodLog([
+      testFood({ foodId: 1, name: 'Tunsalat', caloriesPer100: 120, proteinPer100: 14 }),
+      testFood({
+        foodId: 2,
+        name: 'Rugbrød',
+        caloriesPer100: 90,
+        proteinPer100: 3,
+        carbohydratesPer100: 17,
+        servings: [{ foodServingId: 1, unit: 'Piece', gramsPerUnit: 100 }],
+      }),
+    ]);
+    flushTestCollections([MEAL_PREP]);
+  }
+
+  it('has no rows until the user has a collection', () => {
+    expect(view.entries()).toEqual([]);
   });
 
-  it('er tom, indtil brugeren selv opretter en samling', () => {
-    expect(view.entriesFor(null)).toEqual([]);
-  });
+  it('shows a collection as one bundle with its items and nutrition', () => {
+    loadMealPrep();
 
-  it('viser en brugersamling som ét bundt med måltidets farve', () => {
-    collections.create({ name: 'Meal prep', icon: 'bag', meal: 'frokost', items: [TUN, RUGBROED] });
-
-    const entries = view.entriesFor(null);
-
-    expect(entries).toHaveLength(1);
-    expect(entries[0]).toMatchObject({
-      title: 'Meal prep',
-      subtitle: 'Tunsalat, Rugbrød',
-      meta: '2 varer',
-      tone: 'positive',
-      icon: 'bag',
-      macrosText: '420 kcal · 34 g protein',
-    });
-    expect(entries.at(0)?.id.startsWith(BUNDLE_ID_PREFIX)).toBe(true);
-  });
-
-  it('viser en tom brugersamling med designets reservetekster', () => {
-    collections.create({ name: 'Tom', icon: 'star', meal: 'snack', items: [] });
-
-    expect(view.entriesFor(null)[0]).toMatchObject({
-      subtitle: 'Ingen varer endnu',
-      meta: '0 varer',
-      macrosText: '0 kcal · 0 g protein',
-    });
-  });
-
-  it('slår et bundt-id op og summerer samlingens varer', () => {
-    const created = collections.create({
-      name: 'Meal prep',
-      icon: 'bag',
-      meal: 'frokost',
-      items: [TUN, RUGBROED],
-    });
-
-    const detail = view.detailFor(`${BUNDLE_ID_PREFIX}${created.id}`);
-
-    expect(detail).toMatchObject({
-      title: 'Meal prep',
-      meal: 'frokost',
-      macros: { kcal: 420, protein: 34, carbs: 40, fat: 13 },
-    });
-    expect(detail?.contents).toEqual([
-      { name: 'Tunsalat', quantity: '200 g' },
-      { name: 'Rugbrød', quantity: '2 skiver' },
+    expect(view.entries()).toEqual([
+      {
+        id: `${BUNDLE_ID_PREFIX}3`,
+        title: 'Meal prep',
+        subtitle: 'Tunsalat, Rugbrød',
+        meta: '2 varer',
+        macrosText: '420 kcal · 34 g protein',
+      },
     ]);
   });
 
-  it('slår en løs vare op som en enkelt linje', () => {
-    collections.create({
-      name: 'Aften',
-      icon: 'leaf',
-      meal: 'aften',
-      items: [TUN],
-    });
+  it('looks up a bundle id and sums its items', () => {
+    loadMealPrep();
 
-    expect(view.detailFor(TUN.id)).toMatchObject({
-      title: 'Tunsalat',
-      meal: 'aften',
-      tone: 'selected',
-      contents: [{ name: 'Tunsalat', quantity: '200 g' }],
+    const detail = view.detailFor(`${BUNDLE_ID_PREFIX}3`);
+
+    expect(detail).toMatchObject({
+      title: 'Meal prep',
+      subtitle: 'Tunsalat, Rugbrød',
+      macros: { kcal: 420, protein: 34, carbs: 34, fat: 0 },
     });
+    expect(detail?.contents.map((item) => [item.name, item.quantity])).toEqual([
+      ['Tunsalat', '200 g'],
+      ['Rugbrød', '2 stk'],
+    ]);
+    expect(view.collectionFor(`${BUNDLE_ID_PREFIX}3`)?.name).toBe('Meal prep');
   });
 
-  it('finder kun brugerens egne samlinger som redigerbare', () => {
-    const created = collections.create({
-      name: 'Aften',
-      icon: 'leaf',
-      meal: 'aften',
-      items: [TUN],
-    });
+  it('gives null for an unknown id or one without the bundle prefix', () => {
+    loadMealPrep();
 
-    expect(view.editableCollectionFor(`${BUNDLE_ID_PREFIX}${created.id}`)).toEqual(created);
-    expect(view.editableCollectionFor(TUN.id)).toBeNull();
-    expect(view.editableCollectionFor(`${BUNDLE_ID_PREFIX}findes-ikke`)).toBeNull();
+    expect(view.detailFor(`${BUNDLE_ID_PREFIX}99`)).toBeNull();
+    expect(view.detailFor('3')).toBeNull();
+    expect(view.collectionFor('3')).toBeNull();
   });
 
-  it('giver null for et ukendt id', () => {
-    expect(view.detailFor('findes-ikke')).toBeNull();
-    expect(view.detailFor(`${BUNDLE_ID_PREFIX}findes-ikke`)).toBeNull();
+  it('fails when a store fails, and "Prøv igen" reloads only that one', () => {
+    flushTestFoodLog();
+    TestBed.inject(CollectionsService).load().subscribe();
+    expect(view.status()).toBe('loading');
+
+    http.expectOne(COLLECTIONS_URL).flush(null, { status: 503, statusText: 'Unavailable' });
+    expect(view.status()).toBe('error');
+
+    view.retry();
+    expect(view.status()).toBe('loading');
+    http.expectOne(COLLECTIONS_URL).flush({ items: [], nextCursor: null, hasMore: false });
+    expect(view.status()).toBe('ready');
   });
 });

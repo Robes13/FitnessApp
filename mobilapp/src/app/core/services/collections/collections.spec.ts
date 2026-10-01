@@ -1,199 +1,330 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { STORAGE_KEY } from '../../constants/storage-key';
-import { FoodCollection, FoodItem } from '../../models/food';
-import { FakeStorage, createFakeStorage } from '../../testing/fake-document';
-import { provideCoreTestEnvironment } from '../../testing/test-providers';
-import { CollectionsService, DuplicateCollectionNameError } from './collections';
+import { firstValueFrom } from 'rxjs';
+import { CollectionItem, FoodItem } from '../../models/food';
+import { MealCollectionDto } from '../../models/food-api';
+import {
+  TEST_FOOD,
+  flushTestCollections,
+  flushTestFoodLog,
+  testCollection,
+  testFood,
+  testFoodLog,
+} from '../../testing/fixtures';
+import { TEST_NOW, provideCoreTestEnvironment } from '../../testing/test-providers';
+import { FoodLogService } from '../food-log/food-log';
+import { CollectionsService } from './collections';
 
-const BANAN: FoodItem = {
-  id: 'food-banan',
-  name: 'Banan',
-  quantity: '1 stk',
-  kcal: 105,
-  protein: 1,
-  carbs: 27,
-  fat: 0,
-};
+const URL = {
+  COLLECTIONS: '/api/v1/me/meal-collections',
+  collection: (id: number) => `/api/v1/me/meal-collections/${id}`,
+} as const;
 
-const BASE: FoodCollection = {
-  id: 'base-morgen',
-  name: 'Morgenmad',
-  icon: 'egg',
-  meal: 'morgen',
-  isBase: true,
-  recipeIds: [],
-  items: [],
-};
+const HAVREGRYN = testFood({
+  foodId: 12,
+  name: 'Havregryn',
+  caloriesPer100: 370,
+  proteinPer100: 13,
+  carbohydratesPer100: 60,
+  fatPer100: 7,
+});
+/** A food the app created per piece: `…Per100` is per piece, the serving is 100 g. */
+const BAR = testFood({
+  foodId: 13,
+  name: 'Proteinbar',
+  caloriesPer100: 210,
+  proteinPer100: 20,
+  servings: [{ foodServingId: 1, unit: 'Piece', gramsPerUnit: 100 }],
+});
+const SKYR = testFood({ foodId: 11, name: 'Skyr', caloriesPer100: 63, proteinPer100: 11 });
+
+const MORGEN: MealCollectionDto = testCollection(5, 'Morgen', [
+  { foodId: 12, foodName: 'Havregryn', quantity: 60, unit: 'Gram' },
+  { foodId: 13, foodName: 'Proteinbar', quantity: 2, unit: 'Piece' },
+]);
 
 describe('CollectionsService', () => {
-  let storage: FakeStorage;
-
-  function setup(): CollectionsService {
-    TestBed.configureTestingModule({ providers: provideCoreTestEnvironment({ storage }) });
-    return TestBed.inject(CollectionsService);
-  }
+  let service: CollectionsService;
+  let http: HttpTestingController;
 
   beforeEach(() => {
-    storage = createFakeStorage();
+    TestBed.configureTestingModule({ providers: provideCoreTestEnvironment() });
+    service = TestBed.inject(CollectionsService);
+    http = TestBed.inject(HttpTestingController);
+    flushTestFoodLog([HAVREGRYN, BAR, SKYR]);
   });
 
-  it('has no recipes and no collections until a backend delivers them', () => {
-    const service = setup();
+  afterEach(() => http.verify());
 
-    expect(service.recipes).toEqual([]);
-    expect(service.collections()).toEqual([]);
-    expect(service.baseCollections()).toEqual([]);
-    expect(service.userCollections()).toEqual([]);
-    expect(service.recipeById('laks')).toBeUndefined();
-    expect(service.collectionById('c1')).toBeUndefined();
-    expect(service.collectionForRecipe('laks')).toBeNull();
-  });
+  /** Answers the one open request, which must be `method url`, and returns what was sent. */
+  function answer(method: string, url: string, body: object | null = null): unknown {
+    // Nothing else may be open – the steps run one after the other.
+    expect(http.match((request) => request.method !== method || request.url !== url)).toEqual([]);
+    const request = http.expectOne({ method, url });
+    request.flush(body);
+    return request.request.body;
+  }
 
-  it('creates a user collection and persists it', () => {
-    const service = setup();
+  it('maps the API collections and scales each item from its food', () => {
+    expect(service.status()).toBe('idle');
 
-    const created = service.create({
-      name: '  Meal prep ',
-      icon: 'star',
-      meal: 'frokost',
-      items: [BANAN],
-    });
+    flushTestCollections([MORGEN]);
 
-    expect(created).toMatchObject({
-      name: 'Meal prep',
-      icon: 'star',
-      meal: 'frokost',
-      isBase: false,
-    });
-    expect(created.id).toMatch(/^c-/);
-    expect(created.items).toEqual([BANAN]);
-    expect(service.userCollections()).toEqual([created]);
-    expect(service.collections()).toHaveLength(1);
-    expect(JSON.parse(storage.getItem(STORAGE_KEY.COLLECTIONS) ?? '{}')).toMatchObject({
-      collections: [{ id: created.id }],
-    });
-  });
-
-  it('finds an item across the collections', () => {
-    const service = setup();
-    service.create({ name: 'Snacks', icon: 'bag', meal: 'snack', items: [BANAN] });
-
-    expect(service.itemById(BANAN.id)?.name).toBe('Banan');
-    expect(service.itemById('ukendt')).toBeUndefined();
-  });
-
-  it('rejects a duplicate name, trimmed and case-insensitive', () => {
-    const service = setup();
-    service.create({ name: 'Meal prep', icon: 'star', meal: 'frokost', items: [] });
-
-    expect(service.isNameTaken('  MEAL prep ')).toBe(true);
-    expect(service.isNameTaken('Meal prep 2')).toBe(false);
-    expect(() =>
-      service.create({ name: ' meal PREP', icon: 'bag', meal: 'aften', items: [] }),
-    ).toThrow(DuplicateCollectionNameError);
-    expect(service.collections()).toHaveLength(1);
-  });
-
-  it('updates a user collection and persists it', () => {
-    const service = setup();
-    const created = service.create({ name: 'Aften', icon: 'leaf', meal: 'aften', items: [] });
-
-    const updated = service.update(created.id, {
-      name: ' Frokost ',
-      icon: 'bag',
-      meal: 'frokost',
-      items: [BANAN],
-    });
-
-    expect(updated).toEqual({
-      ...created,
-      name: 'Frokost',
-      icon: 'bag',
-      meal: 'frokost',
-      items: [BANAN],
-    });
-    expect(service.collectionById(created.id)).toEqual(updated);
-    expect(JSON.parse(storage.getItem(STORAGE_KEY.COLLECTIONS) ?? '{}')).toMatchObject({
-      collections: [{ id: created.id, name: 'Frokost', items: [BANAN] }],
-    });
-  });
-
-  it('lets a collection keep its own name but not take another one', () => {
-    const service = setup();
-    const first = service.create({ name: 'Aften', icon: 'leaf', meal: 'aften', items: [] });
-    service.create({ name: 'Frokost', icon: 'bag', meal: 'frokost', items: [] });
-
-    expect(service.isNameTaken('aften', first.id)).toBe(false);
-    expect(service.update(first.id, { ...first, name: 'AFTEN' })?.name).toBe('AFTEN');
-    expect(() => service.update(first.id, { ...first, name: 'frokost' })).toThrow(
-      DuplicateCollectionNameError,
-    );
-    expect(service.collectionById(first.id)?.name).toBe('AFTEN');
-  });
-
-  it('removes a user collection and persists it', () => {
-    const service = setup();
-    const created = service.create({ name: 'Aften', icon: 'leaf', meal: 'aften', items: [] });
-
-    expect(service.remove(created.id)).toBe(true);
-    expect(service.collections()).toEqual([]);
-    expect(JSON.parse(storage.getItem(STORAGE_KEY.COLLECTIONS) ?? '{}')).toEqual({
-      collections: [],
-    });
-    expect(service.remove(created.id)).toBe(false);
-  });
-
-  it('never edits or deletes a base collection', () => {
-    storage.setItem(STORAGE_KEY.COLLECTIONS, JSON.stringify({ collections: [BASE] }));
-    const service = setup();
-
-    expect(service.update(BASE.id, { ...BASE, name: 'Ændret' })).toBeNull();
-    expect(service.remove(BASE.id)).toBe(false);
-    expect(service.collections()).toEqual([BASE]);
-  });
-
-  it('ignores unknown ids on update', () => {
-    const service = setup();
-
-    expect(
-      service.update('findes-ikke', { name: 'X', icon: 'bag', meal: 'snack', items: [] }),
-    ).toBeNull();
-    expect(service.collections()).toEqual([]);
-  });
-
-  it('restores collections from storage', () => {
-    const custom: FoodCollection = {
-      id: 'c-x',
-      name: 'Gemt',
-      icon: 'leaf',
-      meal: 'aften',
-      isBase: false,
-      recipeIds: [],
-      items: [BANAN],
-    };
-    storage.setItem(STORAGE_KEY.COLLECTIONS, JSON.stringify({ collections: [custom] }));
-
-    const service = setup();
-
-    expect(service.userCollections()).toEqual([custom]);
-    expect(service.collectionById('c-x')?.items).toEqual([BANAN]);
-  });
-
-  it('sums the loose items of a collection', () => {
-    const service = setup();
-    const created = service.create({
-      name: 'Aften',
-      icon: 'leaf',
-      meal: 'aften',
-      items: [BANAN, { ...BANAN, id: 'banan-2' }],
-    });
-
-    expect(service.collectionTotals(created)).toEqual({
-      kcal: 210,
-      protein: 2,
-      carbs: 54,
-      fat: 0,
+    expect(service.status()).toBe('ready');
+    expect(service.collections()).toEqual([
+      {
+        id: '5',
+        name: 'Morgen',
+        items: [
+          {
+            id: '12',
+            mealItemId: 1,
+            name: 'Havregryn',
+            quantity: '60 g',
+            kcal: 222,
+            protein: 8,
+            carbs: 36,
+            fat: 4,
+          },
+          {
+            id: '13',
+            mealItemId: 2,
+            name: 'Proteinbar',
+            quantity: '2 stk',
+            kcal: 420,
+            protein: 40,
+            carbs: 0,
+            fat: 0,
+          },
+        ],
+      },
+    ]);
+    const [collection] = service.collections();
+    expect(collection && service.collectionTotals(collection)).toEqual({
+      kcal: 642,
+      protein: 48,
+      carbs: 36,
+      fat: 4,
       count: 2,
     });
+  });
+
+  it('shows an item whose food is not in the catalogue with 0 until it is', () => {
+    flushTestCollections([
+      testCollection(6, 'Ukendt', [{ foodId: 99, foodName: 'Ny', quantity: 100, unit: 'Gram' }]),
+    ]);
+
+    expect(service.collectionById('6')?.items[0]).toMatchObject({ name: 'Ny', kcal: 0 });
+  });
+
+  it('follows every page', async () => {
+    const done = firstValueFrom(service.load());
+    http
+      .expectOne(`${URL.COLLECTIONS}?limit=100`)
+      .flush({ items: [MORGEN], nextCursor: 'c1', hasMore: true });
+    http
+      .expectOne(`${URL.COLLECTIONS}?limit=100&cursor=c1`)
+      .flush({ items: [testCollection(4, 'Ældre', [])], nextCursor: null, hasMore: false });
+    await done;
+
+    expect(service.collections().map((collection) => collection.id)).toEqual(['5', '4']);
+  });
+
+  it('sets status error when the load fails, without erroring', async () => {
+    const done = firstValueFrom(service.load());
+    http
+      .expectOne(`${URL.COLLECTIONS}?limit=100`)
+      .flush(null, { status: 503, statusText: 'Unavailable' });
+    await done;
+
+    expect(service.status()).toBe('error');
+    expect(service.collections()).toEqual([]);
+  });
+
+  it('forgets the collections on reset', () => {
+    flushTestCollections([MORGEN]);
+
+    service.reset();
+
+    expect(service.status()).toBe('idle');
+    expect(service.collections()).toEqual([]);
+  });
+
+  it('checks names trimmed and case-insensitively, except the collection being edited', () => {
+    flushTestCollections([MORGEN]);
+
+    expect(service.isNameTaken('  MORGEN ')).toBe(true);
+    expect(service.isNameTaken('morgen', '5')).toBe(false);
+    expect(service.isNameTaken('Morgen 2')).toBe(false);
+  });
+
+  it('creates the foods first, then the collection with their ids', async () => {
+    const custom: FoodItem = {
+      id: 'food-new',
+      name: 'Egen bar',
+      quantity: '2 stk',
+      kcal: 300,
+      protein: 20,
+      carbs: 30,
+      fat: 10,
+    };
+    const oats: FoodItem = { ...TEST_FOOD, id: '12', name: 'Havregryn', quantity: '60 g' };
+    const done = firstValueFrom(service.create({ name: ' Morgen ', items: [oats, custom] }));
+
+    expect(answer('POST', '/api/v1/foods', testFood({ foodId: 20, name: 'Egen bar' }))).toEqual({
+      name: 'Egen bar',
+      caloriesPer100: 150,
+      proteinPer100: 10,
+      carbohydratesPer100: 15,
+      fatPer100: 5,
+    });
+    answer('PUT', '/api/v1/foods/20/servings/Piece', {
+      foodServingId: 2,
+      unit: 'Piece',
+      gramsPerUnit: 100,
+    });
+    const created = testCollection(7, 'Morgen', [
+      { foodId: 12, foodName: 'Havregryn', quantity: 60, unit: 'Gram' },
+      { foodId: 20, foodName: 'Egen bar', quantity: 2, unit: 'Piece' },
+    ]);
+    expect(answer('POST', URL.COLLECTIONS, created)).toEqual({
+      name: 'Morgen',
+      items: [
+        { foodId: 12, quantity: 60, unit: 'Gram' },
+        { foodId: 20, quantity: 2, unit: 'Piece' },
+      ],
+    });
+    await done;
+
+    expect(service.collectionById('7')?.items.map((item) => item.mealItemId)).toEqual([1, 2]);
+  });
+
+  it('names what failed when the API rejects the new collection', async () => {
+    const oats: FoodItem = { ...TEST_FOOD, id: '12', name: 'Havregryn', quantity: '60 g' };
+    const done = firstValueFrom(service.create({ name: 'Morgen', items: [oats] }));
+    http.expectOne(URL.COLLECTIONS).flush(null, { status: 400, statusText: 'Bad Request' });
+
+    await expect(done).rejects.toEqual({ messageKey: 'collections.saveError', status: 400 });
+    expect(service.collections()).toEqual([]);
+  });
+
+  describe('update', () => {
+    beforeEach(() => flushTestCollections([MORGEN]));
+
+    /** The draft: item 1 kept, item 2 dropped and 150 g Skyr added. */
+    function draft(): readonly CollectionItem[] {
+      const oats = service.collectionById('5')?.items[0];
+      const skyr: FoodItem = { ...TEST_FOOD, id: '11', name: 'Skyr', quantity: '150 g' };
+      return oats ? [oats, skyr] : [skyr];
+    }
+
+    it('saves the diff in order: PATCH → POST → DELETE → GET', async () => {
+      const done = firstValueFrom(service.update('5', { name: 'Morgenmad ', items: draft() }));
+
+      expect(answer('PATCH', URL.collection(5), { ...MORGEN, name: 'Morgenmad' })).toEqual({
+        name: 'Morgenmad',
+      });
+      expect(answer('POST', `${URL.collection(5)}/items`, {})).toEqual({
+        foodId: 11,
+        quantity: 150,
+        unit: 'Gram',
+      });
+      answer('DELETE', `${URL.collection(5)}/items/2`);
+      const saved = testCollection(5, 'Morgenmad', [
+        { foodId: 12, foodName: 'Havregryn', quantity: 60, unit: 'Gram' },
+        { mealItemId: 3, foodId: 11, foodName: 'Skyr', quantity: 150, unit: 'Gram' },
+      ]);
+      answer('GET', URL.collection(5), saved);
+      await done;
+
+      expect(service.collectionById('5')).toMatchObject({
+        name: 'Morgenmad',
+        items: [{ name: 'Havregryn' }, { name: 'Skyr', mealItemId: 3, kcal: 95 }],
+      });
+    });
+
+    it('leaves the name alone when it is unchanged', async () => {
+      const done = firstValueFrom(service.update('5', { name: 'Morgen', items: draft() }));
+
+      answer('POST', `${URL.collection(5)}/items`, {});
+      answer('DELETE', `${URL.collection(5)}/items/2`);
+      answer('GET', URL.collection(5), MORGEN);
+      await done;
+    });
+
+    it('fetches the collection again and rethrows when a step fails', async () => {
+      const done = firstValueFrom(service.update('5', { name: 'Morgen', items: draft() }));
+      http
+        .expectOne({ method: 'POST', url: `${URL.collection(5)}/items` })
+        .flush(null, { status: 503, statusText: 'Unavailable' });
+      // The DELETE never runs, so the API still has both items.
+      answer('GET', URL.collection(5), MORGEN);
+
+      await expect(done).rejects.toEqual({ messageKey: 'common.error.server', status: 503 });
+      expect(service.collectionById('5')?.items).toHaveLength(2);
+    });
+
+    it('names what failed on a rejected step, even when the reload fails too', async () => {
+      const done = firstValueFrom(service.update('5', { name: 'Ny', items: draft() }));
+      http
+        .expectOne({ method: 'PATCH', url: URL.collection(5) })
+        .flush(null, { status: 400, statusText: 'Bad Request' });
+      http
+        .expectOne({ method: 'GET', url: URL.collection(5) })
+        .flush(null, { status: 503, statusText: 'Unavailable' });
+
+      await expect(done).rejects.toEqual({ messageKey: 'collections.saveError', status: 400 });
+      expect(service.collectionById('5')?.name).toBe('Morgen');
+    });
+  });
+
+  it('removes a collection, also when it is already gone', async () => {
+    flushTestCollections([MORGEN, testCollection(4, 'Aften', [])]);
+
+    const first = firstValueFrom(service.remove('5'));
+    answer('DELETE', URL.collection(5));
+    await first;
+    const second = firstValueFrom(service.remove('4'));
+    http
+      .expectOne({ method: 'DELETE', url: URL.collection(4) })
+      .flush(null, { status: 404, statusText: 'Not Found' });
+    await second;
+
+    expect(service.collections()).toEqual([]);
+  });
+
+  it('logs the collection under the meal now and puts the rows in the food log', async () => {
+    flushTestCollections([MORGEN]);
+    const rows = [
+      testFoodLog({ ...TEST_FOOD, name: 'Havregryn', quantity: '60 g' }, 'aften', TEST_NOW, 12),
+      testFoodLog({ ...TEST_FOOD, name: 'Proteinbar', quantity: '2 stk' }, 'aften', TEST_NOW, 13),
+    ];
+
+    const done = firstValueFrom(service.log('5', 'aften'));
+    expect(answer('POST', `${URL.collection(5)}/log`, rows)).toEqual({
+      consumedAt: TEST_NOW.toISOString(),
+      mealType: 'Dinner',
+      multiplier: 1,
+    });
+    await done;
+
+    expect(
+      TestBed.inject(FoodLogService)
+        .byMeal()
+        .get('aften')
+        ?.map((entry) => entry.name),
+    ).toEqual(['Havregryn', 'Proteinbar']);
+  });
+
+  it('names what failed when the log is rejected', async () => {
+    flushTestCollections([MORGEN]);
+
+    const done = firstValueFrom(service.log('5', 'snack'));
+    http
+      .expectOne(`${URL.collection(5)}/log`)
+      .flush(null, { status: 404, statusText: 'Not Found' });
+
+    await expect(done).rejects.toEqual({ messageKey: 'collections.logError', status: 404 });
+    expect(TestBed.inject(FoodLogService).entries()).toEqual([]);
   });
 });

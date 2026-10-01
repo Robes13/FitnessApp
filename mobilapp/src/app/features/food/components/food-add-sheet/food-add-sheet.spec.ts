@@ -1,10 +1,17 @@
 import { Component, Provider, signal } from '@angular/core';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FoodCollection, FoodItem, LoggedFood } from '../../../../core/models/food';
+import { FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
-import { CollectionsService } from '../../../../core/services/collections/collections';
-import { flushTestFoodLog, testFood } from '../../../../core/testing/fixtures';
+import { FoodLogService } from '../../../../core/services/food-log/food-log';
+import {
+  TEST_FOOD,
+  flushTestCollections,
+  flushTestFoodLog,
+  testCollection,
+  testFood,
+  testFoodLog,
+} from '../../../../core/testing/fixtures';
 import { TEST_NOW, provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 import { FoodPickerStartStep } from '../../../../shared/components/food-picker/food-picker';
 import { FoodAddSheet } from './food-add-sheet';
@@ -28,14 +35,6 @@ const LOGGED_SALAD: LoggedFood = {
   fat: 10,
 };
 
-/** Stub without collections, so the empty state can be shown. */
-const NO_COLLECTIONS: Pick<CollectionsService, 'collections' | 'collectionTotals' | 'recipeById'> =
-  {
-    collections: signal<readonly FoodCollection[]>([]),
-    collectionTotals: () => ({ kcal: 0, protein: 0, carbs: 0, fat: 0, count: 0 }),
-    recipeById: () => undefined,
-  };
-
 @Component({
   imports: [FoodAddSheet],
   template: `
@@ -47,7 +46,6 @@ const NO_COLLECTIONS: Pick<CollectionsService, 'collections' | 'collectionTotals
       [busy]="busy()"
       (closed)="closes = closes + 1"
       (selected)="selected.push($event)"
-      (collectionPicked)="collectionsPicked.push($event)"
       (scanRequested)="scans = scans + 1"
     />
   `,
@@ -59,7 +57,6 @@ class Host {
   readonly startStep = signal<FoodPickerStartStep>('search');
   readonly busy = signal(false);
   readonly selected: FoodItem[] = [];
-  readonly collectionsPicked: (readonly FoodItem[])[] = [];
   closes = 0;
   scans = 0;
 }
@@ -152,47 +149,85 @@ describe('FoodAddSheet', () => {
     expect(text('.food-picker__title')).toBe('Kyllingesalat');
   });
 
-  it('lists the collections that have items and picks one as its items', async () => {
-    // The app has no fixed collections – the user has to have created one themselves.
-    const { host, root, settle } = await setup(undefined, [], () => {
-      TestBed.inject(CollectionsService).create({
-        name: 'Meal prep',
-        icon: 'bag',
-        meal: 'frokost',
-        items: [
-          { ...LOGGED_SALAD, id: 'item-salat' },
-          { ...LOGGED_SALAD, id: 'item-salat-2' },
-        ],
+  describe('the Samlinger tab', () => {
+    const LOG_URL = '/api/v1/me/meal-collections/3/log';
+
+    async function openTab(): Promise<Setup> {
+      const result = await setup(undefined, [], () => {
+        flushTestFoodLog([testFood({ foodId: 1, name: 'Havregryn', caloriesPer100: 370 })]);
+        flushTestCollections([
+          testCollection(3, 'Meal prep', [
+            { foodId: 1, foodName: 'Havregryn', quantity: 60, unit: 'Gram' },
+            { foodId: 1, foodName: 'Havregryn', quantity: 40, unit: 'Gram' },
+          ]),
+        ]);
       });
+      result.root.querySelectorAll<HTMLButtonElement>('.ui-segmented-control__option')[1]?.click();
+      await result.settle();
+      return result;
+    }
+
+    function row(root: HTMLElement): HTMLButtonElement | null {
+      return root.querySelector<HTMLButtonElement>('.food-add-sheet__collection');
+    }
+
+    it('lists the collections with their items and rounded kcal', async () => {
+      const { texts } = await openTab();
+
+      expect(texts('.food-add-sheet__collection-name')).toEqual(['Meal prep']);
+      expect(texts('.food-add-sheet__collection-sub')).toEqual(['Havregryn, Havregryn']);
+      expect(texts('.food-add-sheet__collection-end')).toEqual(['370 kcal']);
     });
-    const collections = TestBed.inject(CollectionsService);
-    const first = collections.collections()[0];
 
-    root.querySelectorAll<HTMLButtonElement>('.ui-segmented-control__option')[1]?.click();
-    await settle();
+    it('logs a collection under the chosen meal in one call and then closes', async () => {
+      const { host, root, settle } = await openTab();
+      const http = TestBed.inject(HttpTestingController);
 
-    const rows = Array.from(
-      root.querySelectorAll<HTMLButtonElement>('.food-add-sheet__collection'),
-    );
-    expect(rows).toHaveLength(collections.collections().length);
+      row(root)?.click();
+      await settle();
+      // The row is off while the log runs, so a second tap sends nothing.
+      expect(row(root)?.disabled).toBe(true);
+      row(root)?.click();
+      const request = http.expectOne({ method: 'POST', url: LOG_URL });
+      expect(request.request.body).toMatchObject({ mealType: 'Breakfast', multiplier: 1 });
+      request.flush([
+        testFoodLog({ ...TEST_FOOD, name: 'Havregryn', quantity: '60 g' }, 'morgen'),
+        testFoodLog({ ...TEST_FOOD, name: 'Havregryn', quantity: '40 g' }, 'morgen'),
+      ]);
+      await settle();
 
-    rows[0]?.click();
-    await settle();
+      expect(host.closes).toBe(1);
+      expect(host.selected).toEqual([]);
+      expect(TestBed.inject(FoodLogService).byMeal().get('morgen')).toHaveLength(2);
+    });
 
-    expect(host.collectionsPicked).toEqual([first?.items]);
-    expect(host.selected).toEqual([]);
+    it('stays open with a message when the log fails', async () => {
+      const { host, root, settle, text } = await openTab();
 
-    // While the page logs the items, the rows can't be tapped again.
-    host.busy.set(true);
-    await settle();
-    expect(rows[0]?.disabled).toBe(true);
-    expect(rows[0]?.getAttribute('aria-busy')).toBe('true');
+      row(root)?.click();
+      TestBed.inject(HttpTestingController)
+        .expectOne({ method: 'POST', url: LOG_URL })
+        .flush(null, { status: 400, statusText: 'Bad Request' });
+      await settle();
+
+      expect(host.closes).toBe(0);
+      expect(text('.food-add-sheet__error')).toBe('Samlingen blev ikke logget. Prøv igen.');
+      expect(row(root)?.disabled).toBe(false);
+    });
+
+    it('turns the rows off while the page saves', async () => {
+      const { host, root, settle } = await openTab();
+
+      host.busy.set(true);
+      await settle();
+
+      expect(row(root)?.disabled).toBe(true);
+      expect(row(root)?.getAttribute('aria-busy')).toBe('true');
+    });
   });
 
   it('explains how to build a collection when there are none', async () => {
-    const { root, settle, text } = await setup(undefined, [
-      { provide: CollectionsService, useValue: NO_COLLECTIONS },
-    ]);
+    const { root, settle, text } = await setup();
 
     root.querySelectorAll<HTMLButtonElement>('.ui-segmented-control__option')[1]?.click();
     await settle();

@@ -6,7 +6,7 @@
       size="sm"
       type="button"
       [attr.aria-label]="'collections.recipePage.edit' | translate"
-      (click)="editOpen.set(true)"
+      (click)="openEdit()"
     >
       <app-ui-icon name="pencil" size="lg" />
     </button>
@@ -15,8 +15,8 @@
 
 <div class="recipe-page__scroll">
   @if (detail(); as recipe) {
-    <div class="recipe-page__hero" [class]="toneClass()">
-      <app-ui-icon [name]="recipe.icon" size="hero" [strokeWidth]="1.9" />
+    <div class="recipe-page__hero">
+      <app-ui-icon name="utensils" size="hero" [strokeWidth]="1.9" />
     </div>
     <h2 class="recipe-page__title">{{ recipe.title }}</h2>
     <p class="recipe-page__subtitle">{{ recipe.subtitle }}</p>
@@ -35,18 +35,14 @@
     </ul>
 
     <h3 class="recipe-page__caption">{{ 'collections.recipePage.contents' | translate }}</h3>
-    @if (recipe.contents.length === 0) {
-      <app-ui-empty-state class="recipe-page__empty" [message]="noContentsMessageKey | translate" />
-    } @else {
-      <ul class="recipe-page__contents">
-        @for (line of recipe.contents; track $index) {
-          <li class="recipe-page__line">
-            <span>{{ line.name }}</span>
-            <span class="recipe-page__line-qty">{{ line.quantity }}</span>
-          </li>
-        }
-      </ul>
-    }
+    <ul class="recipe-page__contents">
+      @for (line of recipe.contents; track $index) {
+        <li class="recipe-page__line">
+          <span>{{ line.name }}</span>
+          <span class="recipe-page__line-qty">{{ line.quantity }}</span>
+        </li>
+      }
+    </ul>
 
     <section class="recipe-page__log">
       <h3 class="recipe-page__caption recipe-page__caption--flush">
@@ -56,7 +52,7 @@
         [(value)]="meal"
         [ariaLabel]="'collections.recipePage.logUnder' | translate"
       />
-      @if (logError(); as messageKey) {
+      @if (errorKey(); as messageKey) {
         <app-ui-form-error tone="negative" [message]="messageKey | translate" />
       }
       <button
@@ -66,38 +62,60 @@
         block
         type="button"
         class="recipe-page__log-button"
-        [loading]="logging()"
+        [loading]="pending()"
         (click)="log()"
       >
-        {{ 'collections.recipePage.log' | translate: { kcal: recipe.macros.kcal } }}
+        {{ 'collections.recipePage.log' | translate: { kcal: logKcal() } }}
       </button>
     </section>
 
-    @if (collection()) {
-      <button
-        app-ui-button
-        variant="outline-danger"
-        size="md"
-        block
-        type="button"
-        class="recipe-page__delete"
-        (click)="deleteOpen.set(true)"
-      >
-        {{ 'collections.recipePage.delete' | translate }}
-      </button>
-    }
-  } @else {
-    <app-ui-empty-state class="recipe-page__empty" [message]="notFoundMessageKey | translate" />
     <button
       app-ui-button
-      variant="outline"
+      variant="outline-danger"
       size="md"
+      block
       type="button"
-      class="recipe-page__back"
-      (click)="back()"
+      class="recipe-page__delete"
+      [disabled]="pending()"
+      (click)="openDelete()"
     >
-      {{ 'collections.recipePage.backToCollections' | translate }}
+      {{ 'collections.recipePage.delete' | translate }}
     </button>
+  } @else {
+    @switch (status()) {
+      @case ('loading') {
+        <div class="recipe-page__status">
+          <app-ui-spinner size="lg" />
+        </div>
+      }
+      @case ('error') {
+        <div class="recipe-page__status">
+          <app-ui-empty-state
+            class="recipe-page__status-message"
+            [message]="'collections.page.loadError' | translate"
+          />
+          <button app-ui-button type="button" variant="outline" size="md" (click)="retry()">
+            {{ 'collections.page.retry' | translate }}
+          </button>
+        </div>
+      }
+      @default {
+        <app-ui-empty-state
+          class="recipe-page__empty"
+          [message]="'collections.recipePage.notFound' | translate"
+        />
+        <button
+          app-ui-button
+          variant="outline"
+          size="md"
+          type="button"
+          class="recipe-page__back"
+          (click)="back()"
+        >
+          {{ 'collections.recipePage.backToCollections' | translate }}
+        </button>
+      }
+    }
   }
 </div>
 
@@ -105,6 +123,7 @@
   <app-new-collection-sheet
     [open]="editOpen()"
     [collection]="editable"
+    [busy]="pending()"
     (closed)="editOpen.set(false)"
     (updated)="onUpdated($event)"
   />
@@ -116,6 +135,7 @@
     [bodyParams]="{ name: editable.name }"
     confirmKey="collections.deleteSheet.confirm"
     cancelKey="collections.deleteSheet.cancel"
+    [busy]="pending()"
     (closed)="deleteOpen.set(false)"
     (confirmed)="delete()"
   />

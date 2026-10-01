@@ -1,11 +1,20 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { Component, EnvironmentProviders, Provider } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router, Routes, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
 import { CollectionsService } from '../../../../core/services/collections/collections';
-import { COLLECTIONS_ROUTES } from '../../collections.routes';
+import {
+  flushTestCollections,
+  flushTestFoodLog,
+  testCollection,
+  testFood,
+} from '../../../../core/testing/fixtures';
 import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
+import { COLLECTIONS_ROUTES } from '../../collections.routes';
+import { NewCollectionSheet } from '../../components/new-collection-sheet/new-collection-sheet';
 
 @Component({ template: '' })
 class Blank {}
@@ -15,85 +24,96 @@ const ROUTES: Routes = [
   { path: APP_ROUTE.COLLECTIONS, children: COLLECTIONS_ROUTES },
 ];
 
-/** The page must render in the real jsdom DOM, so only time and mock delays are overridden. */
+/** The page must render in the real jsdom DOM, so only time is overridden. */
 const TEST_PROVIDERS: (Provider | EnvironmentProviders)[] = [
   provideRouter(ROUTES, withComponentInputBinding()),
   ...provideComponentTestEnvironment(),
 ];
+
+const COLLECTIONS_URL = '/api/v1/me/meal-collections';
+const MEAL_PREP = testCollection(3, 'Meal prep', [
+  { foodId: 1, foodName: 'Tunsalat', quantity: 200, unit: 'Gram' },
+]);
 
 function normalize(value: string | null | undefined): string {
   return (value ?? '').replace(/\s+/g, ' ').trim();
 }
 
 describe('CollectionsPage', () => {
+  let http: HttpTestingController;
+
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({ providers: TEST_PROVIDERS });
+    http = TestBed.inject(HttpTestingController);
   });
+
+  afterEach(() => http.verify());
 
   async function setup() {
     const harness = await RouterTestingHarness.create(APP_PATH.COLLECTIONS);
     const page = harness.routeNativeElement as HTMLElement;
+    const text = (selector: string) => normalize(page.querySelector(selector)?.textContent);
     const texts = (selector: string) =>
       Array.from(page.querySelectorAll<HTMLElement>(selector)).map((el) =>
         normalize(el.textContent),
       );
-    const click = async (element: Element | undefined | null) => {
-      (element as HTMLElement | null)?.click();
+    const settle = async () => {
+      await harness.fixture.whenStable();
+      await new Promise((resolve) => setTimeout(resolve, 0));
       await harness.fixture.whenStable();
     };
-    return { harness, page, texts, click };
+    const click = async (element: Element | undefined | null) => {
+      (element as HTMLElement | null)?.click();
+      await settle();
+    };
+    return { harness, page, text, texts, settle, click };
   }
 
-  it('renders the title and an empty list until the user creates something', async () => {
-    const { page, texts } = await setup();
+  it('renders the title and explains how to start without collections', async () => {
+    const { text, texts } = await setup();
 
-    expect(normalize(page.querySelector('.collections-page__title')?.textContent)).toBe(
-      'Samlinger',
-    );
-    expect(normalize(page.querySelector('.collections-page__subtitle')?.textContent)).toBe(
-      'Dine varer og retter – log dem direkte som spist.',
-    );
-    // Dishes and fixed collections must come from the backend, so only "All" remains.
-    expect(texts('.collections-page__chip')).toEqual(['Alle']);
+    expect(text('.collections-page__title')).toBe('Samlinger');
     expect(texts('.collections-page__card-title')).toEqual([]);
+    expect(text('app-ui-empty-state')).toBe(
+      'Du har ingen samlinger endnu. Tryk på + for at samle de varer, du tit spiser sammen.',
+    );
   });
 
-  it('opens a user collection when its card is tapped', async () => {
-    const created = TestBed.inject(CollectionsService).create({
-      name: 'Meal prep',
-      icon: 'bag',
-      meal: 'frokost',
-      items: [],
-    });
-    const { page, click } = await setup();
+  it('shows a collection as one bundle row and opens it on tap', async () => {
+    flushTestFoodLog([testFood({ foodId: 1, name: 'Tunsalat', caloriesPer100: 120 })]);
+    flushTestCollections([MEAL_PREP]);
+    const { page, texts, click } = await setup();
+
+    expect(texts('.collections-page__card-title')).toEqual(['Meal prep']);
+    expect(texts('.collections-page__meta')).toEqual(['1 vare']);
+    expect(texts('.collections-page__macros')).toEqual(['240 kcal · 0 g protein']);
 
     await click(page.querySelector('.collections-page__card'));
 
-    expect(TestBed.inject(Router).url).toBe(APP_PATH.recipe(`col:${created.id}`));
+    expect(TestBed.inject(Router).url).toBe(APP_PATH.recipe('col:3'));
   });
 
-  it('shows a user collection as one bundle row', async () => {
-    TestBed.inject(CollectionsService).create({
-      name: 'Meal prep',
-      icon: 'bag',
-      meal: 'frokost',
-      items: [
-        {
-          id: 'item-tun',
-          name: 'Tunsalat',
-          quantity: '200 g',
-          kcal: 240,
-          protein: 28,
-          carbs: 6,
-          fat: 11,
-        },
-      ],
-    });
-    const { texts } = await setup();
+  it('shows a spinner while loading and a retry after a failed load', async () => {
+    TestBed.inject(CollectionsService).load().subscribe();
+    const { page, text, settle, click } = await setup();
 
-    expect(texts('.collections-page__card-title')[0]).toBe('Meal prep');
-    expect(texts('.collections-page__meta')[0]).toBe('1 vare');
+    expect(page.querySelector('app-ui-spinner')).not.toBeNull();
+
+    http
+      .expectOne(`${COLLECTIONS_URL}?limit=100`)
+      .flush(null, { status: 503, statusText: 'Unavailable' });
+    await settle();
+
+    expect(text('app-ui-empty-state')).toBe('Vi kunne ikke hente dine samlinger.');
+
+    await click(page.querySelector('.collections-page__status button'));
+    http
+      .expectOne(`${COLLECTIONS_URL}?limit=100`)
+      .flush({ items: [MEAL_PREP], nextCursor: null, hasMore: false });
+    await settle();
+
+    expect(page.querySelector('.collections-page__card')).not.toBeNull();
   });
 
   it('opens the new-collection sheet from the plus button', async () => {
@@ -103,5 +123,38 @@ describe('CollectionsPage', () => {
     await click(page.querySelector('button[aria-label="Opret samling"]'));
 
     expect(page.querySelector('[role="dialog"]')?.getAttribute('aria-label')).toBe('Ny samling');
+  });
+
+  it('closes the sheet only once the API has created the collection', async () => {
+    flushTestFoodLog([testFood({ foodId: 1, name: 'Tunsalat', caloriesPer100: 120 })]);
+    const { harness, page, text, settle, click } = await setup();
+    await click(page.querySelector('button[aria-label="Opret samling"]'));
+    const sheet = harness.fixture.debugElement.query(By.directive(NewCollectionSheet));
+    const input = {
+      name: 'Meal prep',
+      items: [
+        { id: '1', name: 'Tunsalat', quantity: '200 g', kcal: 240, protein: 0, carbs: 0, fat: 0 },
+      ],
+    };
+
+    sheet.triggerEventHandler('created', input);
+    http
+      .expectOne({ method: 'POST', url: COLLECTIONS_URL })
+      .flush(null, { status: 400, statusText: 'Bad Request' });
+    await settle();
+
+    expect(page.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(text('.new-collection-sheet__save-error')).toBe('Samlingen blev ikke gemt. Prøv igen.');
+
+    sheet.triggerEventHandler('created', input);
+    http.expectOne({ method: 'POST', url: COLLECTIONS_URL }).flush(MEAL_PREP);
+    await settle();
+
+    expect(page.querySelector('[role="dialog"]')).toBeNull();
+    expect(
+      TestBed.inject(CollectionsService)
+        .collections()
+        .map((c) => c.name),
+    ).toEqual(['Meal prep']);
   });
 });

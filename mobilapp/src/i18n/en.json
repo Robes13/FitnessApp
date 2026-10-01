@@ -128,38 +128,6 @@
         "permission": "We couldn't ask for notification permission. Try again later."
       }
     },
-    "collectionIcons": {
-      "egg": "Egg",
-      "bolt": "Lightning",
-      "utensils": "Cutlery",
-      "cookie": "Cookie",
-      "coffee": "Coffee",
-      "salad": "Salad",
-      "fish": "Fish",
-      "flame": "Flame",
-      "leaf": "Leaf",
-      "heart": "Heart",
-      "star": "Star",
-      "dumbbell": "Dumbbell",
-      "apple": "Apple",
-      "carrot": "Carrot",
-      "sprout": "Sprout",
-      "soup": "Soup",
-      "pizza": "Pizza",
-      "icecream": "Ice cream",
-      "cake": "Cake",
-      "sandwich": "Sandwich",
-      "milk": "Milk",
-      "droplet": "Drop",
-      "timer": "Timer",
-      "sun": "Sun",
-      "moon": "Moon",
-      "target": "Target",
-      "trophy": "Trophy",
-      "bike": "Bike",
-      "bag": "Bag",
-      "sparkles": "Sparkle"
-    },
     "auth": {
       "error": {
         "invalidEmail": "Enter a valid email.",
@@ -316,16 +284,13 @@
       "submitEdit": "Save changes",
       "namePlaceholder": "Name, e.g. Meal prep",
       "nameLabel": "Collection name",
-      "mealCaption": "Belongs to",
-      "iconCaption": "Choose icon",
       "itemsCaption": "Items in the collection",
       "emptyDraft": "Search for an item or scan a barcode to fill the collection.",
+      "minOneItem": "Add at least one item to save the collection.",
       "search": "Search item",
       "scan": "Scan",
       "pickerTitle": "Add",
       "pickerTitleAccent": "to collection",
-      "showMoreIcons": "Show more ({{count}})",
-      "showFewerIcons": "Show fewer",
       "duplicateName": "You already have a collection with that name.",
       "duplicateCustomFood": "You already have a custom item named \"{{foodName}}\", so it wasn't saved again under My items.",
       "saveAndAdd": "Save and add to collection",
@@ -335,16 +300,14 @@
       "title": "Collections",
       "subtitle": "Your items and dishes – log them straight as eaten.",
       "create": "Create collection",
-      "filter": "Filter by collection",
-      "empty": "There are no dishes or items in this collection yet."
+      "empty": "You don't have any collections yet. Tap + to group the items you often eat together.",
+      "loadError": "We couldn't load your collections.",
+      "retry": "Try again"
     },
     "view": {
-      "emptySubtitle": "No items yet",
-      "allChip": "All",
       "itemCountOne": "1 item",
       "itemCountMany": "{{count}} items",
-      "macros": "{{kcal}} kcal · {{protein}} g protein",
-      "recipeMeta": "{{category}} · {{minutes}} min"
+      "macros": "{{kcal}} kcal · {{protein}} g protein"
     },
     "recipePage": {
       "title": "Recipe",
@@ -355,12 +318,13 @@
       "delete": "Delete collection",
       "backToCollections": "Back to collections",
       "notFound": "We couldn't find this recipe.",
-      "noContents": "There are no items in the collection yet.",
       "calories": "Calories",
       "protein": "Protein",
       "carbs": "Carbs",
       "fat": "Fat"
-    }
+    },
+    "saveError": "The collection wasn't saved. Try again.",
+    "logError": "The collection wasn't logged. Try again."
   },
   "food": {
     "mealGroup": {

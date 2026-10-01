@@ -36,26 +36,16 @@
     font-size: var(--font-size-md);
   }
 
-  &__chips {
-    @include mixins.hide-scrollbar;
-
+  &__status {
     display: flex;
-    gap: var(--space-1-5);
-    margin: var(--space-4) calc(var(--layout-page-padding-x) * -1) 0;
-    padding: 0 var(--layout-page-padding-x) var(--space-0-5);
-    overflow-x: auto;
-
-    /* The design's soft edge on the right side, so the list is clearly scrollable. */
-    mask-image: linear-gradient(
-      90deg,
-      var(--color-white) 0,
-      var(--color-white) calc(100% - var(--space-8-5)),
-      transparent 100%
-    );
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3-5);
+    padding: var(--space-6) 0;
   }
 
-  &__chip {
-    flex: none;
+  &__status-message {
+    align-self: stretch;
   }
 
   &__empty {
@@ -92,26 +82,6 @@
         background: var(--color-surface-hover);
       }
     }
-
-    &--accent {
-      --collection-tint: var(--color-accent-soft);
-      --collection-ink: var(--color-accent);
-    }
-
-    &--positive {
-      --collection-tint: var(--color-positive-tint);
-      --collection-ink: var(--color-positive);
-    }
-
-    &--selected {
-      --collection-tint: var(--color-selected-tint-2);
-      --collection-ink: var(--color-selected-text);
-    }
-
-    &--negative {
-      --collection-tint: var(--color-negative-soft);
-      --collection-ink: var(--color-negative);
-    }
   }
 
   &__icon {
@@ -122,8 +92,8 @@
     width: var(--size-control-xl);
     height: var(--size-control-xl);
     border-radius: var(--radius-lg);
-    background: var(--collection-tint);
-    color: var(--collection-ink);
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
   }
 
   &__body {
@@ -135,7 +105,7 @@
   }
 
   &__meta {
-    color: var(--collection-ink);
+    color: var(--color-accent);
     font-size: var(--font-size-2xs);
     font-weight: var(--font-weight-bold);
     letter-spacing: var(--letter-spacing-caps);

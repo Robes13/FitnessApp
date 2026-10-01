@@ -25,10 +25,6 @@
       border-color var(--duration-quick) var(--easing-standard),
       color var(--duration-quick) var(--easing-standard);
 
-    &--filled {
-      background: var(--color-surface);
-    }
-
     &--selected {
       border-color: var(--color-accent);
       background: var(--color-accent-soft);

@@ -128,38 +128,6 @@
         "permission": "Vi kunne ikke spørge om lov til notifikationer. Prøv igen senere."
       }
     },
-    "collectionIcons": {
-      "egg": "Æg",
-      "bolt": "Lyn",
-      "utensils": "Bestik",
-      "cookie": "Småkage",
-      "coffee": "Kaffe",
-      "salad": "Salat",
-      "fish": "Fisk",
-      "flame": "Flamme",
-      "leaf": "Blad",
-      "heart": "Hjerte",
-      "star": "Stjerne",
-      "dumbbell": "Håndvægt",
-      "apple": "Æble",
-      "carrot": "Gulerod",
-      "sprout": "Spire",
-      "soup": "Suppe",
-      "pizza": "Pizza",
-      "icecream": "Is",
-      "cake": "Kage",
-      "sandwich": "Sandwich",
-      "milk": "Mælk",
-      "droplet": "Dråbe",
-      "timer": "Timer",
-      "sun": "Sol",
-      "moon": "Måne",
-      "target": "Mål",
-      "trophy": "Pokal",
-      "bike": "Cykel",
-      "bag": "Taske",
-      "sparkles": "Glimt"
-    },
     "auth": {
       "error": {
         "invalidEmail": "Skriv en gyldig e-mail.",
@@ -316,16 +284,13 @@
       "submitEdit": "Gem ændringer",
       "namePlaceholder": "Navn, f.eks. Meal prep",
       "nameLabel": "Navn på samlingen",
-      "mealCaption": "Hører under",
-      "iconCaption": "Vælg ikon",
       "itemsCaption": "Varer i samlingen",
       "emptyDraft": "Søg en vare eller scan en stregkode for at fylde samlingen.",
+      "minOneItem": "Tilføj mindst én vare for at gemme samlingen.",
       "search": "Søg vare",
       "scan": "Scan",
       "pickerTitle": "Tilføj",
       "pickerTitleAccent": "til samling",
-      "showMoreIcons": "Vis flere ({{count}})",
-      "showFewerIcons": "Vis færre",
       "duplicateName": "Du har allerede en samling med det navn.",
       "duplicateCustomFood": "Du har allerede en egen vare med navnet \"{{foodName}}\", så den blev ikke gemt igen under Mine varer.",
       "saveAndAdd": "Gem og føj til samlingen",
@@ -335,16 +300,14 @@
       "title": "Samlinger",
       "subtitle": "Dine varer og retter – log dem direkte som spist.",
       "create": "Opret samling",
-      "filter": "Filtrér efter samling",
-      "empty": "Der er ingen retter eller varer i den her samling endnu."
+      "empty": "Du har ingen samlinger endnu. Tryk på + for at samle de varer, du tit spiser sammen.",
+      "loadError": "Vi kunne ikke hente dine samlinger.",
+      "retry": "Prøv igen"
     },
     "view": {
-      "emptySubtitle": "Ingen varer endnu",
-      "allChip": "Alle",
       "itemCountOne": "1 vare",
       "itemCountMany": "{{count}} varer",
-      "macros": "{{kcal}} kcal · {{protein}} g protein",
-      "recipeMeta": "{{category}} · {{minutes}} min"
+      "macros": "{{kcal}} kcal · {{protein}} g protein"
     },
     "recipePage": {
       "title": "Opskrift",
@@ -355,12 +318,13 @@
       "delete": "Slet samling",
       "backToCollections": "Tilbage til samlinger",
       "notFound": "Vi kunne ikke finde den her opskrift.",
-      "noContents": "Der er ingen varer i samlingen endnu.",
       "calories": "Kalorier",
       "protein": "Protein",
       "carbs": "Kulhydrat",
       "fat": "Fedt"
-    }
+    },
+    "saveError": "Samlingen blev ikke gemt. Prøv igen.",
+    "logError": "Samlingen blev ikke logget. Prøv igen."
   },
   "food": {
     "mealGroup": {
