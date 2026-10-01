@@ -70,7 +70,8 @@ export class FoodViewService {
   readonly todayLabel = computed(() => formatDayLabel(this.t, this.now()));
 
   readonly kcalTarget: Signal<number> = computed(() => this.targets().kcal);
-  readonly kcalEaten = computed(() => this.foodLog.totals().kcal);
+  /** Whole kcal: the log holds the API's exact values. */
+  readonly kcalEaten = computed(() => Math.round(this.foodLog.totals().kcal));
   /** Target − eaten. Can be negative: the scanner's verdict computes further on it. */
   readonly kcalRemaining = computed(() => this.kcalTarget() - this.kcalEaten());
   /** The design's `kcalLeft`: never below 0 in the actual number on screen. */
@@ -100,7 +101,7 @@ export class FoodViewService {
     const byMeal = this.foodLog.byMeal();
     return MEALS.map((meal) => {
       const entries = byMeal.get(meal.id) ?? [];
-      const kcal = entries.reduce((sum, entry) => sum + entry.kcal, 0);
+      const kcal = Math.round(entries.reduce((sum, entry) => sum + entry.kcal, 0));
       const label = this.t(meal.labelKey);
       return {
         id: meal.id,

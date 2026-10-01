@@ -444,6 +444,7 @@
         "protein": "Protein"
       },
       "streak": "{{streakDays}} days",
+      "streakOne": "1 day",
       "todoCountSingle": "Just one",
       "todos": {
         "mealSubtitle": "Not recorded yet",

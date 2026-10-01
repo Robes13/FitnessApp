@@ -1,4 +1,4 @@
-import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { Injectable, Signal, computed, effect, inject, signal } from '@angular/core';
 import { APP_PATH, QUERY_PARAM } from '../../../core/constants/app-route';
 import { MEALS } from '../../../core/constants/meals';
 import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../core/constants/nutrition';
@@ -151,8 +151,9 @@ const MACRO_DEFINITIONS: readonly MacroDefinition[] = [
  * `–`, so the screen never claims a day had no food. Only today shows 0 – once the food log has
  * loaded (spec 5.2). The anchor is `FoodLogService.today`, so the week moves on at midnight.
  *
- * The service is `providedIn: 'root'` so the selected day survives a tab switch. The
- * celebration toast's timers belong to the page and therefore live in `HomePage`.
+ * The service is `providedIn: 'root'` so the selected day and the celebration's baseline survive
+ * a tab switch (it destroys `HomePage`). The celebration toast's timers belong to the page and
+ * therefore live in `HomePage`.
  */
 @Injectable({ providedIn: 'root' })
 export class HomeSummaryService {
@@ -208,8 +209,15 @@ export class HomeSummaryService {
     );
   });
 
-  /** True as soon as today's calories reach the goal – triggers the celebration toast. */
+  /** True as soon as today's calories reach the goal. */
   readonly goalReached = computed(() => (this.dayParts()[TODAY_INDEX] ?? 0) >= 1);
+
+  private readonly celebrationPending = signal(false);
+  /**
+   * Today's goal was reached after the data loaded, and `HomePage` hasn't celebrated it yet
+   * (`markCelebrated()`). Tracked here, because food is logged on another tab while Home is gone.
+   */
+  readonly celebrationDue: Signal<boolean> = this.celebrationPending.asReadonly();
 
   /** False until the app knows the user's name – until then Home just greets with `'Hej'`. */
   readonly hasName = computed(() => this.displayName() !== '');
@@ -294,7 +302,10 @@ export class HomeSummaryService {
       hitText: String(hit),
       averageKcalText: averageKcal === null ? NO_VALUE : formatInteger(averageKcal),
       proteinHitText: String(proteinHit),
-      streakText: this.t('home.summary.streak', { streakDays }),
+      streakText:
+        streakDays === 1
+          ? this.t('home.summary.streakOne')
+          : this.t('home.summary.streak', { streakDays }),
       note: this.t(weekNoteKey(hit, loggedDays)),
     };
   });
@@ -397,8 +408,28 @@ export class HomeSummaryService {
     };
   });
 
+  constructor() {
+    // `null` while the data loads (also after a sign-out): the first ready value is the baseline,
+    // so a goal already reached on load isn't celebrated; a goal no longer reached drops it.
+    let previous: boolean | null = null;
+    effect(() => {
+      const reached = this.ready() ? this.goalReached() : null;
+      if (reached !== true) {
+        this.celebrationPending.set(false);
+      } else if (previous === false) {
+        this.celebrationPending.set(true);
+      }
+      previous = reached;
+    });
+  }
+
   selectDay(index: number): void {
     this.selected.set(index);
+  }
+
+  /** `HomePage` has shown the celebration. */
+  markCelebrated(): void {
+    this.celebrationPending.set(false);
   }
 
   /** Reloads the stores that failed. `load()` never errors and completes, so nothing hangs. */

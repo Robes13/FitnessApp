@@ -15,16 +15,19 @@ templates.
 | `weekSummary`                         | Dage i mål, kcal i snit, protein ramt, streak og opsamlingen        |
 | `todos`, `nextTodo`, `todoCountLabel` | Manglende vejning og måltider som "Næste skridt" (hentede stores)   |
 | `showGoalCard`, `goalSummary`         | Målkortet (skjult, til målet er hentet, og ved målet `hold`)        |
-| `goalReached`                         | Dagens kalorier har nået målet – udløser fejrings-toasten           |
+| `goalReached`                         | Dagens kalorier har nået målet                                      |
 | `ready`                               | Madlog og profil er hentet – fejringens udgangspunkt                |
+| `celebrationDue`, `markCelebrated()`  | Målet er nået efter indlæsning og endnu ikke fejret af `HomePage`   |
 | `loadFailed`, `reload()`              | En af de tre stores fejlede; `reload()` henter kun dem igen         |
 | `dayRows`                             | De seneste `HOME_HISTORY_DAYS` (30) dage til arket, nyeste først    |
 | `photo`                               | Profilbilledet til avataren i headeren (`null` = vis forbogstavet)  |
 | `selectDay(index)`                    | Vælger dagen, ringene og dagskortet viser                           |
 
 **Hvorfor `root`:** den valgte dag skal overleve et faneskift, præcis som i designet, hvor
-`selDay` ligger i den globale state. Servicen holder ingen timere – fejrings-toastens timer
-hører til siden og ryddes, når siden forlades.
+`selDay` ligger i den globale state. Det samme gælder fejringens udgangspunkt: en `effect` i
+servicen følger `goalReached()`, når `ready()` er sand (ellers nulstilles udgangspunktet), og
+sætter `celebrationDue`, når målet nås bagefter – også mens Hjem er på en anden fane. Servicen
+holder ingen timere – fejrings-toastens timer hører til siden og ryddes, når siden forlades.
 
 **Dage og data:** ugen ruller: `weekDays` henter i dag − 6 … i dag fra
 `FoodLogService.dailyTotals`, forankret i `FoodLogService.today` (skifter ved midnat). `dayTotals`
@@ -33,7 +36,8 @@ giver `null` for dage uden poster. `dayParts` (andel af kaloriemålet), ringene 
 dagskortet og ingen andel i nøgletallene. Gennemsnittet er `–`, ikke 0, når ingen dage tæller med.
 Kun dagskortet viser i dag som 0 kcal og 0 g, når madloggen er `ready` (spec 5.2) – mens den
 indlæses, står der `–`, og nøgletallene tæller stadig kun dage med poster. "kcal i snit" er de
-loggede kalorier, også over målet.
+loggede kalorier, også over målet. Dagstallene er summen af API'ets præcise værdier og afrundes
+først ved visning. Streaken er `1 dag` / `N dage` (`home.summary.streakOne` / `streak`).
 
 **Før data er hentet:** målet (kcal og makroer, også i `dayRows`) er `–`, til
 `UserProfileService.goal` er hentet – aldrig et tavst 0 (5.3). `weekSummary` er `–` uden

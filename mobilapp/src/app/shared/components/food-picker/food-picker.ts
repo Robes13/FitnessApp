@@ -383,7 +383,11 @@ export class FoodPicker {
   protected readonly baseLabel = computed(() => {
     const item = this.portionItem();
     return item
-      ? this.t('shared.foodPicker.baseLabel', { quantity: item.quantity, kcal: item.kcal })
+      ? this.t('shared.foodPicker.baseLabel', {
+          quantity: item.quantity,
+          // A logged row being edited has the API's exact values.
+          kcal: Math.round(item.kcal),
+        })
       : '';
   });
   private readonly ratio = computed(() => (this.amount() ?? 0) / this.baseAmount());
