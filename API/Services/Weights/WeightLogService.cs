@@ -121,7 +121,7 @@ public sealed class WeightLogService(
         await _achievementService.UpdateWeightProgressAsync(userId, cancellationToken);
         if (await IsLatestAsync(userId, log.WeightLogId, cancellationToken)
             && await _context.UserGoals.AnyAsync(goal => goal.UserId == userId, cancellationToken))
-            await _goalService.RecalculateAsync(userId, true, cancellationToken);
+            await _goalService.RecalculateAsync(userId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return ToDto(log);
     }
@@ -159,7 +159,7 @@ public sealed class WeightLogService(
         if ((log.Weight != previousWeight || log.RecordedAt != previousTime)
             && (wasLatest || await IsLatestAsync(userId, weightLogId, cancellationToken))
             && await _context.UserGoals.AnyAsync(goal => goal.UserId == userId, cancellationToken))
-            await _goalService.RecalculateAsync(userId, true, cancellationToken);
+            await _goalService.RecalculateAsync(userId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return ToDto(log);
     }
@@ -176,7 +176,7 @@ public sealed class WeightLogService(
         await _context.SaveChangesAsync(cancellationToken);
         await _achievementService.UpdateWeightProgressAsync(userId, cancellationToken);
         if (wasLatest && await _context.UserGoals.AnyAsync(goal => goal.UserId == userId, cancellationToken))
-            await _goalService.RecalculateAsync(userId, true, cancellationToken);
+            await _goalService.RecalculateAsync(userId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 

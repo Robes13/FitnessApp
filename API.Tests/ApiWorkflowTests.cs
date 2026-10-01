@@ -181,6 +181,9 @@ public sealed class ApiWorkflowTests
             new CreateWeightLogRequest(69m, Jan1.AddDays(5)), CancellationToken.None);
         Assert.Equal(69m, (await service.GetLatestAsync(user.UserId, CancellationToken.None))?.Weight);
         Assert.Equal(2, await database.Context.UserGoals.CountAsync());
+        await service.UpdateAsync(user.UserId, created.WeightLogId,
+            new UpdateWeightLogRequest(69m, null), CancellationToken.None);
+        Assert.Equal(2, await database.Context.UserGoals.CountAsync());
         var conflict = await Assert.ThrowsAsync<WeightDateConflictException>(() => service.CreateAsync(
             user.UserId, new CreateWeightLogRequest(68m, Jan1.AddDays(5).AddHours(1)),
             CancellationToken.None));
