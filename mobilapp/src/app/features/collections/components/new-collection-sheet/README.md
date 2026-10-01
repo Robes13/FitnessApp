@@ -43,6 +43,10 @@ stedet for `created`. Varer tilføjes, rettes og fjernes præcis som ved oprette
 - **To veje til en vare:** "Søg vare" åbner `app-food-picker` i et ark oven på dette
   (`layer="sheet-high"`), og "Scan" åbner `app-barcode-scanner`. Begge lægger varen i
   kladden. Et tryk på en kladde-række åbner vælgeren i portionstrinnet og erstatter varen.
+- **"Ikke fundet" → "Opret varen selv"** åbner vælgerens "Ny egen vare" med den scannede
+  stregkode (`noBarcodeRequested($event)` → vælgerens `[barcode]`), så den egne vare gemmes med
+  den, og næste scanning finder den i kataloget (3.1-6a) – som på Mad-skærmen. "Varen har ingen
+  stregkode" og "Søg vare" giver ingen stregkode.
 - **Varen beholder sit eget id**: katalog-id'et, `off-<stregkode>` for en scannet vare eller
   `food-…` for en ny egen vare. `CollectionsService` slår det op med `FoodLogService.ensureFood`
   og opretter madvaren, hvis den mangler. Den samme vare kan ligge i kladden flere gange
