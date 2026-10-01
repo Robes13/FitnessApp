@@ -32,6 +32,7 @@ import {
 } from '../../../../core/services/food-log/food-log';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { toApiError } from '../../../../core/utils/api';
+import { formatGrams } from '../../../../core/utils/date-format';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import {
   FoodPicker,
@@ -135,10 +136,27 @@ export class NewCollectionSheet {
   protected readonly draft = signal<readonly CollectionItem[]>([]);
   /** The API's limit is reached – "Søg vare" and "Scan" are off. */
   protected readonly draftFull = computed(() => this.draft().length >= COLLECTION_MAX_ITEMS);
-  /** Spec 4.0/4.1-8a: at least one item; the API holds at most 50. */
+  /**
+   * Spec 4.0/4.1-8a: at least one item; the API holds at most 50. Not while a custom food is
+   * still being saved – `ensureFood` would create it a second time (409).
+   */
   protected readonly canSave = computed(() => {
     const count = this.draft().length;
-    return this.name() !== '' && !this.nameTaken() && count >= 1 && count <= COLLECTION_MAX_ITEMS;
+    return (
+      this.name() !== '' &&
+      !this.nameTaken() &&
+      !this.savingCustomFood() &&
+      count >= 1 &&
+      count <= COLLECTION_MAX_ITEMS
+    );
+  });
+  /** Spec 4.0/4.1: the draft's total nutrition, recalculated as items change. */
+  protected readonly totalsText = computed(() => {
+    const totals = this.collections.collectionTotals({ id: '', name: '', items: this.draft() });
+    return this.t('collections.view.macros', {
+      kcal: Math.round(totals.kcal),
+      protein: formatGrams(totals.protein),
+    });
   });
   protected readonly text = computed(() => {
     const keys = this.collection() ? SHEET_TEXT_KEY.edit : SHEET_TEXT_KEY.create;

@@ -7,9 +7,10 @@ kortet "Log som spist under" – og nederst "Slet samling".
 - `recipeId` bindes fra ruten med `withComponentInputBinding()`. Feltnavnet skal matche
   `ROUTE_PARAM.RECIPE_ID`; Angular kræver en statisk streng som alias, så konstanten kan kun
   bruges i `collections.routes.ts`. Specen navigerer via ruten og dækker dermed koblingen.
-- Id'et er `col:<id>` (se feature-README'en). Findes samlingen ikke, viser siden en spinner,
-  mens samlingerne hentes, en fejl med "Prøv igen", hvis de ikke kunne hentes, og ellers en tom
-  tilstand med en vej tilbage.
+- Id'et er `col:<id>` (se feature-README'en). Siden viser samlingen først, når både samlingerne
+  og madloggen er hentet (ellers stod alle varer til 0 kcal): imens en spinner, en fejl med "Prøv
+  igen", hvis en af dem ikke kunne hentes, og findes samlingen ikke, en tom tilstand med en vej
+  tilbage.
 - **Log** (spec 3.2): `MealPicker` vælger måltidet (start: morgenmad), og "Log X kcal" kalder
   `CollectionsService.log(id, måltid)` – ét kald, én madlog-række pr. vare – og skifter til Mad,
   når API'et har svaret.

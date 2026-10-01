@@ -70,8 +70,13 @@ export class RecipePage {
   private readonly t = injectTranslate();
 
   protected readonly status = this.view.status;
-  protected readonly detail = computed(() => this.view.detailFor(this.recipeId()));
-  protected readonly collection = computed(() => this.view.collectionFor(this.recipeId()));
+  /** Only once both stores are ready – until the foods are loaded every item would show 0 kcal. */
+  protected readonly detail = computed(() =>
+    this.status() === 'ready' ? this.view.detailFor(this.recipeId()) : null,
+  );
+  protected readonly collection = computed(() =>
+    this.status() === 'ready' ? this.view.collectionFor(this.recipeId()) : null,
+  );
   /** The meal "Log som spist under" logs under. */
   protected readonly meal = signal<MealId>(DEFAULT_MEAL);
   protected readonly editOpen = signal(false);

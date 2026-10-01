@@ -1,8 +1,9 @@
 # NewCollectionSheet
 
-Arket "Ny samling" (designets `newColOpen`): navn og en kladde af varer. Bunden har "Opret
+Arket "Ny samling" (designets `newColOpen`): navn og en kladde af varer med kladdens samlede
+kcal og protein under listen (spec 4.0/4.1, genberegnet ved hver ændring). Bunden har "Opret
 samling", der er slået fra, indtil samlingen har et gyldigt navn og mindst én vare (spec
-4.0-8a).
+4.0-8a) – og mens en ny egen vare stadig gemmes, så `ensureFood` ikke opretter den to gange.
 
 Med `[collection]` bliver det samme ark til **"Rediger samling"** (spec 4.1): det åbner udfyldt
 med samlingens navn og varer, knappen hedder "Gem ændringer", og arket udsender `updated` i

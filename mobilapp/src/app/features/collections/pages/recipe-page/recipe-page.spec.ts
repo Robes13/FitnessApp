@@ -148,6 +148,18 @@ describe('RecipePage', () => {
     expect(normalize(page.querySelector('.recipe-page__title')?.textContent)).toBe('Meal prep');
   });
 
+  it('shows the load error instead of 0 kcal when the foods failed to load', async () => {
+    flushTestCollections([MEAL_PREP]);
+    TestBed.inject(FoodLogService).load().subscribe();
+    http.expectOne('/api/v1/foods?limit=100').flush(null, { status: 503, statusText: 'Error' });
+    http.expectOne((request) => request.url === '/api/v1/me/food-logs');
+    const { page, text } = await setup(BUNDLE_ID);
+
+    expect(text('app-ui-empty-state')).toBe('Vi kunne ikke hente dine samlinger.');
+    expect(page.querySelector('.recipe-page__log-button')).toBeNull();
+    expect(page.querySelector('[aria-label="Rediger samling"]')).toBeNull();
+  });
+
   it('shows an empty state and a way back when the id is unknown', async () => {
     const { page, text, button, click } = await setup('findes-ikke');
 

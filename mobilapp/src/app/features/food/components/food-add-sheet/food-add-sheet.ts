@@ -27,6 +27,7 @@ import {
   FoodPickerStartStep,
   FoodPickerStep,
 } from '../../../../shared/components/food-picker/food-picker';
+import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiChip } from '../../../../shared/components/ui-chip/ui-chip';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
@@ -36,6 +37,7 @@ import {
   UiSegmentedControl,
 } from '../../../../shared/components/ui-segmented-control/ui-segmented-control';
 import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
+import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
 
 /** The design's `addTab`: the foods from search or the user's collections. */
 export type AddSheetTab = 'varer' | 'samlinger';
@@ -91,12 +93,14 @@ interface CollectionRowView {
   imports: [
     FoodPicker,
     TranslatePipe,
+    UiButton,
     UiChip,
     UiEmptyState,
     UiFormError,
     UiIcon,
     UiSegmentedControl,
     UiSheet,
+    UiSpinner,
   ],
   templateUrl: './food-add-sheet.html',
   styleUrl: './food-add-sheet.scss',
@@ -131,6 +135,8 @@ export class FoodAddSheet {
     TAB_LABEL_KEYS.map(({ value, labelKey }) => ({ value, label: this.t(labelKey) })),
   );
   protected readonly emptyMessageKey = COLLECTIONS_EMPTY_MESSAGE_KEY;
+  /** The collections' load state – the tab doesn't claim "no collections" while it isn't known. */
+  protected readonly collectionsStatus = this.collections.status;
   /** A collection is being logged – the rows are off. */
   protected readonly logging = signal(false);
   /** Translation key of the last failed collection log; cleared on every open. */
@@ -189,6 +195,10 @@ export class FoodAddSheet {
   protected readonly collectionRows = computed<readonly CollectionRowView[]>(() =>
     this.collections.collections().map((collection) => this.toRow(collection)),
   );
+
+  protected retryCollections(): void {
+    this.collections.load().subscribe();
+  }
 
   protected onTabChange(tab: AddSheetTab | null): void {
     this.tab.set(tab ?? DEFAULT_TAB);

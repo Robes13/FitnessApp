@@ -134,6 +134,45 @@ describe('NewCollectionSheet', () => {
     ]);
   });
 
+  it('shows the draft’s total nutrition as items are added (spec 4.0/4.1)', async () => {
+    await addHavregryn();
+    await addHavregryn();
+
+    expect(normalize(root.querySelector('.new-collection-sheet__totals')?.textContent)).toBe(
+      '740 kcal · 0 g protein',
+    );
+  });
+
+  it('can not be saved while a new custom food is still being saved', async () => {
+    await typeName('Meal prep');
+    await click(buttonByText('Søg vare'));
+    fixture.debugElement.query(By.directive(FoodPicker)).triggerEventHandler('picked', {
+      item: {
+        id: 'food-new',
+        name: 'Mysli',
+        quantity: '100 g',
+        kcal: 150,
+        protein: 5,
+        carbs: 0,
+        fat: 0,
+        isCustom: true,
+      },
+      amount: 100,
+      unit: 'g',
+    });
+    await settle();
+
+    // Saving now would make `ensureFood` post the same food again (409).
+    expect(buttonByText('Opret samling')?.disabled).toBe(true);
+
+    TestBed.inject(HttpTestingController)
+      .expectOne({ method: 'POST', url: '/api/v1/foods' })
+      .flush(testFood({ foodId: 2, name: 'Mysli', caloriesPer100: 150 }));
+    await settle();
+
+    expect(buttonByText('Opret samling')?.disabled).toBe(false);
+  });
+
   it('caps the name at the 100 characters the API accepts', () => {
     expect(
       root.querySelector<HTMLInputElement>('.new-collection-sheet__name input')?.maxLength,

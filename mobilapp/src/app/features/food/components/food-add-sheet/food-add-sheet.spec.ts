@@ -3,6 +3,7 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
+import { CollectionsService } from '../../../../core/services/collections/collections';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
 import {
   TEST_FOOD,
@@ -21,6 +22,7 @@ import { FoodAddSheet } from './food-add-sheet';
  * frozen `NOW`. The browser's storage is cleared per test.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
+const COLLECTIONS_URL = '/api/v1/me/meal-collections?limit=100';
 
 const LOGGED_SALAD: LoggedFood = {
   id: 'food-salat',
@@ -224,6 +226,30 @@ describe('FoodAddSheet', () => {
       expect(row(root)?.disabled).toBe(true);
       expect(row(root)?.getAttribute('aria-busy')).toBe('true');
     });
+  });
+
+  it('shows a failed collections load with a retry, not "no collections"', async () => {
+    const { root, settle, text } = await setup(undefined, [], () => {
+      TestBed.inject(CollectionsService).load().subscribe();
+      TestBed.inject(HttpTestingController)
+        .expectOne(COLLECTIONS_URL)
+        .flush(null, { status: 503, statusText: 'Unavailable' });
+    });
+
+    root.querySelectorAll<HTMLButtonElement>('.ui-segmented-control__option')[1]?.click();
+    await settle();
+
+    expect(text('app-ui-empty-state')).toBe('Vi kunne ikke hente dine samlinger.');
+
+    root.querySelector<HTMLButtonElement>('.food-add-sheet__status button')?.click();
+    await settle();
+    expect(root.querySelector('app-ui-spinner')).not.toBeNull();
+    TestBed.inject(HttpTestingController)
+      .expectOne(COLLECTIONS_URL)
+      .flush({ items: [testCollection(3, 'Meal prep', [])], nextCursor: null, hasMore: false });
+    await settle();
+
+    expect(text('.food-add-sheet__collection-name')).toBe('Meal prep');
   });
 
   it('explains how to build a collection when there are none', async () => {

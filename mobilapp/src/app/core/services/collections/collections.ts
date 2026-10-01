@@ -1,7 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import {
-  EMPTY,
   MonoTypeOperatorFunction,
   Observable,
   catchError,
@@ -11,6 +10,7 @@ import {
   map,
   of,
   switchMap,
+  tap,
   throwError,
   toArray,
 } from 'rxjs';
@@ -121,6 +121,9 @@ export class CollectionsService implements SessionDataStore {
   /**
    * Whether another collection already has the name (trimmed, case-insensitive). `exceptId` is
    * the collection being edited, so it doesn't clash with its own name.
+   *
+   * ponytail: unique only in this app – the API accepts duplicates (another device can still make
+   * one); upgrade: a 409 in the API's `MealCollectionService` (api-gaps).
    */
   isNameTaken(name: string, exceptId?: string): boolean {
     const wanted = normalizeName(name);
@@ -160,6 +163,10 @@ export class CollectionsService implements SessionDataStore {
    * a `mealItemId` (after `ensureFood`) → `DELETE` every saved item the draft dropped (after the
    * POSTs, so one always remains) → `GET` the collection. Not atomic: on any error the
    * collection is fetched again, so memory shows what the API kept, and the error is rethrown.
+   * Once every write went through, the save has succeeded even if the `GET` fails (see `fetch`).
+   *
+   * ponytail: not atomic – a failed step leaves what the API kept (reloaded, no data loss);
+   * upgrade: a `PUT me/meal-collections/{id}` that replaces the items in one transaction (api-gaps).
    */
   update(id: string, input: NewCollectionInput): Observable<void> {
     return defer(() => {
@@ -188,10 +195,7 @@ export class CollectionsService implements SessionDataStore {
     }).pipe(
       catchError((error: unknown) =>
         concat(
-          this.fetch(id).pipe(
-            ignoreElements(),
-            catchError(() => EMPTY),
-          ),
+          this.fetch(id).pipe(ignoreElements()),
           throwError(() => error),
         ),
       ),
@@ -202,19 +206,16 @@ export class CollectionsService implements SessionDataStore {
   /** `DELETE`; the food logs made from the collection stay. A 404 (already gone) counts as removed. */
   remove(id: string): Observable<void> {
     return this.http.delete<void>(this.url(COLLECTION_ENDPOINT.collection(id))).pipe(
-      catchError((error: unknown) =>
-        error instanceof HttpErrorResponse && error.status === HttpStatusCode.NotFound
-          ? of(undefined)
-          : throwError(() => error),
-      ),
-      map(() =>
-        this.dtos.update((dtos) => dtos.filter((dto) => String(dto.mealCollectionId) !== id)),
-      ),
+      catchError((error: unknown) => (isNotFound(error) ? of(undefined) : throwError(() => error))),
+      map(() => this.forget(id)),
       mapApiError(),
     );
   }
 
-  /** Logs every item now under `meal` – one food log row each (P13) – and puts the rows in the log. */
+  /**
+   * Logs every item now under `meal` – one food log row each (P13) – and puts the rows in the log.
+   * A 404 (deleted on another device) also drops the collection, so no screen keeps offering it.
+   */
   log(id: string, meal: MealId): Observable<void> {
     return defer(() => {
       const body: LogMealCollectionRequest = {
@@ -225,21 +226,42 @@ export class CollectionsService implements SessionDataStore {
       return this.http.post<FoodLogDto[]>(this.url(COLLECTION_ENDPOINT.log(id)), body);
     }).pipe(
       map((logs) => this.foodLog.addLogs(logs)),
+      tap({
+        error: (error: unknown) => {
+          if (isNotFound(error)) {
+            this.forget(id);
+          }
+        },
+      }),
       mapCollectionError(LOG_ERROR_KEY),
     );
   }
 
-  /** `GET` one collection into memory. */
+  /**
+   * `GET` one collection into memory; never errors. A 404 (deleted on another device) drops it.
+   * Any other failure leaves memory stale (old `mealItemId`s an edit would diff against), so
+   * `status` turns `'error'` and the screens offer a full reload instead.
+   */
   private fetch(id: string): Observable<void> {
-    return this.http
-      .get<MealCollectionDto>(this.url(COLLECTION_ENDPOINT.collection(id)))
-      .pipe(
-        map((fresh) =>
-          this.dtos.update((dtos) =>
-            dtos.map((dto) => (dto.mealCollectionId === fresh.mealCollectionId ? fresh : dto)),
-          ),
+    return this.http.get<MealCollectionDto>(this.url(COLLECTION_ENDPOINT.collection(id))).pipe(
+      map((fresh) =>
+        this.dtos.update((dtos) =>
+          dtos.map((dto) => (dto.mealCollectionId === fresh.mealCollectionId ? fresh : dto)),
         ),
-      );
+      ),
+      catchError((error: unknown) => {
+        if (isNotFound(error)) {
+          this.forget(id);
+        } else {
+          this.statusState.set('error');
+        }
+        return of(undefined);
+      }),
+    );
+  }
+
+  private forget(id: string): void {
+    this.dtos.update((dtos) => dtos.filter((dto) => String(dto.mealCollectionId) !== id));
   }
 
   /** The API food behind the item (created if needed) with the item's amount and unit. */
@@ -252,7 +274,12 @@ export class CollectionsService implements SessionDataStore {
     );
   }
 
-  /** The item with its food's per-100 values scaled to its amount – the API's own formula. */
+  /**
+   * The item with its food's per-100 values scaled to its amount – the API's own formula.
+   *
+   * ponytail: `MealItemDto` has no nutrition, so the item is scaled from its `FoodDto` in
+   * `FoodLogService.foods`; upgrade: nutrition on `MealItemDto` (api-gaps).
+   */
   private toItem(item: MealItemDto, food: FoodDto | undefined): CollectionItem {
     const gramsPerUnit =
       item.unit === 'Gram'
@@ -274,6 +301,10 @@ export class CollectionsService implements SessionDataStore {
       ...this.calculator.scaleMacros(per100, (item.quantity * gramsPerUnit) / PER_100_GRAMS),
     };
   }
+}
+
+function isNotFound(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && error.status === HttpStatusCode.NotFound;
 }
 
 /**

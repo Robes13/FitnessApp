@@ -98,11 +98,14 @@ stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under
   rækkefølge og sender `POST { name, items }`. `update` er en diff: `PATCH` navnet, hvis det er
   ændret → `POST …/items` for hver vare uden `mealItemId` → `DELETE …/items/{id}` for hver gemt
   vare, kladden ikke har (efter POST'ene, så der altid er én tilbage) → `GET` samlingen. Den er
-  ikke atomar: fejler et trin, hentes samlingen igen, og fejlen kastes videre. `remove` = `DELETE`
-  (404 = allerede væk = fjernet; madlog-rækkerne bliver). `log(id, måltid)` = `POST …/{id}/log`
-  med `{ consumedAt: nu, mealType, multiplier: 1 }` → `FoodLogService.addLogs()`. Fejl er `ApiError`;
-  den generelle "noget gik galt" bliver til `collections.saveError` / `collections.logError`.
-  Navne er kun unikke i appen (`isNameTaken`).
+  ikke atomar: fejler et trin, hentes samlingen igen, og fejlen kastes videre. Er alle skrivninger
+  gået igennem, er gemningen lykkedes, også hvis `GET` fejler – så sættes `status` til `'error'`,
+  fordi hukommelsen kan have gamle `mealItemId`'er, og skærmene tilbyder en fuld genindlæsning.
+  `remove` = `DELETE` (404 = allerede væk = fjernet; madlog-rækkerne bliver). `log(id, måltid)` =
+  `POST …/{id}/log` med `{ consumedAt: nu, mealType, multiplier: 1 }` → `FoodLogService.addLogs()`.
+  En 404 på `log` eller under `update` (slettet på en anden enhed) fjerner samlingen fra
+  hukommelsen. Fejl er `ApiError`; den generelle "noget gik galt" bliver til
+  `collections.saveError` / `collections.logError`. Navne er kun unikke i appen (`isNameTaken`).
 - **`AuthApi` er en tynd HTTP-klient.** Én metode pr. endpoint i `AUTH_ENDPOINT`, bodies som
   `models/auth.ts`, og `mapApiError(resolver)` gør alle fejl til en `ApiError` med en
   oversættelsesnøgle (fx 409 → "brugernavn/e-mail optaget", skelnet på API'ets engelske

@@ -12,8 +12,9 @@ Varer/Samlinger og enten `app-food-picker` eller listen over samlinger.
 - **Fanen "Samlinger"** viser brugerens samlinger (navn, varernes navne, afrundet kcal). Et tryk
   logger samlingen under det valgte måltid med `CollectionsService.log()` – ét kald, én række pr.
   vare (P13). Imens er rækkerne slået fra (`aria-busy`); bagefter udsender arket `closed`. En
-  fejl ("Samlingen blev ikke logget. Prøv igen.") vises øverst, og arket bliver åbent. Uden
-  samlinger vises `app-ui-empty-state`.
+  fejl ("Samlingen blev ikke logget. Prøv igen.") vises øverst, og arket bliver åbent. Mens
+  samlingerne hentes, vises en spinner; kunne de ikke hentes, vises fejlen med "Prøv igen"
+  (`CollectionsService.load()`). Uden samlinger vises `app-ui-empty-state`.
 
 - Under redigering kan kun mængden ændres (spec 3.3) – makroerne på en egen vare rettes ikke
   her.

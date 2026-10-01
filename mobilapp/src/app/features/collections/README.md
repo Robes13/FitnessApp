@@ -30,7 +30,8 @@ shell'en fjerner tab baren (designets `navVisible`).
   API'et). Alle kort og heroen bruger derfor ikonet `utensils` i accent-farven.
 - **Næringen regnes i appen.** API'ets `MealItemDto` har ingen næring, så hver vare skaleres fra
   sin madvare i `FoodLogService.foods`. Skærmene venter derfor på både samlingerne og madloggen
-  (`CollectionsViewService.status`), og "Prøv igen" genindlæser den, der fejlede.
+  (`CollectionsViewService.status`) – også opskriften og plus-knappen – og "Prøv igen"
+  genindlæser den, der fejlede.
 - **Mindst én vare** (spec 4.0/4.1-8a): arket kan ikke gemme uden varer og siger hvorfor. API'et
   tillader højst 50; ved 50 er "Søg vare" og "Scan" slået fra. Navnet er højst 100 tegn.
 - **Unikke navne kun i appen.** Arket afviser et navn, en anden samling har (trimmet, uden
@@ -42,7 +43,12 @@ shell'en fjerner tab baren (designets `navVisible`).
 - **Redigering er en diff** (P13): `PATCH` navn → `POST` nye varer → `DELETE` fjernede → `GET`.
   En vare med ny mængde lægges i kladden uden `mealItemId`, så den slettes og tilføjes igen.
   Diffen er ikke atomar: fejler et trin, hentes samlingen igen, arket lukker, og opskriften viser
-  fejlen og det, API'et nåede at gemme – så et nyt forsøg aldrig tilføjer en vare to gange.
+  fejlen og det, API'et nåede at gemme – så et nyt forsøg aldrig tilføjer en vare to gange. Kan
+  samlingen ikke hentes igen, viser skærmene indlæsningsfejlen med "Prøv igen" i stedet for en
+  redigering bygget på gamle id'er. En samling, der er slettet på en anden enhed (404), forsvinder
+  fra skærmene.
+- **Arket viser kladdens samlede næring** (spec 4.0/4.1), genberegnet ved hver ændring. Det kan
+  ikke gemme, mens en ny egen vare stadig gemmes (ellers ville `ensureFood` oprette den igen).
 - **Log som spist** = `POST …/{id}/log` med måltidstypen: N almindelige madlog-rækker, der hver
   kan rettes og fjernes på Mad (P13). Ingen multiplikator. Mad-arkets fane "Samlinger" bruger
   samme kald.

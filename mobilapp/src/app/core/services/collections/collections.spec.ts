@@ -275,6 +275,34 @@ describe('CollectionsService', () => {
 
       await expect(done).rejects.toEqual({ messageKey: 'collections.saveError', status: 400 });
       expect(service.collectionById('5')?.name).toBe('Morgen');
+      // Memory may be stale, so the screens offer a full reload instead of an edit from old ids.
+      expect(service.status()).toBe('error');
+    });
+
+    it('succeeds once every write went through, even when the refresh fails', async () => {
+      const done = firstValueFrom(service.update('5', { name: 'Morgen', items: draft() }));
+      answer('POST', `${URL.collection(5)}/items`, {});
+      answer('DELETE', `${URL.collection(5)}/items/2`);
+      http
+        .expectOne({ method: 'GET', url: URL.collection(5) })
+        .flush(null, { status: 503, statusText: 'Unavailable' });
+
+      await expect(done).resolves.toBeUndefined();
+      expect(service.status()).toBe('error');
+    });
+
+    it('forgets a collection deleted on another device', async () => {
+      const done = firstValueFrom(service.update('5', { name: 'Ny', items: draft() }));
+      http
+        .expectOne({ method: 'PATCH', url: URL.collection(5) })
+        .flush(null, { status: 404, statusText: 'Not Found' });
+      http
+        .expectOne({ method: 'GET', url: URL.collection(5) })
+        .flush(null, { status: 404, statusText: 'Not Found' });
+
+      await expect(done).rejects.toEqual({ messageKey: 'collections.saveError', status: 404 });
+      expect(service.collections()).toEqual([]);
+      expect(service.status()).toBe('ready');
     });
   });
 
@@ -316,7 +344,7 @@ describe('CollectionsService', () => {
     ).toEqual(['Havregryn', 'Proteinbar']);
   });
 
-  it('names what failed when the log is rejected', async () => {
+  it('names what failed when the log is rejected and forgets a collection that is gone', async () => {
     flushTestCollections([MORGEN]);
 
     const done = firstValueFrom(service.log('5', 'snack'));
@@ -326,5 +354,6 @@ describe('CollectionsService', () => {
 
     await expect(done).rejects.toEqual({ messageKey: 'collections.logError', status: 404 });
     expect(TestBed.inject(FoodLogService).entries()).toEqual([]);
+    expect(service.collections()).toEqual([]);
   });
 });

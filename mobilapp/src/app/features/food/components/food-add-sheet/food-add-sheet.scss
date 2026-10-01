@@ -38,6 +38,18 @@
     flex-direction: column;
   }
 
+  &__status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3-5);
+    padding: var(--space-6) 0;
+  }
+
+  &__status-message {
+    align-self: stretch;
+  }
+
   &__collections {
     display: flex;
     flex-direction: column;

@@ -7,6 +7,9 @@ Designets "Samlinger" (HTML-linje 1214). Titel, undertekst, orange plus-knap og 
 Rækkerne kommer fra `CollectionsViewService.entries()`. Hvert kort har ikonet `utensils` i
 accent-farven (API'et har intet ikon eller måltid på en samling).
 
+Plus-knappen er slået fra, indtil listen er hentet: navnetjekket skal kende samlingerne, og en
+oprettelse må ikke overskrives af en indlæsning, der stadig kører.
+
 Siden ejer arket "Ny samling" og den kørende oprettelse: `onCreated` kalder
 `CollectionsService.create()`, arkets knap viser spinner imens (`busy`), og arket lukker først,
 når API'et har svaret. En fejl vises i arket (`error`), som bliver åbent. Et tryk på et kort går

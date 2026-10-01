@@ -97,8 +97,12 @@ describe('CollectionsPage', () => {
   it('shows a spinner while loading and a retry after a failed load', async () => {
     TestBed.inject(CollectionsService).load().subscribe();
     const { page, text, settle, click } = await setup();
+    // Creating waits for the list: the name check needs it, and a load would overwrite the new one.
+    const create = () =>
+      page.querySelector<HTMLButtonElement>('button[aria-label="Opret samling"]');
 
     expect(page.querySelector('app-ui-spinner')).not.toBeNull();
+    expect(create()?.disabled).toBe(true);
 
     http
       .expectOne(`${COLLECTIONS_URL}?limit=100`)
@@ -106,6 +110,7 @@ describe('CollectionsPage', () => {
     await settle();
 
     expect(text('app-ui-empty-state')).toBe('Vi kunne ikke hente dine samlinger.');
+    expect(create()?.disabled).toBe(true);
 
     await click(page.querySelector('.collections-page__status button'));
     http
@@ -114,6 +119,7 @@ describe('CollectionsPage', () => {
     await settle();
 
     expect(page.querySelector('.collections-page__card')).not.toBeNull();
+    expect(create()?.disabled).toBe(false);
   });
 
   it('opens the new-collection sheet from the plus button', async () => {

@@ -12,6 +12,7 @@
       tone="accent"
       type="button"
       [attr.aria-label]="'collections.page.create' | translate"
+      [disabled]="status() !== 'ready'"
       (click)="openSheet()"
     >
       <app-ui-icon name="plus" size="xl" [strokeWidth]="1.9" />

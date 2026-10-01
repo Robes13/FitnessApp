@@ -52,6 +52,26 @@
           (scanRequested)="scanRequested.emit()"
           (cancelled)="closed.emit()"
         />
+      } @else if (collectionsStatus() === 'loading') {
+        <div class="food-add-sheet__status">
+          <app-ui-spinner size="lg" />
+        </div>
+      } @else if (collectionsStatus() === 'error') {
+        <div class="food-add-sheet__status">
+          <app-ui-empty-state
+            class="food-add-sheet__status-message"
+            [message]="'collections.page.loadError' | translate"
+          />
+          <button
+            app-ui-button
+            type="button"
+            variant="outline"
+            size="md"
+            (click)="retryCollections()"
+          >
+            {{ 'collections.page.retry' | translate }}
+          </button>
+        </div>
       } @else if (collectionRows().length === 0) {
         <app-ui-empty-state [message]="emptyMessageKey | translate" />
       } @else {
