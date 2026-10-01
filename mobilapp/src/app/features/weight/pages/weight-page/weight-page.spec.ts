@@ -60,7 +60,7 @@ describe('WeightPage', () => {
     expect(root.querySelector('.weight-page__title')?.textContent).toContain('Registrér');
     expect(root.querySelector('.weight-page__title-accent')?.textContent).toBe('vægt');
     expect(root.querySelector('.weight-page__last-weighed')?.textContent?.trim()).toBe(
-      'Sidst vejet 3 dage siden',
+      'Sidst vejet 18. sep',
     );
     expect(root.querySelector('.weight-page__draft-value')?.textContent?.trim()).toBe('75,0');
     expect(

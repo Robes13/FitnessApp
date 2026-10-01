@@ -208,13 +208,16 @@ export class WeightViewService {
 
   readonly hasEntries = computed(() => this.log.entries().length > 0);
 
-  /** Without weigh-ins the profile's weight is the starting weight from sign-up (spec 6.1). */
+  /**
+   * `'Sidst vejet i dag'` · `'… i går'` · `'… 18. sep'`. Without weigh-ins the profile's weight is
+   * the starting weight from sign-up (spec 6.1).
+   */
   readonly lastWeighLabel = computed(() => {
     const latest = this.log.latest();
     if (latest === null) {
       return this.t('weight.view.neverWeighed');
     }
-    const day = formatRelativeDay(this.t, new Date(latest.at), this.now()).toLowerCase();
+    const day = dayInSentence(this.t, new Date(latest.at), this.now());
     return this.t('weight.view.lastWeighed', { day });
   });
 
