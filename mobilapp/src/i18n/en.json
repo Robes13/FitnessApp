@@ -272,7 +272,7 @@
     "deleteSheet": {
       "title": "Delete",
       "titleAccent": "collection?",
-      "body": "“{{name}}” and its items will be deleted. This can't be undone.",
+      "body": "“{{name}}” will be deleted. Its items and what you've already logged stay. This can't be undone.",
       "confirm": "Yes, delete collection",
       "cancel": "Cancel"
     },
@@ -291,6 +291,9 @@
       "scan": "Scan",
       "pickerTitle": "Add",
       "pickerTitleAccent": "to collection",
+      "pickerTitleEdit": "Edit",
+      "pickerTitleEditAccent": "item",
+      "saveOnly": "Save to My items only",
       "duplicateName": "You already have a collection with that name.",
       "duplicateCustomFood": "You already have a custom item named \"{{foodName}}\", so it wasn't saved again under My items.",
       "saveAndAdd": "Save and add to collection",
@@ -298,7 +301,7 @@
     },
     "page": {
       "title": "Collections",
-      "subtitle": "Your items and dishes – log them straight as eaten.",
+      "subtitle": "Group the items you often eat together and log them as eaten in one go.",
       "create": "Create collection",
       "empty": "You don't have any collections yet. Tap + to group the items you often eat together.",
       "loadError": "We couldn't load your collections.",
@@ -307,17 +310,18 @@
     "view": {
       "itemCountOne": "1 item",
       "itemCountMany": "{{count}} items",
-      "macros": "{{kcal}} kcal · {{protein}} g protein"
+      "macros": "{{kcal}} kcal · {{protein}} g protein",
+      "totals": "{{kcal}} kcal · {{protein}} g protein · {{carbs}} g carbs · {{fat}} g fat"
     },
     "recipePage": {
-      "title": "Recipe",
+      "title": "Collection",
       "edit": "Edit collection",
       "contents": "Contents",
       "logUnder": "Log as eaten under",
       "log": "Log {{kcal}} kcal",
       "delete": "Delete collection",
       "backToCollections": "Back to collections",
-      "notFound": "We couldn't find this recipe.",
+      "notFound": "We couldn't find this collection.",
       "calories": "Calories",
       "protein": "Protein",
       "carbs": "Carbs",
@@ -338,8 +342,10 @@
       "titleAdd": "Add",
       "titleEdit": "Edit",
       "titleEditWhat": "item",
-      "collectionsEmpty": "You have no collections with items yet. Build one under Collection, then log it here with one tap.",
-      "saveAndLog": "Save and log under {{mealName}}"
+      "collectionsEmpty": "You have no collections with items yet. Build one under Collection, then log it here.",
+      "saveAndLog": "Save and log under {{mealName}}",
+      "logCollection": "Log {{kcal}} kcal under {{mealName}}",
+      "cancelCollection": "Cancel"
     },
     "view": {
       "protein": "Protein",

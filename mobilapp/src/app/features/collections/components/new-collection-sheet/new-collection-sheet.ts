@@ -63,6 +63,19 @@ const SHEET_TEXT_KEY = {
 } as const;
 /** The food picker's primary button when the food lands in a collection instead of today's log. */
 const SAVE_AND_ADD_LABEL_KEY = 'collections.newCollectionSheet.saveAndAdd';
+/** Its "Gem uden at logge": a collection logs nothing, the food is only saved under "Mine varer". */
+const SAVE_ONLY_LABEL_KEY = 'collections.newCollectionSheet.saveOnly';
+/** The food picker's sheet – "Tilføj til samling", or "Rediger vare" while an item is edited. */
+const PICKER_TEXT_KEY = {
+  add: {
+    title: 'collections.newCollectionSheet.pickerTitle',
+    accent: 'collections.newCollectionSheet.pickerTitleAccent',
+  },
+  edit: {
+    title: 'collections.newCollectionSheet.pickerTitleEdit',
+    accent: 'collections.newCollectionSheet.pickerTitleEditAccent',
+  },
+} as const;
 
 interface NewCollectionForm {
   name: FormControl<string>;
@@ -150,12 +163,14 @@ export class NewCollectionSheet {
       count <= COLLECTION_MAX_ITEMS
     );
   });
-  /** Spec 4.0/4.1: the draft's total nutrition, recalculated as items change. */
+  /** Spec 4.0/4.1: the draft's total nutrition (kcal, protein, carbs, fat), recalculated as items change. */
   protected readonly totalsText = computed(() => {
     const totals = this.collections.collectionTotals({ id: '', name: '', items: this.draft() });
-    return this.t('collections.view.macros', {
+    return this.t('collections.view.totals', {
       kcal: Math.round(totals.kcal),
       protein: formatGrams(totals.protein),
+      carbs: formatGrams(totals.carbs),
+      fat: formatGrams(totals.fat),
     });
   });
   protected readonly text = computed(() => {
@@ -185,6 +200,11 @@ export class NewCollectionSheet {
     return index === null ? null : (this.draft()[index] ?? null);
   });
   protected readonly saveAndAddLabelKey = SAVE_AND_ADD_LABEL_KEY;
+  protected readonly saveOnlyLabelKey = SAVE_ONLY_LABEL_KEY;
+  protected readonly pickerText = computed(() => {
+    const keys = this.editItem() ? PICKER_TEXT_KEY.edit : PICKER_TEXT_KEY.add;
+    return { title: this.t(keys.title), accent: this.t(keys.accent) };
+  });
 
   constructor() {
     // Every time the sheet opens, it starts over (the design's `openNewCol`) – or from the

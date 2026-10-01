@@ -263,6 +263,8 @@ export class FoodPicker {
   readonly ctaVerb = input<FoodPickerCtaVerb>('Tilføj');
   /** Primary button on "New custom item", e.g. `'Save and log under breakfast'`. */
   readonly saveAndLogLabel = input.required<string>();
+  /** Its secondary, save-only button; `null` (the default) is "Gem uden at logge". */
+  readonly saveOnlyLabel = input<string | null>(null);
   readonly showScan = input(true, { transform: booleanAttribute });
   /** The parent is saving the pick: the primary buttons show a spinner and block further taps. */
   readonly busy = input(false, { transform: booleanAttribute });
@@ -516,6 +518,9 @@ export class FoodPicker {
     const half = Math.round(base / HALF / GRAM_STEP) * GRAM_STEP || GRAM_STEP;
     return [half, base, ...GRAM_CHIP_MULTIPLIERS.map((factor) => base * factor)];
   });
+  protected readonly saveOnlyText = computed(
+    () => this.saveOnlyLabel() ?? this.t('shared.foodPicker.saveWithoutLogging'),
+  );
   protected readonly ctaLabel = computed(() =>
     this.t(CTA_LABEL_KEY[this.ctaVerb()], {
       amount: String(this.amount() ?? ''),

@@ -73,6 +73,44 @@
             {{ 'collections.page.retry' | translate }}
           </button>
         </div>
+      } @else if (chosen(); as collection) {
+        <div class="food-add-sheet__confirm">
+          <span class="food-add-sheet__collection-main">
+            <span class="food-add-sheet__icon">
+              <app-ui-icon name="utensils" size="sm" />
+            </span>
+            <span class="food-add-sheet__collection-text">
+              <span class="food-add-sheet__collection-name">{{ collection.name }}</span>
+              <span class="food-add-sheet__collection-sub">{{ collection.subtitle }}</span>
+            </span>
+          </span>
+          <p class="food-add-sheet__confirm-totals">{{ collection.totalsLabel }}</p>
+          <button
+            app-ui-button
+            variant="primary"
+            size="lg"
+            block
+            type="button"
+            class="food-add-sheet__confirm-log"
+            [disabled]="busy()"
+            [loading]="logging()"
+            (click)="logChosen()"
+          >
+            {{ logLabel() }}
+          </button>
+          <button
+            app-ui-button
+            variant="subtle"
+            size="sm"
+            block
+            type="button"
+            class="food-add-sheet__confirm-cancel"
+            [disabled]="rowsBusy()"
+            (click)="cancelChosen()"
+          >
+            {{ 'food.addSheet.cancelCollection' | translate }}
+          </button>
+        </div>
       } @else if (collectionRows().length === 0) {
         <app-ui-empty-state [message]="emptyMessageKey | translate" />
       } @else {

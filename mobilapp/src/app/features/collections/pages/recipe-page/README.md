@@ -1,6 +1,7 @@
 # RecipePage
 
-Designets "Opskrift" (HTML-linje 1281). `UiPageHeader` med "Opskrift" og en blyant ("Rediger
+Designets "Opskrift" (HTML-linje 1281). `UiPageHeader` med "Samling" (der findes kun samlinger,
+ingen opskrifter – P13) og en blyant ("Rediger
 samling"), hero med ikonet `utensils`, titel, varernes navne, fire makro-fliser, "Indhold" og
 kortet "Log som spist under" – og nederst "Slet samling".
 

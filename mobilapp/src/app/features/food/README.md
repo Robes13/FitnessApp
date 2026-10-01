@@ -51,10 +51,11 @@ viser spinner på knappen og blokerer et nyt kald, og en fejl vises i arket (og 
   snart vælgeren går videre til "Ny egen vare" eller portionstrinnet — og altid, når en logget
   vare redigeres. Så er måltidet givet, og arket hedder "Rediger vare" i stedet for
   "Tilføj morgenmad" (designets `addSheetVerb` / `addSheetWhat`).
-- **En samling logges i ét kald** (P13): fanen "Samlinger" kalder `CollectionsService.log()`
-  (`POST me/meal-collections/{id}/log`), og API'et opretter én række pr. vare under det
-  valgte måltid, så hver række kan rettes og fjernes for sig. Arket lukker, når API'et har svaret;
-  en fejl vises i arket, der bliver åbent.
+- **En samling logges i ét kald** (P13): et tryk i fanen "Samlinger" viser først samlingen med
+  dens samlede næring og "Log X kcal under <måltid>" / "Fortryd" (spec 3.2), så et fejltryk ikke
+  skriver noget. "Log" kalder `CollectionsService.log()` (`POST me/meal-collections/{id}/log`),
+  og API'et opretter én række pr. vare under det valgte måltid, så hver række kan rettes og
+  fjernes for sig. Arket lukker, når API'et har svaret; en fejl vises i arket, der bliver åbent.
 - **`?tilfoej=<måltid>`** (fra "Næste skridt" på Hjem) bindes som input via
   `withComponentInputBinding()` og fjernes fra URL'en igen med `replaceUrl`, så et tilbage-tryk
   eller en genindlæsning ikke åbner arket på ny. Angulars compiler kræver en literal i

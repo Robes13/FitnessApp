@@ -36,6 +36,7 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
 | `editItem`        | `null`     | Redigér en logget vare: starter i `portion` med varens egen mængde som basis; kun mængden kan ændres                                          |
 | `ctaVerb`         | `'Tilføj'` | `Tilføj` eller `Gem` i portionsknappen (en nøgle – teksten oversættes via `CTA_LABEL_KEY`)                                                    |
 | `saveAndLogLabel` | (påkrævet) | Primær knap i "Ny egen vare", fx `'Gem og log under morgenmad'` – forælderen kender måltidet                                                  |
+| `saveOnlyLabel`   | `null`     | Sekundær knap i "Ny egen vare" (kun gem); `null` = "Gem uden at logge". Samlingsarket sender sin egen                                         |
 | `showScan`        | `true`     | Vis scan-knappen ved søgefeltet                                                                                                               |
 | `busy`            | `false`    | Forælderen gemmer: primærknapperne viser spinner, og tryk ignoreres (ingen dobbelte kald)                                                     |
 

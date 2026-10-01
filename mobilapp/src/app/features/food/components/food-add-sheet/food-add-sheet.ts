@@ -20,6 +20,7 @@ import { CollectionsService } from '../../../../core/services/collections/collec
 import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { injectTranslate } from '../../../../core/services/language/translate';
 import { toApiError } from '../../../../core/utils/api';
+import { formatGrams } from '../../../../core/utils/date-format';
 import {
   FoodPicker,
   FoodPickerCtaVerb,
@@ -64,6 +65,8 @@ const CTA_VERB = { add: 'Tilføj', edit: 'Gem' } as const satisfies Record<
 >;
 
 const COLLECTIONS_EMPTY_MESSAGE_KEY = 'food.addSheet.collectionsEmpty';
+/** The chosen collection's confirm button – params `kcal` and `mealName`. */
+const LOG_COLLECTION_KEY = 'food.addSheet.logCollection';
 
 /** A collection in the "Collections" tab – logged as its items, one row each (P13). */
 interface CollectionRowView {
@@ -71,12 +74,16 @@ interface CollectionRowView {
   readonly name: string;
   /** The design's `ac.sub`: the names of the foods in the collection. */
   readonly subtitle: string;
+  readonly kcal: number;
   readonly kcalLabel: string;
+  /** Spec 3.2 "vis næring": kcal, protein, carbs and fat – shown before the collection is logged. */
+  readonly totalsLabel: string;
 }
 
 /**
  * The "Add food" sheet (the design's `addOpen`): meal chips, the Foods/Collections tabs and
- * either `app-food-picker` or the list of collections.
+ * either `app-food-picker` or the list of collections. A tapped collection is first shown with
+ * its nutrition and "Log X kcal under …" / "Fortryd" (spec 3.2) – a stray tap never writes.
  *
  * The tabs only belong to the search step, while the meal chips also stay put on the portion
  * step. Both are hidden in "New custom food" and when an already logged food is being edited –
@@ -197,6 +204,21 @@ export class FoodAddSheet {
   protected readonly collectionRows = computed<readonly CollectionRowView[]>(() =>
     this.collections.collections().map((collection) => this.toRow(collection)),
   );
+  /** The tapped collection's id; cleared by "Fortryd" and whenever the tab changes or the sheet opens. */
+  private readonly chosenId = linkedSignal<AddSheetTab, string | null>({
+    source: this.tab,
+    computation: () => null,
+  });
+  /** The collection waiting for "Log" – `null` again if it disappears (e.g. deleted elsewhere). */
+  protected readonly chosen = computed(
+    () => this.collectionRows().find((row) => row.id === this.chosenId()) ?? null,
+  );
+  protected readonly logLabel = computed(() =>
+    this.t(LOG_COLLECTION_KEY, {
+      kcal: this.chosen()?.kcal ?? 0,
+      mealName: this.mealLabel().toLowerCase(),
+    }),
+  );
 
   protected retryCollections(): void {
     this.collections.load().subscribe();
@@ -210,9 +232,25 @@ export class FoodAddSheet {
     this.selected.emit(selection.item);
   }
 
-  /** One API call logs every item under the chosen meal (P13); the sheet closes on success. */
+  /** Spec 3.2: a tap only chooses the collection – it is logged from the confirmation. */
   protected onCollectionPicked(row: CollectionRowView): void {
     if (this.rowsBusy()) {
+      return;
+    }
+    this.logErrorKey.set(null);
+    this.chosenId.set(row.id);
+  }
+
+  /** "Fortryd": back to the list, nothing logged. */
+  protected cancelChosen(): void {
+    this.logErrorKey.set(null);
+    this.chosenId.set(null);
+  }
+
+  /** One API call logs every item under the chosen meal (P13); the sheet closes on success. */
+  protected logChosen(): void {
+    const row = this.chosen();
+    if (!row || this.rowsBusy()) {
       return;
     }
     this.logging.set(true);
@@ -235,11 +273,19 @@ export class FoodAddSheet {
   /** A collection always has 1–50 items (the API's rule). */
   private toRow(collection: FoodCollection): CollectionRowView {
     const totals = this.collections.collectionTotals(collection);
+    const kcal = Math.round(totals.kcal);
     return {
       id: collection.id,
       name: collection.name,
       subtitle: collection.items.map((item) => item.name).join(', '),
-      kcalLabel: `${Math.round(totals.kcal)} ${this.t('common.unit.kcal')}`,
+      kcal,
+      kcalLabel: `${kcal} ${this.t('common.unit.kcal')}`,
+      totalsLabel: this.t('collections.view.totals', {
+        kcal,
+        protein: formatGrams(totals.protein),
+        carbs: formatGrams(totals.carbs),
+        fat: formatGrams(totals.fat),
+      }),
     };
   }
 }

@@ -47,11 +47,13 @@ shell'en fjerner tab baren (designets `navVisible`).
   samlingen ikke hentes igen, viser skærmene indlæsningsfejlen med "Prøv igen" i stedet for en
   redigering bygget på gamle id'er. En samling, der er slettet på en anden enhed (404), forsvinder
   fra skærmene.
-- **Arket viser kladdens samlede næring** (spec 4.0/4.1), genberegnet ved hver ændring. Det kan
+- **Arket viser kladdens samlede næring** (kcal, protein, kulhydrat og fedt – spec 4.0/4.1),
+  genberegnet ved hver ændring. Det kan
   ikke gemme, mens en ny egen vare stadig gemmes (ellers ville `ensureFood` oprette den igen).
 - **Log som spist** = `POST …/{id}/log` med måltidstypen: N almindelige madlog-rækker, der hver
   kan rettes og fjernes på Mad (P13). Ingen multiplikator. Mad-arkets fane "Samlinger" bruger
-  samme kald.
+  samme kald – efter et bekræftelsestrin med samlingens næring og "Fortryd" (spec 3.2).
 - **Slet kræver bekræftelse** (spec 4.2) i det fælles `shared/components/ui-confirm-sheet`.
-  Madlog-rækker fra samlingen bliver stående. En samling, der allerede er væk (404), tæller som
+  Kun samlingen slettes – madvarerne og madlog-rækker fra samlingen bliver stående, og
+  bekræftelsen siger det. En samling, der allerede er væk (404), tæller som
   slettet.
