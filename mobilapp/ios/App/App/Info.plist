@@ -5,7 +5,7 @@
   <key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Kameraet bruges til at scanne stregkoder på madvarer, så du kan logge dem.</string>
+	<string>Kameraet bruges til at scanne stregkoder på madvarer, så du kan logge dem, og til at tage dit profilbillede.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>

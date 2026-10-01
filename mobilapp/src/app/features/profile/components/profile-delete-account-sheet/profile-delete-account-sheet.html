@@ -13,7 +13,7 @@
   </span>
 
   <p class="profile-delete-account-sheet__body">
-    {{ 'profile.deleteAccountSheet.body' | translate }}
+    {{ body() | translate }}
   </p>
 
   <app-ui-form-error tone="negative" [message]="errorMessage()" />

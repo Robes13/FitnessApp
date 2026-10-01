@@ -11,7 +11,14 @@
     <div class="profile-reminders-sheet__notice" role="status">
       <p class="profile-reminders-sheet__notice-text">{{ notice.textKey | translate }}</p>
       @if (noticeActionLabelKey(); as actionLabelKey) {
-        <button app-ui-button type="button" variant="outline" block (click)="runNoticeAction()">
+        <button
+          app-ui-button
+          type="button"
+          variant="outline"
+          block
+          [loading]="enablingMaster()"
+          (click)="runNoticeAction()"
+        >
           {{ actionLabelKey | translate }}
         </button>
       }

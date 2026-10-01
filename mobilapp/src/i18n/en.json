@@ -586,7 +586,11 @@
       "remindersOff": "Off",
       "remindersNone": "None",
       "remindersActiveOne": "{{count}} active",
-      "remindersActiveMany": "{{count}} active"
+      "remindersActiveMany": "{{count}} active",
+      "privacy": "Privacy",
+      "downloadData": "Download my data",
+      "termsConsent": "Terms and processing of health and profile data",
+      "consentWithdraw": "Withdraw"
     },
     "rows": {
       "goal": "Goal",
@@ -658,9 +662,10 @@
       "chooseAnother": "Choose another photo",
       "use": "Use photo",
       "choose": "Choose photo",
+      "takePhoto": "Take a photo",
       "cropLaterHint": "You'll crop the photo once it's chosen.",
-      "saveError": "The photo couldn't be saved. Free up space and try again.",
-      "readError": "The photo couldn't be loaded. Try another one."
+      "saveError": "The photo couldn't be saved. Try again.",
+      "readError": "This image can't be used – choose another one (e.g. JPEG, PNG or WebP)."
     },
     "logoutSheet": {
       "titleStart": "Log",
@@ -673,6 +678,7 @@
       "titleStart": "Delete",
       "titleAccent": "account?",
       "body": "Your account and all your data will be deleted – on this device too: profile, food log, weigh-ins, custom items and collections. This can't be undone.",
+      "withdrawBody": "This consent is required to use Nutrify. Withdrawing it deletes your account and all your data.",
       "confirm": "Yes, delete my account",
       "cancel": "Cancel"
     },
@@ -956,7 +962,7 @@
       "emailPlaceholder": "Your email · you@mail.com",
       "figureLabel": "Figure with pen",
       "termsAnd": "and",
-      "termsEnd": ".",
+      "termsEnd": ", including the processing of my health and profile data.",
       "termsPrivacy": "privacy policy",
       "termsService": "terms of service",
       "termsStart": "I accept Nutrify's",

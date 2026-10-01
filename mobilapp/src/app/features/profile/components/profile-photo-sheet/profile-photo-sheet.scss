@@ -73,6 +73,11 @@
     &--remove {
       color: var(--color-negative);
     }
+
+    /* The saved photo's "Fjern foto" stands alone under the hint. */
+    &--saved {
+      margin-top: var(--space-3);
+    }
   }
 
   /* File pickers can't be opened from a button – hence a <label> with a hidden input. */

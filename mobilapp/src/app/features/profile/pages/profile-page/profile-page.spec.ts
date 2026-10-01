@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, Provider } from '@angular/core';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { EMPTY, throwError } from 'rxjs';
+import { EMPTY, Subject, throwError } from 'rxjs';
 import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
 import { SessionService } from '../../../../core/services/session/session';
 import { ThemeService } from '../../../../core/services/theme/theme';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
 import { DEFAULT_PROFILE } from '../../../../core/constants/profile-defaults';
+import { PrivacyService } from '../../services/privacy';
 import { ProfilePage } from './profile-page';
 import {
   provideComponentTestEnvironment,
@@ -26,6 +27,7 @@ import {
  * give the profile service a filled-in profile themselves.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
+const NOTIFICATIONS_SETTING = '/api/v1/me/settings/Notifications';
 
 const STORED_PROFILE = {
   ...DEFAULT_PROFILE,
@@ -94,6 +96,18 @@ describe('ProfilePage', () => {
       );
   }
 
+  function notificationsSwitch(host: HTMLElement): HTMLButtonElement | null {
+    return host.querySelector<HTMLButtonElement>(
+      '.profile-page__toggle [aria-label="Notifikationer"]',
+    );
+  }
+
+  function rowButton(host: HTMLElement, label: string): HTMLButtonElement | undefined {
+    return Array.from(host.querySelectorAll<HTMLButtonElement>('button[app-ui-row-button]')).find(
+      (element) => element.querySelector('.ui-row-button__label')?.textContent?.trim() === label,
+    );
+  }
+
   function rowLabels(host: HTMLElement): readonly string[] {
     return Array.from(host.querySelectorAll('button[app-ui-row-button] .ui-row-button__label')).map(
       (element) => element.textContent?.trim() ?? '',
@@ -127,6 +141,8 @@ describe('ProfilePage', () => {
       'Dagligt kaloriemål',
       'E-mail',
       'Påmindelser',
+      'Download mine data',
+      'Servicevilkår og behandling af sundheds- og profildata',
     ]);
   });
 
@@ -203,18 +219,90 @@ describe('ProfilePage', () => {
     expect(theme.isLight()).toBe(true);
   });
 
-  it('stores the notification switch on the profile', async () => {
+  it('saves the notification switch in the API and locks it meanwhile', async () => {
     const { fixture, host } = await setup();
     const profiles = TestBed.inject(UserProfileService);
-    const toggle = host.querySelector<HTMLButtonElement>(
-      '.profile-page__toggle [aria-label="Notifikationer"]',
-    );
+    const toggle = notificationsSwitch(host);
 
     expect(profiles.profile().notificationsEnabled).toBe(true);
     toggle?.click();
     await fixture.whenStable();
+    expect(toggle?.getAttribute('aria-checked')).toBe('false');
+    expect(toggle?.disabled).toBe(true);
+    const request = TestBed.inject(HttpTestingController).expectOne({
+      method: 'PUT',
+      url: NOTIFICATIONS_SETTING,
+    });
+    expect(request.request.body).toEqual({ value: 'false' });
+    expect(profiles.profile().notificationsEnabled).toBe(true);
+    request.flush({ settingKey: 'Notifications', settingValue: 'false', updatedAt: '' });
+    await fixture.whenStable();
 
     expect(profiles.profile().notificationsEnabled).toBe(false);
+    expect(toggle?.getAttribute('aria-checked')).toBe('false');
+    expect(toggle?.disabled).toBe(false);
+  });
+
+  it('flips the notification switch back and says why when saving fails', async () => {
+    const { fixture, host } = await setup();
+    const toggle = notificationsSwitch(host);
+
+    toggle?.click();
+    await fixture.whenStable();
+    TestBed.inject(HttpTestingController)
+      .expectOne(NOTIFICATIONS_SETTING)
+      .error(new ProgressEvent('error'));
+    await fixture.whenStable();
+
+    expect(toggle?.getAttribute('aria-checked')).toBe('true');
+    expect(
+      host.querySelector('.profile-page__section app-ui-form-error')?.textContent?.trim(),
+    ).toBe('Ingen forbindelse. Tjek dit internet, og prøv igen.');
+  });
+
+  it('downloads the data from "Privatliv" and disables the row meanwhile', async () => {
+    const { fixture, host } = await setup();
+    const result = new Subject<void>();
+    const download = vi
+      .spyOn(fixture.debugElement.injector.get(PrivacyService), 'downloadMyData')
+      .mockReturnValue(result);
+    const row = rowButton(host, 'Download mine data');
+
+    row?.click();
+    await fixture.whenStable();
+    expect(download).toHaveBeenCalledOnce();
+    expect(row?.disabled).toBe(true);
+
+    result.error({ messageKey: 'common.error.server', status: 500 });
+    await fixture.whenStable();
+    expect(row?.disabled).toBe(false);
+    expect(row?.parentElement?.querySelector('app-ui-form-error')?.textContent?.trim()).toBe(
+      'Serveren svarer ikke lige nu. Prøv igen om lidt.',
+    );
+  });
+
+  it('withdraws the consent from "Privatliv" after the deletion sheet explains it', async () => {
+    const { fixture, host } = await setup();
+    const session = TestBed.inject(SessionService);
+    const withdraw = vi.spyOn(session, 'withdrawConsent').mockReturnValue(EMPTY);
+    const deleteAccount = vi.spyOn(session, 'deleteAccount');
+    const row = rowButton(host, 'Servicevilkår og behandling af sundheds- og profildata');
+
+    expect(row?.textContent).toContain('Træk tilbage');
+    row?.click();
+    await fixture.whenStable();
+    const sheet = host.querySelector('app-profile-delete-account-sheet');
+    expect(sheet?.textContent).toContain('Samtykket er en forudsætning for Nutrify.');
+    expect(withdraw).not.toHaveBeenCalled();
+
+    Array.from(sheet?.querySelectorAll<HTMLButtonElement>('button') ?? [])
+      .find((element) => element.textContent?.trim() === 'Ja, slet min konto')
+      ?.click();
+    await fixture.whenStable();
+
+    expect(withdraw).toHaveBeenCalledOnce();
+    expect(deleteAccount).not.toHaveBeenCalled();
+    expect(sheet?.querySelector('app-ui-spinner')).not.toBeNull();
   });
 
   it('opens the reminders sheet from the "Påmindelser" row', async () => {

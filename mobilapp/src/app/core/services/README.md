@@ -12,9 +12,9 @@ Hver service har sin egen mappe med implementering og tests. Tilhørende adapter
 | `language/translate.ts`                        | `injectTranslate()`                                    | Giver `t(key, params)` til TypeScript. Læser det aktive sprog, så `computed()` genberegnes ved sprogskift.                                                                                                                                                                                                                                                                                         |
 | `language/translation-loader.ts`               | `JsonTranslationLoader`                                | Leverer `src/i18n/<sprog>.json` fra bundlen (dansk statisk, andre sprog som lazy chunk) – virker offline.                                                                                                                                                                                                                                                                                          |
 | `nutrition-calculator/nutrition-calculator.ts` | `NutritionCalculator`                                  | Rene beregninger: alder, BMI, aktivitetsniveau, træning, tempo, målvægt, adgangskodestyrke, portioner. Ingen kalorie- eller makroformel – målene er API'ets.                                                                                                                                                                                                                                       |
-| `auth-api/auth-api.ts`                         | `AuthApi`                                              | HTTP-klienten til kontoens livscyklus: `register`, `login` (`{ emailOrUsername, password }`), `refresh`, `logout`, `resendVerification`, `forgotPassword` (begge `{ emailOrUsername }`) og `deleteAccount` (`DELETE /me`). API-formede bodies; fejler altid med en `ApiError`.                                                                                                                     |
+| `auth-api/auth-api.ts`                         | `AuthApi`                                              | HTTP-klienten til kontoens livscyklus: `register`, `login` (`{ emailOrUsername, password }`), `refresh`, `logout`, `resendVerification`, `forgotPassword` (begge `{ emailOrUsername }`), `deleteAccount` (`DELETE /me`), `createDataExportToken` og `withdrawTermsConsent`. API-formede bodies; fejler altid med en `ApiError`.                                                                    |
 | `auth-api/auth-mapping.ts`                     | –                                                      | Rene funktioner: `toRegisterRequest()` (signup-kladden → API'ets flade `RegisterRequest`) og fejl-resolverne `registerErrorKey` (409 skelnes på `detail`) og `loginErrorKey` (401/400 → forkerte oplysninger, 429 → for mange forsøg).                                                                                                                                                             |
-| `session/session.ts`                           | `SessionService`                                       | Sessionen mod API'et: `status` (`guest` · `pending-verification` · `authenticated`), tokens, `register`, `login` (e-mail eller brugernavn; 403 → `pending-verification`), `checkVerification`, `resendVerification`, `logout`, `deleteAccount`, `accessToken()`, single-flight `refresh()` og `renewOnOpen()`. Log ud rører ikke lokale data.                                                      |
+| `session/session.ts`                           | `SessionService`                                       | Sessionen mod API'et: `status` (`guest` · `pending-verification` · `authenticated`), tokens, `register`, `login` (e-mail eller brugernavn; 403 → `pending-verification`), `checkVerification`, `resendVerification`, `logout`, `deleteAccount`, `withdrawConsent`, `accessToken()`, single-flight `refresh()` og `renewOnOpen()`. Log ud rører ikke lokale data.                                   |
 | `session-data/session-data.ts`                 | `SessionDataService` + `SESSION_DATA_STORES`           | Kalder `load()` på alle registrerede stores (profil, vægt, mad, samlinger), når sessionen bliver `authenticated`, og `reset()`, når den bliver `guest`. Se [`session-data/README.md`](session-data/README.md).                                                                                                                                                                                     |
 | `user-profile/user-profile.ts`                 | `UserProfileService`                                   | API-baseret `SessionDataStore`: profilen som ét signal plus `status`, `goal`, `targets` (API'ets kalorie- og makromål, afrundet), `calorieFloorApplied`, `displayName`, `age`, `bmi`, `activityLevel` m.fl. `load()`, `save(patch)` (routes pr. felt), `reloadGoal()`; `update`/`replace`/`resetToDefaults` kun i hukommelsen. Mapningen ligger i `profile-mapping.ts`. Se "Profil og kaloriemål". |
 | `food-log/food-log.ts`                         | `FoodLogService`                                       | API-baseret `SessionDataStore`: brugerens katalog (`foods`, `customFoods`) og madlog for 90 dage (`status`, `today`, `entries`, `totals`, `byMeal` fra `mealType`, `entriesFor`, `totalsFor`, `dailyTotals`, `allEntries`). Mutationer som `Observable`: `add`, `update` (kun mængden), `remove`, `addCustomFood`, `ensureFood`; `addLogs` lægger rækker ind. Se "Madloggen".                      |
@@ -24,7 +24,7 @@ Hver service har sin egen mappe med implementering og tests. Tilhørende adapter
 | `product-lookup/product-lookup.ts`             | `ProductLookupService`                                 | `lookup(barcode)` → `ProductLookupResult` (`found` / `not-found` / `error`). Open Food Facts API v2 via `HttpClient`, timeout `PRODUCT_LOOKUP_TIMEOUT_MS`, mapper `OpenFoodFactsProductResponse` til `ScannedProduct` (makroer pr. 100 g, `servingGrams`). Cacher fundne varer lokalt og spørger cachen først.                                                                                     |
 | `barcode-flow/barcode-flow.ts`                 | `BarcodeFlowService`                                   | Facade for stregkodescanneren i `shared/`: `scan`, `lookup` (tæller én scanning pr. opslag), `scale` (varen skaleret til en mængde i dens egen enhed). Holder domænelogikken ude af den delte komponent. Logges en scannet vare, opretter `FoodLogService.ensureFood` den.                                                                                                                         |
 | `weight-log/weight-log.ts`                     | `WeightLogService`                                     | Vejningerne fra API'et (`SessionDataStore`, `status`): nyeste først, `latest`, `weighedToday`, `add` (`POST`; 409 → `{ kind: 'exists', id }`), `update` (`PATCH`), `remove` (`DELETE`), `entriesWithin`, grafens punkter (`seriesFor`). Holder profilens vægt lig nyeste vejning og genindlæser målet efter hver ændring.                                                                          |
-| `reminders/reminders.ts`                       | `ReminderService`                                      | Brugerens påmindelser (morgenmad, frokost, aftensmad, vejning, dagens madlog): `settings`, `update`, `setMasterEnabled`, `requestPermission`, `permission`, `isDelivering`, `sync`. Planlægger lokale notifikationer via `REMINDER_NOTIFIER`.                                                                                                                                                      |
+| `reminders/reminders.ts`                       | `ReminderService`                                      | Brugerens påmindelser (morgenmad, frokost, aftensmad, vejning, dagens madlog) – gemt på enheden: `settings`, `update`, `setMasterEnabled` (gemmer hovedkontakten i API'et), `requestPermission`, `permission`, `isDelivering`, `sync`. Planlægger lokale notifikationer via `REMINDER_NOTIFIER`.                                                                                                   |
 | `reminders/reminder-notifier.ts`               | `REMINDER_NOTIFIER` + `CapacitorReminderNotifier`      | Tynd adapter om `@capacitor/local-notifications` bag interfacet `ReminderNotifier`, så `ReminderService` kan testes med en fake. Utilgængelig i browseren. Planlægger altid med `isExactNotification: false` (se "Påmindelser").                                                                                                                                                                   |
 | `keyboard/keyboard.ts`                         | `KeyboardService`                                      | Skærmtastaturets tilstand: `isOpen` og `inset`. Skriver `--keyboard-inset` og `data-keyboard="open"` på `<html>`, så app-roden krymper over tastaturet i stedet for at WebView'et skubbes, og scroller det fokuserede felt frem i sit eget scroll-område. Se "Tastaturet" i rod-README'en.                                                                                                         |
 | `keyboard/keyboard-platform.ts`                | `KEYBOARD_PLATFORM` + `CapacitorKeyboardPlatform`      | Tynd adapter om `@capacitor/keyboard` bag interfacet `KeyboardPlatform`, så `KeyboardService` kan testes med en fake. Utilgængelig i browseren. `overlaysContent()` er kun sand på iOS; på Android ændrer systemet selv WebView'ets størrelse.                                                                                                                                                     |
@@ -179,7 +179,10 @@ stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under
   mailen til den nye adresse er trykket (A5). Kalorie- og makromålet er **kun** API'ets
   (`targets`: `Math.round` af `UserGoalDto`, 0 før load). `calorieFloorApplied` er sand, når API'et
   har løftet målet til præcis `CALORIE_FLOOR_KCAL` for kønnet. API'et kender kun antal
-  træningsdage (→ de første N ugedage) og tre intensiteter (→ RPE 3/6/9).
+  træningsdage (→ de første N ugedage) og tre intensiteter (→ RPE 3/6/9). Profilbilledet: `uploadPhoto(blob)`
+  sender den bagte JPEG som multipart-feltet `file` (`avatar.jpg`) med `PUT me/profile/image` og
+  viser API'ets `profileImageUrl`; `deletePhoto()` = `DELETE me/profile/image` (404 = allerede
+  væk = succes).
 
 - **Persistens sker eksplicit** i hver mutation frem for via `effect()`, så rækkefølgen er
   deterministisk og testbar uden change detection.
@@ -188,26 +191,41 @@ stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under
 
 `SessionService.deleteAccount()` (GDPR) sletter først kontoen i API'et (`DELETE /me`). **Kun
 efter et 204** kalder den `StorageService.clearAll()` og genindlæser appen på login med
-`document.location.replace`; ved en fejl slettes intet lokalt. Genindlæsningen starter alle
+`document.location.replace`; ved en fejl slettes intet lokalt. `withdrawConsent()` (spec 9.2-3b)
+gør det samme efter `POST me/consents/Terms/withdraw`: vilkårene omfatter behandlingen af
+sundheds- og profildata, så API'et sletter og anonymiserer kontoen. Begge deler `wipeAndRestart()`. Genindlæsningen starter alle
 root-stores forfra som gæst på én gang. Sessionen ændres bevidst ikke i hukommelsen først: så
 ville stores reagere på skiftet (`SessionDataService` → `reset()`) og kunne skrive til storage
 igen, før siden er væk.
 
 ### Påmindelser
 
-`ReminderService` gemmer indstillingerne under `STORAGE_KEY.REMINDERS`. Notifikationer
-leveres kun, når brugeren er logget ind, profilens `notificationsEnabled` (hovedkontakten
-"Notifikationer") er slået til, og platformen har givet lov.
+`ReminderService` gemmer indstillingerne under `STORAGE_KEY.REMINDERS` – bevidst kun på
+enheden (plan-v2 P18, `// ponytail:`): API'ets `ReminderType` kender kun LogFood/LogWeight og
+ingen ugedag, og spec 8.0/8.1 kræver ingen synkronisering. Notifikationer leveres kun, når
+sessionen er `authenticated` (ikke mens e-mailen venter på bekræftelse), profilens
+`notificationsEnabled` (hovedkontakten "Notifikationer") er slået til, og platformen har givet lov.
+
+- **Hovedkontakten** gemmes i API'et: `setMasterEnabled(enabled)` returnerer
+  `UserProfileService.save({ notificationsEnabled })` (`PUT me/settings/Notifications`) og er
+  pessimistisk – profilen ændres, når API'et har svaret, og først da spørges der om lov (ved
+  "til"). Fejler kaldet, ændres intet, og kalderen viser fejlen.
+- **Kontoskift.** Servicens egen `effect()` følger `SessionService.status`: bliver sessionen
+  `authenticated`, læses indstillingerne igen fra storage (en anden konto har fået storage ryddet
+  af `forgetOtherAccount` og starter fra standardvalgene); bliver den `guest`, nulstilles de til
+  `DEFAULT_REMINDER_SETTINGS` **kun i hukommelsen** – storage beholder dem til kontoens næste
+  login. Servicen er bevidst ikke i `SESSION_DATA_STORES` (den oprettes efter sprogets
+  initializer).
 
 - **Idempotent planlægning.** Hver type har et fast notifikations-id (1001–1005). En sync
   annullerer alle fem og planlægger de slåede til igen, så der aldrig opstår dubletter.
   Syncs køres én ad gangen i en kø.
 - **Hvornår der synkroniseres.** Ved app-start (servicen oprettes i sprogets app initializer,
   _efter_ at det gemte sprog er indlæst, og dens `effect()` kører første gang), når
-  indstillinger, hovedkontakt, login-tilstand eller sprog ændrer sig (notifikationernes titel
+  indstillinger, hovedkontakt, sessionens status eller sprog ændrer sig (notifikationernes titel
   og tekst slås op med `injectTranslate()`, når der planlægges), efter en tilladelses-forespørgsel og når appen kommer i forgrunden igen
   (`visibilitychange`), så en tilladelse givet i telefonens indstillinger slår igennem.
-- **Log ud og slet konto.** Log ud sætter `isLoggedIn` til `false`, og effekten annullerer
+- **Log ud og slet konto.** Log ud gør sessionen til `guest`, og effekten annullerer
   alle påmindelser. Efter `deleteAccount()` er nøglen slettet, og genindlæsningen starter
   appen logget ud, så første sync annullerer alt. `SessionService` kender derfor ikke til
   påmindelser.
@@ -225,4 +243,5 @@ leveres kun, når brugeren er logget ind, profilens `notificationsEnabled` (hove
 - I browseren er `permission` `unsupported`, og pluginet kaldes slet ikke.
 
 Undtagelsen fra "persistens sker eksplicit": `ReminderService` bruger ét `effect()` til at
-**planlægge** (ikke gemme), fordi hovedkontakten og login-tilstanden ejes af andre services.
+**planlægge** og følge kontoen (det skriver aldrig til storage), fordi hovedkontakten og
+sessionen ejes af andre services.

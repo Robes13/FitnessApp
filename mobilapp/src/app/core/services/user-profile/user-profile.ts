@@ -47,12 +47,20 @@ import {
 } from '../auth-api/auth-mapping';
 import { NutritionCalculator } from '../nutrition-calculator/nutrition-calculator';
 import { SessionDataStore } from '../session-data/session-data';
-import { toGoalFields, toProfileFields, toUserProfile } from './profile-mapping';
+import {
+  UPLOADED_PHOTO_CROP,
+  toGoalFields,
+  toProfileFields,
+  toUserProfile,
+} from './profile-mapping';
 
 const NO_TARGETS: Macros = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
 const MAINTAIN_GOAL: GoalId = 'hold';
 /** A new "lose"/"gain" goal without a chosen pace gets the recommended one. */
 const DEFAULT_PACE: PaceId = 'moderat';
+/** The multipart field the API reads the photo from, and the baked photo's file name. */
+const PHOTO_UPLOAD_FIELD = 'file';
+const PHOTO_UPLOAD_FILE_NAME = 'avatar.jpg';
 
 /**
  * The signed-in user's profile from the API, as one signal plus derived values (age, BMI,
@@ -180,6 +188,36 @@ export class UserProfileService implements SessionDataStore {
     return concat(...saves).pipe(
       toArray(),
       map(() => undefined),
+    );
+  }
+
+  /**
+   * Spec 2.4: uploads the baked photo (`PUT me/profile/image`, multipart field `file`) and shows
+   * the API's URL – relative in Development (`/api/v1/dev-images/…`, served through the dev
+   * proxy). Pessimistic: the photo changes only once the API has answered.
+   */
+  uploadPhoto(blob: Blob): Observable<void> {
+    const body = new FormData();
+    body.append(PHOTO_UPLOAD_FIELD, blob, PHOTO_UPLOAD_FILE_NAME);
+    return this.http
+      .put<{ profileImageUrl: string }>(this.url(PROFILE_ENDPOINT.PROFILE_IMAGE), body)
+      .pipe(
+        map(({ profileImageUrl }) =>
+          this.update({ photo: { dataUrl: profileImageUrl, ...UPLOADED_PHOTO_CROP } }),
+        ),
+        mapApiError(),
+      );
+  }
+
+  /** Removes the photo (`DELETE me/profile/image`). 404 = it is already gone = success. */
+  deletePhoto(): Observable<void> {
+    return this.http.delete<void>(this.url(PROFILE_ENDPOINT.PROFILE_IMAGE)).pipe(
+      catchError((error: unknown) =>
+        error instanceof HttpErrorResponse && error.status === HttpStatusCode.NotFound
+          ? of(undefined)
+          : throwError(() => toApiError(error)),
+      ),
+      map(() => this.update({ photo: null })),
     );
   }
 

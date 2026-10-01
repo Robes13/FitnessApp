@@ -61,8 +61,10 @@
 }
 
 .ui-row-button {
+  /* A long label (the profile's consent row) wraps instead of pushing the value off the row. */
   &__label {
     flex: none;
+    max-width: 65%;
   }
 
   &__end {

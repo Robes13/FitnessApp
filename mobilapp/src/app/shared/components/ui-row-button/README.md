@@ -34,6 +34,8 @@ attribut på en `<button>`, så hele rækken er ét klikbart element.
 
 ## Beslutninger
 
+- Labelen fylder højst 65 % af rækken: en lang label (fx samtykkerækken på Profil) brydes over
+  flere linjer i stedet for at skubbe værdien ud af rækken. Korte labels mærker det ikke.
 - Divideren sidder **øverst** på hver række; den første række i en liste sætter
   `[divider]="false"`, så listen ikke får en streg i toppen.
 - `compact` har hover-fyld (`--color-surface-hover`) og blødere divider, som designets

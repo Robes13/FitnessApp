@@ -586,7 +586,11 @@
       "remindersOff": "Fra",
       "remindersNone": "Ingen",
       "remindersActiveOne": "{{count}} aktiv",
-      "remindersActiveMany": "{{count}} aktive"
+      "remindersActiveMany": "{{count}} aktive",
+      "privacy": "Privatliv",
+      "downloadData": "Download mine data",
+      "termsConsent": "Servicevilkår og behandling af sundheds- og profildata",
+      "consentWithdraw": "Træk tilbage"
     },
     "rows": {
       "goal": "Mål",
@@ -658,9 +662,10 @@
       "chooseAnother": "Vælg et andet foto",
       "use": "Brug billedet",
       "choose": "Vælg foto",
+      "takePhoto": "Tag et foto",
       "cropLaterHint": "Du beskærer billedet, når det er valgt.",
-      "saveError": "Billedet kunne ikke gemmes. Frigør plads og prøv igen.",
-      "readError": "Billedet kunne ikke indlæses. Prøv et andet."
+      "saveError": "Billedet kunne ikke gemmes. Prøv igen.",
+      "readError": "Billedet kan ikke bruges – vælg et andet (fx JPEG, PNG eller WebP)."
     },
     "logoutSheet": {
       "titleStart": "Log",
@@ -673,6 +678,7 @@
       "titleStart": "Slet",
       "titleAccent": "konto?",
       "body": "Din konto og alle dine data bliver slettet – også på denne enhed: profil, madlog, vejninger, egne varer og samlinger. Det kan ikke fortrydes.",
+      "withdrawBody": "Samtykket er en forudsætning for Nutrify. Trækker du det tilbage, slettes din konto og alle dine data.",
       "confirm": "Ja, slet min konto",
       "cancel": "Annuller"
     },
@@ -956,7 +962,7 @@
       "emailPlaceholder": "Din e-mail · dig@mail.dk",
       "figureLabel": "Figur med kuglepen",
       "termsAnd": "og",
-      "termsEnd": ".",
+      "termsEnd": ", herunder behandling af mine sundheds- og profildata.",
       "termsPrivacy": "privatlivspolitik",
       "termsService": "servicevilkår",
       "termsStart": "Jeg accepterer Nutrifys",

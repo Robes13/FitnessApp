@@ -95,6 +95,30 @@ describe('AuthApi', () => {
     await expect(result).resolves.toBeNull();
   });
 
+  it('asks for a data export token with POST me/data-export/token', async () => {
+    const { result, pending } = call(
+      api.createDataExportToken(),
+      'POST',
+      '/api/v1/me/data-export/token',
+    );
+    expect(pending.request.body).toBeNull();
+    pending.flush({ token: 'abc' });
+
+    await expect(result).resolves.toEqual({ token: 'abc' });
+  });
+
+  it('withdraws the terms consent with POST me/consents/Terms/withdraw', async () => {
+    const { result, pending } = call(
+      api.withdrawTermsConsent(),
+      'POST',
+      '/api/v1/me/consents/Terms/withdraw',
+    );
+    expect(pending.request.body).toBeNull();
+    pending.flush(null, { status: 204, statusText: 'No Content' });
+
+    await expect(result).resolves.toBeNull();
+  });
+
   it('fails with an ApiError the user can read', async () => {
     const { result, pending } = call(
       api.login({ emailOrUsername: 'a@b.dk', password: 'p' }),

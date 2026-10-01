@@ -18,6 +18,7 @@ import { UserProfileService } from './user-profile';
 const URL = {
   ME: '/api/v1/me',
   PROFILE: '/api/v1/me/profile',
+  PROFILE_IMAGE: '/api/v1/me/profile/image',
   GOALS: '/api/v1/me/goals',
   CURRENT_GOAL: '/api/v1/me/goals/current',
   RECALCULATE: '/api/v1/me/goals/recalculate',
@@ -393,6 +394,66 @@ describe('UserProfileService', () => {
 
     expect(service.goal()).toEqual(MAINTAIN_GOAL);
     expect(service.profile().goal).toBe('hold');
+  });
+
+  describe('photo', () => {
+    const DEV_IMAGE_URL = '/api/v1/dev-images/3f2a.jpg';
+    const UPLOADED = { dataUrl: DEV_IMAGE_URL, aspectRatio: 1, zoom: 1, x: 50, y: 50 };
+
+    it('uploads the photo as the multipart field "file" and shows the URL the API returns', async () => {
+      const service = await loaded();
+      const blob = new Blob(['jpeg'], { type: 'image/jpeg' });
+
+      const done = firstValueFrom(service.uploadPhoto(blob));
+      const request = http.expectOne({ method: 'PUT', url: URL.PROFILE_IMAGE });
+      const body = request.request.body as FormData;
+      const file = body.get('file') as File;
+      expect(file.name).toBe('avatar.jpg');
+      expect(file.type).toBe('image/jpeg');
+      expect(service.profile().photo).toBeNull();
+      request.flush({ profileImageUrl: DEV_IMAGE_URL });
+      await done;
+
+      expect(service.profile().photo).toEqual(UPLOADED);
+    });
+
+    it('keeps the photo when the upload fails', async () => {
+      const service = await loaded();
+
+      const done = firstValueFrom(service.uploadPhoto(new Blob([], { type: 'image/jpeg' })));
+      http
+        .expectOne(URL.PROFILE_IMAGE)
+        .flush({ status: 400, detail: 'Image size is outside the configured limit.' }, BAD_REQUEST);
+
+      await expect(done).rejects.toEqual({ messageKey: 'common.error.requestFailed', status: 400 });
+      expect(service.profile().photo).toBeNull();
+    });
+
+    it('removes the photo, and treats 404 (already gone) as success', async () => {
+      const service = await loaded();
+      for (const status of [204, 404]) {
+        service.update({ photo: UPLOADED });
+
+        const done = firstValueFrom(service.deletePhoto());
+        http
+          .expectOne({ method: 'DELETE', url: URL.PROFILE_IMAGE })
+          .flush(null, { status, statusText: 'x' });
+        await done;
+
+        expect(service.profile().photo).toBeNull();
+      }
+    });
+
+    it('keeps the photo when the removal fails', async () => {
+      const service = await loaded();
+      service.update({ photo: UPLOADED });
+
+      const done = firstValueFrom(service.deletePhoto());
+      http.expectOne(URL.PROFILE_IMAGE).flush(null, SERVER_ERROR);
+
+      await expect(done).rejects.toEqual({ messageKey: 'common.error.server', status: 500 });
+      expect(service.profile().photo).toEqual(UPLOADED);
+    });
   });
 
   it('update and replace change memory only', () => {
