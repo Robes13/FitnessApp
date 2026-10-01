@@ -249,7 +249,8 @@
       "insufficient": "Not enough step data yet. There must be steps on at least {{minDays}} of the last {{days}} days.",
       "noPermission": "Nutrify can't read your steps – allow access in {{source}}.",
       "failed": "We couldn't fetch your steps. We'll try again next time.",
-      "accessDenied": "Nutrify didn't get access to your steps, so they aren't fetched."
+      "accessDenied": "Nutrify didn't get access to your steps, so they aren't fetched.",
+      "loadFailed": "We couldn't load your steps setting."
     }
   },
   "auth": {
@@ -741,7 +742,9 @@
     },
     "stepSync": {
       "label": "Steps from {{source}}",
-      "hint": "Once a month Nutrify fetches your average daily steps over the last {{days}} days and updates your activity level and calorie target. Only the average is sent to Nutrify.",
+      "hint": "At most once a month Nutrify updates your activity level and calorie target from your average daily steps over the last {{days}} days. Only the average is sent to Nutrify.",
+      "retry": "Try again",
+      "allowAccess": "Allow access",
       "offSheet": {
         "title": "Turn steps",
         "titleAccent": "off?",

@@ -7,7 +7,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Kameraet bruges til at scanne stregkoder på madvarer, så du kan logge dem, og til at tage dit profilbillede.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Nutrify læser dine skridt én gang om måneden og sender kun dit gennemsnit for de seneste 30 dage, så dit aktivitetsniveau og kaloriemål passer til dig.</string>
+	<string>Nutrify læser dine skridt for de seneste 28 dage, når dit aktivitetsniveau skal opdateres (højst én gang om måneden), og sender kun gennemsnittet, så dit aktivitetsniveau og kaloriemål passer til dig.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

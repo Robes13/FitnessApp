@@ -12,6 +12,30 @@
   @if (statusLine(); as line) {
     <app-ui-form-error [tone]="line.tone" [message]="line.text" />
   }
+  @if (loadFailed()) {
+    <button
+      app-ui-button
+      type="button"
+      variant="outline"
+      size="sm"
+      class="profile-step-sync__action"
+      (click)="retryLoad()"
+    >
+      {{ 'profile.stepSync.retry' | translate }}
+    </button>
+  } @else if (accessMissing()) {
+    <button
+      app-ui-button
+      type="button"
+      variant="outline"
+      size="sm"
+      class="profile-step-sync__action"
+      [loading]="busy()"
+      (click)="toggle(true)"
+    >
+      {{ 'profile.stepSync.allowAccess' | translate }}
+    </button>
+  }
 
   <app-ui-confirm-sheet
     [open]="confirmOpen()"

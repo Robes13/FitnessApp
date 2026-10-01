@@ -51,7 +51,7 @@ import { HEALTH_PLATFORM } from './health-platform';
  *
  * A `SessionDataStore`: `load()` (app start, login) reads whether the `StepsIntegration` consent is
  * active and then syncs when one is due – at most once every 30 days per device, no scheduler. A
- * sync averages the steps of the last 30 full local days that have steps and sends it with
+ * sync averages the steps of the last 28 full local days that have steps and sends it with
  * `PUT me/profile/activity`, which recalculates the goal; the profile then shows the new steps and
  * goal. Turning it on asks the health store for access, grants the consent and syncs right away;
  * turning it off withdraws the consent, and the activity level stays as it is (edited by hand,

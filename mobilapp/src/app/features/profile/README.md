@@ -110,7 +110,8 @@ hentes med det samme; afvises adgangen, forbliver den slået fra med en besked. 
 trækker samtykket tilbage. Statuslinjen: "Hentet d. … – 7.432 skridt om dagen", "Henter dine
 skridt …", "Ikke nok skridtdata endnu …", "Nutrify har ikke adgang til dine skridt – giv adgang i …"
 eller "Vi kunne ikke hente dine skridt. Vi prøver igen næste gang." Den sidste vises også på Hjem,
-så en bruger, der ikke åbner Profil, hører om det. Selve logikken ligger i
+så en bruger, der ikke åbner Profil, hører om det. Ved 4a er der en "Giv adgang"-knap (`enable()`
+igen), og kunne samtykket ikke læses, er kontakten låst med "Prøv igen". Selve logikken ligger i
 `core/services/step-sync/` (se [`core/services/README.md`](../../core/services/README.md)).
 
 ## Slet konto

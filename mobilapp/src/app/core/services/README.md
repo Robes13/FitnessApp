@@ -229,12 +229,21 @@ sundhedsdata og sender **kun gennemsnittet** til API'et. Den er en `SessionDataS
 - **Synkroniseringen** venter først på, at profilens egen `load()` er færdig (ellers kunne dens
   ældre svar overskrive de nye skridt), og spørger så uden dialog om læseadgang
   (`hasStepsAccess`). Ingen adgang = 2.6-4a: intet hentes, `status` `no-permission`. Ellers dagssummer
-  for de seneste 30 hele lokale dage (`queryAggregated`, `bucket: 'day'`); gennemsnittet over dagene
-  med skridt. Under 7 sådanne dage = 2.6-3a (`insufficient`, intet ændres). Ellers
+  for de seneste **28** hele lokale dage (`queryAggregated`, `bucket: 'day'`); gennemsnittet over
+  dagene med skridt. Under 7 sådanne dage = 2.6-3a (`insufficient`, intet ændres). Ellers
   `PUT me/profile/activity { dailySteps: round(snit), fromHealthIntegration: true }` (begrænset til
   `STEPS_MIN`–`STEPS_MAX`), profilens `stepsPerDay` fra svaret, `reloadGoal()` (API'et har genberegnet
   målet) og **først derefter** gemmes datoen (`synced`). En fejl i pluginet eller API'et = 2.6-3b:
-  `failed`, datoen gemmes ikke, så næste app-start prøver igen. 4a og 3a gemmer heller ingen dato.
+  `failed`, datoen gemmes ikke, så næste app-start prøver igen. 4a og 3a gemmer heller ingen dato –
+  skridtene læses altså ved hver app-start, indtil en synkronisering lykkes (privatlivsteksterne
+  siger det samme).
+- **Vinduet er 28 dage** (fire hele uger, så alle ugedage tæller lige meget) og ikke 30: Health
+  Connect lader kun en app læse 30 dage tilbage fra dens første tilladelse, så den 30. dag ville være
+  halv ved synkroniseringen lige efter, at funktionen er slået til.
+- **Dagssummer:** HealthKits dagsspande er kalenderdage, Health Connects er faste 24 timer fra
+  vinduets start. Over sommertidsskiftet i oktober ender vinduet derfor i en ekstra spand på én time.
+  `totalsByLocalDay` i `health-platform.ts` lægger spandene sammen pr. lokal dato for spandens
+  midtpunkt, så den time hører til den sidste dag og ikke tæller som en dag for sig.
 - **`enable()`**: `requestStepsAccess()` (systemets dialog) → `POST me/consents { consentType:
 "StepsIntegration", documentVersion: "1" }` (409 = allerede aktivt = fint) → synkronisering med det
   samme. Afvist adgang giver `false`, og intet ændres.
@@ -243,6 +252,15 @@ sundhedsdata og sender **kun gennemsnittet** til API'et. Den er en `SessionDataS
   manuelt (2.5).
 - **iOS** fortæller aldrig, om læsning er nægtet (privatliv): efter dialogen svarer HealthKit
   "givet", og en nægtet læsning giver bare ingen data – altså `insufficient`, ikke `no-permission`.
+  `no-permission` kommer på iOS kun, når appen aldrig har vist HealthKits ark på telefonen, mens
+  samtykket er aktivt (geninstalleret app, ny telefon, eller slået til på Android). Så står Nutrify
+  ikke under Sundhed → Dataadgang endnu, og rækken på Profil har derfor knappen "Giv adgang", der
+  kalder `enable()` (arket → `POST me/consents`, 409 = fint → synkronisering). Den automatiske
+  synkronisering spørger aldrig selv – på Android ville det åbne Health Connects dialog ved hver
+  start.
+- **`load()` fejler** (samtykket kunne ikke læses, f.eks. offline): `status` `error`, `enabled`
+  `false`. Rækken på Profil siger det, låser kontakten (til eller fra er ukendt) og har "Prøv igen"
+  (`load()` igen).
 
 ### Påmindelser
 

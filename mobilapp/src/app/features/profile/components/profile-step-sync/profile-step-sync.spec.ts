@@ -22,6 +22,7 @@ const LABEL = 'Skridt fra Health Connect';
 class FakeHealthPlatform implements HealthPlatform {
   available = true;
   access = true;
+  requests = 0;
   totals: readonly number[] | Error = [6000, 8000, 7000, 9027, 5000, 8000, 9000];
 
   source(): HealthSource {
@@ -31,6 +32,7 @@ class FakeHealthPlatform implements HealthPlatform {
     return this.available;
   }
   async requestStepsAccess(): Promise<boolean> {
+    this.requests += 1;
     return this.access;
   }
   async hasStepsAccess(): Promise<boolean> {
@@ -76,8 +78,11 @@ describe('ProfileStepSync', () => {
     await fixture.whenStable();
   }
 
-  /** Renders the row after the store's `load()`; `consents` is what `GET me/consents` answers. */
-  async function setup(consents: UserConsentDto[] = []): Promise<void> {
+  /**
+   * Renders the row after the store's `load()`; `consents` is what `GET me/consents` answers,
+   * `null` a 500.
+   */
+  async function setup(consents: UserConsentDto[] | null = []): Promise<void> {
     TestBed.configureTestingModule({
       providers: [
         ...provideComponentTestEnvironment(),
@@ -91,12 +96,19 @@ describe('ProfileStepSync', () => {
     const loaded = firstValueFrom(TestBed.inject(StepSyncService).load());
     await settle();
     if (platform.available) {
-      http
-        .expectOne(`${CONSENTS}?limit=50`)
-        .flush({ items: consents, nextCursor: null, hasMore: false });
+      answerConsents(consents);
     }
     await loaded;
     await settle();
+  }
+
+  function answerConsents(consents: UserConsentDto[] | null): void {
+    const read = http.expectOne(`${CONSENTS}?limit=50`);
+    if (consents === null) {
+      read.flush(null, { status: 500, statusText: 'Server Error' });
+    } else {
+      read.flush({ items: consents, nextCursor: null, hasMore: false });
+    }
   }
 
   function toggle(): HTMLButtonElement | null {
@@ -137,7 +149,7 @@ describe('ProfileStepSync', () => {
     expect(host.querySelector('.profile-step-sync__label')?.textContent?.trim()).toBe(LABEL);
     expect(toggle()?.getAttribute('aria-checked')).toBe('true');
     expect(host.querySelector('.profile-step-sync__hint')?.textContent).toContain(
-      'de seneste 30 dage',
+      'de seneste 28 dage',
     );
     expect(statusText()).toBe('Hentet d. 20. sep – 7.432 skridt om dagen');
   });
@@ -232,7 +244,7 @@ describe('ProfileStepSync', () => {
     await setup([stepsConsent()]);
 
     expect(statusText()).toBe(
-      'Ikke nok skridtdata endnu. Der skal være skridt fra mindst 7 af de seneste 30 dage.',
+      'Ikke nok skridtdata endnu. Der skal være skridt fra mindst 7 af de seneste 28 dage.',
     );
   });
 
@@ -243,5 +255,43 @@ describe('ProfileStepSync', () => {
     expect(statusText()).toBe(
       'Nutrify har ikke adgang til dine skridt – giv adgang i Health Connect.',
     );
+  });
+
+  it('2.6-4a: "Giv adgang" asks for access again and syncs', async () => {
+    platform.access = false;
+    await setup([stepsConsent()]);
+
+    platform.access = true;
+    buttonByText('Giv adgang')?.click();
+    await settle();
+    http
+      .expectOne({ method: 'POST', url: CONSENTS })
+      .flush(
+        { title: 'Conflict', status: 409, detail: 'This consent is already active.' },
+        { status: 409, statusText: 'Conflict' },
+      );
+    await settle();
+    answerSync();
+    await settle();
+
+    expect(platform.requests).toBe(1);
+    expect(statusText()).toBe('Hentet d. 21. sep – 7.432 skridt om dagen');
+    expect(buttonByText('Giv adgang')).toBeUndefined();
+  });
+
+  it('a failed consent read says so, locks the switch, and "Prøv igen" reads it again', async () => {
+    await setup(null);
+
+    expect(statusText()).toBe('Vi kunne ikke hente din indstilling for skridt.');
+    expect(toggle()?.disabled).toBe(true);
+
+    buttonByText('Prøv igen')?.click();
+    await settle();
+    answerConsents([]);
+    await settle();
+
+    expect(statusText()).toBeUndefined();
+    expect(toggle()?.disabled).toBe(false);
+    expect(buttonByText('Prøv igen')).toBeUndefined();
   });
 });

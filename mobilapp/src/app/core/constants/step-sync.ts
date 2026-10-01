@@ -19,8 +19,12 @@ export const CONSENT_PAGE_LIMIT = 50;
 
 /** Spec 2.6 "once a month": a sync is due this many days after the last successful one. */
 export const STEP_SYNC_INTERVAL_DAYS = 30;
-/** The average covers this many full days before today. */
-export const STEP_SYNC_WINDOW_DAYS = 30;
+/**
+ * The average covers this many full days before today: four whole weeks, so every weekday counts
+ * the same. Under 30 on purpose – Health Connect only lets an app read 30 days back from its first
+ * permission grant, so a 30th day would be cut short on the sync right after turning it on.
+ */
+export const STEP_SYNC_WINDOW_DAYS = 28;
 /** Fewer days with steps than this is too little to say anything (no update). */
 export const STEP_SYNC_MIN_DAYS = 7;
 
@@ -43,4 +47,6 @@ export const STEP_SYNC_TEXT_KEY = {
   FAILED: 'core.stepSync.failed',
   /** `enable()` answered `false`: the user didn't allow reading steps. */
   ACCESS_DENIED: 'core.stepSync.accessDenied',
+  /** `status` `error`: the consent couldn't be read, so whether it is on is unknown. */
+  LOAD_FAILED: 'core.stepSync.loadFailed',
 } as const;

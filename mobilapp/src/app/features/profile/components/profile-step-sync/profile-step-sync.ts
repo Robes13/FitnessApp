@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
   HEALTH_SOURCE_NAME_KEY,
   STEP_SYNC_MIN_DAYS,
@@ -19,6 +20,7 @@ import { injectTranslate } from '../../../../core/services/language/translate';
 import { StepSyncService } from '../../../../core/services/step-sync/step-sync';
 import { toApiError } from '../../../../core/utils/api';
 import { formatDayMonth, formatInteger } from '../../../../core/utils/date-format';
+import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiConfirmSheet } from '../../../../shared/components/ui-confirm-sheet/ui-confirm-sheet';
 import {
   FormErrorTone,
@@ -43,8 +45,8 @@ const STATUS_LINE: Partial<Record<StepSyncStatus, { key: string; tone: FormError
   'no-permission': { key: STEP_SYNC_TEXT_KEY.NO_PERMISSION, tone: 'negative' },
   failed: { key: STEP_SYNC_TEXT_KEY.FAILED, tone: 'negative' },
 };
-/** The switch waits while the store loads or syncs. */
-const BUSY_STATUSES: readonly StepSyncStatus[] = ['loading', 'syncing'];
+/** The switch waits while the store loads or syncs, and while it is unknown whether it is on. */
+const BUSY_STATUSES: readonly StepSyncStatus[] = ['loading', 'syncing', 'error'];
 
 /**
  * Spec 2.6 and 9.2-3a on Profile → Privatliv: "Skridt fra Apple Sundhed" (iOS) / "… Health
@@ -54,10 +56,15 @@ const BUSY_STATUSES: readonly StepSyncStatus[] = ['loading', 'syncing'];
  * On asks for access and syncs right away; off asks first (`app-ui-confirm-sheet`), because the
  * activity level then has to be updated by hand. Pessimistic: the switch shows the value being
  * saved and is locked meanwhile; a failure flips it back and says why below it.
+ *
+ * Under the status line: "Prøv igen" when the consent couldn't be read (the switch is locked,
+ * since on or off is unknown), and "Giv adgang" when it is on but the health store denies reading
+ * (2.6-4a) – iOS only lists an app under Sundhed → Dataadgang once it has asked, which a reinstall
+ * or a new phone hasn't.
  */
 @Component({
   selector: 'app-profile-step-sync',
-  imports: [UiConfirmSheet, UiFormError, UiSwitch],
+  imports: [TranslatePipe, UiButton, UiConfirmSheet, UiFormError, UiSwitch],
   templateUrl: './profile-step-sync.html',
   styleUrl: './profile-step-sync.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -93,11 +100,18 @@ export class ProfileStepSync {
   protected readonly busy = computed(
     () => this.saving() !== null || BUSY_STATUSES.includes(this.stepSync.status()),
   );
+  protected readonly loadFailed = computed(() => this.stepSync.status() === 'error');
+  protected readonly accessMissing = computed(
+    () => this.stepSync.enabled() && this.stepSync.status() === 'no-permission',
+  );
   private readonly errorKey = signal<string | null>(null);
   protected readonly statusLine: Signal<StatusLine | null> = computed(() => {
     const errorKey = this.errorKey();
     if (errorKey !== null) {
       return { text: this.t(errorKey, this.params()), tone: 'negative' };
+    }
+    if (this.loadFailed()) {
+      return { text: this.t(STEP_SYNC_TEXT_KEY.LOAD_FAILED), tone: 'negative' };
     }
     if (!this.stepSync.enabled()) {
       return null;
@@ -143,6 +157,14 @@ export class ProfileStepSync {
           this.errorKey.set(toApiError(error).messageKey);
         },
       });
+  }
+
+  /**
+   * Reads the consent again. Not cancelled with the row: `load()` never errors and completes, and
+   * cut off midway the store would stay `loading` – the switch locked.
+   */
+  protected retryLoad(): void {
+    this.stepSync.load().subscribe();
   }
 
   protected cancelOff(): void {

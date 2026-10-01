@@ -260,9 +260,10 @@ npm run sync   # ng build + cap sync
 ## Skridt fra Apple Sundhed / Health Connect
 
 Spec 2.6 og 9.2-3a: Profil → Privatliv har på en telefon rækken "Skridt fra Apple Sundhed" (iOS) /
-"Skridt fra Health Connect" (Android). Slået til læser appen én gang om måneden skridtene for de
-seneste 30 hele dage og sender kun gennemsnittet (`PUT me/profile/activity`); slået fra trækkes
-samtykket tilbage. Logikken: `core/services/step-sync/` (se `src/app/core/services/README.md`).
+"Skridt fra Health Connect" (Android). Slået til læser appen skridtene for de seneste 28 hele dage
+og sender kun gennemsnittet (`PUT me/profile/activity`) – med det samme og derefter ved app-start,
+når der er gået 30 dage siden sidste vellykkede opdatering (indtil da prøves der ved hver start); slået
+fra trækkes samtykket tilbage. Logikken: `core/services/step-sync/` (se `src/app/core/services/README.md`).
 Pluginet er `@capgo/capacitor-health` (v8, HealthKit + Health Connect, SPM); kun
 `core/services/step-sync/health-platform.ts` kalder det. Efter `npm install`: `npm run sync`.
 
@@ -291,14 +292,15 @@ Pluginet er `@capgo/capacitor-health` (v8, HealthKit + Health Connect, SPM); kun
     `NSHealthUpdateUsageDescription`, og pluginet virker uden.
   - HealthKit siger aldrig, om læsning er nægtet: efter dialogen er svaret altid "givet", og en
     nægtet læsning giver bare ingen data. Appen viser da "Ikke nok skridtdata endnu", ikke "ingen
-    adgang".
+    adgang". "Ingen adgang" kommer kun, når samtykket er aktivt, men appen aldrig har vist arket på
+    telefonen (geninstalleret, ny telefon); knappen "Giv adgang" under rækken viser det.
 - **Browser:** rækken vises ikke, og intet hentes.
 
 ### Testskridt og kørsel på emulatorerne
 
 Brug en engangskonto (opret i appen, eller med curl: `POST /api/v1/auth/register` → linket fra
 outboxen `docs/api-integration/docker/outbox/*.txt` med `curl` → log ind i appen). Kun hele dage
-før i dag tæller, og der skal være skridt på mindst 7 af de seneste 30 dage.
+før i dag tæller, og der skal være skridt på mindst 7 af de seneste 28 dage.
 
 **Android** (debug-build på `emulator-5554`, `adb` i `~/Library/Android/sdk/platform-tools`):
 

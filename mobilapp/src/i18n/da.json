@@ -249,7 +249,8 @@
       "insufficient": "Ikke nok skridtdata endnu. Der skal være skridt fra mindst {{minDays}} af de seneste {{days}} dage.",
       "noPermission": "Nutrify har ikke adgang til dine skridt – giv adgang i {{source}}.",
       "failed": "Vi kunne ikke hente dine skridt. Vi prøver igen næste gang.",
-      "accessDenied": "Nutrify fik ikke adgang til dine skridt, så de hentes ikke."
+      "accessDenied": "Nutrify fik ikke adgang til dine skridt, så de hentes ikke.",
+      "loadFailed": "Vi kunne ikke hente din indstilling for skridt."
     }
   },
   "auth": {
@@ -741,7 +742,9 @@
     },
     "stepSync": {
       "label": "Skridt fra {{source}}",
-      "hint": "Én gang om måneden henter Nutrify dit gennemsnitlige antal skridt de seneste {{days}} dage og opdaterer dit aktivitetsniveau og kaloriemål. Kun gennemsnittet sendes til Nutrify.",
+      "hint": "Højst én gang om måneden opdaterer Nutrify dit aktivitetsniveau og kaloriemål ud fra dit gennemsnitlige antal skridt de seneste {{days}} dage. Kun gennemsnittet sendes til Nutrify.",
+      "retry": "Prøv igen",
+      "allowAccess": "Giv adgang",
       "offSheet": {
         "title": "Slå skridt",
         "titleAccent": "fra?",

@@ -30,7 +30,7 @@ const WEEK_OF_STEPS: readonly number[] = [6000, 8000, 7000, 9027, 5000, 8000, 90
 class FakeHealthPlatform implements HealthPlatform {
   available = true;
   access = true;
-  accessAfterRequest = true;
+  accessAfterRequest: boolean | Error = true;
   totals: readonly number[] | Error = WEEK_OF_STEPS;
   requests = 0;
   readonly ranges: { from: Date; to: Date }[] = [];
@@ -43,6 +43,9 @@ class FakeHealthPlatform implements HealthPlatform {
   }
   async requestStepsAccess(): Promise<boolean> {
     this.requests += 1;
+    if (this.accessAfterRequest instanceof Error) {
+      throw this.accessAfterRequest;
+    }
     return this.accessAfterRequest;
   }
   async hasStepsAccess(): Promise<boolean> {
@@ -173,7 +176,7 @@ describe('StepSyncService', () => {
     expect(platform.ranges).toHaveLength(0);
   });
 
-  it('sends the rounded average of the last 30 full days and shows the new steps and goal', async () => {
+  it('sends the rounded average of the last 28 full days and shows the new steps and goal', async () => {
     const { service, http } = setup();
     const profiles = TestBed.inject(UserProfileService);
 
@@ -184,7 +187,7 @@ describe('StepSyncService', () => {
     expect(put.request.method).toBe('PUT');
     expect(put.request.body).toEqual({ dailySteps: 7432, fromHealthIntegration: true });
     const today = startOfDay(TEST_NOW);
-    expect(platform.ranges).toEqual([{ from: addDays(today, -30), to: today }]);
+    expect(platform.ranges).toEqual([{ from: addDays(today, -28), to: today }]);
     expect(profiles.profile().stepsPerDay).toBe(7432);
     expect(profiles.goal()).toEqual(TEST_GOAL);
     expect(service.status()).toBe('synced');
@@ -201,6 +204,17 @@ describe('StepSyncService', () => {
     await done;
 
     expect(put.request.body.dailySteps).toBe(7432);
+  });
+
+  it('sends at most STEPS_MAX', async () => {
+    platform.totals = Array.from({ length: 7 }, () => 60000);
+    const { service, http } = setup();
+
+    const { done } = await load(service);
+    const put = answerSync(http);
+    await done;
+
+    expect(put.request.body.dailySteps).toBe(50000);
   });
 
   it('is not due within 30 days of the last sync', async () => {
@@ -338,6 +352,15 @@ describe('StepSyncService', () => {
 
   it('enable: denied access grants nothing and stays off', async () => {
     platform.accessAfterRequest = false;
+    const { service } = setup();
+
+    await expect(firstValueFrom(service.enable())).resolves.toBe(false);
+
+    expect(service.enabled()).toBe(false);
+  });
+
+  it('enable: a failing permission dialog counts as denied access', async () => {
+    platform.accessAfterRequest = new Error('Background activity launch blocked');
     const { service } = setup();
 
     await expect(firstValueFrom(service.enable())).resolves.toBe(false);
