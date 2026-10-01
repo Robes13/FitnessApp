@@ -643,6 +643,7 @@
       "goalWeightBelowCurrent": "Goal weight must be below your current weight ({{currentKg}} kg).",
       "goalWeightAboveCurrent": "Goal weight must be above your current weight ({{currentKg}} kg).",
       "goalWeightRange": "Choose a goal weight between {{min}} and {{max}} kg.",
+      "numberRange": "Choose a value between {{min}} and {{max}} {{unit}}.",
       "saveFailed": "The change couldn't be saved. Try again."
     },
     "editSheet": {
