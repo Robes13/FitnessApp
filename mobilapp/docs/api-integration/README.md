@@ -122,11 +122,12 @@ Fra plan-v2 §7. Appen er bygget med standardvalget i parentes.
 
 ## Før produktion
 
-- **Hemmeligheder:** `Jwt:SigningKey`, Azure-SAS'en og (fra `8b96be5` på `main`) en
-  Firebase-servicekontos **private nøgle** under `Firebase` ligger committet i `API/appsettings.json`.
-  Rotér alle tre, flyt dem til miljøvariabler/`appsettings.Local.json`, og stop med at sende
-  container-SAS'en i `profileImageUrl` (SAS pr. blob med kun læseret, eller billedet via API'et).
-  (Firebase-blokken bruges ikke af koden, som læser `Firebase:ProjectId`.)
+- **Hemmeligheder:** `Jwt:SigningKey` og Azure-SAS'en ligger committet i `API/appsettings.json`.
+  En Firebase-servicekontos **private nøgle** lå der også (fra `8b96be5` på `main`); den er fjernet fra
+  filen (koden læser kun `Firebase:ProjectId`), men findes stadig i historikken og på `origin/main` og
+  skal derfor **roteres**. Rotér alle tre, hold dem i miljøvariabler/`appsettings.Local.json`, og stop
+  med at sende container-SAS'en i `profileImageUrl` (SAS pr. blob med kun læseret, eller billedet via
+  API'et).
 - **`App__PublicBaseUrl`** skal sættes til API'ets offentlige HTTPS-URL. Links i mails bygges herfra,
   og API'et starter ikke uden en absolut http(s)-URL uden for Development.
 - **SMTP:** uden for Development sendes mails via Resend (`API/EMAIL_SETUP.md`): `Smtp:Password` i
