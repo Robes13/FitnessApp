@@ -127,6 +127,10 @@ nøgle og logges med `console.error`, så den ikke forsvinder.
 `clamp(value, min, max)` klemmer et tal fast til intervallet `[min, max]`.
 `roundTo(value, decimals)` runder til et antal decimaler og normaliserer `-0` til `0`, så
 afrundede værdier kan sammenlignes strengt.
+`parseDecimal(text)` læser et indtastet tal med komma eller punktum (`'45,5'` → 45,5) og giver
+`null` for et tomt felt eller tekst, der ikke er et tal. Talfelterne er `type="text"` med
+`inputmode="decimal"`, fordi Androids WebView smider kommaet væk i et `type="number"`-felt
+(`'45,5'` blev til 455).
 
 Begge bruges overalt, hvor der ellers ville stå `Math.min(max, Math.max(min, x))` eller
 `Math.round(x * 10) / 10` lokalt — geometri-modulerne, opret-flowets trin, Vægt, Hjem og

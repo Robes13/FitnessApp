@@ -117,6 +117,16 @@ describe('UiTextInput', () => {
     expect(host.control.value).toBeNull();
   });
 
+  it('reads a decimal comma in number fields, which are text fields with a decimal keypad', async () => {
+    const { host, field } = await setup('number');
+
+    typeInto(field, '45,5');
+
+    expect(host.control.value).toBe(45.5);
+    expect(field.type).toBe('text');
+    expect(field.getAttribute('inputmode')).toBe('decimal');
+  });
+
   it('keeps password text verbatim but lets plain text be auto-capitalized', async () => {
     const { fixture, host, field } = await setup('password');
 
