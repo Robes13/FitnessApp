@@ -30,3 +30,5 @@ Signup-trin 2 (`birthday`, designets `sAlder`): fødselsdatoen.
 - "I dag" kommer fra `NOW`-tokenet, så alderen kan fryses i tests.
 - Dagcellerne er 28 px høje (`--size-control-3xs`); designet bruger 30 px, som der
   ikke findes en token til.
+- Årsfeltet er 16 px (`--font-size-xl`), ikke designets 15 px: under 16 px zoomer iOS
+  WebView'et ind ved fokus, og zoomet bliver stående resten af oprettelsen.
