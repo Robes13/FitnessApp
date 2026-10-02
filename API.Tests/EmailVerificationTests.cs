@@ -83,7 +83,7 @@ public sealed partial class ApiWorkflowTests
         var sender = new CapturingSender();
         var auth = CreateAuth(database.Context, sender);
         await auth.ResendVerificationAsync(new(user.Email), default);
-        await auth.ResendVerificationAsync(new(user.Username), default);
+        await auth.ResendVerificationAsync(new(user.Email), default);
         var fresh = TokenFrom(Assert.Single(sender.Sent).Body);
         Assert.NotEqual(raw, fresh);
         await Assert.ThrowsAsync<BusinessValidationException>(() => auth.VerifyEmailAsync(new(raw), default));
