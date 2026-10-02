@@ -60,6 +60,7 @@ midlertidig løsning, men den er skrøbelig eller giver dårlig UX · 🟡 mindr
 - 🟡 **Log ud kræver et gyldigt access-token og rydder ikke push-enheden.** `POST /auth/logout` er `[Authorize]`, og `UserDevice` slettes ikke. Forslag: `[AllowAnonymous]` logout, der kun validerer `refreshToken`, med et valgfrit `deviceToken`.
 - ⏸️ **Log ud markerer refresh-tokenet `Revoked`** i stedet for at slette det (spec 1.3; funktionelt det samme, P22).
 - ⏸️ **Ugyldigt verify-link sender ikke automatisk en ny mail** (spec 1.1-4a); siden beder brugeren trykke "Send mail igen" i appen (A2).
+- ⏸️ **"Det gamle link bliver ugyldigt" (spec 1.1-3a) gælder først efter 60 s.** Et resend inden for et minut efter det seneste link sender intet, og det gamle link virker stadig (Roberts cooldown; endpointet er anonymt). Appens hjælpetekst beder derfor brugeren bruge linket i den nyeste mail og nævner grænsen.
 - ⏸️ **`HEAD` på de API-hostede HTML-sider giver 405** (kun GET), så en HEAD-request aldrig forbruger et verify-token. Tjek headers med GET (`curl -s -D - -o /dev/null <link>`), som forbruger tokenet.
 
 ## Profil & mål

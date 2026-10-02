@@ -18,8 +18,9 @@ appen (spec 1.1). Arket kan:
   igen, og pollingen fortsætter. Virker adgangskoden ikke mere (401), sender sessionen brugeren til
   login. `DOCUMENT` injiceres (ikke det globale `document`), så specs kan styre det.
 - **Send mail igen** – `SessionService.resendVerification()` med den identifikator, brugeren
-  oprettede sig eller loggede ind med; hjælpeteksten skifter til "Ny mail sendt – det gamle link
-  virker ikke længere." (API'et ugyldiggør ældre links). API'ets side for et ugyldigt link citerer
+  oprettede sig eller loggede ind med; hjælpeteksten skifter til "Tjek din indbakke, og brug linket i
+  den nyeste mail. Der sendes højst én ny mail i minuttet." (API'et ugyldiggør ældre links, når det
+  sender en ny mail – højst én mail i minuttet). API'ets side for et ugyldigt link citerer
   præcis knapteksten "Send mail igen".
 - **Til login** – stopper pollingen (et tjek undervejs annulleres, så svaret ikke genopliver
   sessionen), og `SessionService.logout()` afslutter den ventende session og går til login.

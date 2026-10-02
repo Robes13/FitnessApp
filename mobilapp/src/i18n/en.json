@@ -490,7 +490,7 @@
       "emailFallback": "your email",
       "resend": "Send e-mail again",
       "resendHint": "Nothing received?",
-      "resendHintSent": "New e-mail sent – the old link no longer works.",
+      "resendHintSent": "Check your inbox and use the link in the newest e-mail. At most one new e-mail is sent a minute.",
       "titleAccent": "email",
       "titleStart": "Check your",
       "backToLogin": "To login"

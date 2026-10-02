@@ -115,7 +115,7 @@ export class VerifyEmailSheet {
       .subscribe();
   }
 
-  /** A new link – the API invalidates the earlier ones. */
+  /** A new link – the API invalidates the earlier ones, but sends at most one mail a minute. */
   protected resend(): void {
     this.run(this.session.resendVerification(), this.resending, () => this.resent.set(true));
   }

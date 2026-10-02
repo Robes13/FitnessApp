@@ -177,7 +177,7 @@ describe('VerifyEmailSheet', () => {
     fixture.detectChanges();
 
     expect(normalize(panel()?.querySelector('.verify-email-sheet__hint')?.textContent)).toBe(
-      'Ny mail sendt – det gamle link virker ikke længere.',
+      'Tjek din indbakke, og brug linket i den nyeste mail. Der sendes højst én ny mail i minuttet.',
     );
   });
 

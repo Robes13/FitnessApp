@@ -490,7 +490,7 @@
       "emailFallback": "din mail",
       "resend": "Send mail igen",
       "resendHint": "Ikke modtaget noget?",
-      "resendHintSent": "Ny mail sendt – det gamle link virker ikke længere.",
+      "resendHintSent": "Tjek din indbakke, og brug linket i den nyeste mail. Der sendes højst én ny mail i minuttet.",
       "titleAccent": "mail",
       "titleStart": "Tjek din",
       "backToLogin": "Til login"
