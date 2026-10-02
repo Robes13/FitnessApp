@@ -111,8 +111,10 @@ trækker samtykket tilbage. Statuslinjen: "Hentet d. … – 7.432 skridt om dag
 skridt …", "Ikke nok skridtdata endnu …", "Nutrify har ikke adgang til dine skridt – giv adgang i …"
 eller "Vi kunne ikke hente dine skridt. Vi prøver igen næste gang." Den sidste vises også på Hjem,
 så en bruger, der ikke åbner Profil, hører om det. Ved 4a er der en "Giv adgang"-knap (`enable()`
-igen), og kunne samtykket ikke læses, er kontakten låst med "Prøv igen". Selve logikken ligger i
-`core/services/step-sync/` (se [`core/services/README.md`](../../core/services/README.md)).
+igen) – på Android "Åbn Health Connect", når en anmodning er afvist – og tilbage i appen indlæser
+rækken igen. På iOS siger "Nutrify kan ikke se nogen skridt …", hvor adgangen gives (HealthKit
+skjuler en nægtet læsning). Kunne samtykket ikke læses, er kontakten låst med "Prøv igen". Selve
+logikken ligger i `core/services/step-sync/` (se [`core/services/README.md`](../../core/services/README.md)).
 
 ## Slet konto
 

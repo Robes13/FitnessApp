@@ -101,6 +101,7 @@ describe('HomePage', () => {
       dailyStepTotals: async () => {
         throw new Error('HealthKit is unavailable');
       },
+      openSettings: async () => undefined,
     };
     const { settle, page } = await setup([
       { provide: HEALTH_PLATFORM, useValue: failingHealthStore },

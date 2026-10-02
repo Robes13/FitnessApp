@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DOCUMENT,
   DestroyRef,
   Signal,
   computed,
@@ -9,6 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
+import { filter, fromEvent } from 'rxjs';
 import {
   HEALTH_SOURCE_NAME_KEY,
   STEP_SYNC_MIN_DAYS,
@@ -31,6 +33,7 @@ import { UiSwitch } from '../../../../shared/components/ui-switch/ui-switch';
 const TEXT_KEY = {
   LABEL: 'profile.stepSync.label',
   HINT: 'profile.stepSync.hint',
+  OPEN_SETTINGS: 'profile.stepSync.openSettings',
 } as const;
 
 interface StatusLine {
@@ -42,11 +45,14 @@ interface StatusLine {
 const STATUS_LINE: Partial<Record<StepSyncStatus, { key: string; tone: FormErrorTone }>> = {
   syncing: { key: STEP_SYNC_TEXT_KEY.SYNCING, tone: 'accent' },
   insufficient: { key: STEP_SYNC_TEXT_KEY.INSUFFICIENT, tone: 'accent' },
+  'no-steps': { key: STEP_SYNC_TEXT_KEY.NO_STEPS, tone: 'negative' },
   'no-permission': { key: STEP_SYNC_TEXT_KEY.NO_PERMISSION, tone: 'negative' },
   failed: { key: STEP_SYNC_TEXT_KEY.FAILED, tone: 'negative' },
 };
 /** The switch waits while the store loads or syncs, and while it is unknown whether it is on. */
 const BUSY_STATUSES: readonly StepSyncStatus[] = ['loading', 'syncing', 'error'];
+/** The outcomes that allowing access outside the app (2.6-4a) can change. */
+const ACCESS_STATUSES: readonly StepSyncStatus[] = ['no-permission', 'no-steps'];
 
 /**
  * Spec 2.6 and 9.2-3a on Profile → Privatliv: "Skridt fra Apple Sundhed" (iOS) / "… Health
@@ -60,7 +66,9 @@ const BUSY_STATUSES: readonly StepSyncStatus[] = ['loading', 'syncing', 'error']
  * Under the status line: "Prøv igen" when the consent couldn't be read (the switch is locked,
  * since on or off is unknown), and "Giv adgang" when it is on but the health store denies reading
  * (2.6-4a) – iOS only lists an app under Sundhed → Dataadgang once it has asked, which a reinstall
- * or a new phone hasn't.
+ * or a new phone hasn't. On Android a denied request offers "Åbn Health Connect" instead: after
+ * two denials Health Connect no longer shows its dialog. Access allowed there (or in iOS's
+ * Settings) counts as soon as the app is visible again – the row loads the store once more.
  */
 @Component({
   selector: 'app-profile-step-sync',
@@ -73,6 +81,7 @@ const BUSY_STATUSES: readonly StepSyncStatus[] = ['loading', 'syncing', 'error']
 export class ProfileStepSync {
   private readonly stepSync = inject(StepSyncService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly document = inject(DOCUMENT);
   private readonly t = injectTranslate();
 
   protected readonly available = this.stepSync.available;
@@ -88,6 +97,9 @@ export class ProfileStepSync {
   protected readonly label = computed(() => this.t(TEXT_KEY.LABEL, this.params()));
   protected readonly hint = computed(() => this.t(TEXT_KEY.HINT, this.params()));
   protected readonly offSheetParams = computed(() => ({ source: this.params().source }));
+  protected readonly openSettingsLabel = computed(() =>
+    this.t(TEXT_KEY.OPEN_SETTINGS, this.params()),
+  );
 
   /** The value `enable()` / `disable()` is saving, else `null`. */
   private readonly saving = signal<boolean | null>(null);
@@ -105,6 +117,15 @@ export class ProfileStepSync {
     () => this.stepSync.enabled() && this.stepSync.status() === 'no-permission',
   );
   private readonly errorKey = signal<string | null>(null);
+  /** Android, after a denied request: Health Connect may no longer show its dialog. */
+  protected readonly openSettingsShown = computed(
+    () => this.stepSync.canOpenSettings && this.errorKey() === STEP_SYNC_TEXT_KEY.ACCESS_DENIED,
+  );
+  /** On, but the health store gives no steps – access may be allowed outside the app meanwhile. */
+  private readonly awaitingAccess = computed(
+    () =>
+      this.stepSync.enabled() && ACCESS_STATUSES.includes(this.stepSync.status()) && !this.busy(),
+  );
   protected readonly statusLine: Signal<StatusLine | null> = computed(() => {
     const errorKey = this.errorKey();
     if (errorKey !== null) {
@@ -131,6 +152,19 @@ export class ProfileStepSync {
           tone: 'positive',
         };
   });
+
+  constructor() {
+    // Back from Health Connect or Settings: the store's status replaces the last attempt's error.
+    fromEvent(this.document, 'visibilitychange')
+      .pipe(
+        filter(() => this.document.visibilityState === 'visible' && this.awaitingAccess()),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        this.errorKey.set(null);
+        this.retryLoad();
+      });
+  }
 
   protected toggle(on: boolean): void {
     if (this.busy()) {
@@ -160,11 +194,17 @@ export class ProfileStepSync {
   }
 
   /**
-   * Reads the consent again. Not cancelled with the row: `load()` never errors and completes, and
-   * cut off midway the store would stay `loading` – the switch locked.
+   * Reads the consent again (and syncs, when due). Not cancelled with the row: `load()` never
+   * errors and completes, and cut off midway the store would stay `loading` – the switch locked.
    */
   protected retryLoad(): void {
     this.stepSync.load().subscribe();
+  }
+
+  /** Health Connect's settings; back in the app, the row shows the store's status again. */
+  protected openSettings(): void {
+    this.errorKey.set(null);
+    void this.stepSync.openSettings();
   }
 
   protected cancelOff(): void {

@@ -28,15 +28,17 @@ const CURRENT_GOAL = '/api/v1/me/goals/current';
 const WEEK_OF_STEPS: readonly number[] = [6000, 8000, 7000, 9027, 5000, 8000, 9000];
 
 class FakeHealthPlatform implements HealthPlatform {
+  store: HealthSource = 'health-connect';
   available = true;
   access = true;
   accessAfterRequest: boolean | Error = true;
   totals: readonly number[] | Error = WEEK_OF_STEPS;
   requests = 0;
+  settings: 'closed' | 'opened' | Error = 'closed';
   readonly ranges: { from: Date; to: Date }[] = [];
 
   source(): HealthSource {
-    return 'health-connect';
+    return this.store;
   }
   async isAvailable(): Promise<boolean> {
     return this.available;
@@ -57,6 +59,12 @@ class FakeHealthPlatform implements HealthPlatform {
       throw this.totals;
     }
     return this.totals;
+  }
+  async openSettings(): Promise<void> {
+    if (this.settings instanceof Error) {
+      throw this.settings;
+    }
+    this.settings = 'opened';
   }
 }
 
@@ -266,6 +274,30 @@ describe('StepSyncService', () => {
     expect(storedLastSync()).toBeNull();
   });
 
+  it('2.6-3a: Health Connect without one day with steps is too few days as well', async () => {
+    platform.totals = [];
+    const { service } = setup();
+
+    await (
+      await load(service)
+    ).done;
+
+    expect(service.status()).toBe('insufficient');
+  });
+
+  it('iOS: not one day with steps is no-steps – how HealthKit answers a denied read', async () => {
+    platform.store = 'apple-health';
+    platform.totals = [];
+    const { service } = setup();
+
+    await (
+      await load(service)
+    ).done;
+
+    expect(service.status()).toBe('no-steps');
+    expect(storedLastSync()).toBeNull();
+  });
+
   it('2.6-3b: a failing health store keeps the old sync date, so it is tried again', async () => {
     const record = storeLastSync(31);
     platform.totals = new Error('Health Connect is unavailable');
@@ -359,6 +391,22 @@ describe('StepSyncService', () => {
     expect(service.enabled()).toBe(false);
   });
 
+  it('enable (2.6-4a): denied access answers false also when the consent is already active', async () => {
+    platform.access = false;
+    platform.accessAfterRequest = false;
+    const { service } = setup();
+    await (
+      await load(service)
+    ).done;
+    expect(service.status()).toBe('no-permission');
+
+    await expect(firstValueFrom(service.enable())).resolves.toBe(false);
+
+    expect(service.enabled()).toBe(true);
+    expect(service.status()).toBe('no-permission');
+    expect(platform.ranges).toHaveLength(0);
+  });
+
   it('enable: a failing permission dialog counts as denied access', async () => {
     platform.accessAfterRequest = new Error('Background activity launch blocked');
     const { service } = setup();
@@ -409,6 +457,27 @@ describe('StepSyncService', () => {
 
     await expect(disabled).rejects.toEqual({ messageKey: 'common.error.server', status: 500 });
     expect(service.enabled()).toBe(true);
+  });
+
+  it('opens the settings only where Health Connect has them, and a failure is only logged', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const { service } = setup();
+    expect(service.canOpenSettings).toBe(true);
+
+    await service.openSettings();
+    expect(platform.settings).toBe('opened');
+
+    platform.settings = new Error('No activity found');
+    await expect(service.openSettings()).resolves.toBeUndefined();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('Apple Health has no settings the app can open', () => {
+    platform.store = 'apple-health';
+    const { service } = setup();
+
+    expect(service.canOpenSettings).toBe(false);
   });
 
   it('reset forgets the account in memory only', async () => {

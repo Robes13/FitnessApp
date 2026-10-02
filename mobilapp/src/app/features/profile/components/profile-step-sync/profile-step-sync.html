@@ -23,6 +23,17 @@
     >
       {{ 'profile.stepSync.retry' | translate }}
     </button>
+  } @else if (openSettingsShown()) {
+    <button
+      app-ui-button
+      type="button"
+      variant="outline"
+      size="sm"
+      class="profile-step-sync__action"
+      (click)="openSettings()"
+    >
+      {{ openSettingsLabel() }}
+    </button>
   } @else if (accessMissing()) {
     <button
       app-ui-button

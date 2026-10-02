@@ -284,15 +284,24 @@ Pluginet er `@capgo/capacitor-health` (v8, HealthKit + Health Connect, SPM); kun
     `file:///android_asset/public/privatliv.html`).
   - **Kun debug** (`android/app/src/debug/`): `WRITE_STEPS`, så testere kan lægge skridt ind på
     emulatoren, og network-security-configen til dev-API'et. Release har kun `READ_STEPS`.
+  - Har brugeren afvist dialogen to gange, viser Health Connect den ikke igen (tilladelsen bliver
+    `USER_FIXED`), og `requestAuthorization` svarer straks "nægtet". Rækken siger det og har knappen
+    "Åbn Health Connect" (`openHealthConnectSettings`), hvor adgangen gives under appens
+    tilladelser. Tilbage i appen (`visibilitychange`) indlæser rækken igen, så adgangen slår
+    igennem uden genstart.
 - **iOS:**
   - HealthKit-capability: `ios/App/App/App.entitlements` (`com.apple.developer.healthkit` = true,
     `com.apple.developer.healthkit.access` = tom), sat som `CODE_SIGN_ENTITLEMENTS` for Debug og
     Release i `App.xcodeproj`. En rigtig enhed kræver et team med HealthKit i provisioning-profilen.
   - `Info.plist`: `NSHealthShareUsageDescription` (dansk). Kun læsning – der er ingen
     `NSHealthUpdateUsageDescription`, og pluginet virker uden.
-  - HealthKit siger aldrig, om læsning er nægtet: efter dialogen er svaret altid "givet", og en
-    nægtet læsning giver bare ingen data. Appen viser da "Ikke nok skridtdata endnu", ikke "ingen
-    adgang". "Ingen adgang" kommer kun, når samtykket er aktivt, men appen aldrig har vist arket på
+  - HealthKit siger aldrig, om læsning er nægtet (Apples privatlivsvalg): efter arket er svaret
+    altid "givet", og en nægtet læsning giver bare ingen data. Trykker brugeren "Tillad ikke", bliver
+    rækken derfor slået til, og samtykket gives – appen kan ikke se forskel. Uden en eneste dag med
+    skridt siger rækken "Nutrify kan ikke se nogen skridt … under Indstillinger → Anonymitet &
+    sikkerhed → Sundhed → Nutrify" (ikke "Ikke nok skridtdata"), og aktivitetsniveauet ændres ikke.
+    iOS lader ikke en app åbne den side, så der er ingen knap; tilbage i appen indlæser rækken igen.
+    "Ingen adgang" kommer kun, når samtykket er aktivt, men appen aldrig har vist arket på
     telefonen (geninstalleret, ny telefon); knappen "Giv adgang" under rækken viser det.
 - **Browser:** rækken vises ikke, og intet hentes.
 

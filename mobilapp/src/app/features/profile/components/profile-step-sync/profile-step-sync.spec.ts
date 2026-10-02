@@ -20,13 +20,15 @@ const ACTIVITY = '/api/v1/me/profile/activity';
 const LABEL = 'Skridt fra Health Connect';
 
 class FakeHealthPlatform implements HealthPlatform {
+  store: HealthSource = 'health-connect';
   available = true;
   access = true;
   requests = 0;
+  settingsOpened = 0;
   totals: readonly number[] | Error = [6000, 8000, 7000, 9027, 5000, 8000, 9000];
 
   source(): HealthSource {
-    return 'health-connect';
+    return this.store;
   }
   async isAvailable(): Promise<boolean> {
     return this.available;
@@ -43,6 +45,9 @@ class FakeHealthPlatform implements HealthPlatform {
       throw this.totals;
     }
     return this.totals;
+  }
+  async openSettings(): Promise<void> {
+    this.settingsOpened += 1;
   }
 }
 
@@ -70,6 +75,7 @@ describe('ProfileStepSync', () => {
   afterEach(() => {
     http.verify();
     localStorage.clear();
+    vi.restoreAllMocks();
   });
 
   /** Lets the plugin's promises run and renders. */
@@ -125,6 +131,12 @@ describe('ProfileStepSync', () => {
     );
   }
 
+  /** The app is hidden (another app on top) or visible again. */
+  function changeVisibility(state: DocumentVisibilityState): void {
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(state);
+    document.dispatchEvent(new Event('visibilitychange'));
+  }
+
   /** Answers the sync's PUT and the goal reload. */
   function answerSync(): void {
     const put = http.expectOne(ACTIVITY);
@@ -173,7 +185,7 @@ describe('ProfileStepSync', () => {
     expect(statusText()).toBe('Hentet d. 21. sep – 7.432 skridt om dagen');
   });
 
-  it('stays off and says why when access is denied', async () => {
+  it('stays off and says why when access is denied, and offers Health Connect', async () => {
     platform.access = false;
     await setup();
 
@@ -181,7 +193,15 @@ describe('ProfileStepSync', () => {
     await settle();
 
     expect(toggle()?.getAttribute('aria-checked')).toBe('false');
-    expect(statusText()).toBe('Nutrify fik ikke adgang til dine skridt, så de hentes ikke.');
+    expect(statusText()).toBe(
+      'Nutrify fik ikke adgang til dine skridt – giv adgang i Health Connect.',
+    );
+    buttonByText('Åbn Health Connect')?.click();
+    await settle();
+
+    expect(platform.settingsOpened).toBe(1);
+    expect(statusText()).toBeUndefined();
+    expect(buttonByText('Åbn Health Connect')).toBeUndefined();
   });
 
   it('turns off only after the confirmation, and the withdrawal', async () => {
@@ -277,6 +297,61 @@ describe('ProfileStepSync', () => {
     expect(platform.requests).toBe(1);
     expect(statusText()).toBe('Hentet d. 21. sep – 7.432 skridt om dagen');
     expect(buttonByText('Giv adgang')).toBeUndefined();
+  });
+
+  it('2.6-4a: when the dialog no longer shows, "Giv adgang" says so and offers Health Connect', async () => {
+    platform.access = false;
+    await setup([stepsConsent()]);
+
+    buttonByText('Giv adgang')?.click();
+    await settle();
+
+    expect(platform.requests).toBe(1);
+    expect(statusText()).toBe(
+      'Nutrify fik ikke adgang til dine skridt – giv adgang i Health Connect.',
+    );
+    expect(buttonByText('Giv adgang')).toBeUndefined();
+    buttonByText('Åbn Health Connect')?.click();
+    await settle();
+
+    expect(platform.settingsOpened).toBe(1);
+    expect(statusText()).toBe(
+      'Nutrify har ikke adgang til dine skridt – giv adgang i Health Connect.',
+    );
+  });
+
+  it('2.6-4a: access allowed outside the app counts once the app is visible again', async () => {
+    platform.access = false;
+    await setup([stepsConsent()]);
+    buttonByText('Giv adgang')?.click();
+    await settle();
+
+    platform.access = true;
+    changeVisibility('hidden');
+    await settle();
+    changeVisibility('visible');
+    await settle();
+    answerConsents([stepsConsent()]);
+    await settle();
+    answerSync();
+    await settle();
+
+    expect(statusText()).toBe('Hentet d. 21. sep – 7.432 skridt om dagen');
+    expect(host.querySelector('.profile-step-sync__action')).toBeNull();
+    // Synced: coming back again loads nothing.
+    changeVisibility('visible');
+    await settle();
+  });
+
+  it('iOS: no steps at all says where to allow access – HealthKit hides a denied read', async () => {
+    platform.store = 'apple-health';
+    platform.totals = [];
+    await setup([stepsConsent()]);
+
+    expect(statusText()).toBe(
+      'Nutrify kan ikke se nogen skridt fra de seneste 28 dage. Har du ikke givet adgang, kan du gøre det under Indstillinger → Anonymitet & sikkerhed → Sundhed → Nutrify.',
+    );
+    expect(host.querySelector('.profile-step-sync__action')).toBeNull();
   });
 
   it('a failed consent read says so, locks the switch, and "Prøv igen" reads it again', async () => {

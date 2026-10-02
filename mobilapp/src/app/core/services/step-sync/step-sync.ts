@@ -84,6 +84,8 @@ export class StepSyncService implements SessionDataStore {
 
   /** Apple Health or Health Connect – `null` in the browser. */
   readonly source: HealthSource | null = this.platform.source();
+  /** Health Connect has a settings screen the app can open (`openSettings`); Apple Health hasn't. */
+  readonly canOpenSettings: boolean = this.source === 'health-connect';
   /** The device has the health store. `false` until loaded – the UI hides the feature then. */
   readonly available: Signal<boolean> = this.availableState.asReadonly();
   /** The `StepsIntegration` consent is active (spec 9.2). */
@@ -125,17 +127,34 @@ export class StepSyncService implements SessionDataStore {
   }
 
   /**
-   * The user turns it on: asks the health store for read access to steps, grants the consent
-   * (409 = already active = fine) and syncs right away. `false` when access wasn't given –
-   * nothing changes then. A failed consent is an `ApiError`; the sync's outcome is `status`.
+   * The user turns it on (or allows access again, 2.6-4a): asks the health store for read access
+   * to steps, grants the consent (409 = already active = fine) and syncs right away. `false` when
+   * access wasn't given – also when the consent is already active – and nothing changes then. A
+   * failed consent is an `ApiError`; the sync's outcome is `status`.
    */
   enable(): Observable<boolean> {
     return defer(() => from(this.requestAccess())).pipe(
       switchMap((granted) =>
-        granted ? this.grantConsent().pipe(switchMap(() => this.sync())) : of(undefined),
+        granted
+          ? this.grantConsent().pipe(
+              switchMap(() => this.sync()),
+              map(() => true),
+            )
+          : of(false),
       ),
-      map(() => this.enabledState()),
     );
+  }
+
+  /**
+   * 2.6-4a on Android: after two denials Health Connect stops showing its dialog, and access can
+   * then only be allowed in its settings. A failure is only logged.
+   */
+  async openSettings(): Promise<void> {
+    try {
+      await this.platform.openSettings();
+    } catch (error: unknown) {
+      console.warn('StepSyncService: Health Connect kunne ikke åbnes.', error);
+    }
   }
 
   /**
@@ -233,6 +252,10 @@ export class StepSyncService implements SessionDataStore {
     return from(this.platform.dailyStepTotals(addDays(today, -STEP_SYNC_WINDOW_DAYS), today)).pipe(
       switchMap((totals) => {
         const days = totals.filter((steps) => steps > 0);
+        if (days.length === 0 && this.source === 'apple-health') {
+          // HealthKit never says whether reading was denied: a denied read just has no data.
+          return of<StepSyncStatus>('no-steps');
+        }
         if (days.length < STEP_SYNC_MIN_DAYS) {
           return of<StepSyncStatus>('insufficient');
         }

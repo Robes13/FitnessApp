@@ -48,6 +48,10 @@ export class CapacitorHealthPlatform implements HealthPlatform {
     });
     return totalsByLocalDay(samples);
   }
+
+  openSettings(): Promise<void> {
+    return Health.openHealthConnectSettings();
+  }
 }
 
 /**
