@@ -279,7 +279,8 @@ Pluginet er `@capgo/capacitor-health` (v8, HealthKit + Health Connect, SPM); kun
     Pluginets manifest leverer dem: `PermissionsRationaleActivity`
     (`androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE`, Android ≤ 13) og aliasset
     `ViewPermissionUsageActivity` (`VIEW_PERMISSION_USAGE` + `HEALTH_PERMISSIONS`, Android 14+).
-    Linket "privatlivspolitik" i dialogen åbner `public/privatliv.html` fra web-buildet
+    Linket "privatlivspolitik" i dialogen åbner `public/privatliv.html` (dansk og engelsk på én side,
+    for siden kører uden JavaScript og kender ikke appens sprog) fra web-buildet
     (`health_connect_privacy_policy_url` i `res/values/strings.xml` =
     `file:///android_asset/public/privatliv.html`).
   - **Kun debug** (`android/app/src/debug/`): `WRITE_STEPS`, så testere kan lægge skridt ind på
