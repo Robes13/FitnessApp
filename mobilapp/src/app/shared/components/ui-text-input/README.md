@@ -48,3 +48,11 @@ Implementerer `ControlValueAccessor`, så feltet bruges med typed reactive forms
 - Host-styling står som `:host(.ui-text-input--invalid) .ui-text-input__field { … }`; under
   emuleret encapsulation rammer en `.ui-text-input--invalid`-regel aldrig værten selv.
 - Tal-felter skjuler browserens pile (`appearance: textfield`), fordi designet bruger −/+ knapper.
+- `time` og `date` er `display: block` uden native `appearance`: ellers giver iOS feltet en
+  indbygget bredde, og det løber ud over arket (fødselsdatoen på Profil blev skåret af i højre side).
+- `date` er den native datovælger, så **datoformatet og vælgerens sprog følger enhedens sprog og
+  region**, ikke appens sprog (`lang` på `<html>` styrer ikke native kontroller). På en dansk telefon
+  står der `03.10.1978`; på en telefon på amerikansk engelsk (som standard-emulatoren) står der
+  `10/03/1978` og "CANCEL/SET", også når appen er på dansk. Det er enhedens eget format, så brugeren
+  læser det, som telefonen ellers viser datoer. Skal formatet følge appens sprog, kræver det en
+  egen datovælger i stedet for den native.

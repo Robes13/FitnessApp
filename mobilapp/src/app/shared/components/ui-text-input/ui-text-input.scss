@@ -71,13 +71,14 @@
      * iOS keeps an intrinsic width on date/time inputs unless the native appearance is
      * dropped, so the field would overflow its container.
      */
-    &[type='time'] {
+    &[type='time'],
+    &[type='date'] {
       display: block;
       padding-block: var(--space-3);
       appearance: none;
     }
 
-    /* iOS renders the native time picker's value in its own box; let it shrink to the field. */
+    /* iOS renders a native date/time value in its own box; let it shrink to the field. */
     &::-webkit-date-and-time-value {
       min-width: 0;
       text-align: start;
