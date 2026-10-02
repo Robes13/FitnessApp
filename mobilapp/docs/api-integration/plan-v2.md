@@ -103,7 +103,8 @@ Defaults – Janick kan ændre dem (åbne spørgsmål i §7).
   status-endpoint (åbner for enumeration). Vi genbruger login.
 - **P2 Login.** Ét felt, "E-mail eller brugernavn". Indeholder værdien `@`, er det en e-mail
   (små bogstaver); ellers et brugernavn (præcis match, som det unikke indeks). Brugernavne må derfor
-  ikke indeholde `@`. Adgangskoden tjekkes før aktiveringen. Rigtig adgangskode + ikke verificeret → 403. Lockout: højst 5 forsøg pr. 15-minutters vindue (fast vindue fra første forsøg), pr. konto
+  ikke indeholde `@`. _Merge:_ uden forskel på store og små bogstaver (`NormalizedUsername`), og
+  brugernavne følger `UsernameRules` (`^[A-Za-z0-9_-]{3,50}$`). Adgangskoden tjekkes før aktiveringen. Rigtig adgangskode + ikke verificeret → 403. Lockout: højst 5 forsøg pr. 15-minutters vindue (fast vindue fra første forsøg), pr. konto
   (ukendte identifikatorer pr. værdi); det 6. afvises med 429, også med rigtig adgangskode. Hvert
   forsøg tælles **atomisk før** adgangskodetjekket (`Interlocked` på en `StrongBox<int>` i
   `IMemoryCache`) – et læs-så-skriv-tal lader parallelle forsøg (hvert ~50 ms PBKDF2) snyde sig forbi.
@@ -495,7 +496,8 @@ login(identifier: string, password: string): Observable<void>; // completer ved 
 checkVerification(): Observable<boolean>;  // login med adgangskoden i hukommelsen; false uden
 resendVerification(): Observable<void>;    // { emailOrUsername }
 renewOnOpen(): void;                        // én refresh ved app-start
-// verifyEmail() og fillProfileFrom() slettes. USERNAME_PATTERN = /^[^@]+$/ i core/constants/auth.ts.
+// verifyEmail() og fillProfileFrom() slettes. USERNAME_PATTERN = /^[A-Za-z0-9_-]{3,50}$/ i core/constants/auth.ts.
+// _Merge:_ API'ets UsernameRules, tjekkes utrimmet.
 
 // food – FoodLogService (SessionDataStore)
 readonly status: Signal<StoreStatus>;
