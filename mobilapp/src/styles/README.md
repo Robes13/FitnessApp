@@ -276,6 +276,15 @@ folden. Trin, hvor det stadig ikke er nok, skjuler en gentagende eller dekorativ
 på høje tablets i portræt), så telefonlayoutet fylder skærmen i stedet for at stå som en smal
 kolonne. Telefoner er låst til portræt (Info.plist og AndroidManifest); tablets drejer frit.
 
+**Systemets tekststørrelse – kendt begrænsning på iOS.** Androids WebView følger selv systemets
+skriftstørrelse (`font_scale`). iOS' "Større tekst" (Dynamic Type) følges **ikke**: WKWebView
+skalerer kun tekst med `font: -apple-system-*`, ikke px/rem, så appen ser ens ud ved alle
+størrelser (intet skæres af). At følge den kræver, at `html`'s `font-size` sættes ud fra
+`-apple-system-body` (17 px ved standardstørrelsen, ca. 3× ved de største
+tilgængelighedsstørrelser) og læses igen, når appen kommer tilbage fra Indstillinger – plus et
+loft og et layoutgennemsyn af alle skærme ved store størrelser (Android viser allerede
+afskæringer ved 1,3). Det er ikke gjort endnu.
+
 Display-overskrifter (`display-heading`) bryder et langt ord i stedet for at løbe ud over
 kanten, når systemets skriftstørrelse er stor. Lange ord i overskrifter kan få en blød
 bindestreg (`adgangs&shy;kode`), så bruddet sker ved en stavelse.

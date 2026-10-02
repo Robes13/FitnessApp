@@ -179,6 +179,8 @@ Appen er låst til portræt på telefoner (`UISupportedInterfaceOrientations` i 
 `@capacitor/app` håndterer Androids tilbageknap og -gestus i `BackButtonService`: et åbent ark
 eller stregkodescanneren lukkes først, ellers går appen tilbage i historikken, og kun når der
 ikke er mere historik, minimeres appen. Uden servicen lukker Capacitor appen ved hvert tryk.
+På et spørgsmålsark (bekræft sletning, log ud, overskriv vejning, slå skridt fra) er tilbage
+"Annuller", undtagen mens handlingen kører, og i opret-flowet går tilbage ét trin.
 
 ---
 
@@ -192,7 +194,11 @@ lægger sig over tastaturet. Sheets lander lige over det, footer-knapper forbliv
 det fokuserede felt scrolles frem i sit eget scroll-område. Tab-baren skjules, mens tastaturet
 er åbent. Kamerarammen i stregkodescanneren og signup-forløbets ring og kapitelnavne gør plads
 for felterne, og signup-trinnet scroller, hvis det stadig ikke passer. Et tryk uden for et
-tekstfelt lukker tastaturet, fordi iOS ikke viser en "Færdig"-knap i et WebView.
+tekstfelt lukker tastaturet, fordi iOS ikke viser en "Færdig"-knap i et WebView. Det sker på
+trykkets `click` og ikke ved nedtryk: ellers falder et løftet ark, før klikket når frem, og
+"Gem" rammer scrimmen og lukker arket uden at gemme. Lytteren sidder på app-roden
+(`KeyboardService.closeOnTapsIn`), fordi iOS kun sender et klik for tryk på almindeligt indhold,
+når et element under `<body>` lytter efter det.
 
 Nye skærme med tekstfelter skal derfor bygges på højden af deres forælder (`height: 100%`, flex
 og egne scroll-områder), ikke på `100vh`, `position: fixed` eller dokumentets scroll. Ellers
