@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  Signal,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { APP_PATH } from '../../../../core/constants/app-route';
@@ -10,11 +19,15 @@ import { ReminderService } from '../../../../core/services/reminders/reminders';
 import { SessionService } from '../../../../core/services/session/session';
 import { ThemeService } from '../../../../core/services/theme/theme';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
+import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
+import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiPageHeader } from '../../../../shared/components/ui-page-header/ui-page-header';
 import { UiRowButton } from '../../../../shared/components/ui-row-button/ui-row-button';
 import { UiSegmentedControl } from '../../../../shared/components/ui-segmented-control/ui-segmented-control';
+import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
 import { UiSwitch } from '../../../../shared/components/ui-switch/ui-switch';
 import { Achievements } from '../../components/achievements/achievements';
 import { ProfileAvatar } from '../../../../shared/components/profile-avatar/profile-avatar';
@@ -23,9 +36,11 @@ import { ProfileEditSheet } from '../../components/profile-edit-sheet/profile-ed
 import { ProfileLogoutSheet } from '../../components/profile-logout-sheet/profile-logout-sheet';
 import { ProfilePhotoSheet } from '../../components/profile-photo-sheet/profile-photo-sheet';
 import { ProfileRemindersSheet } from '../../components/profile-reminders-sheet/profile-reminders-sheet';
+import { ProfileStepSync } from '../../components/profile-step-sync/profile-step-sync';
 import { AchievementsService } from '../../services/achievements';
 import { ProfileEditRowId } from '../../services/profile-edit';
-import { ProfileRowsService } from '../../services/profile-rows';
+import { PrivacyService } from '../../services/privacy';
+import { ProfileRow, ProfileRowsService } from '../../services/profile-rows';
 
 const REMINDERS_VALUE_KEY = {
   OFF: 'profile.page.remindersOff',
@@ -34,9 +49,17 @@ const REMINDERS_VALUE_KEY = {
   ACTIVE_MANY: 'profile.page.remindersActiveMany',
 } as const;
 
+/** Withdrawing the consent deletes the account, so it asks with the deletion's sheet and this text. */
+const WITHDRAW_CONSENT_BODY_KEY = 'profile.deleteAccountSheet.withdrawBody';
+
 /**
  * The profile screen: avatar and key figures at the top, then "Min plan", "Konto", the
- * achievements, "Log ud" and "Slet konto". All rows open the same edit sheet, which knows its own variant.
+ * achievements, "Privatliv" (with the step sync on a phone), "Log ud" and "Slet konto". All plan and account rows open the same
+ * edit sheet, which knows its own variant – except the calorie target, which is the API's and
+ * can't be edited.
+ *
+ * While the profile loads, a spinner replaces the profile's own data; if it fails, a message and
+ * "Prøv igen" do. The settings, privacy, log out and account deletion stay usable either way.
  *
  * The page sits outside the tab shell (it's opened from the avatar on Home), so it doesn't
  * reserve space for the tab bar and navigates back to Home instead.
@@ -51,18 +74,23 @@ const REMINDERS_VALUE_KEY = {
     ProfileLogoutSheet,
     ProfilePhotoSheet,
     ProfileRemindersSheet,
+    ProfileStepSync,
     TranslatePipe,
     UiButton,
+    UiEmptyState,
+    UiFormError,
     UiIcon,
     UiPageHeader,
     UiRowButton,
     UiSegmentedControl,
+    UiSpinner,
     UiSwitch,
   ],
   templateUrl: './profile-page.html',
   styleUrl: './profile-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'profile-page' },
+  providers: [PrivacyService],
 })
 export class ProfilePage {
   private readonly router = inject(Router);
@@ -73,8 +101,15 @@ export class ProfilePage {
   private readonly rows = inject(ProfileRowsService);
   private readonly achievementsService = inject(AchievementsService);
   private readonly reminders = inject(ReminderService);
+  private readonly privacy = inject(PrivacyService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly t = injectTranslate();
 
+  protected readonly status = this.profiles.status;
+  /** The profile's own data is hidden while it loads or after it failed to load. */
+  protected readonly profileShown = computed(
+    () => this.status() !== 'loading' && this.status() !== 'error',
+  );
   protected readonly displayName = this.profiles.displayName;
   protected readonly initial = this.profiles.initial;
   protected readonly photo = computed(() => this.profiles.profile().photo);
@@ -88,7 +123,14 @@ export class ProfilePage {
   protected readonly isLight = this.theme.isLight;
   protected readonly languages = LANGUAGE_OPTIONS;
   protected readonly language = this.languageService.language;
-  protected readonly notificationsEnabled = this.reminders.masterEnabled;
+  /** The value the "Notifikationer" switch is saving, else `null` – the switch shows it meanwhile. */
+  private readonly savingNotifications = signal<boolean | null>(null);
+  protected readonly notificationsEnabled = computed(
+    () => this.savingNotifications() ?? this.reminders.masterEnabled(),
+  );
+  protected readonly notificationsBusy = computed(() => this.savingNotifications() !== null);
+  private readonly notificationsErrorKey = signal<string | null>(null);
+  protected readonly notificationsError = this.translated(this.notificationsErrorKey);
   /** The "Påmindelser" row's value: "Fra", "Ingen", "1 aktiv" or "3 aktive". */
   protected readonly remindersValue = computed(() => {
     const count = this.reminders.enabledCount();
@@ -108,13 +150,32 @@ export class ProfilePage {
   protected readonly logoutOpen = signal(false);
   protected readonly deleteAccountOpen = signal(false);
   protected readonly remindersOpen = signal(false);
+  protected readonly loggingOut = signal(false);
+  /** The deletion sheet confirms withdrawing the consent (spec 9.2-3b) rather than "Slet konto". */
+  private readonly withdrawingConsent = signal(false);
+  protected readonly deleteBodyKey = computed(() =>
+    this.withdrawingConsent() ? WITHDRAW_CONSENT_BODY_KEY : null,
+  );
+  protected readonly deletingAccount = signal(false);
+  private readonly deleteErrorKey = signal<string | null>(null);
+  protected readonly deleteError = this.translated(this.deleteErrorKey);
+  protected readonly downloadingData = signal(false);
+  private readonly downloadErrorKey = signal<string | null>(null);
+  protected readonly downloadError = this.translated(this.downloadErrorKey);
 
   protected goBack(): void {
     void this.router.navigateByUrl(APP_PATH.HOME);
   }
 
-  protected openEdit(row: ProfileEditRowId): void {
-    this.editRow.set(row);
+  protected openEdit(row: ProfileRow): void {
+    if (row.editable !== false) {
+      this.editRow.set(row.id);
+    }
+  }
+
+  /** Never fails – a new failure shows the error again. */
+  protected retryLoad(): void {
+    this.profiles.load().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 
   protected closeEdit(): void {
@@ -146,17 +207,41 @@ export class ProfilePage {
   }
 
   protected askDeleteAccount(): void {
+    this.withdrawingConsent.set(false);
+    this.deleteAccountOpen.set(true);
+  }
+
+  /** "Træk tilbage" on the consent row: the consent is required, so withdrawing deletes the account. */
+  protected askWithdrawConsent(): void {
+    this.withdrawingConsent.set(true);
     this.deleteAccountOpen.set(true);
   }
 
   protected closeDeleteAccount(): void {
     this.deleteAccountOpen.set(false);
+    this.deleteErrorKey.set(null);
   }
 
-  /** Clears all local data and reloads the app at login – see `SessionService.deleteAccount()`. */
+  /**
+   * Deletes the account in the API – directly, or by withdrawing the consent to the terms. On
+   * success `SessionService` clears all local data and reloads the app at login, so the sheet
+   * stays busy until then. On an error nothing is deleted and the sheet shows why.
+   */
   protected deleteAccount(): void {
-    this.deleteAccountOpen.set(false);
-    this.session.deleteAccount();
+    if (this.deletingAccount()) {
+      return;
+    }
+    this.deletingAccount.set(true);
+    this.deleteErrorKey.set(null);
+    const removal = this.withdrawingConsent()
+      ? this.session.withdrawConsent()
+      : this.session.deleteAccount();
+    removal.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      error: (error: unknown) => {
+        this.deletingAccount.set(false);
+        this.deleteErrorKey.set(toApiError(error).messageKey);
+      },
+    });
   }
 
   protected setLight(light: boolean): void {
@@ -169,13 +254,65 @@ export class ProfilePage {
     }
   }
 
+  /** Saved in the API (pessimistic): the switch is locked meanwhile and flips back on an error. */
   protected setNotifications(enabled: boolean): void {
-    this.reminders.setMasterEnabled(enabled);
+    if (this.notificationsBusy()) {
+      return;
+    }
+    this.savingNotifications.set(enabled);
+    this.notificationsErrorKey.set(null);
+    this.reminders
+      .setMasterEnabled(enabled)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.savingNotifications.set(null),
+        error: (error: unknown) => {
+          this.savingNotifications.set(null);
+          this.notificationsErrorKey.set(toApiError(error).messageKey);
+        },
+      });
   }
 
+  /** Spec 9.1: the row is disabled until the download has been handed to the browser. */
+  protected downloadData(): void {
+    if (this.downloadingData()) {
+      return;
+    }
+    this.downloadingData.set(true);
+    this.downloadErrorKey.set(null);
+    this.privacy
+      .downloadMyData()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.downloadingData.set(false),
+        error: (error: unknown) => {
+          this.downloadingData.set(false);
+          this.downloadErrorKey.set(toApiError(error).messageKey);
+        },
+      });
+  }
+
+  /** Never fails: the session ends locally even if the API can't be reached. */
   protected logout(): void {
-    this.logoutOpen.set(false);
-    this.session.logout();
-    void this.router.navigateByUrl(APP_PATH.LOGIN);
+    if (this.loggingOut()) {
+      return;
+    }
+    this.loggingOut.set(true);
+    this.session
+      .logout()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.loggingOut.set(false);
+        this.logoutOpen.set(false);
+        void this.router.navigateByUrl(APP_PATH.LOGIN);
+      });
+  }
+
+  /** An error key as text – a key, so a shown error follows a language switch. */
+  private translated(key: Signal<string | null>): Signal<string | null> {
+    return computed(() => {
+      const value = key();
+      return value === null ? null : this.t(value);
+    });
   }
 }

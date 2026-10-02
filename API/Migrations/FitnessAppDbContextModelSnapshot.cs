@@ -41,6 +41,9 @@ namespace FitnessApp.Api.Migrations
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("NewEmail")
+                        .HasColumnType("varchar(320)");
+
                     b.Property<string>("TokenHash")
                         .IsRequired()
                         .HasColumnType("varchar(64)");
@@ -140,6 +143,9 @@ namespace FitnessApp.Api.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("MealType")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("ProteinConsumed")
                         .HasPrecision(7, 2)

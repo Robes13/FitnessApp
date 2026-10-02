@@ -5,13 +5,16 @@ import {
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { provideTranslateLoader, provideTranslateService } from '@ngx-translate/core';
 import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { BackButtonService } from './core/services/back-button/back-button';
 import { KeyboardService } from './core/services/keyboard/keyboard';
 import { ReminderService } from './core/services/reminders/reminders';
+import { SessionDataService } from './core/services/session-data/session-data';
+import { SessionService } from './core/services/session/session';
 import { ThemeService } from './core/services/theme/theme';
 import { LanguageService } from './core/services/language/language';
 import { JsonTranslationLoader } from './core/services/language/translation-loader';
@@ -36,8 +39,15 @@ export const appConfig: ApplicationConfig = {
           injector.get(ReminderService);
         });
     }),
-    // HttpClient on the Fetch API (product lookups in Open Food Facts).
-    provideHttpClient(withFetch()),
+    // HttpClient on the Fetch API (our API and Open Food Facts). The interceptor adds the bearer
+    // and refreshes the token – for our API only.
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    // Renews a restored session once (spec 1.5), then loads the signed-in user's data from the
+    // API – the loads share that refresh if they need a token – and forgets it on log out.
+    provideAppInitializer(() => {
+      inject(SessionService).renewOnOpen();
+      inject(SessionDataService);
+    }),
     // Component input binding: route and query parameters are bound directly to `input()` on pages.
     provideRouter(routes, withComponentInputBinding()),
     // Restores the saved theme (`data-theme` on <html>) before the first screen renders.

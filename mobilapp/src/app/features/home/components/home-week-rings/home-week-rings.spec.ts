@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WeekRing } from '../../services/home-summary';
 import { HomeWeekRings } from './home-week-rings';
 
-/** Two completed days, one in progress, and one future day – enough to cover all three tones. */
+/** A closed ring, one in progress, and a day without data – enough to cover all three tones. */
 const RINGS: readonly WeekRing[] = [
   {
     index: 0,
@@ -11,7 +11,6 @@ const RINGS: readonly WeekRing[] = [
     tone: 'positive',
     toneClass: 'home-week-rings__progress--positive',
     isToday: false,
-    isFuture: false,
     isSelected: false,
   },
   {
@@ -21,7 +20,6 @@ const RINGS: readonly WeekRing[] = [
     tone: 'accent',
     toneClass: 'home-week-rings__progress--accent',
     isToday: true,
-    isFuture: false,
     isSelected: true,
   },
   {
@@ -31,7 +29,6 @@ const RINGS: readonly WeekRing[] = [
     tone: 'none',
     toneClass: 'home-week-rings__progress--none',
     isToday: false,
-    isFuture: true,
     isSelected: false,
   },
 ];
@@ -73,14 +70,14 @@ describe('HomeWeekRings', () => {
     expect(progressCircles()[1]?.getAttribute('stroke-dashoffset')).toBe('40');
   });
 
-  it('markerer den valgte dag og dæmper dage der ikke er kommet', () => {
+  it('markerer den valgte dag', () => {
     const buttons = host().querySelectorAll('.home-week-rings__day');
     expect(buttons[1]?.getAttribute('aria-pressed')).toBe('true');
     expect(buttons[0]?.getAttribute('aria-pressed')).toBe('false');
 
     const labels = host().querySelectorAll('.home-week-rings__label');
     expect(labels[1]?.classList.contains('home-week-rings__label--selected')).toBe(true);
-    expect(labels[2]?.classList.contains('home-week-rings__label--future')).toBe(true);
+    expect(labels[0]?.classList.contains('home-week-rings__label--selected')).toBe(false);
   });
 
   it('sender ugedagens indeks videre, når en dag vælges', () => {

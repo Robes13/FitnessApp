@@ -2,16 +2,17 @@
 
 Feature-specifikke byggeklodser til Hjem. De er præsentations-komponenter: de modtager
 færdige værdier fra `HomeSummaryService` via inputs og melder tilbage med outputs. Eneste
-undtagelse er `VerifyEmailSheet`, der selv taler med `SessionService` og `UserProfileService`,
+undtagelse er `VerifyEmailSheet`, der selv taler med `SessionService`,
 fordi den ejer sit eget lille flow.
 
 | Komponent              | Selector                     | Rolle                                     |
 | ---------------------- | ---------------------------- | ----------------------------------------- |
-| `HomeWeekRings`        | `app-home-week-rings`        | Ugens syv dagsringe, vælger dagen         |
+| `HomeWeekRings`        | `app-home-week-rings`        | De seneste 7 dages ringe, vælger dagen    |
 | `HomeTodoCard`         | `app-home-todo-card`         | "Næste skridt" – link til Vægt eller Mad  |
 | `HomeDayCard`          | `app-home-day-card`          | Den valgte dags kalorier, vægt og makroer |
 | `HomeGoalCard`         | `app-home-goal-card`         | Det orange "Til mål"-kort                 |
-| `HomeWeekCard`         | `app-home-week-card`         | Ugens fire nøgletal og opsamlingen        |
+| `HomeWeekCard`         | `app-home-week-card`         | 7 dages fire nøgletal og opsamlingen      |
+| `HomeMonthSheet`       | `app-home-month-sheet`       | Arket med de seneste 30 dage              |
 | `HomeCelebrationToast` | `app-home-celebration-toast` | "Dagsmål nået"                            |
 | `VerifyEmailSheet`     | `app-verify-email-sheet`     | "Tjek din mail" – kan ikke lukkes         |
 

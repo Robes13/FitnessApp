@@ -6,9 +6,11 @@ import {
   IntensityDefinition,
   IntensityId,
   PaceDefinition,
-  UnitSystemDefinition,
 } from '../models/profile';
-import { Macros } from '../models/food';
+import { DAYS_PER_WEEK } from './time';
+
+/** Energy in one kg of body weight change (the common 7700 kcal/kg rule of thumb, as in the API). */
+export const KCAL_PER_KG_BODY_WEIGHT = 7700;
 
 export const GOALS: readonly GoalDefinition[] = [
   {
@@ -28,13 +30,18 @@ export const GOALS: readonly GoalDefinition[] = [
   },
 ];
 
+/** The API's daily deficit/surplus for a pace (`GoalCalculator`), so the pace text matches the target. */
+function paceKcalPerDay(kgPerWeek: number): number {
+  return Math.round((kgPerWeek * KCAL_PER_KG_BODY_WEIGHT) / DAYS_PER_WEEK);
+}
+
 export const PACES: readonly PaceDefinition[] = [
   {
     id: 'rolig',
     labelKey: 'core.nutrition.paces.calm.label',
     descriptionKey: 'core.nutrition.paces.calm.description',
     rateLabelKey: 'core.nutrition.paces.calm.rate',
-    kcalPerDay: 250,
+    kcalPerDay: paceKcalPerDay(0.25),
     kgPerWeek: 0.25,
   },
   {
@@ -42,7 +49,7 @@ export const PACES: readonly PaceDefinition[] = [
     labelKey: 'core.nutrition.paces.moderate.label',
     descriptionKey: 'core.nutrition.paces.moderate.description',
     rateLabelKey: 'core.nutrition.paces.moderate.rate',
-    kcalPerDay: 500,
+    kcalPerDay: paceKcalPerDay(0.5),
     kgPerWeek: 0.5,
   },
   {
@@ -50,19 +57,19 @@ export const PACES: readonly PaceDefinition[] = [
     labelKey: 'core.nutrition.paces.fast.label',
     descriptionKey: 'core.nutrition.paces.fast.description',
     rateLabelKey: 'core.nutrition.paces.fast.rate',
-    kcalPerDay: 1000,
+    kcalPerDay: paceKcalPerDay(1),
     kgPerWeek: 1,
   },
 ];
 
 /** The design's `actLevels`. The level chosen is the first one where steps < `maxSteps`. */
 export const ACTIVITY_LEVELS: readonly ActivityLevel[] = [
-  { maxSteps: 2500, pal: 1.25, labelKey: 'core.nutrition.activityLevels.sedentary' },
-  { maxSteps: 5500, pal: 1.4, labelKey: 'core.nutrition.activityLevels.lightlyActive' },
-  { maxSteps: 9000, pal: 1.55, labelKey: 'core.nutrition.activityLevels.active' },
-  { maxSteps: 13000, pal: 1.7, labelKey: 'core.nutrition.activityLevels.veryActive' },
-  { maxSteps: 18000, pal: 1.85, labelKey: 'core.nutrition.activityLevels.extremelyActive' },
-  { maxSteps: 99999, pal: 1.95, labelKey: 'core.nutrition.activityLevels.marathonReady' },
+  { maxSteps: 2500, labelKey: 'core.nutrition.activityLevels.sedentary' },
+  { maxSteps: 5500, labelKey: 'core.nutrition.activityLevels.lightlyActive' },
+  { maxSteps: 9000, labelKey: 'core.nutrition.activityLevels.active' },
+  { maxSteps: 13000, labelKey: 'core.nutrition.activityLevels.veryActive' },
+  { maxSteps: 18000, labelKey: 'core.nutrition.activityLevels.extremelyActive' },
+  { maxSteps: 99999, labelKey: 'core.nutrition.activityLevels.marathonReady' },
 ];
 
 /** The design's `intDef`. An RPE number maps to the first level where rpe <= `maxRpe`. */
@@ -126,22 +133,10 @@ export const GENDERS: readonly GenderDefinition[] = [
   },
 ];
 
-export const UNIT_SYSTEMS: readonly UnitSystemDefinition[] = [
-  {
-    id: 'metrisk',
-    labelKey: 'core.nutrition.unitSystems.metric.label',
-    descriptionKey: 'core.nutrition.unitSystems.metric.description',
-  },
-  {
-    id: 'imperial',
-    labelKey: 'core.nutrition.unitSystems.imperial.label',
-    descriptionKey: 'core.nutrition.unitSystems.imperial.description',
-  },
-];
-
 export const WEIGHT_MIN_KG = 30;
 export const WEIGHT_MAX_KG = 300;
-export const HEIGHT_MIN_CM = 55;
+/** The API accepts 100–250 cm. */
+export const HEIGHT_MIN_CM = 100;
 export const HEIGHT_MAX_CM = 250;
 export const STEPS_MIN = 0;
 export const STEPS_MAX = 50000;
@@ -151,31 +146,22 @@ export const TRAINING_MAX_MINUTES = 180;
 export const TRAINING_DEFAULT_MINUTES = 45;
 export const RPE_MIN = 1;
 export const RPE_MAX = 10;
-export const KCAL_MIN = 1200;
-export const KCAL_MAX = 5000;
-export const MIN_AGE = 16;
-export const MAX_AGE = 120;
-export const PASSWORD_MIN_LENGTH = 8;
-export const PASSWORD_STRONG_LENGTH = 12;
-export const RESET_CODE_LENGTH = 4;
+/** The API's age rule (`ProfileValidation`: 13–100 years, plan-v2 P8). */
+export const MIN_AGE = 13;
+export const MAX_AGE = 100;
+/** The API's password rule (register, reset, change): 10–200 characters, no complexity rules. */
+export const PASSWORD_MIN_LENGTH = 10;
+export const PASSWORD_MAX_LENGTH = 200;
 
-/** Share of daily calories per macro (the design's 30/45/25). */
-export const MACRO_SPLIT: Readonly<Omit<Macros, 'kcal'>> = { protein: 0.3, carbs: 0.45, fat: 0.25 };
-export const KCAL_PER_GRAM: Readonly<Omit<Macros, 'kcal'>> = { protein: 4, carbs: 4, fat: 9 };
-
-/** Mifflin-St Jeor: gender constant. `andet`/unknown uses the average of the two. */
-export const BMR_GENDER_OFFSET: Readonly<Record<Gender, number>> = {
-  mand: 5,
-  kvinde: -161,
-  andet: -78,
+/**
+ * The API's safe minimum for the daily calorie target: it lifts the target to exactly this
+ * (`API/Services/Goals/GoalCalculator.cs`: 1500 kcal for men, 1200 kcal otherwise).
+ */
+export const CALORIE_FLOOR_KCAL: Readonly<Record<Gender, number>> = {
+  mand: 1500,
+  kvinde: 1200,
+  andet: 1200,
 };
-export const BMR_WEIGHT_FACTOR = 10;
-export const BMR_HEIGHT_FACTOR = 6.25;
-export const BMR_AGE_FACTOR = 5;
-/** Used in BMR when the birthday isn't specified. */
-export const BMR_FALLBACK_AGE = 30;
-/** Calorie needs are rounded to the nearest 10. */
-export const KCAL_ROUNDING = 10;
 
 /** Goal weight scale (the design's `gMin`/`gMax`). */
 export const GOAL_WEIGHT_MIN_KG = 35;
@@ -189,41 +175,8 @@ export const GOAL_BMI_MAX = 35;
 export const KM_PER_STEP = 0.00075;
 export const KCAL_PER_STEP_PER_KG = 0.00045;
 
-/**
- * Metabolic equivalents per training intensity (Compendium of Physical Activities, Ainsworth
- * et al. 2011/Herrmann et al. 2024): light ≈ 3.5 (brisk walk, easy cycling), moderate ≈ 5
- * (jog, strength with rests), vigorous ≈ 8 (intervals, heavy lifting). 1 MET ≈ 1 kcal/kg/h.
- */
-export const TRAINING_MET: Readonly<Record<IntensityId, number>> = {
-  mildt: 3.5,
-  moderat: 5,
-  haardt: 8,
-};
-/** Resting MET. It is subtracted, because BMR × PAL already covers resting during the session. */
-export const RESTING_MET = 1;
-/** Intensity used when the user trains but hasn't chosen an RPE. */
+/** Intensity sent to the API when the user trains but hasn't chosen an RPE. */
 export const TRAINING_FALLBACK_INTENSITY: IntensityId = 'moderat';
-
-/**
- * Adaptive target: over the last `ADAPTIVE_WINDOW_DAYS` completed days the actual expenditure
- * is estimated from logged intake and the weight trend, and the target is nudged towards it.
- */
-export const ADAPTIVE_WINDOW_DAYS = 21;
-/** Minimum number of fully logged days (see `ADAPTIVE_MIN_DAY_FRACTION`). */
-export const ADAPTIVE_MIN_LOGGED_DAYS = 10;
-/**
- * A day only counts as logged when its kcal reach this share of the formula expenditure.
- * Below that the day was most likely logged only partly (a forgotten dinner), and counting it
- * would make the estimate think the user eats less than they do.
- */
-export const ADAPTIVE_MIN_DAY_FRACTION = 0.5;
-/** Minimum number of weigh-ins and the minimum number of days between the first and last. */
-export const ADAPTIVE_MIN_WEIGH_INS = 2;
-export const ADAPTIVE_MIN_WEIGHT_SPAN_DAYS = 14;
-/** The adjustment never moves the target more than this many kcal either way. */
-export const ADAPTIVE_MAX_ADJUSTMENT_KCAL = 300;
-/** Energy in one kg of body weight change (the common 7700 kcal/kg rule of thumb). */
-export const KCAL_PER_KG_BODY_WEIGHT = 7700;
 
 /** Max number of results in food search. */
 export const FOOD_SEARCH_MAX_RESULTS = 6;

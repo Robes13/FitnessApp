@@ -1,45 +1,32 @@
 # ForgotPasswordPage
 
-`app-forgot-password-page` – designets "Glemt adgangskode" (`Fitness App.dc.html` linje
-113–182) med alle fire trin i én route-komponent.
+`app-forgot-password-page` – "Glemt adgangskode" (spec 1.4) på designets fotoskærm
+(`Fitness App.dc.html` linje 113–182, trin 1).
 
-| Fil                            | Indhold                                                                         |
-| ------------------------------ | ------------------------------------------------------------------------------- |
-| `forgot-password-page.ts`      | `step`-signal, tre typede formulargrupper, hints, styrkemåler og backend-kald.  |
-| `forgot-password-page.html`    | Foto med forløb, tilbage-knap + logo og `@switch` over de fire trin.            |
-| `forgot-password-page.scss`    | Fælles trin-layout (eyebrow, overskrift, brødtekst, felt, hint, knap, fodnote). |
-| `forgot-password-page.spec.ts` | Hele forløbet, hints, cifferfiltrering, styrkemåler, tilbage og oprydning.      |
+| Fil                            | Indhold                                                                 |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| `forgot-password-page.ts`      | Én typed formular (identifikator), `loading`/`sent`/`resent`, `send()`. |
+| `forgot-password-page.html`    | Foto, tilbage-knap + logo og enten feltet eller den neutrale besked.    |
+| `forgot-password-page.scss`    | Layoutet (overskrift, brødtekst, felt, knap, fodnote).                  |
+| `forgot-password-page.spec.ts` | Præcis ét kald pr. tryk, "Send igen", netværksfejl, tomt felt, tilbage. |
 
-## Trin
+## Forløb
 
-| `step`         | Designets skærm | Overskrift                 | Knap              |
-| -------------- | --------------- | -------------------------- | ----------------- |
-| `email`        | `fp1`           | Glemt din **adgangskode?** | `Send kode`       |
-| `code`         | `fp2`           | Tjek din **mail**          | `Bekræft kode`    |
-| `new-password` | `fp3`           | Vælg en ny **adgangskode** | `Gem adgangskode` |
-| `done`         | `fpDone`        | –                          | –                 |
+1. **Glemt din adgangskode?** – ét felt, `E-mail eller brugernavn` (`autocomplete="username"`),
+   udfyldt med `SessionService.email()`. "Send link" sender `POST auth/password/forgot`
+   `{ emailOrUsername }` (trimmet) – men kun, når feltet ikke er tomt.
+2. **Tjek din mail** – API'et svarer altid 204, så siden viser den neutrale besked: "Hvis kontoen
+   findes, har vi sendt en mail med et link til at vælge en ny adgangskode. Linket virker i 1
+   time." Knappen hedder nu "Send igen" (samme kald; API'et gør det forrige link ugyldigt) og
+   derefter "Sendt igen".
 
-Tilbage-knappen går ét trin tilbage; fra `email` (og fra `done`) videre til `/login`.
+Mailen linker til en side, som **API'et** hoster (ny adgangskode to gange, ingen JavaScript). Appen
+ser aldrig tokenet, så der er hverken kodefelt, adgangskodefelter eller login bagefter – brugeren
+går tilbage til appen og logger ind. Tilbage-knappen og "Log ind" i fodnoten går til `/login`.
 
 ## Detaljer
 
-- **E-mail-hintet** vises først, når der er skrevet mere end tre tegn (designets
-  `fpEmailHint`), og knappen er slået fra, indtil `NutritionCalculator.isValidEmail()` siger
-  god for adressen. Feltet starter med profilens e-mail, ligesom designets `toForgot`.
-- **Kodefeltet** holder kun cifre og højst fire (designets `setFpCode`). Filtreringen sker på
-  `valueChanges`, som sætter den rensede værdi tilbage – det udsender med vilje igen, så
-  signalet følger med.
-- **Styrkemåleren** er `NutritionCalculator.passwordStrength()` tegnet med `UiProgressBar`.
-  Tonen (`negative` · `accent` · `warning` · `positive`) farver både bjælken og etiketten
-  (`Svag` · `OK` · `God` · `Stærk`) og svarer til designets `fpStrength`.
-- **Kvitteringstrinnet** viser `UiSpinner` og "Logger ind med ny kode…", venter
-  `FORGOT_PASSWORD_DONE_DELAY_MS` (1400 ms) og logger derefter ind med
-  `SessionService.login()`. `takeUntilDestroyed` rydder timeren, hvis siden forlades inden, og
-  et fejlet login sender brugeren tilbage til trin 3 med fejlteksten.
-  Loginet bruger profilens gemte brugernavn (`profile().username`). Er det tomt, er der intet
-  at logge ind med, så siden sender i stedet brugeren til `/login` efter ventetiden.
-
-## Kendte afvigelser
-
-Gentag-feltets kant bliver **rød** ved uens adgangskoder, hvor designet bruger orange –
-`UiTextInput.invalid` har kun den negative tone.
+- **Præcis ét kald pr. tryk.** `send()` gør intet, mens et kald kører (og `UiButton` blokerer
+  klik under `loading`), fordi hvert kald revokerer det link, brugeren lige har fået.
+- **Fejl** (fx ingen forbindelse) vises i `app-ui-form-error`, og siden bliver på formularen.
+  Fejllinjen findes kun, når der er en fejl.

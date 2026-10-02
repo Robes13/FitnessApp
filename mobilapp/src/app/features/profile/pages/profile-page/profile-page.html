@@ -5,66 +5,90 @@
 />
 
 <div class="profile-page__scroll">
-  <section class="profile-page__identity">
-    <div class="profile-page__avatar">
-      <app-profile-avatar size="md" [photo]="photo()" [initial]="initial()" />
-      <button
-        type="button"
-        class="profile-page__photo-button"
-        [attr.aria-label]="'profile.page.changePhoto' | translate"
-        (click)="openPhoto()"
-      >
-        <app-ui-icon name="pencil" size="2xs" [strokeWidth]="3" />
-      </button>
-    </div>
-    <div class="profile-page__who">
-      <h2 class="profile-page__name">{{ displayName() }}</h2>
-      <p class="profile-page__email">{{ email() }}</p>
-    </div>
-  </section>
-
-  <section class="profile-page__stats">
-    <div class="profile-page__stat">
-      <p class="profile-page__stat-label">{{ 'profile.page.weight' | translate }}</p>
-      <p class="profile-page__stat-value profile-page__stat-value--accent">
-        {{ weightText()
-        }}<span class="profile-page__stat-unit">{{ 'common.unit.kg' | translate }}</span>
-      </p>
-    </div>
-    <div class="profile-page__stat">
-      <p class="profile-page__stat-label">{{ 'profile.page.height' | translate }}</p>
-      <p class="profile-page__stat-value">
-        {{ heightText()
-        }}<span class="profile-page__stat-unit">{{ 'common.unit.cm' | translate }}</span>
-      </p>
-    </div>
-    <div class="profile-page__stat">
-      <p class="profile-page__stat-label">{{ 'profile.page.bmi' | translate }}</p>
-      <p class="profile-page__stat-value">{{ bmiText() }}</p>
-    </div>
-  </section>
-
-  <section class="profile-page__section">
-    <h2 class="profile-page__section-title">{{ 'profile.page.myPlan' | translate }}</h2>
-    @for (row of planRows(); track row.id) {
-      <button
-        app-ui-row-button
-        [label]="row.label"
-        [value]="row.value"
-        (click)="openEdit(row.id)"
-      ></button>
+  @switch (status()) {
+    @case ('loading') {
+      <div class="profile-page__status">
+        <app-ui-spinner size="lg" />
+      </div>
     }
-  </section>
+    @case ('error') {
+      <div class="profile-page__status">
+        <app-ui-empty-state
+          class="profile-page__status-message"
+          [message]="'profile.page.loadFailed' | translate"
+        />
+        <button app-ui-button type="button" variant="outline" size="md" (click)="retryLoad()">
+          {{ 'profile.page.retry' | translate }}
+        </button>
+      </div>
+    }
+    @default {
+      <section class="profile-page__identity">
+        <div class="profile-page__avatar">
+          <app-profile-avatar size="md" [photo]="photo()" [initial]="initial()" />
+          <button
+            type="button"
+            class="profile-page__photo-button"
+            [attr.aria-label]="'profile.page.changePhoto' | translate"
+            (click)="openPhoto()"
+          >
+            <app-ui-icon name="pencil" size="2xs" [strokeWidth]="3" />
+          </button>
+        </div>
+        <div class="profile-page__who">
+          <h2 class="profile-page__name">{{ displayName() }}</h2>
+          <p class="profile-page__email">{{ email() }}</p>
+        </div>
+      </section>
+
+      <section class="profile-page__stats">
+        <div class="profile-page__stat">
+          <p class="profile-page__stat-label">{{ 'profile.page.weight' | translate }}</p>
+          <p class="profile-page__stat-value profile-page__stat-value--accent">
+            {{ weightText()
+            }}<span class="profile-page__stat-unit">{{ 'common.unit.kg' | translate }}</span>
+          </p>
+        </div>
+        <div class="profile-page__stat">
+          <p class="profile-page__stat-label">{{ 'profile.page.height' | translate }}</p>
+          <p class="profile-page__stat-value">
+            {{ heightText()
+            }}<span class="profile-page__stat-unit">{{ 'common.unit.cm' | translate }}</span>
+          </p>
+        </div>
+        <div class="profile-page__stat">
+          <p class="profile-page__stat-label">{{ 'profile.page.bmi' | translate }}</p>
+          <p class="profile-page__stat-value">{{ bmiText() }}</p>
+        </div>
+      </section>
+
+      <section class="profile-page__section">
+        <h2 class="profile-page__section-title">{{ 'profile.page.myPlan' | translate }}</h2>
+        @for (row of planRows(); track row.id) {
+          <button
+            app-ui-row-button
+            [label]="row.label"
+            [value]="row.value"
+            [chevron]="row.editable !== false"
+            [disabled]="row.editable === false"
+            (click)="openEdit(row)"
+          ></button>
+        }
+      </section>
+    }
+  }
 
   <section class="profile-page__section">
     <h2 class="profile-page__section-title">{{ 'profile.page.account' | translate }}</h2>
-    @for (row of accountRows(); track row.id) {
-      <button
-        app-ui-row-button
-        [label]="row.label"
-        [value]="row.value"
-        (click)="openEdit(row.id)"
-      ></button>
+    @if (profileShown()) {
+      @for (row of accountRows(); track row.id) {
+        <button
+          app-ui-row-button
+          [label]="row.label"
+          [value]="row.value"
+          (click)="openEdit(row)"
+        ></button>
+      }
     }
     <div class="profile-page__toggle">
       <span class="profile-page__toggle-label">{{ 'profile.page.lightMode' | translate }}</span>
@@ -90,9 +114,13 @@
       <app-ui-switch
         [ariaLabel]="'profile.page.notifications' | translate"
         [checked]="notificationsEnabled()"
+        [disabled]="notificationsBusy()"
         (checkedChange)="setNotifications($event)"
       />
     </div>
+    @if (notificationsError(); as message) {
+      <app-ui-form-error tone="negative" [message]="message" />
+    }
     <button
       app-ui-row-button
       [label]="'profile.page.reminders' | translate"
@@ -104,6 +132,26 @@
   <section class="profile-page__section">
     <h2 class="profile-page__section-title">{{ 'profile.page.achievements' | translate }}</h2>
     <app-achievements [achievements]="achievements()" />
+  </section>
+
+  <section class="profile-page__section">
+    <h2 class="profile-page__section-title">{{ 'profile.page.privacy' | translate }}</h2>
+    <button
+      app-ui-row-button
+      [label]="'profile.page.downloadData' | translate"
+      [disabled]="downloadingData()"
+      (click)="downloadData()"
+    ></button>
+    @if (downloadError(); as message) {
+      <app-ui-form-error tone="negative" [message]="message" />
+    }
+    <button
+      app-ui-row-button
+      [label]="'profile.page.termsConsent' | translate"
+      [value]="'profile.page.consentWithdraw' | translate"
+      (click)="askWithdrawConsent()"
+    ></button>
+    <app-profile-step-sync />
   </section>
 
   <button
@@ -132,9 +180,17 @@
 <app-profile-edit-sheet [row]="editRow()" (closed)="closeEdit()" />
 <app-profile-photo-sheet [open]="photoOpen()" (closed)="closePhoto()" />
 <app-profile-reminders-sheet [open]="remindersOpen()" (closed)="closeReminders()" />
-<app-profile-logout-sheet [open]="logoutOpen()" (closed)="closeLogout()" (confirmed)="logout()" />
+<app-profile-logout-sheet
+  [open]="logoutOpen()"
+  [busy]="loggingOut()"
+  (closed)="closeLogout()"
+  (confirmed)="logout()"
+/>
 <app-profile-delete-account-sheet
   [open]="deleteAccountOpen()"
+  [busy]="deletingAccount()"
+  [errorMessage]="deleteError()"
+  [bodyKey]="deleteBodyKey()"
   (closed)="closeDeleteAccount()"
   (confirmed)="deleteAccount()"
 />

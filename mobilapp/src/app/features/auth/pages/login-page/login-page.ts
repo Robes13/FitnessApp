@@ -4,18 +4,20 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { APP_PATH } from '../../../../core/constants/app-route';
+import { LOGIN_IDENTIFIER_MAX_LENGTH } from '../../../../core/constants/auth';
 import { PHOTO_SCREEN_THEME } from '../../../../core/constants/theme';
+import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { SessionService } from '../../../../core/services/session/session';
+import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiTextInput } from '../../../../shared/components/ui-text-input/ui-text-input';
 import { AUTH_ASSET } from '../../auth-assets';
-import { authErrorKey } from '../../auth-error';
 import { AuthBackdrop } from '../../components/auth-backdrop/auth-backdrop';
 import { holdDarkSystemBarsWhileOpen } from '../../photo-screen';
 
 interface LoginForm {
-  username: FormControl<string>;
+  identifier: FormControl<string>;
   password: FormControl<string>;
 }
 
@@ -23,8 +25,11 @@ interface LoginForm {
  * The design's login screen (lines 88–110): photo background, logo and wordmark at the top, the
  * heading "Spis klogt. / Træn stærkt." and the glass fields at the bottom.
  *
- * The login itself goes through `SessionService`, which talks to `AuthApi`. The button shows a
- * spinner while the call is in progress, and the backend's error text is shown in `app-ui-form-error`.
+ * One field takes the e-mail or the username (the API tells them apart by the `@`). The login
+ * itself goes through `SessionService`; the button shows a spinner while the call is in progress,
+ * and the error is shown in `app-ui-form-error`. An unverified e-mail is no error: the session
+ * becomes `pending-verification`, and Home shows the verification sheet. The field is filled in
+ * with the e-mail the session remembers after a log out or an app restart.
  */
 @Component({
   selector: 'app-login-page',
@@ -52,15 +57,20 @@ export class LoginPage {
   protected readonly logoSrc = AUTH_ASSET.LOGO;
   protected readonly signupPath = APP_PATH.SIGNUP;
   protected readonly forgotPasswordPath = APP_PATH.FORGOT_PASSWORD;
+  /**
+   * Above the on-screen keyboard the fields move up over the photo's light middle, so the
+   * backdrop's gradient keeps the heading and the error line readable.
+   */
+  protected readonly keyboardOpen = inject(KeyboardService).isOpen;
 
   protected readonly loading = signal(false);
   /** Translation key of the error shown below the fields – translated in the template. */
   protected readonly errorKey = signal<string | null>(null);
 
   protected readonly form = new FormGroup<LoginForm>({
-    username: new FormControl('', {
+    identifier: new FormControl(this.session.email() ?? '', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(50)],
+      validators: [Validators.required, Validators.maxLength(LOGIN_IDENTIFIER_MAX_LENGTH)],
     }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
@@ -70,14 +80,15 @@ export class LoginPage {
   }
 
   protected submit(): void {
+    // Both fields are required (the identifier at most 320 characters) – else the API's generic 400 comes back.
     if (this.loading() || this.form.invalid) {
       return;
     }
-    const { username, password } = this.form.getRawValue();
+    const { identifier, password } = this.form.getRawValue();
     this.loading.set(true);
     this.errorKey.set(null);
     this.session
-      .login(username, password)
+      .login(identifier, password)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -86,7 +97,7 @@ export class LoginPage {
         },
         error: (error: unknown) => {
           this.loading.set(false);
-          this.errorKey.set(authErrorKey(error));
+          this.errorKey.set(toApiError(error).messageKey);
         },
       });
   }

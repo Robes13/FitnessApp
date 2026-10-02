@@ -5,7 +5,7 @@ træning, mål og notifikationer og lander på en opsummering, der opretter kont
 
 | Fil/mappe                     | Indhold                                                                           |
 | ----------------------------- | --------------------------------------------------------------------------------- |
-| `signup.routes.ts`            | `SIGNUP_ROUTES`: `SignupPage` med `SignupStateService` som route-provider.        |
+| `signup.routes.ts`            | `SIGNUP_ROUTES`: ruten til `SignupPage`, som selv leverer `SignupStateService`.   |
 | `services/`                   | `SignupStateService` – kladden, trin-navigationen og oprettelsen.                 |
 | `pages/signup-page/`          | Siden: fremdrift øverst, det aktive trin i midten, tilbage/videre nederst.        |
 | `components/signup-progress/` | Ringen med trinnummeret, kapitelnavn og kapitelbjælkerne.                         |
@@ -50,13 +50,41 @@ med meget indhold kan scrolle uden at skubbe knapperne ud af skærmen.
 
 ## Oprettelsen
 
-`submit()` registrerer kontoen hos `AuthApi`, skriver kladden som profil via
-`UserProfileService.replace` og kalder `SessionService.completeSignup()`. Brugeren er derefter
-logget ind, men **ikke** bekræftet, så Hjem viser bekræftelses-arket. Profilen skrives først,
-når registreringen er gået godt, og siden viser fejlen fra backenden i en `UiFormError`.
-Indtil backenden findes, svarer `AuthApi.register` med en stubbet succes, så hele flowet kan
-klikkes igennem.
-Selve navigationen til Hjem sker i `SignupPage`, fordi den også ejer spinner og fejltekst.
+`submit()` kalder `SessionService.register(profil, adgangskode, gentagelse)`. Den mapper kladden
+til API'ets flade `RegisterRequest` (`toRegisterRequest()` i `core/services/auth-api/auth-mapping.ts`)
+og sender `POST auth/register`. API'et opretter profil, første mål, notifikationsindstilling og
+vilkårssamtykke i ét kald og sender selv bekræftelsesmailen. Sessionen bliver derefter
+`pending-verification`, og Hjem viser bekræftelses-arket, mens brugeren trykker på linket i
+mailen (se `features/home/components/verify-email-sheet`). Adgangskoden holdes **kun i
+hukommelsen**, så arket kan logge brugeren ind automatisk, når e-mailen er bekræftet.
+
+Kladden skrives som lokal profil via `UserProfileService.replace` først, når API'et har oprettet
+kontoen. Siden viser fejlen i en `UiFormError` – e-mail eller brugernavn optaget (409),
+for kort adgangskode eller "Kontoen kunne ikke oprettes" – via `toApiError(error).messageKey`.
+Fejlen forsvinder, så snart brugeren retter kladden: et trin åbnes fra opsummeringen, eller
+e-mailen ændres. Selve navigationen til Hjem sker i `SignupPage`, fordi den også ejer spinner og
+fejltekst.
+
+Kladden – også adgangskoden – lever kun, så længe `SignupPage` gør: siden leverer
+`SignupStateService` i sine egne `providers`, så den nedlægges, når brugeren går til Hjem eller
+login. Næste besøg på `/opret` (fx en ny bruger efter log ud) starter tomt. Den må **ikke** ligge
+på ruten: Angular beholder en rutes injector, efter at brugeren er gået væk.
+
+### API'ets regler i trinnene
+
+- **Brugernavn** 3–50 tegn, kun bogstaver a–z/A–Z, tal, `-` og `_` (`USERNAME_PATTERN` = API'ets
+  `UsernameRules`; dermed hverken mellemrum eller `@`, som login skelner e-mail fra brugernavn på).
+  Værdien tjekkes, som den er skrevet (ikke trimmet), og én hint-tekst (`usernameRule`) forklarer
+  reglen. **Adgangskode** 10–200 tegn (`PASSWORD_MIN_LENGTH`/`PASSWORD_MAX_LENGTH`). Felterne stopper
+  ved maksimum, og `canContinue('account')` kræver reglerne.
+- **Højde** 100–250 cm (`HEIGHT_MIN_CM` = 100) og **alder** `MIN_AGE`–`MAX_AGE` (13–100 år, API'ets
+  regel). "For ung"-teksten interpolerer `MIN_AGE` (`{{minAge}}`).
+- **Målvægt** skal ligge på målets side af vægten i dag (under ved "tabe", over ved "tage").
+  Skalaens grænser sikrer det ikke i yderpunkterne (vægt ≤ 36 kg ved "tabe", ≥ 200 kg ved
+  "tage"), så `canContinue('goal-weight')` kræver det også – ellers svarer register 400.
+- API'et gemmer kun antallet af træningsdage og én af tre intensiteter (`Low`/`Moderate`/`High`
+  via `INTENSITIES[].maxRpe`); uden træningsdage sendes `TRAINING_FALLBACK_INTENSITY`. Ugedagene
+  og RPE-tallet gemmes kun lokalt i profilen (gap i API'et).
 
 ## Bevidste afvigelser fra prototypen
 
@@ -65,6 +93,7 @@ Selve navigationen til Hjem sker i `SignupPage`, fordi den også ejer spinner og
   trinnet stadig tælles med i `visOrder`. Her går flowet til næste **synlige** trin, så
   notifikationer altid bliver spurgt om.
 - **Fejltekst ved oprettelse.** Prototypen har ingen fejltilstand på det sidste trin. Slår
-  registreringen fejl, viser siden backendens besked, ellers "Kontoen kunne ikke oprettes.
-  Prøv igen."
+  registreringen fejl, viser siden en oversat fejltekst (fx "Der findes allerede en konto med
+  den e-mail."). Står der noget i e-mailfeltet, der ikke er en e-mail, siger samme linje
+  "Skriv en gyldig e-mail." (1.0-15a), så det er tydeligt, hvorfor "Opret konto" er slået fra.
 - **Alderen regnes ud fra `NOW`.** Prototypen har datoen 16. september 2026 hardkodet.

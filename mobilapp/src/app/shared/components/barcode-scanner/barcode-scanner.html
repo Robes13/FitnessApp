@@ -107,15 +107,44 @@
         {{ 'shared.barcodeScanner.enterManually' | translate }}
       </button>
       <button app-ui-button variant="ghost" size="sm" type="button" (click)="requestNoBarcode()">
-        {{ 'shared.barcodeScanner.noBarcode' | translate }}
+        {{ newFoodLabelKey() | translate }}
       </button>
     </div>
   </div>
 
-  <app-ui-sheet [open]="isResultOpen()" [title]="resultTitle()" layer="top" (closed)="rescan()">
+  <app-ui-sheet
+    [open]="isResultOpen()"
+    [title]="resultTitle()"
+    layer="top"
+    scrollable
+    (closed)="rescan()"
+  >
     @if (product()) {
       <div class="barcode-scanner__result">
         <p class="barcode-scanner__subtitle">{{ resultSubtitle() }}</p>
+        @if (showMeals()) {
+          <p class="barcode-scanner__caption">
+            {{ 'shared.barcodeScanner.mealQuestion' | translate }}
+          </p>
+          <div
+            class="barcode-scanner__meals"
+            role="group"
+            [attr.aria-label]="'shared.barcodeScanner.mealQuestion' | translate"
+          >
+            @for (option of mealOptions; track option.id) {
+              <button
+                app-ui-chip
+                type="button"
+                size="sm"
+                class="barcode-scanner__meal"
+                [selected]="option.id === meal()"
+                (click)="pickMeal(option.id)"
+              >
+                {{ option.labelKey | translate }}
+              </button>
+            }
+          </div>
+        }
         <p class="barcode-scanner__caption">
           {{ 'shared.barcodeScanner.amountQuestion' | translate }}
         </p>
@@ -138,7 +167,6 @@
           <app-ui-text-input
             formControlName="grams"
             type="number"
-            inputMode="numeric"
             size="md"
             [ariaLabel]="amountAriaLabel()"
             [invalid]="hasAmountError()"
@@ -164,12 +192,16 @@
         }
       </div>
     }
+    @if (shownError(); as message) {
+      <app-ui-form-error sheetFooter tone="negative" [message]="message" />
+    }
     <div class="barcode-scanner__footer" sheetFooter>
       <button
         app-ui-button
         variant="outline"
         type="button"
         class="barcode-scanner__action"
+        [disabled]="busy()"
         (click)="rescan()"
       >
         {{ 'shared.barcodeScanner.rescan' | translate }}
@@ -179,107 +211,10 @@
         type="button"
         class="barcode-scanner__action"
         [disabled]="!canAddScanned()"
+        [loading]="busy()"
         (click)="addScanned()"
       >
         {{ 'shared.barcodeScanner.add' | translate }}
-      </button>
-    </div>
-  </app-ui-sheet>
-
-  <app-ui-sheet
-    [open]="isUnknownOpen()"
-    layer="top"
-    maxHeight="full"
-    scrollable
-    (closed)="rescan()"
-  >
-    <span class="barcode-scanner__badge" sheetTitle>{{
-      'shared.barcodeScanner.unknownBadge' | translate
-    }}</span>
-    <form class="barcode-scanner__unknown" [formGroup]="form">
-      <h3 class="barcode-scanner__heading">
-        {{ 'shared.barcodeScanner.unknownTitleStart' | translate }}
-        <span class="barcode-scanner__heading-accent">{{
-          'shared.barcodeScanner.unknownTitleAccent' | translate
-        }}</span>
-      </h3>
-      <p class="barcode-scanner__lead">
-        {{ 'shared.barcodeScanner.unknownLead' | translate }}
-      </p>
-      @if (barcode()) {
-        <p class="barcode-scanner__code-value">
-          {{ 'shared.barcodeScanner.barcodeValue' | translate: { barcode: barcode() } }}
-        </p>
-      }
-      <div class="barcode-scanner__fields">
-        <div class="barcode-scanner__field">
-          <span class="barcode-scanner__label">{{
-            'shared.barcodeScanner.nameLabel' | translate
-          }}</span>
-          <app-ui-text-input
-            formControlName="name"
-            [placeholder]="'shared.barcodeScanner.namePlaceholder' | translate"
-            [ariaLabel]="'shared.barcodeScanner.nameLabel' | translate"
-            [invalid]="nameTaken()"
-          />
-          <app-ui-form-error [message]="nameError()" tone="negative" />
-        </div>
-        <div class="barcode-scanner__field">
-          <span class="barcode-scanner__label">{{
-            'shared.barcodeScanner.portionLabel' | translate
-          }}</span>
-          <app-ui-text-input
-            formControlName="quantity"
-            [placeholder]="'shared.barcodeScanner.portionPlaceholder' | translate"
-            [ariaLabel]="'shared.barcodeScanner.portionLabel' | translate"
-          />
-        </div>
-        <div class="barcode-scanner__field-row">
-          <div class="barcode-scanner__field">
-            <span class="barcode-scanner__label">{{
-              'shared.barcodeScanner.kcalLabel' | translate
-            }}</span>
-            <app-ui-text-input
-              formControlName="kcal"
-              type="number"
-              inputMode="numeric"
-              placeholder="210"
-              [ariaLabel]="'shared.barcodeScanner.kcalLabel' | translate"
-            />
-          </div>
-          <div class="barcode-scanner__field">
-            <span class="barcode-scanner__label">{{
-              'shared.barcodeScanner.proteinLabel' | translate
-            }}</span>
-            <app-ui-text-input
-              formControlName="protein"
-              type="number"
-              inputMode="numeric"
-              placeholder="20"
-              [ariaLabel]="'shared.barcodeScanner.proteinLabel' | translate"
-            />
-          </div>
-        </div>
-      </div>
-    </form>
-    <div class="barcode-scanner__footer" sheetFooter>
-      <button
-        app-ui-button
-        variant="outline"
-        type="button"
-        class="barcode-scanner__action"
-        (click)="rescan()"
-      >
-        {{ 'shared.barcodeScanner.rescan' | translate }}
-      </button>
-      <button
-        app-ui-button
-        type="button"
-        class="barcode-scanner__action"
-        [disabled]="!canSaveUnknown()"
-        (click)="saveUnknown()"
-      >
-        {{ 'shared.barcodeScanner.saveAndAdd' | translate }}
       </button>
     </div>
   </app-ui-sheet>

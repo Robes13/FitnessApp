@@ -8,6 +8,11 @@
       "g": "g",
       "kcal": "kcal",
       "cm": "cm"
+    },
+    "error": {
+      "network": "No connection. Check your internet and try again.",
+      "server": "The server isn't responding right now. Try again in a moment.",
+      "requestFailed": "Something went wrong. Try again."
     }
   },
   "core": {
@@ -87,16 +92,6 @@
           "label": "Other",
           "description": "Average of the two formulas"
         }
-      },
-      "unitSystems": {
-        "metric": {
-          "label": "Metric",
-          "description": "kg · cm"
-        },
-        "imperial": {
-          "label": "Imperial",
-          "description": "lb · in"
-        }
       }
     },
     "meals": {
@@ -133,44 +128,15 @@
         "permission": "We couldn't ask for notification permission. Try again later."
       }
     },
-    "collectionIcons": {
-      "egg": "Egg",
-      "bolt": "Lightning",
-      "utensils": "Cutlery",
-      "cookie": "Cookie",
-      "coffee": "Coffee",
-      "salad": "Salad",
-      "fish": "Fish",
-      "flame": "Flame",
-      "leaf": "Leaf",
-      "heart": "Heart",
-      "star": "Star",
-      "dumbbell": "Dumbbell",
-      "apple": "Apple",
-      "carrot": "Carrot",
-      "sprout": "Sprout",
-      "soup": "Soup",
-      "pizza": "Pizza",
-      "icecream": "Ice cream",
-      "cake": "Cake",
-      "sandwich": "Sandwich",
-      "milk": "Milk",
-      "droplet": "Drop",
-      "timer": "Timer",
-      "sun": "Sun",
-      "moon": "Moon",
-      "target": "Target",
-      "trophy": "Trophy",
-      "bike": "Bike",
-      "bag": "Bag",
-      "sparkles": "Sparkle"
-    },
     "auth": {
       "error": {
-        "noBackend": "There is no connection to a server yet.",
         "invalidEmail": "Enter a valid email.",
-        "invalidCode": "The code is 4 digits.",
-        "passwordTooShort": "At least 8 characters."
+        "passwordTooShort": "At least 10 characters.",
+        "invalidCredentials": "Wrong username, e-mail or password.",
+        "tooManyAttempts": "Too many failed attempts. Wait up to 15 minutes and try again.",
+        "emailTaken": "An account with that email already exists.",
+        "usernameTaken": "That username is taken. Pick another one.",
+        "registerFailed": "The account couldn't be created. Check your details and try again."
       }
     },
     "barcode": {
@@ -181,10 +147,10 @@
       "permissionDenied": "The app doesn't have camera access. Allow access in Settings to scan barcodes – or enter the numbers below.",
       "unreadable": "We couldn't read the barcode. Try again with better light, or enter the numbers below.",
       "moduleInstalling": "The barcode scanner is being downloaded from Google Play. Try again in a moment.",
+      "moduleUnavailable": "The camera scanner can't be used on this phone right now. Enter the barcode number below.",
       "lookupError": "We couldn't look up the item. Check your internet connection and try again.",
       "invalidBarcode": "The barcode must be {{minDigits}}–{{maxDigits}} digits.",
-      "invalidAmount": "Enter an amount between {{minGrams}} and {{maxGrams}} g.",
-      "duplicateName": "You already have a custom item with that name.",
+      "invalidAmount": "Enter an amount between {{minGrams}} and {{maxGrams}} {{unit}}.",
       "servingLabel": "Serving",
       "amountLabel": "Amount ({{unit}})",
       "amountAriaLabelMillilitres": "Amount in millilitres",
@@ -193,10 +159,16 @@
       "barcodeLabelWeb": "Enter the barcode",
       "unnamedProduct": "Item {{barcode}}"
     },
+    "quantity": {
+      "piece": "pc",
+      "pieces": "pcs",
+      "serving": "serving",
+      "servings": "servings"
+    },
     "weight": {
       "range": {
         "lastWeek": "Last week",
-        "lastFourWeeks": "Last 4 weeks",
+        "lastThreeWeeks": "Last 3 weeks",
         "lastThreeMonths": "Last 3 mo"
       },
       "logList": {
@@ -204,12 +176,6 @@
         "showAll": "Show all ({{hiddenCount}} more)",
         "editRow": "Edit weigh-in {{date}} at {{time}}, {{kg}} kg"
       }
-    },
-    "passwordStrength": {
-      "weak": "Weak",
-      "ok": "OK",
-      "good": "Good",
-      "strong": "Strong"
     },
     "date": {
       "today": "Today",
@@ -273,49 +239,45 @@
         "nov": "Nov",
         "dec": "Dec"
       }
+    },
+    "stepSync": {
+      "source": {
+        "appleHealth": "Apple Health",
+        "healthConnect": "Health Connect"
+      },
+      "syncing": "Fetching your steps …",
+      "synced": "Fetched {{day}} – {{steps}} steps a day",
+      "insufficient": "Not enough step data yet. There must be steps on at least {{minDays}} of the last {{days}} days.",
+      "noSteps": "Nutrify can't see any steps from the last {{days}} days. If you haven't allowed access, you can do so in Settings → Privacy & Security → Health → Nutrify.",
+      "noPermission": "Nutrify can't read your steps – allow access in {{source}}.",
+      "failed": "We couldn't fetch your steps. We'll try again next time.",
+      "accessDenied": "Nutrify didn't get access to your steps – allow access in {{source}}.",
+      "loadFailed": "We couldn't load your steps setting."
     }
   },
   "auth": {
-    "error": {
-      "fallback": "Something went wrong. Try again."
-    },
     "loginPage": {
       "headingStart": "Eat smart.",
       "headingAccent": "Train hard.",
-      "username": "Username",
       "password": "Password",
       "submit": "Log in",
       "newHere": "New here?",
       "createAccount": "Create account",
-      "forgotPassword": "Forgot password?"
+      "forgotPassword": "Forgot password?",
+      "identifier": "E-mail or username"
     },
     "forgotPasswordPage": {
-      "stepOf": "Step {{step}} of {{total}}",
       "emailTitleStart": "Forgot your",
       "emailTitleAccent": "pass­word?",
-      "emailBody": "Enter the email your account was created with. We'll send a 4-digit code.",
-      "emailPlaceholder": "you@mail.com",
-      "emailLabel": "Email",
-      "sendCode": "Send code",
+      "emailBody": "Enter your e-mail or username. We'll send you a link to choose a new password.",
+      "identifierLabel": "E-mail or username",
+      "sendLink": "Send link",
+      "sentTitle": "Check your e-mail",
+      "sentBody": "If the account exists, we've sent an e-mail with a link to choose a new password. The link works for 1 hour.",
       "rememberIt": "Remember it?",
       "logIn": "Log in",
-      "codeTitleStart": "Check your",
-      "codeTitleAccent": "email",
-      "codeBodyStart": "The code was sent to",
-      "codeBodyEnd": "and is valid for 15 minutes.",
-      "codeLabel": "Four-digit code",
-      "confirmCode": "Confirm code",
-      "noEmail": "No email?",
-      "resend": "Resend",
-      "resent": "Sent again",
-      "passwordTitleStart": "Choose a new",
-      "passwordTitleAccent": "pass­word",
-      "passwordBody": "At least 8 characters. Numbers and capital letters are a good idea.",
-      "newPassword": "New password",
-      "repeatPassword": "Repeat password",
-      "savePassword": "Save password",
-      "loggingIn": "Logging in with new password…",
-      "mismatch": "The passwords don't match."
+      "resend": "Send again",
+      "resent": "Sent again"
     }
   },
   "collections": {
@@ -325,7 +287,7 @@
     "deleteSheet": {
       "title": "Delete",
       "titleAccent": "collection?",
-      "body": "“{{name}}” and its items will be deleted. This can't be undone.",
+      "body": "“{{name}}” will be deleted. Its items and what you've already logged stay. This can't be undone.",
       "confirm": "Yes, delete collection",
       "cancel": "Cancel"
     },
@@ -337,16 +299,16 @@
       "submitEdit": "Save changes",
       "namePlaceholder": "Name, e.g. Meal prep",
       "nameLabel": "Collection name",
-      "mealCaption": "Belongs to",
-      "iconCaption": "Choose icon",
       "itemsCaption": "Items in the collection",
       "emptyDraft": "Search for an item or scan a barcode to fill the collection.",
+      "minOneItem": "Add at least one item to save the collection.",
       "search": "Search item",
       "scan": "Scan",
       "pickerTitle": "Add",
       "pickerTitleAccent": "to collection",
-      "showMoreIcons": "Show more ({{count}})",
-      "showFewerIcons": "Show fewer",
+      "pickerTitleEdit": "Edit",
+      "pickerTitleEditAccent": "item",
+      "saveOnly": "Save to My items only",
       "duplicateName": "You already have a collection with that name.",
       "duplicateCustomFood": "You already have a custom item named \"{{foodName}}\", so it wasn't saved again under My items.",
       "saveAndAdd": "Save and add to collection",
@@ -354,34 +316,34 @@
     },
     "page": {
       "title": "Collections",
-      "subtitle": "Your items and dishes – log them straight as eaten.",
+      "subtitle": "Group the items you often eat together and log them as eaten in one go.",
       "create": "Create collection",
-      "filter": "Filter by collection",
-      "empty": "There are no dishes or items in this collection yet."
+      "empty": "You don't have any collections yet. Tap + to group the items you often eat together.",
+      "loadError": "We couldn't load your collections.",
+      "retry": "Try again"
     },
     "view": {
-      "emptySubtitle": "No items yet",
-      "allChip": "All",
       "itemCountOne": "1 item",
       "itemCountMany": "{{count}} items",
       "macros": "{{kcal}} kcal · {{protein}} g protein",
-      "recipeMeta": "{{category}} · {{minutes}} min"
+      "totals": "{{kcal}} kcal · {{protein}} g protein · {{carbs}} g carbs · {{fat}} g fat"
     },
     "recipePage": {
-      "title": "Recipe",
+      "title": "Collection",
       "edit": "Edit collection",
       "contents": "Contents",
       "logUnder": "Log as eaten under",
       "log": "Log {{kcal}} kcal",
       "delete": "Delete collection",
       "backToCollections": "Back to collections",
-      "notFound": "We couldn't find this recipe.",
-      "noContents": "There are no items in the collection yet.",
+      "notFound": "We couldn't find this collection.",
       "calories": "Calories",
       "protein": "Protein",
       "carbs": "Carbs",
       "fat": "Fat"
-    }
+    },
+    "saveError": "The collection wasn't saved. Try again.",
+    "logError": "The collection wasn't logged. Try again."
   },
   "food": {
     "mealGroup": {
@@ -395,10 +357,10 @@
       "titleAdd": "Add",
       "titleEdit": "Edit",
       "titleEditWhat": "item",
-      "collectionsEmpty": "You have no collections with items yet. Build one under Collection, then log it here with one tap.",
+      "collectionsEmpty": "You have no collections with items yet. Build one under Collection, then log it here.",
       "saveAndLog": "Save and log under {{mealName}}",
-      "itemCountOne": "{{count}} item",
-      "itemCountMany": "{{count}} items"
+      "logCollection": "Log {{kcal}} kcal under {{mealName}}",
+      "cancelCollection": "Cancel"
     },
     "view": {
       "protein": "Protein",
@@ -415,15 +377,31 @@
       "eatenOfGoal": "{{eaten}} eaten · goal {{goal}}",
       "addFood": "Add food",
       "scan": "Scan barcode",
-      "duplicateCustomFood": "You already have a custom item named \"{{foodName}}\", so it wasn't saved again."
+      "duplicateCustomFood": "You already have a custom item named \"{{foodName}}\", so it wasn't saved again.",
+      "loadError": "We couldn't load your food and calorie goal. Try again in a moment.",
+      "saveError": "The item wasn't saved. Try again.",
+      "removeError": "The item wasn't removed. Try again.",
+      "notFound": "The item no longer exists.",
+      "retry": "Try again"
+    },
+    "removeSheet": {
+      "title": "Remove",
+      "titleAccent": "item?",
+      "body": "“{{foodName}}” will be removed from today's log.",
+      "confirm": "Yes, remove item",
+      "cancel": "Cancel"
     }
   },
   "history": {
     "entries": {
+      "accountTitle": "Account created",
       "foodSummary": "{{kcal}} kcal · P {{protein}} g · C {{carbs}} g · F {{fat}} g",
+      "goalTitle": "Goal updated",
+      "goalValue": "{{kcal}} kcal",
       "groupLabel": "{{day}} · {{date}}",
       "mealValue": "{{kcal}} kcal",
       "relog": "Log again today",
+      "relogFailed": "Not logged – try again",
       "relogged": "Logged today",
       "today": "Today",
       "weighSubtitle": "Weigh-in recorded",
@@ -440,7 +418,9 @@
     },
     "page": {
       "empty": "No entries yet.",
+      "error": "Your history couldn't be loaded.",
       "filtersAriaLabel": "Filter history",
+      "retry": "Try again",
       "titleAccent": "history",
       "titleStart": "Your"
     }
@@ -459,7 +439,9 @@
       "toGoal": "To goal"
     },
     "page": {
-      "profileAriaLabel": "Profile"
+      "profileAriaLabel": "Profile",
+      "loadError": "Your data couldn't be loaded.",
+      "retry": "Try again"
     },
     "summary": {
       "dayTitle": {
@@ -470,6 +452,7 @@
       "goal": {
         "coachHold": "You're staying within ±{{kg}} kg of your goal weight.",
         "coachPace": "At your pace of {{pace}}, you'll get there in about {{weeks}} weeks.",
+        "coachPaceOne": "At your pace of {{pace}}, you'll get there in about 1 week.",
         "coachReached": "You've hit your goal – consider switching to \"Maintain weight\".",
         "reached": "Reached!",
         "toGoal": "{{kg}} kg"
@@ -483,6 +466,7 @@
         "protein": "Protein"
       },
       "streak": "{{streakDays}} days",
+      "streakOne": "1 day",
       "todoCountSingle": "Just one",
       "todos": {
         "mealSubtitle": "Not recorded yet",
@@ -491,43 +475,41 @@
         "weighTitle": "Remember to weigh yourself today"
       },
       "weekNote": {
-        "empty": "No days logged this week yet.",
+        "empty": "No days logged in the last 7 days.",
         "solid": "Solid week. Protein is what lifts the rest.",
         "strong": "Strong week – keep it up.",
         "uneven": "Uneven week. Set one goal: hit protein tomorrow."
-      },
-      "weekProgress": "Day {{dayNumber}} of 7"
+      }
     },
     "todoCard": {
       "caption": "Next step"
     },
     "verifyEmail": {
-      "changeEmail": "Change email",
-      "checkAgain": "Check again",
-      "checking": "Checking…",
-      "copyEnd": ". The app unlocks once you've confirmed.",
-      "copyStart": "We've sent a confirmation code to",
-      "emailAriaLabel": "Email",
+      "copyEnd": ". Tap the link in the e-mail – the app notices by itself.",
+      "copyStart": "We've sent a link to",
       "emailFallback": "your email",
-      "invalidEmail": "Enter a valid email.",
-      "notVerified": "Not confirmed",
-      "requestFailed": "Something went wrong. Try again.",
-      "resend": "Resend code",
+      "resend": "Send e-mail again",
       "resendHint": "Nothing received?",
-      "resendHintSent": "New code sent – check spam too.",
-      "resendSent": "Code sent ✓",
+      "resendHintSent": "New e-mail sent – the old link no longer works.",
       "titleAccent": "email",
-      "titleStart": "Check your"
+      "titleStart": "Check your",
+      "backToLogin": "To login"
     },
     "weekCard": {
       "averageKcal": "kcal avg.",
-      "caption": "This week",
+      "caption": "Last 7 days",
       "daysOnTarget": "days on target",
       "proteinHit": "protein hit",
       "streak": "streak"
     },
     "weekRings": {
-      "ariaLabel": "Days of the week"
+      "ariaLabel": "The last 7 days"
+    },
+    "monthSheet": {
+      "kcal": "{{eaten}} / {{goal}} kcal",
+      "macros": "P {{protein}} g · C {{carbs}} g · F {{fat}} g",
+      "open": "See the last 30 days",
+      "title": "Last 30 days"
     }
   },
   "weight": {
@@ -551,9 +533,19 @@
     "logList": {
       "title": "Recent weigh-ins"
     },
+    "overwriteSheet": {
+      "body": "You've already weighed in today. Do you want to overwrite the weigh-in with {{kg}} kg?",
+      "cancel": "Cancel",
+      "confirm": "Yes, overwrite",
+      "titleAccent": "today's weigh-in?",
+      "titleStart": "Overwrite"
+    },
     "page": {
+      "loadError": "Your weigh-ins couldn't be loaded.",
       "rangesAriaLabel": "Choose period",
+      "retry": "Try again",
       "save": "Save weigh-in",
+      "saveError": "The weigh-in wasn't saved. Please try again.",
       "saved": "Saved ✓",
       "sinceLast": "Since last time",
       "titleAccent": "weight",
@@ -569,20 +561,20 @@
       "ariaLabel": "Figure on scale"
     },
     "view": {
-      "emptyLog": "No weigh-ins yet.",
+      "emptyLog": "No weigh-ins yet. The starting weight from sign-up can't be edited – record a new weigh-in first.",
       "lastWeighed": "Last weighed {{day}}",
       "logStart": "Start",
-      "neverWeighed": "No weigh-ins yet",
+      "neverWeighed": "Starting weight from sign-up",
       "noRecentLog": "No weigh-ins in the last 3 mo.",
       "rangeDelta": "{{delta}} kg",
       "rangeStart": {
-        "fourWeeks": "-4 weeks",
         "threeMonths": "-3 mo",
-        "week": "-week"
+        "threeWeeks": "-3 weeks",
+        "week": "-1 week"
       },
       "ranges": {
-        "fourWeeks": "4 weeks",
         "threeMonths": "3 mo",
+        "threeWeeks": "3 weeks",
         "week": "1 week"
       }
     }
@@ -612,14 +604,22 @@
       "achievements": "Achievements",
       "logout": "Log out",
       "deleteAccount": "Delete account",
+      "loadFailed": "Your profile couldn't be loaded.",
+      "retry": "Try again",
       "remindersOff": "Off",
       "remindersNone": "None",
       "remindersActiveOne": "{{count}} active",
-      "remindersActiveMany": "{{count}} active"
+      "remindersActiveMany": "{{count}} active",
+      "privacy": "Privacy",
+      "downloadData": "Download my data",
+      "termsConsent": "Terms and processing of health and profile data",
+      "consentWithdraw": "Withdraw"
     },
     "rows": {
       "goal": "Goal",
       "pace": "Pace",
+      "birthday": "Date of birth",
+      "birthdayValue": "{{date}} {{year}} · {{age}} years",
       "gender": "Sex",
       "height": "Height",
       "heightValue": "{{heightCm}} cm",
@@ -635,16 +635,16 @@
       "trainInt": "Intensity",
       "kcal": "Daily calorie goal",
       "kcalValue": "{{kcal}} kcal",
-      "kcalValueAdjusted": "{{kcal}} kcal · adjusted {{adjustment}}",
+      "kcalValueFloor": "{{kcal}} kcal · safe minimum",
       "email": "Email",
-      "units": "Units",
       "emailPlaceholder": "you@mail.com"
     },
     "edit": {
       "goalTitle": "Your goal",
       "paceTitle": "Pace",
+      "birthdayTitle": "Date of birth",
+      "birthdayInvalid": "You must be between {{min}} and {{max}} years old.",
       "genderTitle": "Sex",
-      "unitsTitle": "Units",
       "intensityTitle": "Intensity",
       "heightTitle": "Height",
       "stepsTitle": "Steps per day",
@@ -655,11 +655,9 @@
       "trainFreqUnit": "/ week",
       "trainDurTitle": "Length per workout",
       "trainDurUnit": "min",
-      "kcalTitle": "Daily calorie goal",
-      "kcalHint": "Suggested: {{kcal}} kcal",
-      "kcalHintAdjusted": "Suggested: {{kcal}} kcal (adjusted {{adjustment}} kcal based on your weight trend)",
       "emailTitle": "Email",
       "emailPlaceholder": "you@mail.com",
+      "emailSent": "We've sent a confirmation link to {{email}}. Your e-mail changes when you tap the link.",
       "goalWeightTitle": "Goal weight",
       "goalWeightHint": "Now: {{currentKg}} kg",
       "goalWeightHintPending": "Your goal weight doesn't match the goal \"{{goal}}\" (now: {{currentKg}} kg). Choose a new goal weight – the goal changes when you save.",
@@ -667,7 +665,9 @@
       "goalWeightTooHigh": "That goal is very high for your height.",
       "goalWeightBelowCurrent": "Goal weight must be below your current weight ({{currentKg}} kg).",
       "goalWeightAboveCurrent": "Goal weight must be above your current weight ({{currentKg}} kg).",
-      "goalWeightRange": "Choose a goal weight between {{min}} and {{max}} kg."
+      "goalWeightRange": "Choose a goal weight between {{min}} and {{max}} kg.",
+      "numberRange": "Choose a value between {{min}} and {{max}} {{unit}}.",
+      "saveFailed": "The change couldn't be saved. Try again."
     },
     "editSheet": {
       "decrease": "Less",
@@ -686,9 +686,10 @@
       "chooseAnother": "Choose another photo",
       "use": "Use photo",
       "choose": "Choose photo",
+      "takePhoto": "Take a photo",
       "cropLaterHint": "You'll crop the photo once it's chosen.",
-      "saveError": "The photo couldn't be saved. Free up space and try again.",
-      "readError": "The photo couldn't be loaded. Try another one."
+      "saveError": "The photo couldn't be saved. Try again.",
+      "readError": "This image can't be used – choose another one (e.g. JPEG, PNG or WebP)."
     },
     "logoutSheet": {
       "titleStart": "Log",
@@ -700,7 +701,8 @@
     "deleteAccountSheet": {
       "titleStart": "Delete",
       "titleAccent": "account?",
-      "body": "All your data on this device will be deleted: profile, food log, weigh-ins, custom items and collections. This can't be undone.",
+      "body": "Your account and all your data will be deleted – on this device too: profile, food log, weigh-ins, custom items and collections. This can't be undone.",
+      "withdrawBody": "This consent is required to use Nutrify. Withdrawing it deletes your account and all your data.",
       "confirm": "Yes, delete my account",
       "cancel": "Cancel"
     },
@@ -740,6 +742,20 @@
       "complete": "Done",
       "missing": "Missing",
       "progress": "{{value}}/{{target}} {{unit}}"
+    },
+    "stepSync": {
+      "label": "Steps from {{source}}",
+      "hint": "At most once a month Nutrify updates your activity level and calorie target from your average daily steps over the last {{days}} days. Only the average is sent to Nutrify.",
+      "retry": "Try again",
+      "allowAccess": "Allow access",
+      "openSettings": "Open {{source}}",
+      "offSheet": {
+        "title": "Turn steps",
+        "titleAccent": "off?",
+        "body": "Nutrify stops fetching your steps from {{source}}. Your activity level stays as it is – from now on you update it yourself under My plan → Activity.",
+        "confirm": "Yes, turn off",
+        "cancel": "Cancel"
+      }
     }
   },
   "shared": {
@@ -767,8 +783,17 @@
       "emptyBlank": "You have no items yet. Search, scan a barcode or create one yourself.",
       "emptyNoMatches": "No items match your search.",
       "duplicateName": "You already have a custom item with that name.",
-      "macroError": "Protein, carbs and fat must be 0 or more.",
+      "nameRequired": "Enter the item's name.",
+      "nameTooLong": "The name can have at most {{max}} characters.",
+      "amountMin": "The serving must be at least 1.",
+      "amountRequired": "Enter the serving size.",
+      "portionTooSmall": "The serving is too small for that many calories or macros.",
+      "kcalRequired": "Enter the calories for the serving.",
       "kcalError": "Calories must be at least 1.",
+      "kcalTooLarge": "At most {{max}} kcal per serving.",
+      "macroNegative": "Must be 0 or more.",
+      "macroTooLarge": "At most {{max}} g per serving.",
+      "amountTooLarge": "That's too much for one entry – split it up.",
       "stat": {
         "protein": "protein",
         "carbs": "carbs",
@@ -776,7 +801,6 @@
       },
       "ctaAdd": "Add {{amount}} {{unit}}",
       "ctaSave": "Save {{amount}} {{unit}}",
-      "macroBase": "Nutrition per {{quantity}}",
       "baseLabel": "{{quantity}} · {{kcal}} kcal",
       "searchPlaceholder": "Search food, e.g. oats",
       "scanBarcode": "Scan barcode",
@@ -811,21 +835,11 @@
       "lookUp": "Look up",
       "enterManually": "Enter manually instead",
       "noBarcode": "Item has no barcode",
+      "createOwn": "Create the item yourself",
+      "mealQuestion": "Which meal?",
       "amountQuestion": "How much did you have?",
       "rescan": "Scan again",
       "add": "Add",
-      "unknownBadge": "Unknown item",
-      "unknownTitleStart": "That's one we",
-      "unknownTitleAccent": "don't know",
-      "unknownLead": "This barcode isn't in the database. Take the numbers from the package and we'll save it to your own items – next time it's ready in one tap.",
-      "barcodeValue": "Barcode {{barcode}}",
-      "nameLabel": "Name",
-      "namePlaceholder": "e.g. Caramel protein bar",
-      "portionLabel": "Serving",
-      "portionPlaceholder": "e.g. 55 g",
-      "kcalLabel": "Calories",
-      "proteinLabel": "Protein (g)",
-      "saveAndAdd": "Save and add",
       "verdictOver": "This puts you {{kcalOver}} kcal over today's goal. Consider half, or save it for after training.",
       "verdictProtein": "Good protein source – {{protein}} g protein. You'll have {{kcalLeft}} kcal left afterwards.",
       "verdictFits": "Fits in nicely. {{kcalLeft}} kcal left afterwards.",
@@ -834,20 +848,22 @@
         "protein": "protein",
         "carbs": "carbs",
         "fat": "fat"
-      }
+      },
+      "notFound": "The product wasn't found."
     }
   },
   "signup": {
     "accountStep": {
-      "minLengthHint": "At least 8 characters.",
+      "minLengthHint": "At least 10 characters.",
       "mismatchHint": "The passwords don't match.",
       "password": "Password",
-      "passwordPlaceholder": "Password (at least 8 characters)",
+      "passwordPlaceholder": "Password (at least 10 characters)",
       "passwordRepeat": "Repeat password",
       "subtitle": "Choose a username and a password.",
       "titleAccent": "account",
       "titleStart": "Create your",
-      "username": "Username"
+      "username": "Username",
+      "usernameRule": "The username must be 3–50 characters: letters a–z, numbers, - and _."
     },
     "activityStep": {
       "countCaption": "steps on a typical day",
@@ -871,7 +887,7 @@
       "ageUnit": "years",
       "hintNoDate": "Choose your date of birth above.",
       "hintTooOld": "Check the date again.",
-      "hintTooYoung": "You must be at least 16 to use Nutrify.",
+      "hintTooYoung": "You must be at least {{minAge}} to use Nutrify.",
       "labelNoDate": "No date selected yet",
       "monthLabel": "Month",
       "nextMonth": "Next month",
@@ -957,9 +973,6 @@
       "titleAccent": "fast?",
       "titleStart": "How"
     },
-    "page": {
-      "submitError": "The account couldn't be created. Try again."
-    },
     "progress": {
       "editingCaption": "Back to summary",
       "editingLabel": "Editing",
@@ -995,7 +1008,7 @@
       "emailPlaceholder": "Your email · you@mail.com",
       "figureLabel": "Figure with pen",
       "termsAnd": "and",
-      "termsEnd": ".",
+      "termsEnd": ", including the processing of my health and profile data.",
       "termsPrivacy": "privacy policy",
       "termsService": "terms of service",
       "termsStart": "I accept Nutrify's",

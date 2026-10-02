@@ -8,4 +8,4 @@ public interface IJwtTokenService
 }
 
 public sealed record IssuedToken(string Value, string TokenId, DateTime ExpiresAt);
-public sealed record RefreshTokenIdentity(int UserId, string TokenId);
+public sealed record RefreshTokenIdentity(int UserId, string TokenId, DateTime IssuedAt, DateTime ExpiresAt);

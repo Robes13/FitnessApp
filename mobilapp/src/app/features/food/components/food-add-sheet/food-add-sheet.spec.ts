@@ -1,18 +1,28 @@
 import { Component, Provider, signal } from '@angular/core';
+import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FoodCollection, FoodItem, LoggedFood } from '../../../../core/models/food';
+import { FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
+import {
+  TEST_FOOD,
+  flushTestCollections,
+  flushTestFoodLog,
+  testCollection,
+  testFood,
+  testFoodLog,
+} from '../../../../core/testing/fixtures';
 import { TEST_NOW, provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
 import { FoodPickerStartStep } from '../../../../shared/components/food-picker/food-picker';
 import { FoodAddSheet } from './food-add-sheet';
 
 /**
- * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT`,
- * a frozen `NOW` and 0ms mock delays. The browser's storage is cleared per test.
+ * Component tests use `provideComponentTestEnvironment()`: jsdom's real `DOCUMENT` and a
+ * frozen `NOW`. The browser's storage is cleared per test.
  */
 const TEST_PROVIDERS: Provider[] = [...provideComponentTestEnvironment()];
+const COLLECTIONS_URL = '/api/v1/me/meal-collections?limit=100';
 
 const LOGGED_SALAD: LoggedFood = {
   id: 'food-salat',
@@ -27,14 +37,6 @@ const LOGGED_SALAD: LoggedFood = {
   fat: 10,
 };
 
-/** Stub without collections, so the empty state can be shown. */
-const NO_COLLECTIONS: Pick<CollectionsService, 'collections' | 'collectionTotals' | 'recipeById'> =
-  {
-    collections: signal<readonly FoodCollection[]>([]),
-    collectionTotals: () => ({ kcal: 0, protein: 0, carbs: 0, fat: 0, count: 0 }),
-    recipeById: () => undefined,
-  };
-
 @Component({
   imports: [FoodAddSheet],
   template: `
@@ -43,6 +45,7 @@ const NO_COLLECTIONS: Pick<CollectionsService, 'collections' | 'collectionTotals
       [(meal)]="meal"
       [editEntry]="editEntry()"
       [startStep]="startStep()"
+      [busy]="busy()"
       (closed)="closes = closes + 1"
       (selected)="selected.push($event)"
       (scanRequested)="scans = scans + 1"
@@ -54,6 +57,7 @@ class Host {
   readonly meal = signal<MealId>('morgen');
   readonly editEntry = signal<LoggedFood | null>(null);
   readonly startStep = signal<FoodPickerStartStep>('search');
+  readonly busy = signal(false);
   readonly selected: FoodItem[] = [];
   closes = 0;
   scans = 0;
@@ -76,6 +80,8 @@ describe('FoodAddSheet', () => {
   beforeEach(() => {
     localStorage.clear();
   });
+
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
 
   async function setup(
     configure?: (host: Host) => void,
@@ -145,55 +151,175 @@ describe('FoodAddSheet', () => {
     expect(text('.food-picker__title')).toBe('Kyllingesalat');
   });
 
-  it('lists the collections that have content and logs one as a single item', async () => {
-    // The app has no fixed collections – the user has to have created one themselves.
-    const { host, root, settle } = await setup(undefined, [], () => {
-      TestBed.inject(CollectionsService).create({
-        name: 'Meal prep',
-        icon: 'bag',
-        meal: 'frokost',
-        items: [
-          { ...LOGGED_SALAD, id: 'item-salat' },
-          { ...LOGGED_SALAD, id: 'item-salat-2' },
-        ],
+  describe('the Samlinger tab', () => {
+    const LOG_URL = '/api/v1/me/meal-collections/3/log';
+
+    async function openTab([first, second] = [60, 40]): Promise<Setup> {
+      const result = await setup(undefined, [], () => {
+        flushTestFoodLog([
+          testFood({
+            foodId: 1,
+            name: 'Havregryn',
+            caloriesPer100: 370,
+            proteinPer100: 13,
+            carbohydratesPer100: 60,
+            fatPer100: 7,
+          }),
+        ]);
+        flushTestCollections([
+          testCollection(3, 'Meal prep', [
+            { foodId: 1, foodName: 'Havregryn', quantity: first, unit: 'Gram' },
+            { foodId: 1, foodName: 'Havregryn', quantity: second, unit: 'Gram' },
+          ]),
+        ]);
       });
+      result.root.querySelectorAll<HTMLButtonElement>('.ui-segmented-control__option')[1]?.click();
+      await result.settle();
+      return result;
+    }
+
+    function row(root: HTMLElement): HTMLButtonElement | null {
+      return root.querySelector<HTMLButtonElement>('.food-add-sheet__collection');
+    }
+
+    function logButton(root: HTMLElement): HTMLButtonElement | null {
+      return root.querySelector<HTMLButtonElement>('.food-add-sheet__confirm-log');
+    }
+
+    /** Spec 3.2: a tap only chooses the collection – nothing is logged before the confirmation. */
+    async function choose({ root, settle }: Setup): Promise<void> {
+      row(root)?.click();
+      await settle();
+      TestBed.inject(HttpTestingController).expectNone({ method: 'POST', url: LOG_URL });
+    }
+
+    it('lists the collections with their items and rounded kcal', async () => {
+      const { texts } = await openTab();
+
+      expect(texts('.food-add-sheet__collection-name')).toEqual(['Meal prep']);
+      expect(texts('.food-add-sheet__collection-sub')).toEqual(['Havregryn, Havregryn']);
+      expect(texts('.food-add-sheet__collection-end')).toEqual(['370 kcal']);
     });
-    const collections = TestBed.inject(CollectionsService);
-    const first = collections.collections()[0];
+
+    it('shows the chosen collection with its nutrition before anything is logged', async () => {
+      const sheet = await openTab();
+      await choose(sheet);
+
+      expect(sheet.root.querySelector('.food-add-sheet__collections')).toBeNull();
+      expect(sheet.text('.food-add-sheet__confirm .food-add-sheet__collection-name')).toBe(
+        'Meal prep',
+      );
+      expect(sheet.text('.food-add-sheet__confirm-totals')).toBe(
+        '370 kcal · 13 g protein · 60 g kulhydrat · 7 g fedt',
+      );
+      expect(sheet.text('.food-add-sheet__confirm-log')).toBe('Log 370 kcal under morgenmad');
+    });
+
+    it('writes kcal from 1000 up with a thousands separator', async () => {
+      const sheet = await openTab([600, 400]);
+
+      expect(sheet.texts('.food-add-sheet__collection-end')).toEqual(['3.700 kcal']);
+      await choose(sheet);
+      expect(sheet.text('.food-add-sheet__confirm-totals')).toBe(
+        '3.700 kcal · 130 g protein · 600 g kulhydrat · 70 g fedt',
+      );
+      expect(sheet.text('.food-add-sheet__confirm-log')).toBe('Log 3.700 kcal under morgenmad');
+    });
+
+    it('goes back to the list without logging on "Fortryd"', async () => {
+      const sheet = await openTab();
+      await choose(sheet);
+
+      sheet.root.querySelector<HTMLButtonElement>('.food-add-sheet__confirm-cancel')?.click();
+      await sheet.settle();
+
+      expect(sheet.texts('.food-add-sheet__collection-name')).toEqual(['Meal prep']);
+      expect(sheet.host.closes).toBe(0);
+    });
+
+    it('logs a collection under the chosen meal in one call and then closes', async () => {
+      const sheet = await openTab();
+      const { host, root, settle } = sheet;
+      const http = TestBed.inject(HttpTestingController);
+      await choose(sheet);
+
+      logButton(root)?.click();
+      await settle();
+      // The button is busy while the log runs, so a second tap sends nothing.
+      expect(logButton(root)?.getAttribute('aria-busy')).toBe('true');
+      logButton(root)?.click();
+      const request = http.expectOne({ method: 'POST', url: LOG_URL });
+      expect(request.request.body).toMatchObject({ mealType: 'Breakfast', multiplier: 1 });
+      request.flush([
+        testFoodLog({ ...TEST_FOOD, name: 'Havregryn', quantity: '60 g' }, 'morgen'),
+        testFoodLog({ ...TEST_FOOD, name: 'Havregryn', quantity: '40 g' }, 'morgen'),
+      ]);
+      await settle();
+
+      expect(host.closes).toBe(1);
+      expect(host.selected).toEqual([]);
+      expect(TestBed.inject(FoodLogService).byMeal().get('morgen')).toHaveLength(2);
+    });
+
+    it('stays open with a message when the log fails', async () => {
+      const sheet = await openTab();
+      const { host, root, settle, text } = sheet;
+      await choose(sheet);
+
+      logButton(root)?.click();
+      TestBed.inject(HttpTestingController)
+        .expectOne({ method: 'POST', url: LOG_URL })
+        .flush(null, { status: 400, statusText: 'Bad Request' });
+      await settle();
+
+      expect(host.closes).toBe(0);
+      expect(text('.food-add-sheet__error')).toBe('Samlingen blev ikke logget. Prøv igen.');
+      expect(logButton(root)?.getAttribute('aria-busy')).toBeNull();
+    });
+
+    it('turns the rows off while the page saves', async () => {
+      const { host, root, settle } = await openTab();
+
+      host.busy.set(true);
+      await settle();
+
+      expect(row(root)?.disabled).toBe(true);
+      expect(row(root)?.getAttribute('aria-busy')).toBe('true');
+    });
+  });
+
+  it('shows a failed collections load with a retry, not "no collections"', async () => {
+    const { root, settle, text } = await setup(undefined, [], () => {
+      TestBed.inject(CollectionsService).load().subscribe();
+      TestBed.inject(HttpTestingController)
+        .expectOne(COLLECTIONS_URL)
+        .flush(null, { status: 503, statusText: 'Unavailable' });
+    });
 
     root.querySelectorAll<HTMLButtonElement>('.ui-segmented-control__option')[1]?.click();
     await settle();
 
-    const rows = Array.from(
-      root.querySelectorAll<HTMLButtonElement>('.food-add-sheet__collection'),
-    );
-    expect(rows).toHaveLength(collections.collections().length);
+    expect(text('app-ui-empty-state')).toBe('Vi kunne ikke hente dine samlinger.');
 
-    rows[0]?.click();
+    root.querySelector<HTMLButtonElement>('.food-add-sheet__status button')?.click();
+    await settle();
+    expect(root.querySelector('app-ui-spinner')).not.toBeNull();
+    TestBed.inject(HttpTestingController)
+      .expectOne(COLLECTIONS_URL)
+      .flush({ items: [testCollection(3, 'Meal prep', [])], nextCursor: null, hasMore: false });
     await settle();
 
-    const totals = first ? collections.collectionTotals(first) : null;
-    expect(host.selected[0]).toEqual({
-      id: first?.id,
-      name: first?.name,
-      quantity: `${totals?.count} varer`,
-      kcal: totals?.kcal,
-      protein: totals?.protein,
-      carbs: totals?.carbs,
-      fat: totals?.fat,
-    });
+    expect(text('.food-add-sheet__collection-name')).toBe('Meal prep');
   });
 
   it('explains how to build a collection when there are none', async () => {
-    const { root, settle, text } = await setup(undefined, [
-      { provide: CollectionsService, useValue: NO_COLLECTIONS },
-    ]);
+    const { root, settle, text } = await setup();
 
     root.querySelectorAll<HTMLButtonElement>('.ui-segmented-control__option')[1]?.click();
     await settle();
 
     expect(text('app-ui-empty-state')).toBe(
-      'Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her med ét tryk.',
+      'Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her.',
     );
   });
 
@@ -211,14 +337,7 @@ describe('FoodAddSheet', () => {
   it('keeps the meal chips but drops the tabs on the portion step', async () => {
     // Search only finds the user's own foods, so there has to be one to select.
     const { root, settle } = await setup(undefined, [], () => {
-      TestBed.inject(FoodLogService).addCustomFood({
-        name: 'Havregryn',
-        quantity: '60 g',
-        kcal: 222,
-        protein: 8,
-        carbs: 38,
-        fat: 4,
-      });
+      flushTestFoodLog([testFood({ foodId: 1, name: 'Havregryn', caloriesPer100: 370 })]);
     });
 
     root.querySelector<HTMLButtonElement>('.food-picker__result')?.click();

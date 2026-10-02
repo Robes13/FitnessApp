@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   effect,
   inject,
   signal,
@@ -9,11 +10,16 @@ import {
 import { TranslatePipe } from '@ngx-translate/core';
 import { RouterLink } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
+import { STEP_SYNC_TEXT_KEY } from '../../../../core/constants/step-sync';
 import { SessionService } from '../../../../core/services/session/session';
+import { StepSyncService } from '../../../../core/services/step-sync/step-sync';
 import { ProfileAvatar } from '../../../../shared/components/profile-avatar/profile-avatar';
+import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { HomeCelebrationToast } from '../../components/home-celebration-toast/home-celebration-toast';
 import { HomeDayCard } from '../../components/home-day-card/home-day-card';
 import { HomeGoalCard } from '../../components/home-goal-card/home-goal-card';
+import { HomeMonthSheet } from '../../components/home-month-sheet/home-month-sheet';
 import { HomeTodoCard } from '../../components/home-todo-card/home-todo-card';
 import { HomeWeekCard } from '../../components/home-week-card/home-week-card';
 import { HomeWeekRings } from '../../components/home-week-rings/home-week-rings';
@@ -26,13 +32,13 @@ const CELEBRATION_DURATION_MS = 3400;
 const CELEBRATION_VIBRATION_MS: readonly number[] = [16, 45, 28];
 
 /**
- * Home: greeting and avatar, the week's day rings, next step, the selected day's card,
- * the goal card, and the week's key figures.
+ * Home: greeting and avatar, the last seven days' rings (with "Prøv igen" when a store failed to
+ * load, a notice when the step sync failed, and the 30-day sheet below), next step, the selected
+ * day's card, the goal card, and the week's key figures.
  *
- * The page owns the celebration toast: when today's calories cross the goal, it pops up
- * (with vibration where the device supports it), and the timer is cleared when the page is
- * left. If the goal is already met before the page opens, there's no celebration – only the
- * transition counts, as in the design.
+ * The page owns the celebration toast: when `HomeSummaryService.celebrationDue()` says today's
+ * calories crossed the goal (also while Home was on another tab), it pops up with vibration where
+ * the device supports it, and the timer is cleared when the page is left.
  */
 @Component({
   selector: 'app-home-page',
@@ -40,9 +46,12 @@ const CELEBRATION_VIBRATION_MS: readonly number[] = [16, 45, 28];
     RouterLink,
     TranslatePipe,
     ProfileAvatar,
+    UiButton,
+    UiFormError,
     HomeCelebrationToast,
     HomeDayCard,
     HomeGoalCard,
+    HomeMonthSheet,
     HomeTodoCard,
     HomeWeekCard,
     HomeWeekRings,
@@ -56,24 +65,28 @@ const CELEBRATION_VIBRATION_MS: readonly number[] = [16, 45, 28];
 export class HomePage {
   protected readonly summary = inject(HomeSummaryService);
   private readonly session = inject(SessionService);
+  private readonly stepSync = inject(StepSyncService);
 
   protected readonly profilePath = APP_PATH.PROFILE;
-  protected readonly isEmailVerified = this.session.isEmailVerified;
+  /** Home stays locked behind the verification sheet until the session has tokens. */
+  protected readonly isAuthenticated = this.session.isAuthenticated;
+  /**
+   * Spec 2.6: the monthly step sync failed at start-up. Said here as well as on Profile, so a user
+   * who doesn't open Profile hears of it; it stays until the next sync (at the next app start).
+   */
+  protected readonly stepSyncFailed = computed(() => this.stepSync.status() === 'failed');
+  protected readonly stepSyncFailedKey = STEP_SYNC_TEXT_KEY.FAILED;
   protected readonly celebrating = signal(false);
+  protected readonly monthSheetOpen = signal(false);
 
-  /** `null` until the first run, so an already-reached ring isn't celebrated on open. */
-  private lastGoalReached: boolean | null = null;
   private celebrationTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     effect(() => {
-      const reached = this.summary.goalReached();
-      const previous = this.lastGoalReached;
-      this.lastGoalReached = reached;
-      if (previous !== false || !reached) {
-        return;
+      if (this.summary.celebrationDue()) {
+        this.summary.markCelebrated();
+        this.celebrate();
       }
-      this.celebrate();
     });
 
     inject(DestroyRef).onDestroy(() => this.clearCelebrationTimer());

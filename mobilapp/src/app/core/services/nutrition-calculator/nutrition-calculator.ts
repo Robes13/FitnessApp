@@ -1,17 +1,6 @@
 import { Injectable } from '@angular/core';
-import { injectTranslate } from '../language/translate';
 import {
   ACTIVITY_LEVELS,
-  ADAPTIVE_MAX_ADJUSTMENT_KCAL,
-  ADAPTIVE_MIN_DAY_FRACTION,
-  ADAPTIVE_MIN_LOGGED_DAYS,
-  ADAPTIVE_MIN_WEIGH_INS,
-  ADAPTIVE_MIN_WEIGHT_SPAN_DAYS,
-  BMR_AGE_FACTOR,
-  BMR_FALLBACK_AGE,
-  BMR_GENDER_OFFSET,
-  BMR_HEIGHT_FACTOR,
-  BMR_WEIGHT_FACTOR,
   DEFAULT_QUANTITY_UNIT,
   GOAL_BMI_MAX,
   GOAL_BMI_MIN,
@@ -19,78 +8,37 @@ import {
   GOAL_WEIGHT_MIN_KG,
   GOAL_WEIGHT_MIN_SPAN_KG,
   INTENSITIES,
-  KCAL_MIN,
-  KCAL_PER_GRAM,
-  KCAL_PER_KG_BODY_WEIGHT,
   KCAL_PER_STEP_PER_KG,
-  KCAL_ROUNDING,
   KM_PER_STEP,
-  MACRO_SPLIT,
   PACES,
-  PASSWORD_MIN_LENGTH,
-  PASSWORD_STRONG_LENGTH,
-  RESTING_MET,
   RPE_MAX,
   RPE_MIN,
   STEPS_MAX,
   STEPS_MIN,
-  TRAINING_FALLBACK_INTENSITY,
-  TRAINING_MAX_MINUTES,
-  TRAINING_MET,
-  TRAINING_MIN_MINUTES,
 } from '../../constants/nutrition';
-import { DAYS_PER_WEEK, MINUTES_PER_HOUR } from '../../constants/time';
 import { Macros } from '../../models/food';
-import {
-  AdaptiveAdjustment,
-  AdaptiveGoalInput,
-  GoalWeightBounds,
-  ParsedQuantity,
-  PasswordStrength,
-} from '../../models/nutrition';
+import { GoalWeightBounds, ParsedQuantity } from '../../models/nutrition';
 import {
   ActivityLevel,
-  Gender,
   GoalId,
   IntensityDefinition,
   PaceDefinition,
   UserProfile,
 } from '../../models/profile';
-import { WeighEntry } from '../../models/weight';
-import { daysBetween } from '../../utils/date-format';
 import { clamp, roundTo } from '../../utils/math';
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})/;
 const EMAIL_PATTERN = /\S+@\S+\.\S+/;
-const UPPERCASE_PATTERN = /[A-ZÆØÅ]/;
-const DIGIT_PATTERN = /\d/;
 const LEADING_NUMBER_PATTERN = /^[\d.,\s]+/;
 const CM_PER_M = 100;
 
-/** Indexed by score. */
-const PASSWORD_STRENGTHS: readonly (Omit<PasswordStrength, 'label'> & { labelKey: string })[] = [
-  { score: 0, percent: 30, labelKey: 'core.passwordStrength.weak', tone: 'negative' },
-  { score: 1, percent: 30, labelKey: 'core.passwordStrength.weak', tone: 'negative' },
-  { score: 2, percent: 55, labelKey: 'core.passwordStrength.ok', tone: 'accent' },
-  { score: 3, percent: 80, labelKey: 'core.passwordStrength.good', tone: 'warning' },
-  { score: 4, percent: 100, labelKey: 'core.passwordStrength.strong', tone: 'positive' },
-];
-const EMPTY_PASSWORD_STRENGTH: PasswordStrength = {
-  score: 0,
-  percent: 0,
-  label: '',
-  tone: 'muted',
-};
-
 /**
- * Pure calculations from the design's `renderVals()`: age, BMR (Mifflin-St Jeor), training
- * expenditure, calorie target (incl. the adaptive adjustment), macro split, goal weight,
- * password strength and portion scaling. No state.
+ * Pure calculations from the design's `renderVals()`: age, BMI, activity level, training,
+ * goal weight and portion scaling. No state. The calorie and macro targets
+ * come from the API (`UserProfileService.targets`), never from the app.
  */
 @Injectable({ providedIn: 'root' })
 export class NutritionCalculator {
-  private readonly t = injectTranslate();
-
   /** Completed years as of `today`. 0 if the date is missing or invalid. */
   ageFromBirthday(isoDate: string | null, today: Date): number {
     const birthday = parseIsoDate(isoDate);
@@ -112,123 +60,14 @@ export class NutritionCalculator {
     return roundTo(rawBmi(kg, cm), 1);
   }
 
-  /** Basal metabolic rate (Mifflin-St Jeor). Age 0 → 30 years; `andet`/unknown gender → average. */
-  bmr(kg: number, cm: number, age: number, gender: Gender | null): number {
-    const effectiveAge = age > 0 ? age : BMR_FALLBACK_AGE;
-    const offset = BMR_GENDER_OFFSET[gender ?? 'andet'];
-    return BMR_WEIGHT_FACTOR * kg + BMR_HEIGHT_FACTOR * cm - BMR_AGE_FACTOR * effectiveAge + offset;
-  }
-
   activityLevelFor(steps: number): ActivityLevel {
     const clamped = clamp(steps, STEPS_MIN, STEPS_MAX);
     const level = ACTIVITY_LEVELS.find((candidate) => clamped < candidate.maxSteps);
     return level ?? ACTIVITY_LEVELS[ACTIVITY_LEVELS.length - 1]!;
   }
 
-  /** Daily need without goal adjustment, rounded to the nearest 10 kcal. */
-  baseKcal(bmr: number, pal: number): number {
-    return roundToKcalStep(bmr * pal);
-  }
-
-  /**
-   * Training expenditure averaged over the week:
-   * days/week × minutes × (MET − resting MET) × kg / 60 / 7. 0 without training days.
-   * Without a chosen RPE the moderate MET is used.
-   */
-  exerciseKcalPerDay(profile: UserProfile): number {
-    const intensityId = this.intensityFor(profile.trainingRpe)?.id ?? TRAINING_FALLBACK_INTENSITY;
-    const netMet = TRAINING_MET[intensityId] - RESTING_MET;
-    const weeklyKcal =
-      (this.weeklyTrainingMinutes(profile) * netMet * profile.weightKg) / MINUTES_PER_HOUR;
-    return weeklyKcal / DAYS_PER_WEEK;
-  }
-
-  /** Expenditure by formula: BMR × PAL (steps) + training, rounded to the nearest 10 kcal. */
-  maintenanceKcal(profile: UserProfile, today: Date): number {
-    const age = this.ageFromBirthday(profile.birthday, today);
-    const bmr = this.bmr(profile.weightKg, profile.heightCm, age, profile.gender);
-    const pal = this.activityLevelFor(profile.stepsPerDay).pal;
-    return roundToKcalStep(bmr * pal + this.exerciseKcalPerDay(profile));
-  }
-
-  goalAdjustment(goal: GoalId | null, pace: PaceDefinition | null): number {
-    if (!pace || !goal) {
-      return 0;
-    }
-    switch (goal) {
-      case 'tabe':
-        return -pace.kcalPerDay;
-      case 'tage':
-        return pace.kcalPerDay;
-      case 'hold':
-        return 0;
-    }
-  }
-
-  /**
-   * Calculated suggestion (without manual override): maintenance + goal adjustment +
-   * `adaptiveKcal` (see `adaptiveAdjustment`), never below 1200 kcal.
-   */
-  suggestedKcalTarget(profile: UserProfile, today: Date, adaptiveKcal = 0): number {
-    const adjustment = this.goalAdjustment(profile.goal, this.paceFor(profile.pace));
-    return Math.max(KCAL_MIN, this.maintenanceKcal(profile, today) + adjustment + adaptiveKcal);
-  }
-
-  /** Daily calorie target: manual override, otherwise the calculated suggestion. */
-  kcalTarget(profile: UserProfile, today: Date, adaptiveKcal = 0): number {
-    return profile.kcalOverride ?? this.suggestedKcalTarget(profile, today, adaptiveKcal);
-  }
-
-  /**
-   * Estimates the actual expenditure from the window's data and how far the target should move
-   * towards it: estimated TDEE = average kcal on logged days − weight trend (kg/day) × 7700.
-   * The weight trend is the least-squares slope through the weigh-ins. A day counts as logged
-   * only when its kcal reach `ADAPTIVE_MIN_DAY_FRACTION` of the formula expenditure; partly
-   * logged days are left out. `null` when there is too little data (fewer than 10 logged days,
-   * or fewer than 2 weigh-ins spanning 14 days).
-   */
-  adaptiveAdjustment(input: AdaptiveGoalInput): AdaptiveAdjustment | null {
-    const minDayKcal = input.formulaTdeeKcal * ADAPTIVE_MIN_DAY_FRACTION;
-    const loggedDays = input.dailyTotals.filter(
-      (day) => day.entryCount > 0 && day.totals.kcal >= minDayKcal,
-    );
-    if (loggedDays.length < ADAPTIVE_MIN_LOGGED_DAYS) {
-      return null;
-    }
-    const slopeKgPerDay = weightTrendKgPerDay(input.weighIns);
-    if (slopeKgPerDay === null) {
-      return null;
-    }
-    const averageKcal =
-      loggedDays.reduce((sum, day) => sum + day.totals.kcal, 0) / loggedDays.length;
-    const estimatedTdeeKcal = roundToKcalStep(
-      averageKcal - slopeKgPerDay * KCAL_PER_KG_BODY_WEIGHT,
-    );
-    const adjustmentKcal = clamp(
-      roundToKcalStep(estimatedTdeeKcal - input.formulaTdeeKcal),
-      -ADAPTIVE_MAX_ADJUSTMENT_KCAL,
-      ADAPTIVE_MAX_ADJUSTMENT_KCAL,
-    );
-    return { estimatedTdeeKcal, adjustmentKcal };
-  }
-
-  /** Grams per macro based on the 30/45/25 split. `kcal` is the target itself. */
-  macroGoals(kcalTarget: number): Macros {
-    return {
-      kcal: kcalTarget,
-      protein: Math.round((kcalTarget * MACRO_SPLIT.protein) / KCAL_PER_GRAM.protein),
-      carbs: Math.round((kcalTarget * MACRO_SPLIT.carbs) / KCAL_PER_GRAM.carbs),
-      fat: Math.round((kcalTarget * MACRO_SPLIT.fat) / KCAL_PER_GRAM.fat),
-    };
-  }
-
   trainingFrequency(profile: UserProfile): number {
     return profile.trainingDays.filter(Boolean).length;
-  }
-
-  weeklyTrainingMinutes(profile: UserProfile): number {
-    const minutes = clamp(profile.trainingMinutes, TRAINING_MIN_MINUTES, TRAINING_MAX_MINUTES);
-    return this.trainingFrequency(profile) * minutes;
   }
 
   intensityFor(rpe: number | null): IntensityDefinition | null {
@@ -273,24 +112,6 @@ export class NutritionCalculator {
     }
   }
 
-  /** The design's `fpScore`: length ≥ 8, length ≥ 12, an uppercase letter and a digit each give one point. */
-  passwordStrength(password: string): PasswordStrength {
-    if (password.length === 0) {
-      return EMPTY_PASSWORD_STRENGTH;
-    }
-    const score =
-      Number(password.length >= PASSWORD_MIN_LENGTH) +
-      Number(password.length >= PASSWORD_STRONG_LENGTH) +
-      Number(UPPERCASE_PATTERN.test(password)) +
-      Number(DIGIT_PATTERN.test(password));
-    const strength = PASSWORD_STRENGTHS[score];
-    if (!strength) {
-      return EMPTY_PASSWORD_STRENGTH;
-    }
-    const { labelKey, ...rest } = strength;
-    return { ...rest, label: this.t(labelKey) };
-  }
-
   isValidEmail(value: string): boolean {
     return EMAIL_PATTERN.test(value);
   }
@@ -322,39 +143,6 @@ function parseIsoDate(value: string | null): Date | null {
     ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
     : new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
-
-/** Rounds to the nearest `KCAL_ROUNDING` kcal. `+ 0` normalizes `-0` to `0`. */
-function roundToKcalStep(kcal: number): number {
-  return Math.round(kcal / KCAL_ROUNDING) * KCAL_ROUNDING + 0;
-}
-
-/**
- * Least-squares slope (kg per day) through the weigh-ins. `null` with fewer than
- * `ADAPTIVE_MIN_WEIGH_INS` weigh-ins or when they span less than `ADAPTIVE_MIN_WEIGHT_SPAN_DAYS`.
- */
-function weightTrendKgPerDay(weighIns: readonly WeighEntry[]): number | null {
-  if (weighIns.length < ADAPTIVE_MIN_WEIGH_INS) {
-    return null;
-  }
-  const sorted = [...weighIns].sort((a, b) => a.at.localeCompare(b.at));
-  const first = new Date(sorted[0]!.at);
-  const points = sorted.map((entry) => ({
-    day: daysBetween(first, new Date(entry.at)),
-    kg: entry.kg,
-  }));
-  if (points[points.length - 1]!.day < ADAPTIVE_MIN_WEIGHT_SPAN_DAYS) {
-    return null;
-  }
-  const meanDay = points.reduce((sum, point) => sum + point.day, 0) / points.length;
-  const meanKg = points.reduce((sum, point) => sum + point.kg, 0) / points.length;
-  let covariance = 0;
-  let variance = 0;
-  for (const point of points) {
-    covariance += (point.day - meanDay) * (point.kg - meanKg);
-    variance += (point.day - meanDay) ** 2;
-  }
-  return covariance / variance;
 }
 
 function rawBmi(kg: number, cm: number): number {

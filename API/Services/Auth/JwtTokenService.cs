@@ -75,7 +75,7 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options, IOptions<Refre
                 throw new UnauthorizedException("The refresh token is invalid.");
             }
 
-            return new RefreshTokenIdentity(userId, tokenId);
+            return new RefreshTokenIdentity(userId, tokenId, jwt.ValidFrom, jwt.ValidTo);
         }
         catch (SecurityTokenException)
         {

@@ -67,7 +67,7 @@ public sealed class FirebasePushNotificationService(
             if (string.IsNullOrWhiteSpace(projectId))
                 throw new InvalidOperationException("Firebase:ProjectId is not configured.");
             var app = FirebaseApp.GetInstance("FitnessApp.Api")
-                ?? FirebaseApp.Create(new AppOptions
+                ?? FirebaseApp.Create(new FirebaseAdmin.AppOptions
                 {
                     Credential = GoogleCredential.GetApplicationDefault(),
                     ProjectId = projectId

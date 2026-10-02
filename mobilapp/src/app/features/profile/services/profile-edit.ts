@@ -1,34 +1,33 @@
 import { Injectable, inject } from '@angular/core';
+import { EMPTY, Observable, map, of } from 'rxjs';
 import {
   GENDERS,
   GOALS,
   INTENSITIES,
-  KCAL_MAX,
-  KCAL_MIN,
+  MAX_AGE,
+  MIN_AGE,
   PACES,
   STEPS_MAX,
   STEPS_MIN,
   TRAINING_MAX_MINUTES,
   TRAINING_MIN_MINUTES,
-  UNIT_SYSTEMS,
   WEIGHT_MAX_KG,
   WEIGHT_MIN_KG,
 } from '../../../core/constants/nutrition';
-import { GoalId } from '../../../core/models/profile';
-import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
+import { DAYS_PER_WEEK } from '../../../core/constants/time';
+import { GoalId, UserProfile } from '../../../core/models/profile';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
+import { trainingDaysFor } from '../../../core/services/user-profile/profile-mapping';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
-import {
-  formatInteger,
-  formatSignedDecimal,
-  formatWeightKg,
-} from '../../../core/utils/date-format';
+import { formatWeightKg, toIsoDate } from '../../../core/utils/date-format';
+import { NOW } from '../../../core/utils/now';
 import { injectTranslate } from '../../../core/services/language/translate';
 
 /** The rows in Profile that can be edited. The ids are the design's `editDefs` keys. */
 export const PROFILE_EDIT_ROWS = [
   'goal',
   'pace',
+  'birthday',
   'gender',
   'height',
   'goalWeight',
@@ -36,9 +35,7 @@ export const PROFILE_EDIT_ROWS = [
   'trainFreq',
   'trainDur',
   'trainInt',
-  'kcal',
   'email',
-  'units',
 ] as const;
 
 export type ProfileEditRowId = (typeof PROFILE_EDIT_ROWS)[number];
@@ -77,8 +74,17 @@ export interface TextEditDefinition extends BaseEditDefinition {
   readonly value: string;
 }
 
+/** A native date field. The bounds are the API's age rule (`MIN_AGE`–`MAX_AGE`). */
+export interface DateEditDefinition extends BaseEditDefinition {
+  readonly kind: 'date';
+  /** `YYYY-MM-DD`, or `''` when not chosen. */
+  readonly value: string;
+  readonly min: string;
+  readonly max: string;
+}
+
 export type ProfileEditDefinition =
-  OptionsEditDefinition | NumberEditDefinition | TextEditDefinition;
+  OptionsEditDefinition | NumberEditDefinition | TextEditDefinition | DateEditDefinition;
 
 /**
  * What happened when an option was picked. A new goal ("tabe"/"tage") that the stored goal
@@ -98,27 +104,30 @@ const HEIGHT_EDIT_MAX_CM = 230;
 const HEIGHT_STEP_CM = 1;
 const GOAL_WEIGHT_STEP_KG = 1;
 const STEPS_STEP = 500;
-const TRAINING_DAYS_PER_WEEK = 7;
 const TRAINING_FREQUENCY_STEP = 1;
 const TRAINING_MINUTES_STEP = 5;
-const KCAL_STEP = 50;
 
 /** The same two warnings as the sign-up flow's goal-weight step. */
 const GOAL_WEIGHT_TOO_LOW_KEY = 'profile.edit.goalWeightTooLow';
 const GOAL_WEIGHT_TOO_HIGH_KEY = 'profile.edit.goalWeightTooHigh';
 
 const SAVED: OptionApplyResult = { kind: 'saved' };
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * The definitions behind the "Rediger profil" sheet: what a row is called, what kind of
  * field it shows, and what happens when the user saves. A port of the design's
  * `editDefs`/`openEdit`.
+ *
+ * The `apply…` methods save through `UserProfileService.save()` (pessimistic – the profile
+ * changes once the API has answered) and fail with its `ApiError`. A value that breaks the
+ * row's rules is never sent: the observable then completes without emitting.
  */
 @Injectable({ providedIn: 'root' })
 export class ProfileEditService {
   private readonly profiles = inject(UserProfileService);
-  private readonly adaptiveGoal = inject(AdaptiveGoalService);
   private readonly calculator = inject(NutritionCalculator);
+  private readonly now = inject(NOW);
   private readonly t = injectTranslate();
 
   definitionFor(row: ProfileEditRowId): ProfileEditDefinition {
@@ -161,19 +170,6 @@ export class ProfileEditService {
             id: gender.id,
             label: this.t(gender.labelKey),
             description: '',
-          })),
-        };
-      case 'units':
-        return {
-          id: row,
-          title: this.t('profile.edit.unitsTitle'),
-          hint: '',
-          kind: 'options',
-          selectedId: profile.units,
-          options: UNIT_SYSTEMS.map((unit) => ({
-            id: unit.id,
-            label: this.t(unit.labelKey),
-            description: this.t(unit.descriptionKey),
           })),
         };
       case 'trainInt':
@@ -223,7 +219,7 @@ export class ProfileEditService {
           kind: 'number',
           unit: this.t('profile.edit.trainFreqUnit'),
           min: 0,
-          max: TRAINING_DAYS_PER_WEEK,
+          max: DAYS_PER_WEEK,
           step: TRAINING_FREQUENCY_STEP,
           value: this.profiles.trainingFrequency(),
         };
@@ -239,17 +235,14 @@ export class ProfileEditService {
           step: TRAINING_MINUTES_STEP,
           value: Math.round(profile.trainingMinutes),
         };
-      case 'kcal':
+      case 'birthday':
         return {
           id: row,
-          title: this.t('profile.edit.kcalTitle'),
-          hint: this.kcalHint(),
-          kind: 'number',
-          unit: this.t('common.unit.kcal'),
-          min: KCAL_MIN,
-          max: KCAL_MAX,
-          step: KCAL_STEP,
-          value: this.adaptiveGoal.kcalTarget(),
+          title: this.t('profile.edit.birthdayTitle'),
+          hint: '',
+          kind: 'date',
+          value: profile.birthday ?? '',
+          ...this.birthdayBounds(),
         };
       case 'email':
         return {
@@ -263,19 +256,20 @@ export class ProfileEditService {
     }
   }
 
-  /**
-   * The suggestion behind the kcal row, with the adjustment spelled out when it actually changes
-   * the suggestion (after the 1200 kcal floor).
-   */
-  private kcalHint(): string {
-    const suggestion = formatInteger(this.adaptiveGoal.suggestedKcalTarget());
-    const adjustment = this.adaptiveGoal.suggestedAdjustmentKcal();
-    return adjustment === 0
-      ? this.t('profile.edit.kcalHint', { kcal: suggestion })
-      : this.t('profile.edit.kcalHintAdjusted', {
-          kcal: suggestion,
-          adjustment: formatSignedDecimal(adjustment, 0),
-        });
+  /** The birthdays the API accepts today: an age from `MIN_AGE` up to `MAX_AGE` years. */
+  birthdayBounds(): { readonly min: string; readonly max: string } {
+    const today = this.now();
+    const year = today.getFullYear();
+    return {
+      min: toIsoDate(new Date(year - MAX_AGE - 1, today.getMonth(), today.getDate() + 1)),
+      max: toIsoDate(new Date(year - MIN_AGE, today.getMonth(), today.getDate())),
+    };
+  }
+
+  /** Whether `isoDate` is a birthday the API accepts (`YYYY-MM-DD` compares as text). */
+  isBirthdayValid(isoDate: string): boolean {
+    const { min, max } = this.birthdayBounds();
+    return ISO_DATE.test(isoDate) && isoDate >= min && isoDate <= max;
   }
 
   /**
@@ -339,13 +333,11 @@ export class ProfileEditService {
   }
 
   /** Saves a goal change together with the new goal weight it required. */
-  applyGoalWithGoalWeight(goal: GoalId, goalWeightKg: number): boolean {
+  applyGoalWithGoalWeight(goal: GoalId, goalWeightKg: number): Observable<void> {
     const rounded = Math.round(goalWeightKg);
-    if (this.goalWeightError(rounded, goal) !== null) {
-      return false;
-    }
-    this.profiles.update({ goal, goalWeightKg: rounded });
-    return true;
+    return this.goalWeightError(rounded, goal) === null
+      ? this.profiles.save({ goal, goalWeightKg: rounded })
+      : EMPTY;
   }
 
   /**
@@ -353,89 +345,66 @@ export class ProfileEditService {
    * up in the definition list, so an unknown string can never end up in the profile.
    * The exception is a goal the stored goal weight doesn't fit – see `OptionApplyResult`.
    */
-  applyOption(row: ProfileEditRowId, optionId: string): OptionApplyResult {
+  applyOption(row: ProfileEditRowId, optionId: string): Observable<OptionApplyResult> {
+    const saved = (patch: Partial<UserProfile>): Observable<OptionApplyResult> =>
+      this.profiles.save(patch).pipe(map(() => SAVED));
     switch (row) {
       case 'goal': {
         const goal = GOALS.find((item) => item.id === optionId);
         if (!goal) {
-          return SAVED;
+          return EMPTY;
         }
         const goalWeightKg = Math.round(this.profiles.profile().goalWeightKg);
         if (this.goalWeightError(goalWeightKg, goal.id) !== null) {
-          return { kind: 'needs-goal-weight', goal: goal.id };
+          return of({ kind: 'needs-goal-weight', goal: goal.id });
         }
-        this.profiles.update({ goal: goal.id });
-        return SAVED;
+        return saved({ goal: goal.id });
       }
       case 'pace': {
         const pace = PACES.find((item) => item.id === optionId);
-        if (pace) {
-          this.profiles.update({ pace: pace.id });
-        }
-        return SAVED;
+        return pace ? saved({ pace: pace.id }) : EMPTY;
       }
       case 'gender': {
         const gender = GENDERS.find((item) => item.id === optionId);
-        if (gender) {
-          this.profiles.update({ gender: gender.id });
-        }
-        return SAVED;
-      }
-      case 'units': {
-        const units = UNIT_SYSTEMS.find((item) => item.id === optionId);
-        if (units) {
-          this.profiles.update({ units: units.id });
-        }
-        return SAVED;
+        return gender ? saved({ gender: gender.id }) : EMPTY;
       }
       case 'trainInt': {
         const intensity = INTENSITIES.find((item) => item.id === optionId);
-        if (intensity) {
-          this.profiles.update({ trainingRpe: intensity.rpe });
-        }
-        return SAVED;
+        return intensity ? saved({ trainingRpe: intensity.rpe }) : EMPTY;
       }
       default:
-        return SAVED;
+        return EMPTY;
     }
   }
 
-  /** Returns `false` when the value was rejected (a goal weight that breaks the goal's rules). */
-  applyNumber(row: ProfileEditRowId, value: number): boolean {
+  /** Nothing is sent for a goal weight that breaks the goal's rules. */
+  applyNumber(row: ProfileEditRowId, value: number): Observable<void> {
     const rounded = Math.round(value);
     switch (row) {
       case 'height':
-        this.profiles.update({ heightCm: rounded });
-        return true;
+        return this.profiles.save({ heightCm: rounded });
       case 'goalWeight':
-        if (this.goalWeightError(rounded) !== null) {
-          return false;
-        }
-        this.profiles.update({ goalWeightKg: rounded });
-        return true;
+        return this.goalWeightError(rounded) === null
+          ? this.profiles.save({ goalWeightKg: rounded })
+          : EMPTY;
       case 'steps':
-        this.profiles.update({ stepsPerDay: rounded });
-        return true;
+        return this.profiles.save({ stepsPerDay: rounded });
       case 'trainFreq':
-        this.profiles.update({ trainingDays: trainingDaysFor(rounded) });
-        return true;
+        return this.profiles.save({ trainingDays: trainingDaysFor(rounded) });
       case 'trainDur':
-        this.profiles.update({ trainingMinutes: rounded });
-        return true;
-      case 'kcal':
-        this.profiles.update({ kcalOverride: rounded });
-        return true;
+        return this.profiles.save({ trainingMinutes: rounded });
       default:
-        return true;
+        return EMPTY;
     }
   }
 
-  applyEmail(value: string): void {
-    this.profiles.update({ email: value.trim() });
+  /** Nothing is sent for a birthday outside the API's age rule. */
+  applyBirthday(isoDate: string): Observable<void> {
+    return this.isBirthdayValid(isoDate) ? this.profiles.save({ birthday: isoDate }) : EMPTY;
   }
-}
 
-/** The design's `trainFreq.apply`: the first `count` weekdays are marked as training days. */
-function trainingDaysFor(count: number): readonly boolean[] {
-  return Array.from({ length: TRAINING_DAYS_PER_WEEK }, (_, index) => index < count);
+  /** Sends the confirmation mail to the new address – the profile keeps the old one until then. */
+  applyEmail(value: string): Observable<void> {
+    return this.profiles.save({ email: value.trim() });
+  }
 }

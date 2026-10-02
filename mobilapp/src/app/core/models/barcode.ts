@@ -11,6 +11,7 @@ export type ProductBaseUnit = (typeof PRODUCT_BASE_UNIT)[keyof typeof PRODUCT_BA
  * - `permission-denied`: no camera access (iOS).
  * - `unreadable`: the camera returned no usable barcode, or the scan failed.
  * - `module-installing`: Android's Google barcode module is missing; its download was started.
+ * - `module-unavailable`: the module is still missing after that request, or Google refused it.
  * - `unavailable`: no camera scanning on this platform (the browser).
  */
 export type BarcodeScanOutcome =
@@ -19,6 +20,7 @@ export type BarcodeScanOutcome =
   | { readonly status: 'permission-denied' }
   | { readonly status: 'unreadable' }
   | { readonly status: 'module-installing' }
+  | { readonly status: 'module-unavailable' }
   | { readonly status: 'unavailable' };
 
 /** Camera permission as the platform reports it. */

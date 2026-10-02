@@ -1,24 +1,33 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
-import { GENDERS, UNIT_SYSTEMS } from '../../../core/constants/nutrition';
-import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
+import { GENDERS } from '../../../core/constants/nutrition';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import {
+  formatDayMonth,
   formatDecimal,
   formatInteger,
-  formatSignedDecimal,
   formatWeightKg,
+  fromIsoDate,
 } from '../../../core/utils/date-format';
 import { clamp } from '../../../core/utils/math';
 import { injectTranslate } from '../../../core/services/language/translate';
 
 import { ProfileEditRowId } from './profile-edit';
 
-export interface ProfileRow {
-  readonly id: ProfileEditRowId;
-  readonly label: string;
-  readonly value: string;
-}
+/** A row opens the edit sheet – except the calorie target, which is the API's (`editable: false`). */
+export type ProfileRow =
+  | {
+      readonly id: ProfileEditRowId;
+      readonly label: string;
+      readonly value: string;
+      readonly editable?: true;
+    }
+  | {
+      readonly id: 'kcal';
+      readonly label: string;
+      readonly value: string;
+      readonly editable: false;
+    };
 
 /** The design's `'–'` for a value the user hasn't chosen yet. */
 const EMPTY_VALUE = '–';
@@ -32,14 +41,14 @@ const EMPTY_VALUE = '–';
  * pace doesn't change the target), and "Længde"/"Intensitet" only show when the user has at
  * least one training day.
  *
- * "Dagligt kaloriemål" is the adapted target; when the intake/weight trend moves it, the value
- * also says by how much (e.g. "2.410 kcal · tilpasset −120").
+ * "Dagligt kaloriemål" is the API's target (calculated from the profile and goal) and can't be
+ * edited; when the API has lifted it to its safe minimum, the value says so
+ * ("1.200 kcal · sikkert minimum").
  */
 @Injectable({ providedIn: 'root' })
 export class ProfileRowsService {
   private readonly profiles = inject(UserProfileService);
   private readonly calculator = inject(NutritionCalculator);
-  private readonly adaptiveGoal = inject(AdaptiveGoalService);
   private readonly t = injectTranslate();
 
   readonly planRows: Signal<readonly ProfileRow[]> = computed(() => {
@@ -63,6 +72,7 @@ export class ProfileRowsService {
       });
     }
     rows.push(
+      { id: 'birthday', label: this.t('profile.rows.birthday'), value: this.birthdayLabel() },
       { id: 'gender', label: this.t('profile.rows.gender'), value: this.genderLabel() },
       {
         id: 'height',
@@ -115,13 +125,13 @@ export class ProfileRowsService {
       id: 'kcal',
       label: this.t('profile.rows.kcal'),
       value: this.kcalText(),
+      editable: false,
     });
     return rows;
   });
 
   readonly accountRows: Signal<readonly ProfileRow[]> = computed(() => [
-    { id: 'email' as const, label: this.t('profile.rows.email'), value: this.email() },
-    { id: 'units' as const, label: this.t('profile.rows.units'), value: this.unitsLabel() },
+    { id: 'email', label: this.t('profile.rows.email'), value: this.email() },
   ]);
 
   /** The design's `profileEmail`: the placeholder shows until the user has typed their e-mail. */
@@ -134,27 +144,33 @@ export class ProfileRowsService {
   /** BMI is always shown with one decimal – the design's `toFixed(1)`. */
   readonly bmiText = computed(() => formatDecimal(this.profiles.bmi(), 1));
 
-  private readonly kcalText = computed(() => {
-    const target = formatInteger(this.adaptiveGoal.kcalTarget());
-    const adjustment = this.adaptiveGoal.adjustmentKcal();
-    return adjustment === 0
-      ? this.t('profile.rows.kcalValue', { kcal: target })
-      : this.t('profile.rows.kcalValueAdjusted', {
-          kcal: target,
-          adjustment: formatSignedDecimal(adjustment, 0),
-        });
+  private readonly kcalText = computed(() =>
+    this.t(
+      this.profiles.calorieFloorApplied()
+        ? 'profile.rows.kcalValueFloor'
+        : 'profile.rows.kcalValue',
+      { kcal: formatInteger(this.profiles.targets().kcal) },
+    ),
+  );
+
+  /** "16. maj 1998 · 28 år". */
+  private readonly birthdayLabel = computed(() => {
+    const birthday = this.profiles.profile().birthday;
+    if (birthday === null) {
+      return EMPTY_VALUE;
+    }
+    const date = fromIsoDate(birthday);
+    return this.t('profile.rows.birthdayValue', {
+      date: formatDayMonth(this.t, date),
+      year: date.getFullYear(),
+      age: this.profiles.age(),
+    });
   });
 
   private readonly genderLabel = computed(() => {
     const gender = this.profiles.profile().gender;
     const definition = GENDERS.find((item) => item.id === gender);
     return definition ? this.t(definition.labelKey) : EMPTY_VALUE;
-  });
-
-  private readonly unitsLabel = computed(() => {
-    const units = this.profiles.profile().units;
-    const definition = UNIT_SYSTEMS.find((item) => item.id === units);
-    return definition ? this.t(definition.descriptionKey) : EMPTY_VALUE;
   });
 
   private readonly intensityLabel = computed(() => {

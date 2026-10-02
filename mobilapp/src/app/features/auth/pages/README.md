@@ -5,7 +5,7 @@ bagved, og indholdet lægges ovenpå i en flex-kolonne, der fylder højden. De b
 **ikke** mixinen `page-screen` – der er ingen scroll-container, og der er ingen tab bar at gøre
 plads til.
 
-| Mappe                                                     | Skærm                                             |
-| --------------------------------------------------------- | ------------------------------------------------- |
-| [`login-page/`](login-page/README.md)                     | `/login` – brugernavn, adgangskode og fodnoterne. |
-| [`forgot-password-page/`](forgot-password-page/README.md) | `/glemt-adgangskode` – de fire trin.              |
+| Mappe                                                     | Skærm                                                               |
+| --------------------------------------------------------- | ------------------------------------------------------------------- |
+| [`login-page/`](login-page/README.md)                     | `/login` – e-mail eller brugernavn, adgangskode og fodnoterne.      |
+| [`forgot-password-page/`](forgot-password-page/README.md) | `/glemt-adgangskode` – ét felt, "Send link" og den neutrale besked. |

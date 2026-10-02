@@ -1,4 +1,4 @@
-<app-auth-backdrop />
+<app-auth-backdrop [gradient]="keyboardOpen()" />
 
 <div class="login-page__content">
   <div class="login-page__brand">
@@ -16,9 +16,9 @@
 
   <form class="login-page__form" [formGroup]="form" (ngSubmit)="submit()">
     <app-ui-text-input
-      formControlName="username"
-      [placeholder]="'auth.loginPage.username' | translate"
-      [ariaLabel]="'auth.loginPage.username' | translate"
+      formControlName="identifier"
+      [placeholder]="'auth.loginPage.identifier' | translate"
+      [ariaLabel]="'auth.loginPage.identifier' | translate"
       autocomplete="username"
       translucent
     />

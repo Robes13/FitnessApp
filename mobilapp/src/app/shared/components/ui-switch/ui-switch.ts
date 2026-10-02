@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
 
 /**
- * Toggle switch 48×28 with a 22 px thumb (Light mode, Notifications). The state is a
- * two-way `model`, so `[(checked)]` works. The button is the interactive part and carries
- * `role="switch"`, `aria-checked` and `aria-label`.
+ * Toggle switch 48×28 with a 22 px thumb (Light mode, Notifications). Controlled: it always
+ * shows `checked`, and a tap only emits `checkedChange` with the new value – the parent decides.
+ * A save that is refused or fails before the next render therefore can't leave it showing the
+ * wrong state. The button is the interactive part and carries `role="switch"`, `aria-checked`
+ * and `aria-label`.
  */
 @Component({
   selector: 'app-ui-switch',
@@ -16,14 +18,15 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, input, model } fr
   },
 })
 export class UiSwitch {
-  readonly checked = model(false);
+  readonly checked = input(false);
   readonly ariaLabel = input.required<string>();
   readonly disabled = input(false, { transform: booleanAttribute });
 
+  readonly checkedChange = output<boolean>();
+
   protected toggle(): void {
-    if (this.disabled()) {
-      return;
+    if (!this.disabled()) {
+      this.checkedChange.emit(!this.checked());
     }
-    this.checked.update((on) => !on);
   }
 }

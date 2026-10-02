@@ -5,7 +5,6 @@
       type="button"
       class="meal-picker__option"
       [class.meal-picker__option--selected]="value() === meal.id"
-      [class.meal-picker__option--filled]="filled()"
       role="radio"
       [attr.aria-checked]="value() === meal.id"
       [tabindex]="tabIndexFor(meal.id)"

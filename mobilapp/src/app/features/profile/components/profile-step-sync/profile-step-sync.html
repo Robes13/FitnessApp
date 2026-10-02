@@ -1,0 +1,63 @@
+@if (available()) {
+  <div class="profile-step-sync__row">
+    <span class="profile-step-sync__label">{{ label() }}</span>
+    <app-ui-switch
+      [ariaLabel]="label()"
+      [checked]="checked()"
+      [disabled]="busy()"
+      (checkedChange)="toggle($event)"
+    />
+  </div>
+  <p class="profile-step-sync__hint">{{ hint() }}</p>
+  @if (statusLine(); as line) {
+    <app-ui-form-error [tone]="line.tone" [message]="line.text" />
+  }
+  @if (loadFailed()) {
+    <button
+      app-ui-button
+      type="button"
+      variant="outline"
+      size="sm"
+      class="profile-step-sync__action"
+      (click)="retryLoad()"
+    >
+      {{ 'profile.stepSync.retry' | translate }}
+    </button>
+  } @else if (openSettingsShown()) {
+    <button
+      app-ui-button
+      type="button"
+      variant="outline"
+      size="sm"
+      class="profile-step-sync__action"
+      (click)="openSettings()"
+    >
+      {{ openSettingsLabel() }}
+    </button>
+  } @else if (accessMissing()) {
+    <button
+      app-ui-button
+      type="button"
+      variant="outline"
+      size="sm"
+      class="profile-step-sync__action"
+      [loading]="busy()"
+      (click)="toggle(true)"
+    >
+      {{ 'profile.stepSync.allowAccess' | translate }}
+    </button>
+  }
+
+  <app-ui-confirm-sheet
+    [open]="confirmOpen()"
+    titleKey="profile.stepSync.offSheet.title"
+    accentKey="profile.stepSync.offSheet.titleAccent"
+    bodyKey="profile.stepSync.offSheet.body"
+    [bodyParams]="offSheetParams()"
+    confirmKey="profile.stepSync.offSheet.confirm"
+    cancelKey="profile.stepSync.offSheet.cancel"
+    [busy]="disabling()"
+    (closed)="cancelOff()"
+    (confirmed)="confirmOff()"
+  />
+}

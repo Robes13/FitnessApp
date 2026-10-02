@@ -10,6 +10,7 @@
     [placeholder]="'signup.accountStep.username' | translate"
     [ariaLabel]="'signup.accountStep.username' | translate"
     autocomplete="username"
+    [maxLength]="usernameMaxLength"
   />
   <app-ui-text-input
     formControlName="password"
@@ -17,6 +18,7 @@
     [placeholder]="'signup.accountStep.passwordPlaceholder' | translate"
     [ariaLabel]="'signup.accountStep.password' | translate"
     autocomplete="new-password"
+    [maxLength]="passwordMaxLength"
   />
   <app-ui-text-input
     formControlName="passwordRepeat"
@@ -24,6 +26,7 @@
     [placeholder]="'signup.accountStep.passwordRepeat' | translate"
     [ariaLabel]="'signup.accountStep.passwordRepeat' | translate"
     autocomplete="new-password"
+    [maxLength]="passwordMaxLength"
     [invalid]="mismatch()"
     invalidTone="accent"
   />

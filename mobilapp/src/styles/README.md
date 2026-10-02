@@ -129,7 +129,9 @@ eller en font-størrelse direkte. Mangler der en værdi, tilføjes en token i
 ligger i `:root[data-theme='light']` i `_tokens.scss` og svarer til
 designets `.theme-light`. Kun baggrund, flader, kanter, tekst, den runde
 knaps fyld og `sm/md/lg`-skyggerne skifter — accent, valgt, positiv,
-negativ og figurens farver er ens i begge temaer.
+negativ og figurens farver er ens i begge temaer. Undtagelsen er grøn tekst:
+al grøn tekst bruger `--color-positive-text`, for `--color-positive` står i 1,6:1
+på det lyse papir, så det lyse tema bruger en mørkere grøn (4,6:1).
 
 **Operativsystemets `prefers-color-scheme` følges bevidst ikke.**
 Brugeren slår "Lys tilstand" til og fra under Profil, og valget gemmes.
@@ -162,6 +164,10 @@ overskrift er typisk orange (`--color-accent`).
 `body` har `font-size: var(--font-size-xl)` (16px), fordi designet ikke
 sætter en body-størrelse — tekst uden eksplicit størrelse er 16px.
 Komponenter sætter deres egen størrelse.
+
+Tekstfelter (`input`, `textarea`) er mindst 16px (`--font-size-xl`), også hvor
+designet er mindre: under 16px zoomer iOS WebView'et ind, når feltet får fokus,
+og zoomet bliver stående, efter at tastaturet er lukket.
 
 ## Mixins
 
@@ -273,6 +279,15 @@ folden. Trin, hvor det stadig ikke er nok, skjuler en gentagende eller dekorativ
 (fødselsdagens alders-visning, intensitetens tal og figur, målvægtens "Nu: …"-linje). På `tablet` får `html` 125 % (150 %
 på høje tablets i portræt), så telefonlayoutet fylder skærmen i stedet for at stå som en smal
 kolonne. Telefoner er låst til portræt (Info.plist og AndroidManifest); tablets drejer frit.
+
+**Systemets tekststørrelse – kendt begrænsning på iOS.** Androids WebView følger selv systemets
+skriftstørrelse (`font_scale`). iOS' "Større tekst" (Dynamic Type) følges **ikke**: WKWebView
+skalerer kun tekst med `font: -apple-system-*`, ikke px/rem, så appen ser ens ud ved alle
+størrelser (intet skæres af). At følge den kræver, at `html`'s `font-size` sættes ud fra
+`-apple-system-body` (17 px ved standardstørrelsen, ca. 3× ved de største
+tilgængelighedsstørrelser) og læses igen, når appen kommer tilbage fra Indstillinger – plus et
+loft og et layoutgennemsyn af alle skærme ved store størrelser (Android viser allerede
+afskæringer ved 1,3). Det er ikke gjort endnu.
 
 Display-overskrifter (`display-heading`) bryder et langt ord i stedet for at løbe ud over
 kanten, når systemets skriftstørrelse er stor. Lange ord i overskrifter kan få en blød

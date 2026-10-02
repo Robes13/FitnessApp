@@ -7,24 +7,62 @@
 | ----- | -------------------------- | -------------------------------------- |
 | `row` | `ProfileEditRowId \| null` | Rækken, der redigeres. `null` = lukket |
 
-| Output   | Beskrivelse                                                          |
-| -------- | -------------------------------------------------------------------- |
-| `closed` | Arket skal lukkes – efter luk-knap, scrim, Escape eller et gemt valg |
+| Output   | Beskrivelse                                                             |
+| -------- | ----------------------------------------------------------------------- |
+| `closed` | Arket skal lukkes – efter luk-knap, scrim, Escape eller en gemt ændring |
 
 Forælderen ejer, hvad der er åbent. Komponenten slår selv definitionen op i
 `ProfileEditService`, så profilsiden kun skal kende rækkens id.
 
-## De tre varianter
+## De fire varianter
 
-| Variant   | Felt                             | Gemmes          |
-| --------- | -------------------------------- | --------------- |
-| `options` | Liste af `app-ui-option-card`    | Straks ved valg |
-| `number`  | −/+ omkring et talfelt med enhed | Med "Gem"       |
-| `text`    | E-mail i `app-ui-text-input`     | Med "Gem"       |
+| Variant   | Felt                                                   | Gemmes          |
+| --------- | ------------------------------------------------------ | --------------- |
+| `options` | Liste af `app-ui-option-card`                          | Straks ved valg |
+| `number`  | −/+ omkring et talfelt med enhed                       | Med "Gem"       |
+| `date`    | Fødselsdato i `app-ui-text-input type="date"` (native) | Med "Gem"       |
+| `text`    | E-mail i `app-ui-text-input`                           | Med "Gem"       |
 
 Alle felter er typede reactive forms. Grænser (`min`/`max`) kommer fra definitionen og sættes
 som validators, når arket åbner, så "Gem" er slået fra, indtil tallet er gyldigt – præcis som
 designets `editSaveDisabled`.
+
+## Gem, fejl og fortryd
+
+Alt gemmes i API'et gennem `ProfileEditService` (pessimistisk). Mens et kald kører, er
+`saving` sand: "Gem" viser `UiButton`s spinner (`loading`), valgkortene er slået fra, og et
+nyt tryk sender intet – så der aldrig går to kald af sted. Arket kan heller ikke lukkes
+(`hideClose`), så svaret aldrig lander på en anden række. Lykkes det, lukker arket. Fejler
+det, bliver arket åbent med en `UiFormError`:
+
+| Fejl                     | Tekst                                                    |
+| ------------------------ | -------------------------------------------------------- |
+| Fødselsdato, 400 (alder) | `profile.edit.birthdayInvalid` ("… mellem 13 og 100 år") |
+| E-mail, 409 / 400        | `core.auth.error.emailTaken` / `invalidEmail`            |
+| Alt andet                | `profile.edit.saveFailed`                                |
+
+Fejlen hører til den værdi, der blev sendt, så den forsvinder, så snart værdien ændres. En gemt
+e-mail lukker ikke arket, men viser `profile.edit.emailSent` ("Vi har sendt et bekræftelseslink
+til …") og en "Luk"-knap – adressen skifter først, når linket er trykket. Er adressen den
+nuværende (uanset store/små bogstaver), sender API'et ingen mail, så arket lukker bare uden kald.
+At lukke arket uden at gemme er fortryd: intet er ændret.
+
+## Ugyldige værdier markeres (spec 2.x)
+
+Bryder værdien feltets regel, er "Gem" slået fra, feltet får rød ramme (`invalid` på
+`app-ui-text-input`, `profile-edit-sheet__number--invalid` på talfeltet), og
+`app-ui-form-error` siger hvorfor – før noget sendes:
+
+| Felt        | Regel                              | Tekst                                                  |
+| ----------- | ---------------------------------- | ------------------------------------------------------ |
+| Tal         | Uden for definitionens `min`–`max` | `profile.edit.numberRange` ("… mellem 120 og 230 cm.") |
+| Målvægt     | `goalWeightError` (se nedenfor)    | Målvægtens egne tekster                                |
+| Fødselsdato | `isBirthdayValid` (API'ets regel)  | `profile.edit.birthdayInvalid`                         |
+| E-mail      | `isValidEmail`                     | `core.auth.error.invalidEmail`                         |
+
+Et tomt felt slår kun "Gem" fra – ingen tekst, ingen rød ramme. API'ets afvisning af en
+fødselsdato eller e-mail (tabellen ovenfor) markerer også feltet; en fejlet gemning gør ikke, for
+værdien er i orden. Datovælgeren får fødselsdatoens grænser som native `min`/`max`.
 
 ## Målvægt og skift af mål
 
@@ -43,3 +81,5 @@ intet ændret.
   orange her i arket.
 - Talfeltet er et almindeligt `<input type="number">`, fordi `app-ui-text-input` ikke har en
   display-størrelse på 38 px. Feltet har ingen egen ramme – kortet omkring det er rammen.
+- Fødselsdatoen er den native datovælger, så den viser datoen i enhedens sprog og format, ikke
+  appens (se [`UiTextInput`](../../../../shared/components/ui-text-input/README.md)).

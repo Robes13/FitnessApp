@@ -1,31 +1,36 @@
-using System.Net;
-using FitnessApp.Api.Options;
-using FitnessApp.Api.Services.Email;
 using FitnessApp.Api.Exceptions;
-using Microsoft.Extensions.Options;
+using FitnessApp.Api.Services.Email;
+using FitnessApp.Api.Utilities;
 
 namespace FitnessApp.Api.Services.Auth;
 
-public sealed class AccountMessageSender(IEmailService emailService, IOptions<SmtpOptions> options,
+public sealed class AccountMessageSender(
+    IEmailService emailService,
+    IHostEnvironment environment,
     ILogger<AccountMessageSender> logger) : IAccountMessageSender
 {
-    public Task SendAsync(string email, string subject, string message, CancellationToken cancellationToken)
-        => emailService.SendEmailAsync(email, subject, $"<p>{WebUtility.HtmlEncode(message)}</p>", message, cancellationToken);
-
-    public async Task SendVerificationAsync(string email, string token, CancellationToken cancellationToken)
+    public async Task SendAsync(string email, AccountEmail mail, CancellationToken cancellationToken)
     {
+        if (environment.IsDevelopment())
+        {
+            var directory = Path.Combine(environment.ContentRootPath, ".dev-outbox");
+            Directory.CreateDirectory(directory);
+            var filename = Path.Combine(directory, $"{Guid.NewGuid():N}.txt");
+            await File.WriteAllTextAsync(filename,
+                $"To: {email}{Environment.NewLine}Subject: {mail.Subject}{Environment.NewLine}{Environment.NewLine}{mail.Text}",
+                cancellationToken);
+            return;
+        }
+
         try
         {
-            if (options.Value.ApplicationUrl != "https://eldorado-fts.dk")
-                throw new ExternalServiceConfigurationException("The Nutrify application URL must be https://eldorado-fts.dk.");
-            var url = options.Value.ApplicationUrl + "/api/v1/auth/email/verify?token=" + Uri.EscapeDataString(token);
-            var (html, text) = VerificationEmailTemplate.Create(url);
-            await emailService.SendEmailAsync(email, "Verify your Nutrify email", html, text, cancellationToken);
+            await emailService.SendEmailAsync(email, mail.Subject, mail.Html, mail.Text, cancellationToken);
         }
         catch (ExternalServiceConfigurationException exception)
         {
-            // Account and token are already committed. Keep registration successful and allow a later resend.
-            logger.LogWarning("Verification email not delivered: {Reason}", exception.Message);
+            // The account change is already committed and every mail can be asked for again (resend, forgot,
+            // PATCH me). Failing here would also tell an anonymous caller that the account exists.
+            logger.LogWarning("Account email not delivered: {Reason}", exception.Message);
         }
     }
 }

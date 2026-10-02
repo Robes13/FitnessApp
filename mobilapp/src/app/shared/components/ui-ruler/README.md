@@ -1,7 +1,7 @@
 # UiRuler
 
 Designets lineal: et vandret spor af streger, der trækkes under en fast orange midterlinje.
-Bruges til vægt (30–300 kg), højde (55–250 cm), skridt (0–50.000), træningslængde (10–180 min)
+Bruges til vægt (30–300 kg), højde (100–250 cm), skridt (0–50.000), træningslængde (10–180 min)
 og målvægt i opret-flowet samt til ny vejning (0,1 kg-trin) på Vægt-siden.
 
 ## Filer
@@ -79,10 +79,17 @@ i node (vægt 75 i hvile, under træk, 75,4 og skridt 6.000).
 
 ## Interaktion
 
-- **Træk:** et usynligt lag (`role="slider"`, `touch-action: none`) over hele linealen. Ved
-  nedtryk committes værdien under fingeren (`value + (clientX − midte) / pxPerUnit`), og
-  bevægelser måles relativt til startpunktet. Pointer capture holder trækket, selv om fingeren
-  forlader elementet.
+- **Træk:** et usynligt lag (`role="slider"`, `touch-action: pan-y`) over hele linealen. Sporet
+  følger fingeren: træk mod højre giver lavere værdier (`startværdi − dx / pxPerUnit`). Et tryk
+  ændrer intet – trækket starter først efter 6 px vandret bevægelse og måles derfra, så hverken
+  et tryk med lidt rystelse eller grænsen giver et hop. Pointer capture holder trækket, selv om
+  fingeren forlader elementet.
+- **Lodret swipe ruller siden:** browseren overtager lodrette bevægelser (`pan-y`) og sender
+  `pointercancel`; så sættes værdien tilbage til den ved nedtryk. Linealen fylder hele bredden
+  midt på Vægt-siden og i arkene, så ellers kunne man ikke rulle forbi den, og et swipe ændrede
+  vægten, som "Gem vejning" så gemte.
+- Designets "værdien under fingeren committes ved nedtryk" og `touch-action: none` er bevidst
+  fravalgt af samme grund.
 - **Tastatur:** `←`/`→` (og `↑`/`↓`) ± `step`, `Home`/`End` til min/max.
 - Alle commits rundes til nærmeste `step`, rundes til tre decimaler (mod flydende-tal-støj) og
   klemmes fast til `min..max`.

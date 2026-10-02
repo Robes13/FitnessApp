@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { KeyboardService } from './core/services/keyboard/keyboard';
 
 /**
  * The root component: just a `<router-outlet>`. It represents the phone's "screen" – full
  * height, constrained to `--layout-max-width`, with the app background. All content comes
- * from the router.
+ * from the router. A tap anywhere in it outside a text field closes the on-screen keyboard.
  */
 @Component({
   selector: 'app-root',
@@ -14,4 +15,10 @@ import { RouterOutlet } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'app-root' },
 })
-export class App {}
+export class App {
+  constructor() {
+    inject(KeyboardService).closeOnTapsIn(
+      inject<ElementRef<HTMLElement>>(ElementRef).nativeElement,
+    );
+  }
+}

@@ -250,20 +250,36 @@ describe('UiRuler', () => {
     expect(host.value()).toBe(75.2);
   });
 
-  it('committer værdien under fingeren ved nedtryk og følger trækket', async () => {
+  it('ændrer intet ved et tryk – heller ikke med lidt rystelse', async () => {
+    const { host, range } = await setup();
+
+    range.dispatchEvent(pointerEvent('pointerdown', 100));
+    range.dispatchEvent(pointerEvent('pointermove', 104));
+    range.dispatchEvent(pointerEvent('pointerup', 104));
+
+    expect(host.value()).toBe(75);
+    expect(host.dragging()).toBe(false);
+  });
+
+  it('lader sporet følge fingeren, når den trækkes vandret', async () => {
     const { fixture, host, ruler, range } = await setup();
 
-    // In jsdom the element's rect is 0×0 at x = 0, so the center is 0 and 16 px equals +2 kg (8 px/kg).
-    range.dispatchEvent(pointerEvent('pointerdown', 16));
-    expect(host.value()).toBe(77);
+    range.dispatchEvent(pointerEvent('pointerdown', 100));
+    // Passing the 6 px slop starts the drag without moving the value.
+    range.dispatchEvent(pointerEvent('pointermove', 110));
+    expect(host.value()).toBe(75);
     expect(host.dragging()).toBe(true);
     await fixture.whenStable();
     expect(ruler.classList.contains('ui-ruler--dragging')).toBe(true);
 
-    range.dispatchEvent(pointerEvent('pointermove', 24));
+    // 16 px to the right pulls 2 kg lower values under the line (8 px/kg) …
+    range.dispatchEvent(pointerEvent('pointermove', 126));
+    expect(host.value()).toBe(73);
+    // … and back to the left raises it again.
+    range.dispatchEvent(pointerEvent('pointermove', 86));
     expect(host.value()).toBe(78);
 
-    range.dispatchEvent(pointerEvent('pointerup', 24));
+    range.dispatchEvent(pointerEvent('pointerup', 86));
     expect(host.dragging()).toBe(false);
     expect(host.value()).toBe(78);
 
@@ -273,12 +289,35 @@ describe('UiRuler', () => {
     expect(ruler.classList.contains('ui-ruler--dragging')).toBe(false);
   });
 
-  it('klemmer træk fast til max', async () => {
+  it('gendanner værdien, når browseren overtager berøringen for at rulle siden', async () => {
     const { host, range } = await setup();
 
-    range.dispatchEvent(pointerEvent('pointerdown', 8000));
-    expect(host.value()).toBe(300);
-    range.dispatchEvent(pointerEvent('pointercancel', 8000));
+    range.dispatchEvent(pointerEvent('pointerdown', 100));
+    range.dispatchEvent(pointerEvent('pointermove', 110));
+    range.dispatchEvent(pointerEvent('pointermove', 118));
+    expect(host.value()).toBe(74);
+
+    range.dispatchEvent(pointerEvent('pointercancel', 118));
+    expect(host.value()).toBe(75);
     expect(host.dragging()).toBe(false);
+  });
+
+  it('klemmer træk fast til min og max', async () => {
+    const { host, range } = await setup();
+
+    range.dispatchEvent(pointerEvent('pointerdown', 0));
+    range.dispatchEvent(pointerEvent('pointermove', 10));
+    range.dispatchEvent(pointerEvent('pointermove', 8000));
+    expect(host.value()).toBe(30);
+    range.dispatchEvent(pointerEvent('pointermove', -8000));
+    expect(host.value()).toBe(300);
+    range.dispatchEvent(pointerEvent('pointerup', -8000));
+    expect(host.dragging()).toBe(false);
+  });
+
+  it('lader lodrette swipes rulle siden', async () => {
+    const { range } = await setup();
+
+    expect(getComputedStyle(range).touchAction).toBe('pan-y');
   });
 });

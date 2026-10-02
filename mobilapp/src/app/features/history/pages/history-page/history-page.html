@@ -1,4 +1,4 @@
-<div class="history-page__scroll">
+<div class="history-page__scroll" #list (scroll)="onScroll(list)">
   <h1 class="history-page__title">
     {{ 'history.page.titleStart' | translate }}
     <span class="history-page__title-accent">{{ 'history.page.titleAccent' | translate }}</span>
@@ -15,7 +15,7 @@
         size="sm"
         class="history-page__filter"
         [selected]="item.id === filter()"
-        (click)="selectFilter(item.id)"
+        (click)="selectFilter(item)"
       >
         {{ item.labelKey | translate }}
       </button>
@@ -23,10 +23,6 @@
   </div>
 
   <div class="history-page__groups">
-    @if (isEmpty()) {
-      <app-ui-empty-state [message]="'history.page.empty' | translate" />
-    }
-
     @for (group of groups(); track group.id) {
       <section class="history-page__group">
         <h2 class="history-page__group-label">{{ group.label }}</h2>
@@ -41,6 +37,7 @@
               [class.history-page__dot--vejning]="entry.kind === 'vejning'"
               [class.history-page__dot--mad]="entry.kind === 'mad'"
               [class.history-page__dot--maal]="entry.kind === 'maal'"
+              [class.history-page__dot--konto]="entry.kind === 'konto'"
             ></span>
 
             <span class="history-page__text">
@@ -48,13 +45,7 @@
               <span class="history-page__row-subtitle">{{ entry.subtitle }}</span>
             </span>
 
-            <span
-              class="history-page__value"
-              [class.history-page__value--positive]="entry.valueTone === 'positive'"
-              [class.history-page__value--negative]="entry.valueTone === 'negative'"
-            >
-              {{ entry.value }}
-            </span>
+            <span class="history-page__value">{{ entry.value }}</span>
 
             @if (entry.food) {
               <button
@@ -63,12 +54,17 @@
                 size="4xs"
                 tone="ghost"
                 class="history-page__relog"
-                [class.history-page__relog--done]="isRelogged(entry)"
+                [class.history-page__relog--done]="relogState(entry) === 'logged'"
+                [class.history-page__relog--failed]="relogState(entry) === 'failed'"
                 [attr.aria-label]="relogLabel(entry)"
                 [title]="relogLabel(entry)"
                 (click)="relog(entry)"
               >
-                <app-ui-icon name="redo" size="xs" [strokeWidth]="relogIconStrokeWidth" />
+                <app-ui-icon
+                  [name]="relogState(entry) === 'failed' ? 'close' : 'redo'"
+                  size="xs"
+                  [strokeWidth]="relogIconStrokeWidth"
+                />
               </button>
             } @else if (reservesRelogSpace()) {
               <span class="history-page__relog-space" aria-hidden="true"></span>
@@ -76,6 +72,30 @@
           </div>
         }
       </section>
+    }
+
+    @switch (status()) {
+      @case ('loading') {
+        <div class="history-page__status">
+          <app-ui-spinner />
+        </div>
+      }
+      @case ('error') {
+        <div class="history-page__status">
+          <app-ui-form-error
+            class="history-page__status-message"
+            tone="negative"
+            [message]="'history.page.error' | translate"
+          />
+          <button app-ui-button type="button" variant="outline" size="md" (click)="retry()">
+            {{ 'history.page.retry' | translate }}
+          </button>
+        </div>
+      }
+    }
+
+    @if (isEmpty()) {
+      <app-ui-empty-state [message]="'history.page.empty' | translate" />
     }
   </div>
 </div>

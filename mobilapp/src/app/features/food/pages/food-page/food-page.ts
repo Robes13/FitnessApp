@@ -10,23 +10,30 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { Observable, finalize } from 'rxjs';
+import { API_ERROR_MESSAGE_KEY } from '../../../../core/constants/api';
 import { QUERY_PARAM } from '../../../../core/constants/app-route';
 import { MEAL_IDS } from '../../../../core/constants/meals';
-import { CustomFoodInput, FoodItem, LoggedFood } from '../../../../core/models/food';
+import { FoodItem, LoggedFood } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
 import {
   DuplicateCustomFoodNameError,
   FoodLogService,
 } from '../../../../core/services/food-log/food-log';
 import { injectTranslate } from '../../../../core/services/language/translate';
+import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
+import { toApiError } from '../../../../core/utils/api';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import { FoodPickerStartStep } from '../../../../shared/components/food-picker/food-picker';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+import { UiConfirmSheet } from '../../../../shared/components/ui-confirm-sheet/ui-confirm-sheet';
+import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-icon-button';
 import { UiProgressBar } from '../../../../shared/components/ui-progress-bar/ui-progress-bar';
 import { UiProgressRing } from '../../../../shared/components/ui-progress-ring/ui-progress-ring';
+import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
 import { FoodAddSheet } from '../../components/food-add-sheet/food-add-sheet';
 import { FoodMealGroup } from '../../components/food-meal-group/food-meal-group';
 import { DEFAULT_MEAL, FoodViewService } from '../../services/food-view';
@@ -46,15 +53,29 @@ const ADD_MEAL_PARAM: 'tilfoej' = QUERY_PARAM.ADD_MEAL;
 const KCAL_RING_DIAMETER = 84;
 const KCAL_RING_STROKE_WIDTH = 8.4;
 
-/** Shown when a new custom food clashes with an existing one's name (e.g. from the scanner). Param `foodName`. */
+/** A new custom food clashed with an existing one's name (409). Param `foodName`. */
 const DUPLICATE_CUSTOM_FOOD_NOTICE_KEY = 'food.page.duplicateCustomFood';
+/** What failed, when the API's error is only the generic "request failed". */
+const SAVE_ERROR_KEY = 'food.page.saveError';
+const REMOVE_ERROR_KEY = 'food.page.removeError';
+
+/** The page as a whole: the first load, a failed store (food log or profile), or the content. */
+type FoodPageStatus = 'loading' | 'error' | 'ready';
+
+/** Why the last save or removal failed – translated live in `notice`. */
+interface Failure {
+  readonly key: string;
+  readonly params?: Readonly<Record<string, string>>;
+}
 
 /**
  * The Mad screen: today's calories and macros, the four meal groups and the ways into the log –
  * the "Add food" sheet and the barcode scanner.
  *
- * The page only owns the UI state around the sheet (open, selected meal, food being edited).
- * All numbers come from `FoodViewService`, and the log is only ever changed through `FoodLogService`.
+ * The page only owns the UI state around the sheet (open, selected meal, food being edited,
+ * the running save). All numbers come from `FoodViewService`, and the log is only ever changed
+ * through `FoodLogService` – pessimistically: the sheet closes once the API has answered, a
+ * failure is shown in the sheet (and under the buttons), and `pending` blocks a second save.
  *
  * `/mad?tilfoej=<meal>` (from Home) opens the sheet on that meal. The parameter is bound as input
  * (`withComponentInputBinding()`) and removed from the URL again, so a reload or a back press
@@ -68,11 +89,14 @@ const DUPLICATE_CUSTOM_FOOD_NOTICE_KEY = 'food.page.duplicateCustomFood';
     FoodMealGroup,
     TranslatePipe,
     UiButton,
+    UiConfirmSheet,
+    UiEmptyState,
     UiFormError,
     UiIcon,
     UiIconButton,
     UiProgressBar,
     UiProgressRing,
+    UiSpinner,
   ],
   templateUrl: './food-page.html',
   styleUrl: './food-page.scss',
@@ -85,6 +109,7 @@ export class FoodPage {
 
   protected readonly view = inject(FoodViewService);
   private readonly foodLog = inject(FoodLogService);
+  private readonly profiles = inject(UserProfileService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly t = injectTranslate();
@@ -92,21 +117,36 @@ export class FoodPage {
   protected readonly ringDiameter = KCAL_RING_DIAMETER;
   protected readonly ringStrokeWidth = KCAL_RING_STROKE_WIDTH;
 
+  /** The kcal goal comes from the profile, so its failure is the page's failure too. */
+  protected readonly status = computed<FoodPageStatus>(() => {
+    const stores = [this.foodLog.status(), this.profiles.status()];
+    if (stores.includes('error')) {
+      return 'error';
+    }
+    return stores.includes('loading') ? 'loading' : 'ready';
+  });
+
   protected readonly addOpen = signal(false);
   protected readonly addMeal = signal<MealId>(DEFAULT_MEAL);
   protected readonly editEntry = signal<LoggedFood | null>(null);
   protected readonly pickerStartStep = signal<FoodPickerStartStep>('search');
+  /** The barcode the scanner didn't find, for the new-food form it opened (3.1-6a). */
+  protected readonly newFoodBarcode = signal<string | null>(null);
   protected readonly scannerOpen = signal(false);
-  /** The custom food whose name was already taken; cleared when the sheet or scanner opens. */
-  private readonly duplicateCustomFoodName = signal<string | null>(null);
-  /** Feedback after a custom food couldn't be saved – translated live from the stored name. */
+  /** The entry the removal confirmation (3.4) asks about. */
+  protected readonly removeTarget = signal<LoggedFood | null>(null);
+  protected readonly removeOpen = computed(() => this.removeTarget() !== null);
+  protected readonly removeParams = computed(() => ({
+    foodName: this.removeTarget()?.name ?? '',
+  }));
+  /** A save or removal is running: its button shows a spinner and further taps are ignored. */
+  protected readonly pending = signal(false);
+  /** Cleared when the sheet or the scanner opens and when the next action starts. */
+  private readonly failure = signal<Failure | null>(null);
   protected readonly notice = computed(() => {
-    const foodName = this.duplicateCustomFoodName();
-    return foodName === null ? null : this.t(DUPLICATE_CUSTOM_FOOD_NOTICE_KEY, { foodName });
+    const failure = this.failure();
+    return failure === null ? null : this.t(failure.key, failure.params);
   });
-
-  /** The meal the scanner saves under – the text belongs to the scanner's CTA. */
-  protected readonly scannerMealLabel = computed(() => this.view.mealLabel(this.addMeal()));
 
   constructor() {
     effect(() => {
@@ -125,6 +165,16 @@ export class FoodPage {
     });
   }
 
+  /** "Prøv igen": reloads the store(s) that failed. Not cancelled on leaving, so no store hangs in `loading`. */
+  protected retry(): void {
+    if (this.foodLog.status() === 'error') {
+      this.foodLog.load().subscribe();
+    }
+    if (this.profiles.status() === 'error') {
+      this.profiles.load().subscribe();
+    }
+  }
+
   // --- The sheet -------------------------------------------------------------------------------
 
   /** "Add food" – keeps the meal the sheet was last on (the design's `openAdd`). */
@@ -137,11 +187,13 @@ export class FoodPage {
     this.startAdd(meal, 'search');
   }
 
+  /** Only the amount can be changed (spec 3.3). */
   protected openEdit(entry: LoggedFood): void {
-    this.duplicateCustomFoodName.set(null);
+    this.failure.set(null);
     this.editEntry.set(entry);
     this.addMeal.set(entry.meal);
     this.pickerStartStep.set('search');
+    this.newFoodBarcode.set(null);
     this.addOpen.set(true);
   }
 
@@ -150,29 +202,41 @@ export class FoodPage {
     this.editEntry.set(null);
   }
 
-  protected removeEntry(entry: LoggedFood): void {
-    this.foodLog.remove(entry.logId);
-  }
-
-  /** A finished food from the sheet: update the edited entry, otherwise add it to the log. */
+  /** A finished food from the sheet: update the edited entry, otherwise log it. */
   protected onSelected(item: FoodItem): void {
     const editing = this.editEntry();
-    if (editing) {
-      this.foodLog.update(editing.logId, { ...item });
-    } else {
-      this.foodLog.add(item, this.addMeal());
-    }
-    this.closeAdd();
+    this.run(
+      editing ? this.foodLog.update(editing.logId, item) : this.foodLog.add(item, this.addMeal()),
+      SAVE_ERROR_KEY,
+      () => this.closeAdd(),
+    );
   }
 
-  /** Saved with the picker's id, so an entry logged via "Gem og log …" points at the custom food. */
+  /** "Gem uden at logge": the picker returns to its search once the food is saved. */
   protected onCustomFoodCreated(item: FoodItem): void {
-    this.saveCustomFood(item);
+    this.run(this.foodLog.addCustomFood(item), SAVE_ERROR_KEY);
   }
 
-  /** Editing a logged custom food also changes the custom food; the entry follows in `onSelected`. */
-  protected onCustomFoodEdited(item: FoodItem): void {
-    this.foodLog.updateCustomFood(item.id, toCustomFoodInput(item));
+  // --- Removal (3.4) ---------------------------------------------------------------------------
+
+  protected removeEntry(entry: LoggedFood): void {
+    this.failure.set(null);
+    this.removeTarget.set(entry);
+  }
+
+  protected cancelRemove(): void {
+    this.removeTarget.set(null);
+  }
+
+  /** The confirmation closes either way; a failure is shown under the buttons. */
+  protected confirmRemove(): void {
+    const entry = this.removeTarget();
+    if (entry) {
+      this.run(
+        this.foodLog.remove(entry.logId).pipe(finalize(() => this.removeTarget.set(null))),
+        REMOVE_ERROR_KEY,
+      );
+    }
   }
 
   // --- The scanner -----------------------------------------------------------------------------
@@ -182,67 +246,66 @@ export class FoodPage {
    * leads back to the sheet – as in the design, where `openScan` doesn't touch `addOpen`.
    */
   protected openScanner(): void {
-    this.duplicateCustomFoodName.set(null);
+    this.failure.set(null);
     this.scannerOpen.set(true);
   }
 
-  protected onScanFound(item: FoodItem): void {
-    this.foodLog.add(item, this.addMeal());
-    this.closeAdd();
-  }
-
   /**
-   * "Unknown food" saved: it becomes a custom food and is added to the log at the same time.
-   * If the name is already taken, the food is still logged – only the custom food isn't saved again.
+   * A scanned product becomes the user's own food as it is logged – under the meal picked on the
+   * scanner's result sheet (`[(meal)]`, the sheet's meal too). Pessimistic like the sheet: the
+   * scanner closes once the API has answered; a failure keeps its result open with the notice.
    */
-  protected onScanCustomSaved(item: FoodItem): void {
-    this.foodLog.add(this.saveCustomFood(item) ?? item, this.addMeal());
-    this.closeAdd();
+  protected onScanFound(item: FoodItem): void {
+    this.run(this.foodLog.add(item, this.addMeal()), SAVE_ERROR_KEY, () => {
+      this.scannerOpen.set(false);
+      this.closeAdd();
+    });
   }
 
   protected onScanManual(): void {
     this.startAdd(this.addMeal(), 'search');
   }
 
-  protected onScanNoBarcode(): void {
-    this.startAdd(this.addMeal(), 'new-food');
+  /**
+   * "Varen har ingen stregkode" – or "Opret varen selv" after "ikke fundet", with the barcode the
+   * new food is saved with (3.1-6a → 3.0).
+   */
+  protected onScanNoBarcode(barcode: string | null): void {
+    this.startAdd(this.addMeal(), 'new-food', barcode);
   }
 
   protected onScannerClosed(): void {
     this.scannerOpen.set(false);
   }
 
-  private startAdd(meal: MealId, step: FoodPickerStartStep): void {
-    this.duplicateCustomFoodName.set(null);
+  private startAdd(meal: MealId, step: FoodPickerStartStep, barcode: string | null = null): void {
+    this.failure.set(null);
     this.editEntry.set(null);
     this.addMeal.set(meal);
     this.pickerStartStep.set(step);
+    this.newFoodBarcode.set(barcode);
     this.addOpen.set(true);
   }
 
-  /** Returns the saved custom food, or `null` (with a notice) when the name is already taken. */
-  private saveCustomFood(item: FoodItem): FoodItem | null {
-    try {
-      return this.foodLog.addCustomFood(toCustomFoodInput(item), item.id);
-    } catch (error) {
-      if (!(error instanceof DuplicateCustomFoodNameError)) {
-        throw error;
-      }
-      this.duplicateCustomFoodName.set(item.name);
-      return null;
+  /** Runs one mutation at a time. Not cancelled when the page closes, so a save is never lost. */
+  private run(action: Observable<unknown>, fallbackKey: string, done?: () => void): void {
+    if (this.pending()) {
+      return;
     }
+    this.pending.set(true);
+    this.failure.set(null);
+    action.pipe(finalize(() => this.pending.set(false))).subscribe({
+      next: () => done?.(),
+      error: (error: unknown) => this.failure.set(toFailure(error, fallbackKey)),
+    });
   }
 }
 
-/** `FoodLogService.addCustomFood` sets `isCustom` itself; the id is passed separately. */
-function toCustomFoodInput(item: FoodItem): CustomFoodInput {
-  return {
-    name: item.name,
-    quantity: item.quantity,
-    kcal: item.kcal,
-    protein: item.protein,
-    carbs: item.carbs,
-    fat: item.fat,
-    brand: item.brand,
-  };
+/** The API's generic "request failed" says what failed here; network, server and not-found keep their text. */
+function toFailure(error: unknown, fallbackKey: string): Failure {
+  if (error instanceof DuplicateCustomFoodNameError) {
+    return { key: DUPLICATE_CUSTOM_FOOD_NOTICE_KEY, params: { foodName: error.foodName } };
+  }
+  const { messageKey } = toApiError(error);
+  return { key: messageKey === API_ERROR_MESSAGE_KEY.REQUEST_FAILED ? fallbackKey : messageKey };
 }

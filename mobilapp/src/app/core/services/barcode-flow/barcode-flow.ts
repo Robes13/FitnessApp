@@ -1,30 +1,19 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, defer } from 'rxjs';
-import { PRODUCT_BASE_GRAMS } from '../../constants/barcode';
+import { Observable, defer, of } from 'rxjs';
+import { PRODUCT_BASE_GRAMS, PRODUCT_BASE_UNIT } from '../../constants/barcode';
 import { BarcodeScanOutcome, ProductLookupResult, ScannedProduct } from '../../models/barcode';
 import { FoodItem } from '../../models/food';
-import { newId } from '../../utils/id';
+import { FoodDto } from '../../models/food-api';
 import { BarcodeScannerService } from '../barcode-scanner/barcode-scanner';
-import { CUSTOM_FOOD_ID_PREFIX, FoodLogService } from '../food-log/food-log';
+import { FoodLogService } from '../food-log/food-log';
 import { NutritionCalculator } from '../nutrition-calculator/nutrition-calculator';
 import { ProductLookupService } from '../product-lookup/product-lookup';
-
-/** The "Unknown item" form's values. */
-export interface UnknownProductInput {
-  readonly name: string;
-  readonly quantity: string;
-  readonly kcal: number | null;
-  readonly protein: number | null;
-}
-
-/** Design's `saveNewFood`: an empty portion becomes '1 portion'. */
-const DEFAULT_CUSTOM_QUANTITY = '1 portion';
 
 /**
  * The domain side of the barcode scanner (`shared/components/barcode-scanner`), so the shared
  * component only holds presentation and form state: scanning with the camera, looking the
- * barcode up (each lookup counts one scan for the "10 scans" badge), scaling a product to an
- * amount, the duplicate-name check for the "Unknown item" form and building that custom food.
+ * barcode up (each lookup counts one scan for the "10 scans" badge) and scaling a product to an
+ * amount.
  *
  * Nothing is logged or saved here – the component emits the item and its parent does that.
  */
@@ -46,11 +35,18 @@ export class BarcodeFlowService {
     return this.scanner.openSettings();
   }
 
-  /** Counts the scan when subscribed, then looks the barcode up. Never errors. */
+  /**
+   * Counts the scan when subscribed, then looks the barcode up: first in the user's own
+   * catalogue (a food scanned before, or one created for a barcode Open Food Facts doesn't
+   * know – 3.1-6a), then in Open Food Facts. Never errors.
+   */
   lookup(barcode: string): Observable<ProductLookupResult> {
     return defer(() => {
       this.scanner.recordScan();
-      return this.productLookup.lookup(barcode);
+      const own = this.foodLog.foods().find((food) => food.barcode === barcode);
+      return own
+        ? of<ProductLookupResult>({ status: 'found', product: toCatalogueProduct(barcode, own) })
+        : this.productLookup.lookup(barcode);
     });
   }
 
@@ -62,29 +58,41 @@ export class BarcodeFlowService {
       quantity: formatAmount(product, amount),
     };
   }
-
-  /** Whether the trimmed name is already one of the user's own foods. Empty is never taken. */
-  isCustomFoodNameTaken(name: string): boolean {
-    const trimmed = name.trim();
-    return trimmed !== '' && this.foodLog.hasCustomFoodNamed(trimmed);
-  }
-
-  /** The custom food from the "Unknown item" form: carbs/fat 0, portion '1 portion' if empty. */
-  toCustomFood(input: UnknownProductInput): FoodItem {
-    return {
-      id: newId(CUSTOM_FOOD_ID_PREFIX),
-      name: input.name.trim(),
-      quantity: input.quantity.trim() || DEFAULT_CUSTOM_QUANTITY,
-      kcal: Math.round(input.kcal ?? 0),
-      protein: Math.round(input.protein ?? 0),
-      carbs: 0,
-      fat: 0,
-      isCustom: true,
-    };
-  }
 }
 
 /** `'150 g'`, or `'150 ml'` for a liquid – the unit of the product's base portion. */
 export function formatAmount(product: ScannedProduct, amount: number): string {
   return `${Math.round(amount)} ${product.unit}`;
+}
+
+/**
+ * A catalogue food as a scanned product: the API's values per 100 g, or per 100 ml when the food
+ * has a millilitre serving. The item keeps the food's id, so logging it reuses the food.
+ *
+ * ponytail: a food entered per piece/portion is per unit with a synthetic 100 g serving
+ * (`SERVING_GRAMS_PER_UNIT`), so the scanner offers that unit as its "Portion" of 100 g. Upgrade
+ * path: a nutrition basis per food in the API (api-gaps).
+ */
+function toCatalogueProduct(barcode: string, food: FoodDto): ScannedProduct {
+  const unit = food.servings.some((serving) => serving.unit === 'Milliliter')
+    ? PRODUCT_BASE_UNIT.MILLILITRES
+    : PRODUCT_BASE_UNIT.GRAMS;
+  const perUnit = food.servings.find(
+    (serving) => serving.unit === 'Piece' || serving.unit === 'Serving',
+  );
+  return {
+    barcode,
+    unit,
+    item: {
+      id: String(food.foodId),
+      name: food.name,
+      quantity: `${PRODUCT_BASE_GRAMS} ${unit}`,
+      kcal: food.caloriesPer100,
+      protein: food.proteinPer100,
+      carbs: food.carbohydratesPer100,
+      fat: food.fatPer100,
+      isCustom: true,
+    },
+    servingGrams: perUnit?.gramsPerUnit ?? null,
+  };
 }

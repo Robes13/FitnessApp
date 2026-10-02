@@ -22,19 +22,36 @@
     padding-inline: var(--space-1);
   }
 
-  &__tabs {
+  &__tabs,
+  &__error {
     flex: none;
   }
 
   /*
    * Only the list scrolls; the meal chips and Foods/Collections stay fixed at the top of the sheet
    * (`UiSheet` with `column`). `display: flex` lets the food picker fill the rest of the height.
+   * The inline padding (given back by the margin) is room for the focus ring that the picker's
+   * fields reach into with their negative margin – inside the padding nothing scrolls sideways.
    */
   &__scroll {
     @include mixins.scroll-area;
 
     display: flex;
     flex-direction: column;
+    margin-inline: calc(-1 * var(--space-1));
+    padding-inline: var(--space-1);
+  }
+
+  &__status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3-5);
+    padding: var(--space-6) 0;
+  }
+
+  &__status-message {
+    align-self: stretch;
   }
 
   &__collections {
@@ -56,6 +73,11 @@
     font-family: var(--font-family-base);
     text-align: left;
     cursor: pointer;
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
   }
 
   &__collection-main {
@@ -73,26 +95,8 @@
     width: var(--size-control-2xs);
     height: var(--size-control-2xs);
     border-radius: var(--radius-md);
-
-    &--accent {
-      background: var(--color-accent-soft);
-      color: var(--color-accent);
-    }
-
-    &--positive {
-      background: var(--color-positive-tint);
-      color: var(--color-positive);
-    }
-
-    &--selected {
-      background: var(--color-selected-tint-2);
-      color: var(--color-selected-text);
-    }
-
-    &--negative {
-      background: var(--color-negative-soft);
-      color: var(--color-negative);
-    }
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
   }
 
   &__collection-text {
@@ -125,6 +129,22 @@
     color: var(--color-accent);
     font-size: var(--font-size-md);
     font-weight: var(--font-weight-bold);
+  }
+
+  /* Spec 3.2: the tapped collection with its nutrition, "Log X kcal under …" and "Fortryd". */
+  &__confirm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-top: var(--border-width-thin) solid var(--color-border-soft);
+  }
+
+  &__confirm-totals {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
   }
 
   &__collection-add {

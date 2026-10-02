@@ -7,21 +7,22 @@ Rene, sideeffektfrie hjælpefunktioner.
 Dato- og talformatering som i designet (eksemplerne er på dansk). Funktionerne, der giver
 tekst, tager en `t: Translate` fra `injectTranslate()` som første parameter:
 
-| Funktion                                            | Eksempel                                   |
-| --------------------------------------------------- | ------------------------------------------ |
-| `formatRelativeDay(t, date, today)`                 | `'I dag'` · `'I går'` · `'3 dage siden'`   |
-| `formatDayLabel(t, date)`                           | `'Mandag 21. sep'`                         |
-| `formatDayMonth(t, date)`                           | `'21. sep'`                                |
-| `formatWeekdayAbbreviated(t, date)`                 | `'Tir.'`                                   |
-| `formatTime(date)`                                  | `'07:45'`                                  |
-| `formatDecimal(74.5)`                               | `'74,5'`                                   |
-| `formatWeightKg(74.5)` / `formatWeightKg(75)`       | `'74,5'` · `'75'` (designets `weightText`) |
-| `formatSignedDecimal(-1.2)`                         | `'−1,2'` (typografisk minus)               |
-| `formatInteger(6000)`                               | `'6.000'`                                  |
-| `mondayIndex(date)`                                 | `0` = mandag … `6` = søndag                |
-| `toIsoDate(date)`                                   | `'2026-09-21'` (lokal tid)                 |
-| `fromIsoDate('2026-09-21')`                         | lokal midnat den dag (omvendt `toIsoDate`) |
-| `startOfDay`, `addDays`, `isSameDay`, `daysBetween` | dato-aritmetik på kalenderdage             |
+| Funktion                                            | Eksempel                                                                  |
+| --------------------------------------------------- | ------------------------------------------------------------------------- |
+| `formatRelativeDay(t, date, today)`                 | `'I dag'` · `'I går'` · `'3 dage siden'`                                  |
+| `formatDayLabel(t, date)`                           | `'Mandag 21. sep'`                                                        |
+| `formatDayMonth(t, date)`                           | `'21. sep'`                                                               |
+| `formatWeekdayAbbreviated(t, date)`                 | `'Tir.'`                                                                  |
+| `formatTime(date)`                                  | `'07:45'`                                                                 |
+| `formatDecimal(74.5)`                               | `'74,5'`                                                                  |
+| `formatWeightKg(74.5)` / `formatWeightKg(75)`       | `'74,5'` · `'75'` (designets `weightText`)                                |
+| `formatSignedDecimal(-1.2)`                         | `'−1,2'` (typografisk minus)                                              |
+| `formatInteger(6000)`                               | `'6.000'`                                                                 |
+| `mondayIndex(date)`                                 | `0` = mandag … `6` = søndag                                               |
+| `toIsoDate(date)`                                   | `'2026-09-21'` (lokal tid)                                                |
+| `fromIsoDate('2026-09-21')`                         | lokal midnat den dag (omvendt `toIsoDate`)                                |
+| `startOfDay`, `addDays`, `isSameDay`, `daysBetween` | dato-aritmetik på kalenderdage                                            |
+| `currentTimeZoneId()`                               | `'Europe/Copenhagen'` (IANA, `'UTC'` som fallback) – API'ets `timeZoneId` |
 
 Navnelister (oversættelsesnøgler, mandag/januar først): `DAY_NAME_SHORT_KEYS`,
 `DAY_NAME_LONG_KEYS`, `DAY_LETTER_KEYS`, `MONTH_NAME_LONG_KEYS`, `MONTH_NAME_SHORT_KEYS`.
@@ -31,6 +32,91 @@ følger appens sprog via signalet `numberLocale`, som `LanguageService` sætter 
 `setNumberLocale()` (`'74,5'` på dansk, `'74.5'` på engelsk), så en `computed()`, der formaterer et
 tal, genberegnes ved sprogskift. Kun det typografiske minus i `formatSignedDecimal` sættes
 bagefter, fordi `Intl` bruger en almindelig bindestreg. Eksemplerne ovenfor er på dansk.
+
+Hele tal, der vises – kcal, skridt og grænserne i fejlbeskeder (`'Højst 9.999 kcal pr.
+portion.'`, `'… mellem 0 og 50.000 skridt.'`) – går altid gennem `formatInteger` (den afrunder
+selv), også når de sendes som parameter til en oversættelse, så tusindtalsseparatoren er ens på
+alle skærme. Undtagelsen er en vares `quantity` (`'1500 g'`): den er data, som
+`NutritionCalculator.parseQuantity` læser tilbage, og tallet formateres derfor ikke (kun enheden,
+se `quantity.ts`).
+
+## `quantity.ts`
+
+`FoodItem.quantity` beholder appens enhedstoken (`'2 portion'`, `'1 stk'`), fordi det er data, der
+læses tilbage og sendes til API'et. Hvor en mængde **vises**, går den gennem
+`formatQuantity(t, quantity)`, som skriver de talte enheder på det aktive sprog og i ental/flertal
+(`COUNTED_UNIT_LABEL_KEY`, nøglerne `core.quantity.*`):
+
+| Ind           | Dansk           | Engelsk        |
+| ------------- | --------------- | -------------- |
+| `'1 portion'` | `'1 portion'`   | `'1 serving'`  |
+| `'2 portion'` | `'2 portioner'` | `'2 servings'` |
+| `'2 stk'`     | `'2 stk'`       | `'2 pcs'`      |
+| `'150 g'`     | `'150 g'`       | `'150 g'`      |
+
+Ental er præcis 1 – alt andet er flertal (`'1.5 portioner'`). g, ml og de enheder, appen aldrig
+opretter, vises som tokenet. `formatQuantityUnit(t, unit, amount)` giver kun enheden – til
+portionstrinnets enhed ved tallet, hurtigvalgene og knappen (`Tilføj 2 portioner`). Bruges af
+vare-vælgeren, Mad-sidens rækker, samlingsarkets kladde og opskriftssiden.
+
+## `api.ts`
+
+Det fælles HTTP-lag for alle domæner:
+
+| Funktion                      | Brug                                                                                                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `injectApiUrl()`              | `const url = injectApiUrl();` → `url('me/weight-logs')` = `'/api/v1/me/weight-logs'` (base-URL fra `API_BASE_URL`).                                                |
+| `toApiError(error, resolve?)` | Enhver fejl → `ApiError { messageKey, status? }`. Læser API'ets tre fejlformer, tom body og status 0. `resolve(problem)` giver en specifik nøgle eller `null`.     |
+| `mapApiError(resolve?)`       | `catchError`, der kaster `toApiError(...)` videre – sidste led i en services HTTP-pipe.                                                                            |
+| `fetchAllPages(fetchPage)`    | Følger `nextCursor`, til `hasMore` er `false`, og giver alle `items` i API'ets rækkefølge (nyeste først). `fetchPage(null)` er første side.                        |
+| `resolveApiUrl(url, base)`    | En relativ URL fra API'et (`/api/v1/dev-images/…`) på native: gjort absolut mod `API_BASE_URL` og hentet via CapacitorHttp's proxy (læs nedenfor). Ellers uændret. |
+| `parseApiDateTime(value)`     | Et API-tidsstempel (UTC med `Z`, 0–7 decimaler) som `Date`; decimalerne kortes til 3, så også ældre WebViews kan læse det.                                         |
+| `readProblemBody(error)`      | Fejlens body som record – også når CapacitorHttp (Android) giver den som tekst (JSON parses i `try/catch`); tom, ikke-JSON eller `null` → `{}`.                    |
+
+`resolveApiUrl` sender dev-billedet gennem CapacitorHttp's proxy på appens egen origin
+(`/_capacitor_http_interceptor_?u=<API-URL>`, samme vej som appens GET-kald), fordi Androids
+https-WebView blokerer et http-billede direkte fra dev-API'et som mixed content. I browseren
+(relativ base) og for absolutte/`data:`-URL'er (produktionens https-billeder) er URL'en uændret.
+
+`ApiProblem` er det, en resolver får: `{ status, detail, fields }` – `detail` er API'ets engelske
+tekst (matches med et regex), `fields` er nøglerne i en valideringsfejl med små bogstaver og
+uden `$.` (`'password'`, `'birthdate'`). Uden resolver (eller når den giver `null`) bruges de
+generelle nøgler i `API_ERROR_MESSAGE_KEY`: status 0 → netværk, 5xx → server, resten →
+"Noget gik galt. Prøv igen."
+
+Eksempel fra en domæne-service (navnene er illustrative; `HttpStatusCode` kommer fra
+`@angular/common/http` – ingen magiske statuskoder):
+
+```ts
+return this.http
+  .post<WeightLogDto>(this.url(WEIGHT_ENDPOINT.LOGS), request)
+  .pipe(
+    mapApiError((problem) =>
+      problem.status === HttpStatusCode.Conflict ? WEIGHT_ERROR_KEY.DAY_TAKEN : null,
+    ),
+  );
+```
+
+Skal en service bruge et felt ud over `detail`/`errors` (fx vægt-409'ens `existingWeightLogId`),
+læser den bodyen med `readProblemBody`, så streng-bodies fra CapacitorHttp også virker:
+
+```ts
+catchError((error: unknown) => {
+  if (error instanceof HttpErrorResponse && error.status === HttpStatusCode.Conflict) {
+    const id = readProblemBody(error)['existingWeightLogId'];
+    if (typeof id === 'number') {
+      return of({ kind: 'exists', id: String(id) });
+    }
+  }
+  return throwError(() => toApiError(error));
+});
+```
+
+API'et sender ingen fejlkoder (plan-v2 P6); statuskoden, felterne og – for de to 409'ere med
+samme status – `detail`-teksten er det, der skelnes på.
+
+En fejl, der ikke er en `HttpErrorResponse` (en bug, fx i en mapping), bliver den generiske
+nøgle og logges med `console.error`, så den ikke forsvinder.
 
 ## `language.ts`
 
@@ -46,6 +132,10 @@ bagefter, fordi `Intl` bruger en almindelig bindestreg. Eksemplerne ovenfor er p
 `clamp(value, min, max)` klemmer et tal fast til intervallet `[min, max]`.
 `roundTo(value, decimals)` runder til et antal decimaler og normaliserer `-0` til `0`, så
 afrundede værdier kan sammenlignes strengt.
+`parseDecimal(text)` læser et indtastet tal med komma eller punktum (`'45,5'` → 45,5) og giver
+`null` for et tomt felt eller tekst, der ikke er et tal. Talfelterne er `type="text"` med
+`inputmode="decimal"`, fordi Androids WebView smider kommaet væk i et `type="number"`-felt
+(`'45,5'` blev til 455).
 
 Begge bruges overalt, hvor der ellers ville stå `Math.min(max, Math.max(min, x))` eller
 `Math.round(x * 10) / 10` lokalt — geometri-modulerne, opret-flowets trin, Vægt, Hjem og

@@ -8,6 +8,11 @@
       "g": "g",
       "kcal": "kcal",
       "cm": "cm"
+    },
+    "error": {
+      "network": "Ingen forbindelse. Tjek dit internet, og prøv igen.",
+      "server": "Serveren svarer ikke lige nu. Prøv igen om lidt.",
+      "requestFailed": "Noget gik galt. Prøv igen."
     }
   },
   "core": {
@@ -87,16 +92,6 @@
           "label": "Andet",
           "description": "Gennemsnit af de to formler"
         }
-      },
-      "unitSystems": {
-        "metric": {
-          "label": "Metrisk",
-          "description": "kg · cm"
-        },
-        "imperial": {
-          "label": "Imperial",
-          "description": "lb · in"
-        }
       }
     },
     "meals": {
@@ -133,44 +128,15 @@
         "permission": "Vi kunne ikke spørge om lov til notifikationer. Prøv igen senere."
       }
     },
-    "collectionIcons": {
-      "egg": "Æg",
-      "bolt": "Lyn",
-      "utensils": "Bestik",
-      "cookie": "Småkage",
-      "coffee": "Kaffe",
-      "salad": "Salat",
-      "fish": "Fisk",
-      "flame": "Flamme",
-      "leaf": "Blad",
-      "heart": "Hjerte",
-      "star": "Stjerne",
-      "dumbbell": "Håndvægt",
-      "apple": "Æble",
-      "carrot": "Gulerod",
-      "sprout": "Spire",
-      "soup": "Suppe",
-      "pizza": "Pizza",
-      "icecream": "Is",
-      "cake": "Kage",
-      "sandwich": "Sandwich",
-      "milk": "Mælk",
-      "droplet": "Dråbe",
-      "timer": "Timer",
-      "sun": "Sol",
-      "moon": "Måne",
-      "target": "Mål",
-      "trophy": "Pokal",
-      "bike": "Cykel",
-      "bag": "Taske",
-      "sparkles": "Glimt"
-    },
     "auth": {
       "error": {
-        "noBackend": "Der er ingen forbindelse til en server endnu.",
         "invalidEmail": "Skriv en gyldig e-mail.",
-        "invalidCode": "Koden er 4 cifre.",
-        "passwordTooShort": "Mindst 8 tegn."
+        "passwordTooShort": "Mindst 10 tegn.",
+        "invalidCredentials": "Forkert brugernavn, e-mail eller adgangskode.",
+        "tooManyAttempts": "For mange mislykkede forsøg. Vent op til 15 minutter, og prøv igen.",
+        "emailTaken": "Der findes allerede en konto med den e-mail.",
+        "usernameTaken": "Brugernavnet er taget. Vælg et andet.",
+        "registerFailed": "Kontoen kunne ikke oprettes. Tjek dine oplysninger, og prøv igen."
       }
     },
     "barcode": {
@@ -181,10 +147,10 @@
       "permissionDenied": "Appen har ikke adgang til kameraet. Giv adgang under Indstillinger for at scanne stregkoder – eller indtast tallene herunder.",
       "unreadable": "Vi kunne ikke læse stregkoden. Prøv igen med bedre lys, eller indtast tallene herunder.",
       "moduleInstalling": "Stregkodescanneren hentes fra Google Play. Prøv igen om et øjeblik.",
+      "moduleUnavailable": "Kamerascanneren kan ikke bruges på telefonen lige nu. Indtast stregkodens tal herunder.",
       "lookupError": "Vi kunne ikke slå varen op. Tjek din internetforbindelse, og prøv igen.",
       "invalidBarcode": "Stregkoden skal være {{minDigits}}–{{maxDigits}} cifre.",
-      "invalidAmount": "Angiv en mængde mellem {{minGrams}} og {{maxGrams}} g.",
-      "duplicateName": "Du har allerede en egen vare med det navn.",
+      "invalidAmount": "Angiv en mængde mellem {{minGrams}} og {{maxGrams}} {{unit}}.",
       "servingLabel": "Portion",
       "amountLabel": "Mængde ({{unit}})",
       "amountAriaLabelMillilitres": "Mængde i milliliter",
@@ -193,10 +159,16 @@
       "barcodeLabelWeb": "Indtast stregkoden",
       "unnamedProduct": "Vare {{barcode}}"
     },
+    "quantity": {
+      "piece": "stk",
+      "pieces": "stk",
+      "serving": "portion",
+      "servings": "portioner"
+    },
     "weight": {
       "range": {
         "lastWeek": "Sidste uge",
-        "lastFourWeeks": "Sidste 4 uger",
+        "lastThreeWeeks": "Sidste 3 uger",
         "lastThreeMonths": "Sidste 3 mdr."
       },
       "logList": {
@@ -204,12 +176,6 @@
         "showAll": "Vis alle ({{hiddenCount}} mere)",
         "editRow": "Ret vejning {{date}} kl. {{time}}, {{kg}} kg"
       }
-    },
-    "passwordStrength": {
-      "weak": "Svag",
-      "ok": "OK",
-      "good": "God",
-      "strong": "Stærk"
     },
     "date": {
       "today": "I dag",
@@ -273,49 +239,45 @@
         "nov": "nov",
         "dec": "dec"
       }
+    },
+    "stepSync": {
+      "source": {
+        "appleHealth": "Apple Sundhed",
+        "healthConnect": "Health Connect"
+      },
+      "syncing": "Henter dine skridt …",
+      "synced": "Hentet d. {{day}} – {{steps}} skridt om dagen",
+      "insufficient": "Ikke nok skridtdata endnu. Der skal være skridt fra mindst {{minDays}} af de seneste {{days}} dage.",
+      "noSteps": "Nutrify kan ikke se nogen skridt fra de seneste {{days}} dage. Har du ikke givet adgang, kan du gøre det under Indstillinger → Anonymitet & sikkerhed → Sundhed → Nutrify.",
+      "noPermission": "Nutrify har ikke adgang til dine skridt – giv adgang i {{source}}.",
+      "failed": "Vi kunne ikke hente dine skridt. Vi prøver igen næste gang.",
+      "accessDenied": "Nutrify fik ikke adgang til dine skridt – giv adgang i {{source}}.",
+      "loadFailed": "Vi kunne ikke hente din indstilling for skridt."
     }
   },
   "auth": {
-    "error": {
-      "fallback": "Noget gik galt. Prøv igen."
-    },
     "loginPage": {
       "headingStart": "Spis klogt.",
       "headingAccent": "Træn stærkt.",
-      "username": "Brugernavn",
       "password": "Adgangskode",
       "submit": "Log ind",
       "newHere": "Ny her?",
       "createAccount": "Opret konto",
-      "forgotPassword": "Glemt adgangskode?"
+      "forgotPassword": "Glemt adgangskode?",
+      "identifier": "E-mail eller brugernavn"
     },
     "forgotPasswordPage": {
-      "stepOf": "Trin {{step}} af {{total}}",
       "emailTitleStart": "Glemt din",
       "emailTitleAccent": "adgangs­kode?",
-      "emailBody": "Skriv den e-mail, din konto er oprettet med. Vi sender en 4-cifret kode.",
-      "emailPlaceholder": "dig@mail.dk",
-      "emailLabel": "E-mail",
-      "sendCode": "Send kode",
+      "emailBody": "Skriv din e-mail eller dit brugernavn. Vi sender dig et link til at vælge en ny adgangskode.",
+      "identifierLabel": "E-mail eller brugernavn",
+      "sendLink": "Send link",
+      "sentTitle": "Tjek din mail",
+      "sentBody": "Hvis kontoen findes, har vi sendt en mail med et link til at vælge en ny adgangskode. Linket virker i 1 time.",
       "rememberIt": "Husker du den?",
       "logIn": "Log ind",
-      "codeTitleStart": "Tjek din",
-      "codeTitleAccent": "mail",
-      "codeBodyStart": "Koden er sendt til",
-      "codeBodyEnd": "og gælder i 15 minutter.",
-      "codeLabel": "Firecifret kode",
-      "confirmCode": "Bekræft kode",
-      "noEmail": "Ingen mail?",
       "resend": "Send igen",
-      "resent": "Sendt igen",
-      "passwordTitleStart": "Vælg en ny",
-      "passwordTitleAccent": "adgangs­kode",
-      "passwordBody": "Mindst 8 tegn. Brug gerne tal og store bogstaver.",
-      "newPassword": "Ny adgangskode",
-      "repeatPassword": "Gentag adgangskode",
-      "savePassword": "Gem adgangskode",
-      "loggingIn": "Logger ind med ny kode…",
-      "mismatch": "Adgangskoderne er ikke ens."
+      "resent": "Sendt igen"
     }
   },
   "collections": {
@@ -325,7 +287,7 @@
     "deleteSheet": {
       "title": "Slet",
       "titleAccent": "samling?",
-      "body": "«{{name}}» og varerne i den bliver slettet. Det kan ikke fortrydes.",
+      "body": "«{{name}}» bliver slettet. Varerne og det, du allerede har logget, bliver stående. Det kan ikke fortrydes.",
       "confirm": "Ja, slet samlingen",
       "cancel": "Annuller"
     },
@@ -337,16 +299,16 @@
       "submitEdit": "Gem ændringer",
       "namePlaceholder": "Navn, f.eks. Meal prep",
       "nameLabel": "Navn på samlingen",
-      "mealCaption": "Hører under",
-      "iconCaption": "Vælg ikon",
       "itemsCaption": "Varer i samlingen",
       "emptyDraft": "Søg en vare eller scan en stregkode for at fylde samlingen.",
+      "minOneItem": "Tilføj mindst én vare for at gemme samlingen.",
       "search": "Søg vare",
       "scan": "Scan",
       "pickerTitle": "Tilføj",
       "pickerTitleAccent": "til samling",
-      "showMoreIcons": "Vis flere ({{count}})",
-      "showFewerIcons": "Vis færre",
+      "pickerTitleEdit": "Rediger",
+      "pickerTitleEditAccent": "vare",
+      "saveOnly": "Gem kun under Mine varer",
       "duplicateName": "Du har allerede en samling med det navn.",
       "duplicateCustomFood": "Du har allerede en egen vare med navnet \"{{foodName}}\", så den blev ikke gemt igen under Mine varer.",
       "saveAndAdd": "Gem og føj til samlingen",
@@ -354,34 +316,34 @@
     },
     "page": {
       "title": "Samlinger",
-      "subtitle": "Dine varer og retter – log dem direkte som spist.",
+      "subtitle": "Saml de varer, du tit spiser sammen, og log dem samlet som spist.",
       "create": "Opret samling",
-      "filter": "Filtrér efter samling",
-      "empty": "Der er ingen retter eller varer i den her samling endnu."
+      "empty": "Du har ingen samlinger endnu. Tryk på + for at samle de varer, du tit spiser sammen.",
+      "loadError": "Vi kunne ikke hente dine samlinger.",
+      "retry": "Prøv igen"
     },
     "view": {
-      "emptySubtitle": "Ingen varer endnu",
-      "allChip": "Alle",
       "itemCountOne": "1 vare",
       "itemCountMany": "{{count}} varer",
       "macros": "{{kcal}} kcal · {{protein}} g protein",
-      "recipeMeta": "{{category}} · {{minutes}} min"
+      "totals": "{{kcal}} kcal · {{protein}} g protein · {{carbs}} g kulhydrat · {{fat}} g fedt"
     },
     "recipePage": {
-      "title": "Opskrift",
+      "title": "Samling",
       "edit": "Rediger samling",
       "contents": "Indhold",
       "logUnder": "Log som spist under",
       "log": "Log {{kcal}} kcal",
       "delete": "Slet samling",
       "backToCollections": "Tilbage til samlinger",
-      "notFound": "Vi kunne ikke finde den her opskrift.",
-      "noContents": "Der er ingen varer i samlingen endnu.",
+      "notFound": "Vi kunne ikke finde den her samling.",
       "calories": "Kalorier",
       "protein": "Protein",
       "carbs": "Kulhydrat",
       "fat": "Fedt"
-    }
+    },
+    "saveError": "Samlingen blev ikke gemt. Prøv igen.",
+    "logError": "Samlingen blev ikke logget. Prøv igen."
   },
   "food": {
     "mealGroup": {
@@ -395,10 +357,10 @@
       "titleAdd": "Tilføj",
       "titleEdit": "Rediger",
       "titleEditWhat": "vare",
-      "collectionsEmpty": "Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her med ét tryk.",
+      "collectionsEmpty": "Du har ingen samlinger med varer endnu. Byg en under Samling, så kan du logge den her.",
       "saveAndLog": "Gem og log under {{mealName}}",
-      "itemCountOne": "{{count}} vare",
-      "itemCountMany": "{{count}} varer"
+      "logCollection": "Log {{kcal}} kcal under {{mealName}}",
+      "cancelCollection": "Fortryd"
     },
     "view": {
       "protein": "Protein",
@@ -415,15 +377,31 @@
       "eatenOfGoal": "{{eaten}} spist · mål {{goal}}",
       "addFood": "Tilføj mad",
       "scan": "Scan stregkode",
-      "duplicateCustomFood": "Du har allerede en egen vare med navnet \"{{foodName}}\", så den blev ikke gemt igen."
+      "duplicateCustomFood": "Du har allerede en egen vare med navnet \"{{foodName}}\", så den blev ikke gemt igen.",
+      "loadError": "Vi kunne ikke hente din mad og dit kaloriemål. Prøv igen om lidt.",
+      "saveError": "Varen blev ikke gemt. Prøv igen.",
+      "removeError": "Varen blev ikke fjernet. Prøv igen.",
+      "notFound": "Varen findes ikke længere.",
+      "retry": "Prøv igen"
+    },
+    "removeSheet": {
+      "title": "Fjern",
+      "titleAccent": "vare?",
+      "body": "«{{foodName}}» bliver fjernet fra dagens log.",
+      "confirm": "Ja, fjern varen",
+      "cancel": "Annuller"
     }
   },
   "history": {
     "entries": {
+      "accountTitle": "Konto oprettet",
       "foodSummary": "{{kcal}} kcal · P {{protein}} g · K {{carbs}} g · F {{fat}} g",
+      "goalTitle": "Mål opdateret",
+      "goalValue": "{{kcal}} kcal",
       "groupLabel": "{{day}} · {{date}}",
       "mealValue": "{{kcal}} kcal",
       "relog": "Log igen i dag",
+      "relogFailed": "Ikke logget – prøv igen",
       "relogged": "Logget i dag",
       "today": "I dag",
       "weighSubtitle": "Vejning registreret",
@@ -440,7 +418,9 @@
     },
     "page": {
       "empty": "Ingen poster endnu.",
+      "error": "Historikken kunne ikke hentes.",
       "filtersAriaLabel": "Filtrér historik",
+      "retry": "Prøv igen",
       "titleAccent": "historik",
       "titleStart": "Din"
     }
@@ -459,7 +439,9 @@
       "toGoal": "Til mål"
     },
     "page": {
-      "profileAriaLabel": "Profil"
+      "profileAriaLabel": "Profil",
+      "loadError": "Dine data kunne ikke hentes.",
+      "retry": "Prøv igen"
     },
     "summary": {
       "dayTitle": {
@@ -470,6 +452,7 @@
       "goal": {
         "coachHold": "Du holder dig inden for ±{{kg}} kg af din målvægt.",
         "coachPace": "Med dit tempo på {{pace}} er du der om ca. {{weeks}} uger.",
+        "coachPaceOne": "Med dit tempo på {{pace}} er du der om ca. 1 uge.",
         "coachReached": "Du har ramt dit mål – overvej at skifte til \"Holde vægten\".",
         "reached": "Nået!",
         "toGoal": "{{kg}} kg"
@@ -483,6 +466,7 @@
         "protein": "Protein"
       },
       "streak": "{{streakDays}} dage",
+      "streakOne": "1 dag",
       "todoCountSingle": "Kun én",
       "todos": {
         "mealSubtitle": "Ikke registreret endnu",
@@ -491,43 +475,41 @@
         "weighTitle": "Husk at veje dig i dag"
       },
       "weekNote": {
-        "empty": "Ingen dage logget i denne uge endnu.",
+        "empty": "Ingen dage logget de seneste 7 dage.",
         "solid": "Solid uge. Protein er det, der løfter resten.",
         "strong": "Stærk uge – bliv ved.",
         "uneven": "Ujævn uge. Sæt et enkelt mål: ram protein i morgen."
-      },
-      "weekProgress": "Dag {{dayNumber}} af 7"
+      }
     },
     "todoCard": {
       "caption": "Næste skridt"
     },
     "verifyEmail": {
-      "changeEmail": "Ændre mail",
-      "checkAgain": "Tjek igen",
-      "checking": "Tjekker…",
-      "copyEnd": ". Appen låses op, når du har bekræftet.",
-      "copyStart": "Vi har sendt en bekræftelseskode til",
-      "emailAriaLabel": "E-mail",
+      "copyEnd": ". Tryk på linket i mailen – appen opdager det selv.",
+      "copyStart": "Vi har sendt et link til",
       "emailFallback": "din mail",
-      "invalidEmail": "Skriv en gyldig e-mail.",
-      "notVerified": "Ikke bekræftet",
-      "requestFailed": "Noget gik galt. Prøv igen.",
-      "resend": "Gensend kode",
+      "resend": "Send mail igen",
       "resendHint": "Ikke modtaget noget?",
-      "resendHintSent": "Ny kode sendt – tjek også spam.",
-      "resendSent": "Kode sendt ✓",
+      "resendHintSent": "Ny mail sendt – det gamle link virker ikke længere.",
       "titleAccent": "mail",
-      "titleStart": "Tjek din"
+      "titleStart": "Tjek din",
+      "backToLogin": "Til login"
     },
     "weekCard": {
       "averageKcal": "kcal i snit",
-      "caption": "Denne uge",
+      "caption": "Seneste 7 dage",
       "daysOnTarget": "dage i mål",
       "proteinHit": "protein ramt",
       "streak": "streak"
     },
     "weekRings": {
-      "ariaLabel": "Ugens dage"
+      "ariaLabel": "De seneste 7 dage"
+    },
+    "monthSheet": {
+      "kcal": "{{eaten}} / {{goal}} kcal",
+      "macros": "P {{protein}} g · K {{carbs}} g · F {{fat}} g",
+      "open": "Se de seneste 30 dage",
+      "title": "Seneste 30 dage"
     }
   },
   "weight": {
@@ -551,9 +533,19 @@
     "logList": {
       "title": "Seneste vejninger"
     },
+    "overwriteSheet": {
+      "body": "Du har allerede vejet dig i dag. Vil du overskrive vejningen med {{kg}} kg?",
+      "cancel": "Annuller",
+      "confirm": "Ja, overskriv",
+      "titleAccent": "dagens vejning?",
+      "titleStart": "Overskriv"
+    },
     "page": {
+      "loadError": "Vejningerne kunne ikke hentes.",
       "rangesAriaLabel": "Vælg periode",
+      "retry": "Prøv igen",
       "save": "Gem vejning",
+      "saveError": "Vejningen blev ikke gemt. Prøv igen.",
       "saved": "Gemt ✓",
       "sinceLast": "Siden sidst",
       "titleAccent": "vægt",
@@ -569,20 +561,20 @@
       "ariaLabel": "Figur på vægt"
     },
     "view": {
-      "emptyLog": "Ingen vejninger endnu.",
+      "emptyLog": "Ingen vejninger endnu. Startvægten fra registreringen kan ikke rettes – registrér en ny vejning først.",
       "lastWeighed": "Sidst vejet {{day}}",
       "logStart": "Start",
-      "neverWeighed": "Ingen vejninger endnu",
+      "neverWeighed": "Startvægt fra registreringen",
       "noRecentLog": "Ingen vejninger de sidste 3 mdr.",
       "rangeDelta": "{{delta}} kg",
       "rangeStart": {
-        "fourWeeks": "-4 uger",
         "threeMonths": "-3 mdr.",
-        "week": "-uge"
+        "threeWeeks": "-3 uger",
+        "week": "-1 uge"
       },
       "ranges": {
-        "fourWeeks": "4 uger",
         "threeMonths": "3 mdr.",
+        "threeWeeks": "3 uger",
         "week": "1 uge"
       }
     }
@@ -612,14 +604,22 @@
       "achievements": "Præstationer",
       "logout": "Log ud",
       "deleteAccount": "Slet konto",
+      "loadFailed": "Profilen kunne ikke hentes.",
+      "retry": "Prøv igen",
       "remindersOff": "Fra",
       "remindersNone": "Ingen",
       "remindersActiveOne": "{{count}} aktiv",
-      "remindersActiveMany": "{{count}} aktive"
+      "remindersActiveMany": "{{count}} aktive",
+      "privacy": "Privatliv",
+      "downloadData": "Download mine data",
+      "termsConsent": "Servicevilkår og behandling af sundheds- og profildata",
+      "consentWithdraw": "Træk tilbage"
     },
     "rows": {
       "goal": "Mål",
       "pace": "Tempo",
+      "birthday": "Fødselsdato",
+      "birthdayValue": "{{date}} {{year}} · {{age}} år",
       "gender": "Køn",
       "height": "Højde",
       "heightValue": "{{heightCm}} cm",
@@ -635,31 +635,29 @@
       "trainInt": "Intensitet",
       "kcal": "Dagligt kaloriemål",
       "kcalValue": "{{kcal}} kcal",
-      "kcalValueAdjusted": "{{kcal}} kcal · tilpasset {{adjustment}}",
+      "kcalValueFloor": "{{kcal}} kcal · sikkert minimum",
       "email": "E-mail",
-      "units": "Enheder",
       "emailPlaceholder": "dig@mail.dk"
     },
     "edit": {
       "goalTitle": "Dit mål",
       "paceTitle": "Tempo",
+      "birthdayTitle": "Fødselsdato",
+      "birthdayInvalid": "Du skal være mellem {{min}} og {{max}} år.",
       "genderTitle": "Køn",
-      "unitsTitle": "Enheder",
       "intensityTitle": "Intensitet",
       "heightTitle": "Højde",
       "stepsTitle": "Skridt om dagen",
-      "stepsHint": "Dit typiske dagligt niveau",
+      "stepsHint": "Dit typiske daglige niveau",
       "stepsUnit": "skridt",
       "trainFreqTitle": "Træningsdage",
       "trainFreqHint": "Faste træninger om ugen",
       "trainFreqUnit": "/ uge",
       "trainDurTitle": "Længde pr. træning",
       "trainDurUnit": "min",
-      "kcalTitle": "Dagligt kaloriemål",
-      "kcalHint": "Beregnet forslag: {{kcal}} kcal",
-      "kcalHintAdjusted": "Beregnet forslag: {{kcal}} kcal (tilpasset {{adjustment}} kcal ud fra din vægtudvikling)",
       "emailTitle": "E-mail",
       "emailPlaceholder": "dig@mail.dk",
+      "emailSent": "Vi har sendt et bekræftelseslink til {{email}}. Din e-mail skifter, når du trykker på linket.",
       "goalWeightTitle": "Målvægt",
       "goalWeightHint": "Nu: {{currentKg}} kg",
       "goalWeightHintPending": "Din målvægt passer ikke til målet \"{{goal}}\" (nu: {{currentKg}} kg). Vælg en ny målvægt – målet skiftes, når du gemmer.",
@@ -667,7 +665,9 @@
       "goalWeightTooHigh": "Det mål er meget højt for din højde.",
       "goalWeightBelowCurrent": "Målvægten skal være under din nuværende vægt ({{currentKg}} kg).",
       "goalWeightAboveCurrent": "Målvægten skal være over din nuværende vægt ({{currentKg}} kg).",
-      "goalWeightRange": "Vælg en målvægt mellem {{min}} og {{max}} kg."
+      "goalWeightRange": "Vælg en målvægt mellem {{min}} og {{max}} kg.",
+      "numberRange": "Vælg en værdi mellem {{min}} og {{max}} {{unit}}.",
+      "saveFailed": "Ændringen kunne ikke gemmes. Prøv igen."
     },
     "editSheet": {
       "decrease": "Mindre",
@@ -686,9 +686,10 @@
       "chooseAnother": "Vælg et andet foto",
       "use": "Brug billedet",
       "choose": "Vælg foto",
+      "takePhoto": "Tag et foto",
       "cropLaterHint": "Du beskærer billedet, når det er valgt.",
-      "saveError": "Billedet kunne ikke gemmes. Frigør plads og prøv igen.",
-      "readError": "Billedet kunne ikke indlæses. Prøv et andet."
+      "saveError": "Billedet kunne ikke gemmes. Prøv igen.",
+      "readError": "Billedet kan ikke bruges – vælg et andet (fx JPEG, PNG eller WebP)."
     },
     "logoutSheet": {
       "titleStart": "Log",
@@ -700,7 +701,8 @@
     "deleteAccountSheet": {
       "titleStart": "Slet",
       "titleAccent": "konto?",
-      "body": "Alle dine data på denne enhed bliver slettet: profil, madlog, vejninger, egne varer og samlinger. Det kan ikke fortrydes.",
+      "body": "Din konto og alle dine data bliver slettet – også på denne enhed: profil, madlog, vejninger, egne varer og samlinger. Det kan ikke fortrydes.",
+      "withdrawBody": "Samtykket er en forudsætning for Nutrify. Trækker du det tilbage, slettes din konto og alle dine data.",
       "confirm": "Ja, slet min konto",
       "cancel": "Annuller"
     },
@@ -740,6 +742,20 @@
       "complete": "Klaret",
       "missing": "Mangler",
       "progress": "{{value}}/{{target}} {{unit}}"
+    },
+    "stepSync": {
+      "label": "Skridt fra {{source}}",
+      "hint": "Højst én gang om måneden opdaterer Nutrify dit aktivitetsniveau og kaloriemål ud fra dit gennemsnitlige antal skridt de seneste {{days}} dage. Kun gennemsnittet sendes til Nutrify.",
+      "retry": "Prøv igen",
+      "allowAccess": "Giv adgang",
+      "openSettings": "Åbn {{source}}",
+      "offSheet": {
+        "title": "Slå skridt",
+        "titleAccent": "fra?",
+        "body": "Nutrify holder op med at hente dine skridt fra {{source}}. Dit aktivitetsniveau bliver stående – fremover retter du det selv under Min plan → Aktivitet.",
+        "confirm": "Ja, slå fra",
+        "cancel": "Annuller"
+      }
     }
   },
   "shared": {
@@ -767,8 +783,17 @@
       "emptyBlank": "Du har ingen varer endnu. Søg, scan en stregkode eller opret en selv.",
       "emptyNoMatches": "Ingen varer matcher din søgning.",
       "duplicateName": "Du har allerede en egen vare med det navn.",
-      "macroError": "Protein, kulhydrat og fedt skal være 0 eller større.",
+      "nameRequired": "Skriv varens navn.",
+      "nameTooLong": "Navnet må højst have {{max}} tegn.",
+      "amountMin": "Portionen skal være mindst 1.",
+      "amountRequired": "Skriv portionens størrelse.",
+      "portionTooSmall": "Portionen er for lille til så mange kalorier eller makroer.",
+      "kcalRequired": "Skriv kalorierne for portionen.",
       "kcalError": "Kalorier skal være mindst 1.",
+      "kcalTooLarge": "Højst {{max}} kcal pr. portion.",
+      "macroNegative": "Skal være 0 eller større.",
+      "macroTooLarge": "Højst {{max}} g pr. portion.",
+      "amountTooLarge": "Det er for meget til én logning – del den op.",
       "stat": {
         "protein": "protein",
         "carbs": "kulhydrat",
@@ -776,7 +801,6 @@
       },
       "ctaAdd": "Tilføj {{amount}} {{unit}}",
       "ctaSave": "Gem {{amount}} {{unit}}",
-      "macroBase": "Næringsindhold pr. {{quantity}}",
       "baseLabel": "{{quantity}} · {{kcal}} kcal",
       "searchPlaceholder": "Søg mad, f.eks. havregryn",
       "scanBarcode": "Scan stregkode",
@@ -811,21 +835,11 @@
       "lookUp": "Slå op",
       "enterManually": "Indtast manuelt i stedet",
       "noBarcode": "Varen har ingen stregkode",
+      "createOwn": "Opret varen selv",
+      "mealQuestion": "Hvilket måltid?",
       "amountQuestion": "Hvor meget tog du?",
       "rescan": "Scan igen",
       "add": "Tilføj",
-      "unknownBadge": "Ukendt vare",
-      "unknownTitleStart": "Den kender vi",
-      "unknownTitleAccent": "ikke",
-      "unknownLead": "Stregkoden findes ikke i databasen. Tag tallene fra pakken, så gemmer vi varen under dine egne – næste gang er den klar med ét tryk.",
-      "barcodeValue": "Stregkode {{barcode}}",
-      "nameLabel": "Navn",
-      "namePlaceholder": "f.eks. Proteinbar Karamel",
-      "portionLabel": "Portion",
-      "portionPlaceholder": "f.eks. 55 g",
-      "kcalLabel": "Kalorier",
-      "proteinLabel": "Protein (g)",
-      "saveAndAdd": "Gem og tilføj",
       "verdictOver": "Den skubber dig {{kcalOver}} kcal over dagens mål. Overvej en halv, eller gem den til efter træning.",
       "verdictProtein": "God proteinkilde – {{protein}} g protein. Du har {{kcalLeft}} kcal tilbage bagefter.",
       "verdictFits": "Passer fint ind. {{kcalLeft}} kcal tilbage bagefter.",
@@ -834,20 +848,22 @@
         "protein": "protein",
         "carbs": "kulhydrat",
         "fat": "fedt"
-      }
+      },
+      "notFound": "Varen blev ikke fundet."
     }
   },
   "signup": {
     "accountStep": {
-      "minLengthHint": "Mindst 8 tegn.",
+      "minLengthHint": "Mindst 10 tegn.",
       "mismatchHint": "Adgangskoderne er ikke ens.",
       "password": "Adgangskode",
-      "passwordPlaceholder": "Adgangskode (mindst 8 tegn)",
+      "passwordPlaceholder": "Adgangskode (mindst 10 tegn)",
       "passwordRepeat": "Gentag adgangskode",
       "subtitle": "Vælg et brugernavn og en adgangskode.",
       "titleAccent": "konto",
       "titleStart": "Opret din",
-      "username": "Brugernavn"
+      "username": "Brugernavn",
+      "usernameRule": "Brugernavnet skal være 3–50 tegn: bogstaver a–z (uden æ, ø og å), tal, - og _."
     },
     "activityStep": {
       "countCaption": "skridt på en almindelig dag",
@@ -871,7 +887,7 @@
       "ageUnit": "år",
       "hintNoDate": "Vælg din fødselsdato ovenfor.",
       "hintTooOld": "Tjek datoen igen.",
-      "hintTooYoung": "Du skal være mindst 16 år for at bruge Nutrify.",
+      "hintTooYoung": "Du skal være mindst {{minAge}} år for at bruge Nutrify.",
       "labelNoDate": "Ingen dato valgt endnu",
       "monthLabel": "Måned",
       "nextMonth": "Næste måned",
@@ -957,9 +973,6 @@
       "titleAccent": "hurtigt?",
       "titleStart": "Hvor"
     },
-    "page": {
-      "submitError": "Kontoen kunne ikke oprettes. Prøv igen."
-    },
     "progress": {
       "editingCaption": "Tilbage til opsummering",
       "editingLabel": "Retter",
@@ -995,7 +1008,7 @@
       "emailPlaceholder": "Din e-mail · dig@mail.dk",
       "figureLabel": "Figur med kuglepen",
       "termsAnd": "og",
-      "termsEnd": ".",
+      "termsEnd": ", herunder behandling af mine sundheds- og profildata.",
       "termsPrivacy": "privatlivspolitik",
       "termsService": "servicevilkår",
       "termsStart": "Jeg accepterer Nutrifys",

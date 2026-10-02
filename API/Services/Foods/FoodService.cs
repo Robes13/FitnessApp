@@ -178,6 +178,7 @@ public sealed class FoodService(FitnessAppDbContext context, TimeProvider timePr
         }
 
         RequestGuards.EnsurePositive(request.GramsPerUnit, nameof(request.GramsPerUnit));
+        RequestGuards.EnsureAtMost(request.GramsPerUnit, RequestGuards.MaxNumeric7Scale2, nameof(request.GramsPerUnit));
 
         var serving = await _context.FoodServings
             .SingleOrDefaultAsync(
@@ -240,6 +241,10 @@ public sealed class FoodService(FitnessAppDbContext context, TimeProvider timePr
         RequestGuards.EnsureNonNegative(protein, "ProteinPer100");
         RequestGuards.EnsureNonNegative(carbohydrates, "CarbohydratesPer100");
         RequestGuards.EnsureNonNegative(fat, "FatPer100");
+        RequestGuards.EnsureAtMost(calories, RequestGuards.MaxNumeric7Scale2, "CaloriesPer100");
+        RequestGuards.EnsureAtMost(protein, RequestGuards.MaxNumeric7Scale2, "ProteinPer100");
+        RequestGuards.EnsureAtMost(carbohydrates, RequestGuards.MaxNumeric7Scale2, "CarbohydratesPer100");
+        RequestGuards.EnsureAtMost(fat, RequestGuards.MaxNumeric7Scale2, "FatPer100");
     }
 
     private static string? NormalizeBarcode(string? barcode)

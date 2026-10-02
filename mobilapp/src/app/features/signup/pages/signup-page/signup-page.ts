@@ -4,15 +4,17 @@ import {
   DestroyRef,
   computed,
   inject,
+  linkedSignal,
   signal,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
-import { ApiError } from '../../../../core/models/api-error';
+import { AUTH_ERROR_MESSAGE_KEY } from '../../../../core/constants/auth';
 import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { injectTranslate } from '../../../../core/services/language/translate';
+import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-icon-button';
@@ -34,20 +36,10 @@ import { TrainingIntensityStep } from '../../components/steps/training-intensity
 import { WeightStep } from '../../components/steps/weight-step/weight-step';
 import { SignupStateService } from '../../services/signup-state';
 
-/** The design has no error state here – the text is our own, in the design's tone. */
-const SUBMIT_ERROR_MESSAGE_KEY = 'signup.page.submitError';
-
-/** The key of the error to show; the page translates it live, so it follows a language switch. */
-function errorMessageKey(error: unknown): string {
-  const messageKey = (error as Partial<ApiError> | null)?.messageKey;
-  return typeof messageKey === 'string' && messageKey.length > 0
-    ? messageKey
-    : SUBMIT_ERROR_MESSAGE_KEY;
-}
-
 /**
  * The signup flow's only page: progress at the top, the active step in the middle and
- * back/next at the bottom. The steps fetch their own data from `SignupStateService`.
+ * back/next at the bottom. The steps fetch their own data from `SignupStateService`, which the
+ * page provides, so the draft is destroyed with it.
  */
 @Component({
   selector: 'app-signup-page',
@@ -76,7 +68,8 @@ function errorMessageKey(error: unknown): string {
   templateUrl: './signup-page.html',
   styleUrl: './signup-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'signup-page' },
+  host: { class: 'signup-page', '(document:keydown.escape)': 'onEscape($event)' },
+  providers: [SignupStateService],
 })
 export class SignupPage {
   private readonly router = inject(Router);
@@ -87,11 +80,34 @@ export class SignupPage {
   /** Above the on-screen keyboard the progress header slims down, so the fields keep the room. */
   protected readonly keyboardOpen = inject(KeyboardService).isOpen;
   protected readonly submitting = signal(false);
-  private readonly errorKey = signal<string | null>(null);
+  /**
+   * The design has no error state here – the texts are our own, in the design's tone. The refused
+   * draft's error is cleared as soon as the user edits it: a step opens from the summary, or the
+   * e-mail on it changes.
+   */
+  private readonly errorKey = linkedSignal({
+    source: () => [this.state.step(), this.state.email()],
+    computation: (): string | null => null,
+  });
+  /** The refused draft's error, else why the summary's e-mail keeps "Create account" disabled. */
   protected readonly error = computed(() => {
-    const key = this.errorKey();
+    const invalidEmail = this.state.step() === 'summary' && this.state.emailInvalid();
+    const key = this.errorKey() ?? (invalidEmail ? AUTH_ERROR_MESSAGE_KEY.INVALID_EMAIL : null);
     return key === null ? null : this.t(key);
   });
+
+  /**
+   * Android's back button arrives as Escape (`BackButtonService`): it steps back like the ‹
+   * circle, so the draft survives. On the first step it is left unhandled, and the router goes
+   * back to where the flow was opened from (login).
+   */
+  protected onEscape(event: Event): void {
+    if (event.defaultPrevented || this.state.backLeavesFlow()) {
+      return;
+    }
+    event.preventDefault();
+    this.state.back();
+  }
 
   /** On the summary, the button creates the account – otherwise it just moves on. */
   protected onNext(): void {
@@ -114,7 +130,8 @@ export class SignupPage {
         },
         error: (error: unknown) => {
           this.submitting.set(false);
-          this.errorKey.set(errorMessageKey(error));
+          // A key, not a text, so a shown error follows a language switch.
+          this.errorKey.set(toApiError(error).messageKey);
         },
       });
   }

@@ -1,15 +1,15 @@
 # Services (samlinger)
 
-| Fil                   | Indhold                                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------------------ |
-| `collections-view.ts` | `CollectionsViewService` – listens rækker (`CollectionEntry`), filter-chips og opskriftens data. |
+| Fil                   | Indhold                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `collections-view.ts` | `CollectionsViewService` – listens rækker (`entries()`), opskriftens data (`detailFor`) og `status`/`retry`. |
 
-Servicen er ren udledning oven på `CollectionsService` i `core`: den gemmer ingenting og
-ejer ingen state. Det valgte filter bor i `CollectionsPage`, og metoderne tager det som
-argument, så de kan kaldes fra en `computed()` og testes uden komponenter.
+Servicen er ren udledning oven på `CollectionsService` og `FoodLogService` i `core`: den gemmer
+ingenting og ejer ingen state, så metoderne kan kaldes fra en `computed()` og testes uden
+komponenter.
 
-`BUNDLE_ID_PREFIX` (`col:`) er præfikset foran en samlings id, når hele samlingen åbnes som
-én post. Se feature-README'en for de tre slags rute-id'er.
-
-`editableCollectionFor(routeId)` giver brugersamlingen bag et `col:`-id — den, opskriftsskærmen
-må redigere og slette. Retter, løse varer og faste samlinger giver `null`.
+- `BUNDLE_ID_PREFIX` (`col:`) er præfikset foran en samlings id i opskriftens rute.
+  `collectionFor(routeId)` giver samlingen bag et `col:`-id, ellers `null`.
+- `status` er `error`, hvis samlingerne eller madloggen fejlede, `loading`, mens en af dem
+  hentes, og ellers `ready` – næringen kommer fra madloggens madvarer. `retry()` genindlæser kun
+  den eller de stores, der fejlede.

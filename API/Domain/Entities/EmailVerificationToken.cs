@@ -9,5 +9,6 @@ public class EmailVerificationToken
     public DateTime ExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UsedAt { get; set; }
+    public string? NewEmail { get; set; }
     public User User { get; set; } = null!;
 }

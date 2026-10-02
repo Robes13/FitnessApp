@@ -1,9 +1,11 @@
 import { Injectable, InjectionToken, Signal, inject, signal } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { BarcodeFormat, BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
+import { Observable, defer, of } from 'rxjs';
 import { BARCODE_PATTERN, BARCODE_PLUGIN_ERROR } from '../../constants/barcode';
 import { STORAGE_KEY } from '../../constants/storage-key';
 import { BarcodeScanOutcome, BarcodeScannerPlatform, CameraPermission } from '../../models/barcode';
+import { SessionDataStore } from '../session-data/session-data';
 import { StorageService } from '../storage/storage';
 
 /** The plugin's name in the native bridge (`Capacitor.isPluginAvailable`). */
@@ -76,18 +78,33 @@ const PROMPT_PERMISSIONS: readonly CameraPermission[] = ['prompt', 'prompt-with-
  *
  * All plugin calls go through `BARCODE_SCANNER_PLATFORM`. `scan()` never throws: every way a
  * scan can end is a `BarcodeScanOutcome`, so the UI can show the right state.
+ *
+ * The count is the account's local data (the API keeps none), so it follows the session like the
+ * other stores: `load()` reads it on `authenticated`, `reset()` forgets it on `guest` – another
+ * account signing in on the device starts from its own count.
  */
 @Injectable({ providedIn: 'root' })
-export class BarcodeScannerService {
+export class BarcodeScannerService implements SessionDataStore {
   private readonly storage = inject(StorageService);
   private readonly platform = inject(BARCODE_SCANNER_PLATFORM);
-  private readonly scanCountState = signal<number>(
-    this.storage.read<number>(STORAGE_KEY.SCAN_COUNT) ?? 0,
-  );
+  private readonly scanCountState = signal(0);
+  /** Google's barcode module is asked for once per app run (see `installModuleOnce`). */
+  private moduleRequested = false;
 
   readonly scanCount: Signal<number> = this.scanCountState.asReadonly();
   /** `false` in the browser: the UI offers typing the barcode instead. */
   readonly canScan: boolean = this.platform.isAvailable();
+
+  load(): Observable<void> {
+    return defer(() => {
+      this.scanCountState.set(this.storage.read<number>(STORAGE_KEY.SCAN_COUNT) ?? 0);
+      return of(undefined);
+    });
+  }
+
+  reset(): void {
+    this.scanCountState.set(0);
+  }
 
   async scan(): Promise<BarcodeScanOutcome> {
     if (!this.canScan) {
@@ -98,8 +115,7 @@ export class BarcodeScannerService {
         return { status: 'permission-denied' };
       }
       if (!(await this.platform.isScannerModuleAvailable())) {
-        await this.platform.installScannerModule();
-        return { status: 'module-installing' };
+        return await this.installModuleOnce();
       }
       const barcode = (await this.platform.scan()).find((value) => BARCODE_PATTERN.test(value));
       return barcode ? { status: 'scanned', barcode } : { status: 'unreadable' };
@@ -122,6 +138,26 @@ export class BarcodeScannerService {
     const count = this.scanCountState() + 1;
     this.scanCountState.set(count);
     this.storage.write(STORAGE_KEY.SCAN_COUNT, count);
+  }
+
+  /**
+   * The first time the module is missing its download is started ("try again in a moment").
+   * After that – or when Google refuses the request – it's `module-unavailable`: a download that
+   * fails or stalls (no Play Store, no network, throttled) never reports back, and asking again
+   * would only repeat "try again" forever. The typed barcode is the way then.
+   */
+  private async installModuleOnce(): Promise<BarcodeScanOutcome> {
+    if (this.moduleRequested) {
+      return { status: 'module-unavailable' };
+    }
+    this.moduleRequested = true;
+    try {
+      await this.platform.installScannerModule();
+      return { status: 'module-installing' };
+    } catch (error: unknown) {
+      console.warn('BarcodeScannerService: Googles stregkodemodul kunne ikke hentes.', error);
+      return { status: 'module-unavailable' };
+    }
   }
 
   private async hasCameraAccess(): Promise<boolean> {

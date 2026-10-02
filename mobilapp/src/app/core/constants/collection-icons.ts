@@ -1,3 +1,7 @@
+/**
+ * The 30 collection icons from the design (`colIconDefs`). The API stores no icon, so every
+ * collection shows `utensils`; the names stay because `IconName` is built from them.
+ */
 export const COLLECTION_ICON_NAMES = [
   'egg',
   'bolt',
@@ -32,44 +36,3 @@ export const COLLECTION_ICON_NAMES = [
 ] as const;
 
 export type CollectionIconName = (typeof COLLECTION_ICON_NAMES)[number];
-
-/** Number of icons shown before the user taps "Show more". */
-export const COLLECTION_ICON_PREVIEW_COUNT = 12;
-
-/**
- * Translation keys of what the icon depicts, read aloud by screen readers. The design only
- * has the drawings (`colIconDefs`), so the names live here alongside `COLLECTION_ICON_NAMES`,
- * so any icon picker can use the same names.
- */
-export const COLLECTION_ICON_LABEL_KEYS: Readonly<Record<CollectionIconName, string>> = {
-  egg: 'core.collectionIcons.egg',
-  bolt: 'core.collectionIcons.bolt',
-  utensils: 'core.collectionIcons.utensils',
-  cookie: 'core.collectionIcons.cookie',
-  coffee: 'core.collectionIcons.coffee',
-  salad: 'core.collectionIcons.salad',
-  fish: 'core.collectionIcons.fish',
-  flame: 'core.collectionIcons.flame',
-  leaf: 'core.collectionIcons.leaf',
-  heart: 'core.collectionIcons.heart',
-  star: 'core.collectionIcons.star',
-  dumbbell: 'core.collectionIcons.dumbbell',
-  apple: 'core.collectionIcons.apple',
-  carrot: 'core.collectionIcons.carrot',
-  sprout: 'core.collectionIcons.sprout',
-  soup: 'core.collectionIcons.soup',
-  pizza: 'core.collectionIcons.pizza',
-  icecream: 'core.collectionIcons.icecream',
-  cake: 'core.collectionIcons.cake',
-  sandwich: 'core.collectionIcons.sandwich',
-  milk: 'core.collectionIcons.milk',
-  droplet: 'core.collectionIcons.droplet',
-  timer: 'core.collectionIcons.timer',
-  sun: 'core.collectionIcons.sun',
-  moon: 'core.collectionIcons.moon',
-  target: 'core.collectionIcons.target',
-  trophy: 'core.collectionIcons.trophy',
-  bike: 'core.collectionIcons.bike',
-  bag: 'core.collectionIcons.bag',
-  sparkles: 'core.collectionIcons.sparkles',
-};

@@ -1,21 +1,15 @@
 # MealPicker
 
-Designets 2×2-gitter med Morgenmad · Frokost · Aftensmad · Snacks. Bruges to steder:
-"Hører under" i arket "Ny samling" (`filled`, så ikke-valgte knapper har en svag flade) og
-"Log som spist under" på opskriftsskærmen (gennemsigtig).
+Designets 2×2-gitter med Morgenmad · Frokost · Aftensmad · Snacks: "Log som spist under" på
+opskriftsskærmen – måltidstypen, samlingen logges under (spec 3.2).
 
 ```html
-<app-meal-picker
-  [(value)]="meal"
-  filled
-  [ariaLabel]="'collections.newCollectionSheet.mealCaption' | translate"
-/>
+<app-meal-picker [(value)]="meal" [ariaLabel]="'collections.recipePage.logUnder' | translate" />
 ```
 
 | Input       | Betydning                                                                                              |
 | ----------- | ------------------------------------------------------------------------------------------------------ |
 | `value`     | `model<MealId>` – det valgte måltid (tovejsbinding).                                                   |
-| `filled`    | Ikke-valgte knapper får `--color-surface` i stedet for at være gennemsigtige.                          |
 | `ariaLabel` | Gruppens (oversatte) navn, ellers "Vælg måltid". Knapperne er `role="radio"` i en `role="radiogroup"`. |
 
 **Tastatur:** gruppen følger radiogruppe-mønstret. Kun det valgte måltid er i

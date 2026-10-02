@@ -10,16 +10,18 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
+import { parseDecimal } from '../../../core/utils/math';
 import { IconName } from '../ui-icon/icon-registry';
 import { UiIcon } from '../ui-icon/ui-icon';
 
-export type TextInputType = 'text' | 'password' | 'email' | 'number' | 'time';
+export type TextInputType = 'text' | 'password' | 'email' | 'number' | 'time' | 'date';
 export type TextInputMode = 'text' | 'numeric' | 'decimal' | 'email' | 'tel' | 'search' | 'url';
 /** 52 / 48 px – `--size-control-lg` / `-md`. */
 export type TextInputSize = 'lg' | 'md';
 /**
  * The value in the form. Text fields always give a `string`; `type="number"` gives a number
- * or `null` when the field is empty – like Angular's built-in number accessor.
+ * or `null` when the field is empty – like Angular's built-in number accessor. A number field is
+ * a native text field that reads a decimal comma (`parseDecimal`).
  */
 export type TextInputValue = string | number | null;
 /**
@@ -76,6 +78,9 @@ export class UiTextInput implements ControlValueAccessor {
   readonly placeholder = input('');
   readonly inputMode = input<TextInputMode | null>(null);
   readonly maxLength = input<number | null>(null);
+  /** Native `min`/`max`, e.g. `'YYYY-MM-DD'` bounds for the date picker. */
+  readonly min = input<string | null>(null);
+  readonly max = input<string | null>(null);
   readonly autocomplete = input<string | null>(null);
   readonly ariaLabel = input<string | null>(null);
   /** Error state: colored border. The text is shown separately with `app-ui-form-error`. */
@@ -100,8 +105,16 @@ export class UiTextInput implements ControlValueAccessor {
   protected readonly hasRevealToggle = computed(
     () => this.type() === 'password' && this.revealable(),
   );
+  /**
+   * `number` is a text field: Android's WebView drops a typed decimal comma in a native number
+   * field (`45,5` → `455`), and the app is Danish.
+   */
   protected readonly nativeType = computed(() =>
-    this.hasRevealToggle() && this.revealed() ? 'text' : this.type(),
+    (this.hasRevealToggle() && this.revealed()) || this.type() === 'number' ? 'text' : this.type(),
+  );
+  /** A number field gets the keypad with a decimal separator unless the field asks for another. */
+  protected readonly nativeInputMode = computed(
+    () => this.inputMode() ?? (this.type() === 'number' ? 'decimal' : null),
   );
   /** Usernames, e-mails, passwords and codes: no auto-capitalization, autocorrect or spellcheck. */
   protected readonly verbatim = computed(
@@ -152,6 +165,6 @@ export class UiTextInput implements ControlValueAccessor {
     if (this.type() !== 'number') {
       return rawValue;
     }
-    return rawValue === '' ? null : Number.parseFloat(rawValue);
+    return parseDecimal(rawValue);
   }
 }

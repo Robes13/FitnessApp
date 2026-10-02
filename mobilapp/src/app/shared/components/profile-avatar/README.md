@@ -24,5 +24,19 @@ regnet i pixels, ville beskæringen fra editoren ikke passe på avataren.
 træk i pixels til en ny position i procent. Trækket regnes altid fra beskæringen, som den var,
 da fingeren blev sat — ikke skridt for skridt — så positionen ikke driver af afrunding.
 
+`photoDrawRect()` er de samme formler i pixels: hvor hele billedet skal tegnes på et kvadratisk
+canvas (`BAKED_PHOTO_SIZE` = 512 px), så canvasset viser præcis avatarens udsnit – fyld efter den
+korte side gange zoom, og `x`/`y` procent af overskuddet. Fotoarket bager dermed beskæringen ind i
+den JPEG, der uploades (plan-v2 P10).
+
+`photo.dataUrl` er enten en data-URL (et valgt billede under beskæring) eller API'ets
+`profileImageUrl`. I Development er den relativ (`/api/v1/dev-images/<guid>.jpg`) og virker
+uændret i `url("…")` i browseren, fordi den slås op på sidens egen origin, og dev-proxyen sender
+`/api` videre til API'et. På native gør profilmapningen (`toProfilePhoto` → `resolveApiUrl`) den
+absolut mod API'et og lader billedet gå gennem CapacitorHttp's proxy på appens egen origin
+(`/_capacitor_http_interceptor_?u=…`, samme vej som appens GET-kald): Android-WebView'et
+(`https://localhost`) blokerer ellers http-billedet som mixed content – også med
+`MIXED_CONTENT_ALWAYS_ALLOW`. Produktionens Azure-URL'er er absolutte https-URL'er og hentes direkte.
+
 Avataren er dekorativ (`aria-hidden`): navnet står ved siden af, og i fotoarket bærer den
 omkringliggende knap etiketten.

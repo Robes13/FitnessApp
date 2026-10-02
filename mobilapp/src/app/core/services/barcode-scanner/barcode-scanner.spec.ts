@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom } from 'rxjs';
 import { BARCODE_PLUGIN_ERROR } from '../../constants/barcode';
 import { STORAGE_KEY } from '../../constants/storage-key';
 import { BarcodeScannerPlatform, CameraPermission } from '../../models/barcode';
@@ -14,6 +15,7 @@ class FakeScannerPlatform implements BarcodeScannerPlatform {
   permission: CameraPermission = 'granted';
   permissionAfterRequest: CameraPermission = 'granted';
   moduleAvailable = true;
+  installError: Error | null = null;
   scanned: readonly string[] | Error = [EAN_13];
   readonly calls: string[] = [];
 
@@ -35,6 +37,9 @@ class FakeScannerPlatform implements BarcodeScannerPlatform {
   }
   async installScannerModule(): Promise<void> {
     this.calls.push('install');
+    if (this.installError) {
+      throw this.installError;
+    }
   }
   async scan(): Promise<readonly string[]> {
     this.calls.push('scan');
@@ -105,11 +110,25 @@ describe('BarcodeScannerService', () => {
     expect(platform.calls).toEqual(['request', 'scan']);
   });
 
-  it('starts installing the Google barcode module when it is missing', async () => {
+  it('starts installing the Google barcode module once, then says it is unavailable', async () => {
     platform.moduleAvailable = false;
+    const scanner = setup();
 
-    await expect(setup().scan()).resolves.toEqual({ status: 'module-installing' });
+    await expect(scanner.scan()).resolves.toEqual({ status: 'module-installing' });
+    // A failed or stalled download never reports back – asking again would repeat "try again".
+    await expect(scanner.scan()).resolves.toEqual({ status: 'module-unavailable' });
     expect(platform.calls).toEqual(['install']);
+
+    platform.moduleAvailable = true;
+    await expect(scanner.scan()).resolves.toEqual({ status: 'scanned', barcode: EAN_13 });
+  });
+
+  it('says the module is unavailable when Google refuses to install it', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    platform.moduleAvailable = false;
+    platform.installError = new Error('API unavailable');
+
+    await expect(setup().scan()).resolves.toEqual({ status: 'module-unavailable' });
   });
 
   it('maps the plugin errors to cancelled / permission-denied / unreadable', async () => {
@@ -138,14 +157,28 @@ describe('BarcodeScannerService', () => {
     expect(platform.calls).toEqual(['settings']);
   });
 
-  it('counts and persists the scans, continuing the stored count', () => {
+  it('counts and persists the scans, continuing the count stored when it loads', async () => {
     storage.setItem(STORAGE_KEY.SCAN_COUNT, '1');
     const scanner = setup();
+    // Read on `load()` (the session is authenticated), not at construction.
+    expect(scanner.scanCount()).toBe(0);
+    await firstValueFrom(scanner.load());
 
     scanner.recordScan();
     scanner.recordScan();
 
     expect(scanner.scanCount()).toBe(3);
     expect(storage.getItem(STORAGE_KEY.SCAN_COUNT)).toBe('3');
+  });
+
+  it('forgets the count in memory on reset and leaves the stored one alone', async () => {
+    storage.setItem(STORAGE_KEY.SCAN_COUNT, '6');
+    const scanner = setup();
+    await firstValueFrom(scanner.load());
+
+    scanner.reset();
+
+    expect(scanner.scanCount()).toBe(0);
+    expect(storage.getItem(STORAGE_KEY.SCAN_COUNT)).toBe('6');
   });
 });

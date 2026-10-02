@@ -134,7 +134,7 @@ public sealed class UserGoalService(FitnessAppDbContext context, TimeProvider ti
         return ToDto(goal);
     }
 
-    public async Task<UserGoalDto> RecalculateAsync(int userId, bool force, CancellationToken cancellationToken)
+    public async Task<UserGoalDto> RecalculateAsync(int userId, CancellationToken cancellationToken)
     {
         var profile = await GetProfileAsync(userId, cancellationToken);
         var previous = await _context.UserGoals
@@ -158,7 +158,8 @@ public sealed class UserGoalService(FitnessAppDbContext context, TimeProvider ti
             targetWeight,
             goalType == FitnessApp.Api.Domain.Enums.GoalType.MaintainWeight ? 0m : previous.WeightChangePerWeek,
             _timeProvider.GetUtcNow().UtcDateTime);
-        if (!force && previous.GoalType == recalculated.GoalType
+        // Unchanged numbers keep the current goal, so history only shows real goal changes (spec 7.0).
+        if (previous.GoalType == recalculated.GoalType
             && previous.TargetWeight == recalculated.TargetWeight
             && previous.WeightChangePerWeek == recalculated.WeightChangePerWeek
             && previous.TargetDailyCalories == recalculated.TargetDailyCalories

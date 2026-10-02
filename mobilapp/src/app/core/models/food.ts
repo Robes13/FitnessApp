@@ -1,4 +1,3 @@
-import { CollectionIconName } from '../constants/collection-icons';
 import { MealId } from './meal';
 
 export interface Macros {
@@ -14,6 +13,8 @@ export interface FoodItem extends Macros {
   /** The portion the macros apply to, e.g. `'250 g'` or `'1 portion'`. */
   quantity: string;
   brand?: string;
+  /** A new custom food's barcode – the scanner didn't find it (3.1-6a), so it's saved with the food. */
+  barcode?: string;
   isCustom?: boolean;
 }
 
@@ -24,38 +25,19 @@ export interface LoggedFood extends FoodItem {
   loggedAt: string;
 }
 
-export interface Ingredient {
-  name: string;
-  quantity: string;
-}
-
-export interface Recipe extends Macros {
-  id: string;
-  title: string;
-  subtitle: string;
-  meal: MealId;
-  category: string;
-  timeMinutes: number;
-  servings: string;
-  ingredients: readonly Ingredient[];
-  steps: readonly string[];
-}
+/** An item of a collection. `mealItemId` is the API's id – absent until the item is saved. */
+export type CollectionItem = FoodItem & { readonly mealItemId?: number };
 
 export interface FoodCollection {
+  /** `String(mealCollectionId)`. */
   id: string;
   name: string;
-  icon: CollectionIconName;
-  meal: MealId;
-  isBase: boolean;
-  recipeIds: readonly string[];
-  items: readonly FoodItem[];
+  items: readonly CollectionItem[];
 }
 
 export interface NewCollectionInput {
   name: string;
-  icon: CollectionIconName;
-  meal: MealId;
-  items: readonly FoodItem[];
+  items: readonly CollectionItem[];
 }
 
 /** One day's summed macros from the food log. `entryCount` is 0 on days without a log. */

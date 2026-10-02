@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug build only: never in a release. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Cleartext HTTP to the dev API in Docker (emulator: 10.0.2.2) – see the config. -->
+    <application android:networkSecurityConfig="@xml/network_security_config" />
+
+    <!-- Lets testers seed steps on the emulator with Health.saveSample (see README.md). -->
+    <uses-permission android:name="android.permission.health.WRITE_STEPS" tools:node="replace" />
+</manifest>

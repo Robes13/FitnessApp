@@ -7,6 +7,7 @@ import {
   photoBackgroundPosition,
   photoBackgroundSize,
   photoDragSpan,
+  photoDrawRect,
   photoZoomPercent,
 } from './photo-crop';
 
@@ -23,6 +24,50 @@ describe('photo-crop', () => {
 
   it('wraps the data URL in url()', () => {
     expect(photoBackgroundImage(photo())).toBe('url("data:image/png;base64,AAA")');
+  });
+
+  it("renders the API's relative development URL as it is", () => {
+    expect(photoBackgroundImage(photo({ dataUrl: '/api/v1/dev-images/3f2a.jpg' }))).toBe(
+      'url("/api/v1/dev-images/3f2a.jpg")',
+    );
+  });
+
+  describe('photoDrawRect', () => {
+    it('draws an unzoomed square photo over the whole 512 px canvas', () => {
+      expect(photoDrawRect(photo({ aspectRatio: 1 }))).toEqual({
+        x: 0,
+        y: 0,
+        width: 512,
+        height: 512,
+      });
+    });
+
+    it('fills the height of a landscape photo and centres the overflow', () => {
+      expect(photoDrawRect(photo({ aspectRatio: 1.5 }))).toEqual({
+        x: -128,
+        y: 0,
+        width: 768,
+        height: 512,
+      });
+    });
+
+    it('fills the width of a portrait photo, zoomed and offset like the avatar', () => {
+      expect(photoDrawRect(photo({ aspectRatio: 0.5, zoom: 2, x: 25, y: 100 }))).toEqual({
+        x: -128,
+        y: -1536,
+        width: 1024,
+        height: 2048,
+      });
+    });
+
+    it('scales to any canvas size', () => {
+      expect(photoDrawRect(photo({ aspectRatio: 2, x: 100 }), 100)).toEqual({
+        x: -100,
+        y: 0,
+        width: 200,
+        height: 100,
+      });
+    });
   });
 
   it('scales a landscape photo by its height and a portrait photo by its width', () => {

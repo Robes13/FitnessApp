@@ -61,8 +61,10 @@
 }
 
 .ui-row-button {
+  /* A long label (the profile's consent row) wraps instead of pushing the value off the row. */
   &__label {
     flex: none;
+    max-width: 65%;
   }
 
   &__end {
@@ -74,10 +76,11 @@
     font-size: var(--font-size-md);
   }
 
+  /* Wraps instead of truncating, so a long value or a large system font stays readable. */
   &__value {
-    @include mixins.text-truncate;
-
+    overflow-wrap: anywhere;
     color: var(--color-text-secondary);
+    text-align: end;
 
     &--muted {
       color: var(--color-text-muted);

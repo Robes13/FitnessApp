@@ -1,12 +1,17 @@
-import { Injectable, Signal, computed, inject, signal } from '@angular/core';
+import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
+import { EMPTY, Observable, catchError, defer, finalize, map, merge, mergeMap, of } from 'rxjs';
 import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../core/constants/nutrition';
 import { WEIGHT_LOG_HISTORY_RANGE } from '../../../core/constants/weight';
+import { StoreStatus } from '../../../core/models/api';
 import { GoalId } from '../../../core/models/profile';
 import { Tone } from '../../../core/models/tone';
-import { WeighEntry, WeightRange } from '../../../core/models/weight';
+import { WeightPoint, WeightRange } from '../../../core/models/weight';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
+import { toApiError } from '../../../core/utils/api';
 import {
+  daysBetween,
+  formatDayMonth,
   formatDecimal,
   formatRelativeDay,
   formatSignedDecimal,
@@ -14,7 +19,7 @@ import {
 } from '../../../core/utils/date-format';
 import { clamp, roundTo } from '../../../core/utils/math';
 import { NOW } from '../../../core/utils/now';
-import { injectTranslate } from '../../../core/services/language/translate';
+import { Translate, injectTranslate } from '../../../core/services/language/translate';
 
 /** The tone of a weight change: green when it goes the right way, red when it doesn't. */
 export type WeightChangeTone = Extract<Tone, 'positive' | 'negative' | 'muted'>;
@@ -24,6 +29,8 @@ export interface WeighLogRow {
   readonly id: string;
   /** `'I dag'` · `'I går'` · `'3 dage siden'`. */
   readonly date: string;
+  /** The day inside a sentence: `'i dag'` · `'i går'` · `'18. sep'`. */
+  readonly dateInSentence: string;
   /** `'07:45'`. */
   readonly time: string;
   /** The weight with a Danish comma, e.g. `'75,0'`. */
@@ -46,19 +53,22 @@ export interface WeightRangeOption {
 /** The chip texts from the design's `ranges` – shorter than the chart's `rangeLabel`. */
 export const WEIGHT_RANGE_OPTIONS: readonly WeightRangeOption[] = [
   { id: '1u', labelKey: 'weight.view.ranges.week' },
-  { id: '4u', labelKey: 'weight.view.ranges.fourWeeks' },
+  { id: '3u', labelKey: 'weight.view.ranges.threeWeeks' },
   { id: '3m', labelKey: 'weight.view.ranges.threeMonths' },
 ];
 
-/** The chart's left-hand footer per range – design's `rangeLabel` with `'Sidste '` swapped for `'-'`. */
+/**
+ * The chart's left-hand footer per range – design's `rangeLabel` with `'Sidste '` swapped for
+ * `'-'`, and `'-1 uge'` for the week (`'-uge'` doesn't read).
+ */
 const WEIGHT_RANGE_START_LABEL_KEY: Readonly<Record<WeightRange, string>> = {
   '1u': 'weight.view.rangeStart.week',
-  '4u': 'weight.view.rangeStart.fourWeeks',
+  '3u': 'weight.view.rangeStart.threeWeeks',
   '3m': 'weight.view.rangeStart.threeMonths',
 };
 
-/** The design's default range. */
-export const DEFAULT_WEIGHT_RANGE: WeightRange = '4u';
+/** The default range – the spec's 3 weeks instead of the design's 4 (plan-v2 P16). */
+export const DEFAULT_WEIGHT_RANGE: WeightRange = '3u';
 /** The step for −/+ and the ruler. */
 export const WEIGHT_STEP_KG = 0.1;
 
@@ -71,6 +81,8 @@ const MAINTAIN_TOLERANCE_KG = 0.5;
 export const COLLAPSED_LOG_ROWS = 6;
 
 const EMPTY_LOG_MESSAGE_KEY = 'weight.view.emptyLog';
+/** The page's save and the overwrite question fail with this text when the API saved nothing. */
+const SAVE_ERROR_KEY = 'weight.page.saveError';
 const NO_RECENT_LOG_MESSAGE_KEY = 'weight.view.noRecentLog';
 /** Design's `good` for "maintain": the deviation from the goal with a small bonus. */
 const MAINTAIN_PROGRESS_BONUS_KG = 0.3;
@@ -94,7 +106,9 @@ export function weightChangeTone(deltaKg: number, goal: GoalId | null): WeightCh
 
 /**
  * The weight screen's derived values: the draft weight the user adjusts, the difference from
- * the last weigh-in, the distance to the goal weight, the chart's points and the list of weigh-ins.
+ * the last weigh-in, the distance to the goal weight, the chart's points and the list of weigh-ins
+ * – and the screen's API actions (save, overwrite, edit, delete, retry) with their busy and error
+ * states.
  *
  * The service is **feature-local** and provided by `WeightPage` (`providers: [WeightViewService]`),
  * so the draft and the selected range live exactly as long as the screen – just like in the
@@ -113,9 +127,38 @@ export class WeightViewService {
   private readonly rangeState = signal<WeightRange>(DEFAULT_WEIGHT_RANGE);
   private readonly logExpandedState = signal(false);
   private readonly editingId = signal<string | null>(null);
+  private readonly overwriteIdState = signal<string | null>(null);
+  private readonly savingState = signal(false);
+  private readonly editBusyState = signal(false);
+  /** Keys, so a shown error follows a language switch. */
+  private readonly saveErrorKey = signal<string | null>(null);
+  private readonly overwriteErrorKey = signal<string | null>(null);
+  private readonly editErrorKey = signal<string | null>(null);
 
   readonly range: Signal<WeightRange> = this.rangeState.asReadonly();
   readonly rangeOptions = WEIGHT_RANGE_OPTIONS;
+
+  /**
+   * The first load of the two stores the screen needs. `'loading'` wins, so "Prøv igen" only
+   * shows once nothing is running any more.
+   */
+  readonly loadStatus = computed<StoreStatus>(() => {
+    const statuses = [this.log.status(), this.profile.status()];
+    if (statuses.includes('loading')) {
+      return 'loading';
+    }
+    return statuses.includes('error') ? 'error' : 'ready';
+  });
+
+  /** "Gem vejning" (and "Ja, overskriv") is running – the buttons show a spinner. */
+  readonly saving: Signal<boolean> = this.savingState.asReadonly();
+  readonly saveError = this.translated(this.saveErrorKey);
+  /** Today's weigh-in the overwrite question is about; `null` = the sheet is closed. */
+  readonly overwriteId: Signal<string | null> = this.overwriteIdState.asReadonly();
+  readonly overwriteError = this.translated(this.overwriteErrorKey);
+  /** The edit sheet's save or delete is running. */
+  readonly editBusy: Signal<boolean> = this.editBusyState.asReadonly();
+  readonly editError = this.translated(this.editErrorKey);
 
   readonly profileWeightKg = computed(() => this.profile.profile().weightKg);
   readonly heightCm = computed(() => this.profile.profile().heightCm);
@@ -168,43 +211,48 @@ export class WeightViewService {
 
   readonly hasEntries = computed(() => this.log.entries().length > 0);
 
+  /**
+   * `'Sidst vejet i dag'` · `'… i går'` · `'… 18. sep'`. Without weigh-ins the profile's weight is
+   * the starting weight from sign-up (spec 6.1).
+   */
   readonly lastWeighLabel = computed(() => {
     const latest = this.log.latest();
     if (latest === null) {
       return this.t('weight.view.neverWeighed');
     }
-    const day = formatRelativeDay(this.t, new Date(latest.at), this.now()).toLowerCase();
+    const day = dayInSentence(this.t, new Date(latest.at), this.now());
     return this.t('weight.view.lastWeighed', { day });
   });
 
-  /** The weigh-ins in the selected range, oldest first. Empty until the user has weighed in. */
-  readonly seriesKg = computed<readonly number[]>(() =>
-    this.log.seriesFor(this.rangeState()).map((point) => point.kg),
-  );
+  /**
+   * The chart's weigh-ins in the selected range, oldest first, each placed by its time in the
+   * range. Empty until the user has weighed in.
+   */
+  readonly series = computed<readonly WeightPoint[]>(() => this.log.seriesFor(this.rangeState()));
 
-  /** `'Sidste 4 uger'` – the heading on the right in the chart card. */
+  /** `'Sidste 3 uger'` – the heading on the right in the chart card. */
   readonly rangeLabel = computed(() => this.log.rangeLabel(this.rangeState()));
-  /** `'-4 uger'` – the chart's left-hand footer. */
+  /** `'-3 uger'` – the chart's left-hand footer. */
   readonly rangeStartLabel = computed(() =>
     this.t(WEIGHT_RANGE_START_LABEL_KEY[this.rangeState()]),
   );
 
   /** The difference between the chart's first and last point. */
   readonly rangeDeltaKg = computed(() => {
-    const series = this.seriesKg();
+    const series = this.series();
     const first = series[0];
     const last = series[series.length - 1];
     if (first === undefined || last === undefined || series.length < 2) {
       return 0;
     }
-    return last - first;
+    return last.kg - first.kg;
   });
   readonly rangeDeltaText = computed(() =>
     this.t('weight.view.rangeDelta', { delta: formatSignedDecimal(this.rangeDeltaKg()) }),
   );
   /** Neutral until the range holds two weigh-ins – a lone point has no change to judge. */
   readonly rangeDeltaTone = computed<WeightChangeTone>(() =>
-    this.seriesKg().length < 2 ? 'muted' : rangeTone(this.rangeDeltaKg(), this.goal()),
+    this.series().length < 2 ? 'muted' : rangeTone(this.rangeDeltaKg(), this.goal()),
   );
 
   /** The profile's weight without a redundant `,0` – design's `weightText`. */
@@ -219,6 +267,7 @@ export class WeightViewService {
   readonly allLogRows = computed<readonly WeighLogRow[]>(() => {
     const entries = this.log.entries();
     const goal = this.goal();
+    const today = this.now();
     return this.log.entriesWithin(WEIGHT_LOG_HISTORY_RANGE).map((entry, index) => {
       // `entriesWithin` is a newest-first prefix of `entries`, so the indexes line up.
       const previous = entries[index + 1];
@@ -227,7 +276,8 @@ export class WeightViewService {
       const deltaTone: WeightChangeTone = previous ? weightChangeTone(change, goal) : 'muted';
       return {
         id: entry.id,
-        date: formatRelativeDay(this.t, at, this.now()),
+        date: formatRelativeDay(this.t, at, today),
+        dateInSentence: dayInSentence(this.t, at, today),
         time: formatTime(at),
         kg: formatDecimal(entry.kg),
         kgValue: entry.kg,
@@ -281,38 +331,140 @@ export class WeightViewService {
     this.logExpandedState.update((expanded) => !expanded);
   }
 
+  /** "Prøv igen": reloads the store(s) that failed. Never errors. */
+  retryLoad(): Observable<void> {
+    return merge(
+      ...[this.log, this.profile]
+        .filter((store) => store.status() === 'error')
+        .map((store) => store.load()),
+    );
+  }
+
   startEdit(id: string): void {
+    this.editErrorKey.set(null);
     this.editingId.set(id);
   }
 
   cancelEdit(): void {
     this.editingId.set(null);
+    this.editErrorKey.set(null);
   }
 
-  /** Saves the corrected weight. `WeightLogService` keeps the profile's weight in sync. */
-  saveEdit(kg: number): void {
-    const id = this.editingId();
-    if (id !== null) {
-      this.log.update(id, clamp(kg, WEIGHT_MIN_KG, WEIGHT_MAX_KG));
-    }
-    this.editingId.set(null);
+  /** Saves the corrected weight (time unchanged). On an error the sheet stays open and says why. */
+  saveEdit(kg: number): Observable<void> {
+    return this.editing((id) =>
+      this.log.update(id, clamp(kg, WEIGHT_MIN_KG, WEIGHT_MAX_KG)).pipe(map(() => undefined)),
+    );
   }
 
   /** Deletes the weigh-in open in the edit sheet. */
-  removeEditing(): void {
-    const id = this.editingId();
-    if (id !== null) {
-      this.log.remove(id);
-    }
-    this.editingId.set(null);
+  removeEditing(): Observable<void> {
+    return this.editing((id) => this.log.remove(id));
   }
 
   /**
-   * Saves the draft as a weigh-in. A second weigh-in the same day replaces today's entry
-   * (`WeightLogService.add`), which also updates the profile's weight.
+   * Saves the draft as today's weigh-in and emits once it is saved. Has the day a weigh-in
+   * already, nothing is saved: `overwriteId` opens the question, and the observable completes
+   * without a value. A failure shows `saveError` – "ikke gemt" only when the API saved nothing.
    */
-  save(): WeighEntry {
-    return this.log.add(this.draftKg());
+  save(): Observable<void> {
+    return this.track(
+      this.savingState,
+      this.saveErrorKey,
+      () => SAVE_ERROR_KEY,
+      () =>
+        this.log.add(this.draftKg()).pipe(
+          mergeMap((result) => {
+            if (result.kind === 'saved') {
+              return of(undefined);
+            }
+            this.overwriteErrorKey.set(null);
+            this.overwriteIdState.set(result.id);
+            return EMPTY;
+          }),
+        ),
+    );
+  }
+
+  /** "Ja, overskriv": today's weigh-in gets the draft and the time now. Emits once overwritten. */
+  confirmOverwrite(): Observable<void> {
+    return this.track(
+      this.savingState,
+      this.overwriteErrorKey,
+      () => SAVE_ERROR_KEY,
+      () => {
+        const id = this.overwriteIdState();
+        return id === null
+          ? EMPTY
+          : this.log
+              .update(id, this.draftKg(), this.now())
+              .pipe(map(() => this.overwriteIdState.set(null)));
+      },
+    );
+  }
+
+  /** "Annuller" (spec 6.0-4b): nothing is sent, today's weigh-in stays. */
+  cancelOverwrite(): void {
+    this.overwriteIdState.set(null);
+    this.overwriteErrorKey.set(null);
+  }
+
+  /**
+   * Runs `mutation` on the weigh-in open in the edit sheet and closes the sheet when it is done.
+   * On an error the sheet stays open with it.
+   */
+  private editing(mutation: (id: string) => Observable<void>): Observable<void> {
+    return this.track(
+      this.editBusyState,
+      this.editErrorKey,
+      (error) => toApiError(error).messageKey,
+      () => {
+        const id = this.editingId();
+        return id === null ? EMPTY : mutation(id).pipe(map(() => this.editingId.set(null)));
+      },
+    );
+  }
+
+  /**
+   * One mutation at a time: `busy` while it runs – a second tap does nothing. A failure sets
+   * `errorKey` to `keyFor(error)` and completes without a value, so callers never handle errors.
+   * Has the list changed, the API carried the mutation out and only the sync after it failed:
+   * the open sheet closes then, and the API error shows under "Gem vejning".
+   */
+  private track(
+    busy: WritableSignal<boolean>,
+    errorKey: WritableSignal<string | null>,
+    keyFor: (error: unknown) => string,
+    mutation: () => Observable<void>,
+  ): Observable<void> {
+    return defer(() => {
+      if (busy()) {
+        return EMPTY;
+      }
+      busy.set(true);
+      errorKey.set(null);
+      const before = this.log.entries();
+      return mutation().pipe(
+        catchError((error: unknown) => {
+          if (this.log.entries() === before) {
+            errorKey.set(keyFor(error));
+          } else {
+            this.overwriteIdState.set(null);
+            this.editingId.set(null);
+            this.saveErrorKey.set(toApiError(error).messageKey);
+          }
+          return EMPTY;
+        }),
+        finalize(() => busy.set(false)),
+      );
+    });
+  }
+
+  private translated(key: Signal<string | null>): Signal<string | null> {
+    return computed(() => {
+      const value = key();
+      return value === null ? null : this.t(value);
+    });
   }
 }
 
@@ -328,6 +480,13 @@ function rangeTone(deltaKg: number, goal: GoalId | null): WeightChangeTone {
         ? Math.abs(deltaKg) < MAINTAIN_TOLERANCE_KG
         : deltaKg < 0;
   return good ? 'positive' : 'negative';
+}
+
+/** `'i dag'` · `'i går'` · `'18. sep'` – relative up to yesterday, then the date. */
+function dayInSentence(t: Translate, date: Date, today: Date): string {
+  return daysBetween(date, today) <= 1
+    ? formatRelativeDay(t, date, today).toLowerCase()
+    : formatDayMonth(t, date);
 }
 
 /** `75` → `'75'`, `74,5` → `'74,5'` (design's `weightText`). */

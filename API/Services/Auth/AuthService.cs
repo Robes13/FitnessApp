@@ -1,12 +1,16 @@
+using System.Runtime.CompilerServices;
 using FitnessApp.Api.Data;
 using FitnessApp.Api.Domain.Entities;
 using FitnessApp.Api.Domain.Enums;
 using FitnessApp.Api.DTOs.Auth;
 using FitnessApp.Api.Exceptions;
+using FitnessApp.Api.Options;
 using FitnessApp.Api.Services.Goals;
 using FitnessApp.Api.Utilities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace FitnessApp.Api.Services.Auth;
 
@@ -17,14 +21,22 @@ public sealed class AuthService(
     IAccountMessageSender messageSender,
     IConfiguration configuration,
     TimeProvider timeProvider,
+    IMemoryCache cache,
+    IOptions<AppOptions> appOptions,
     ILogger<AuthService> logger) : IAuthService
 {
+    private const int MaxFailedAttempts = 5;
+    private const string InvalidCredentials = "Invalid credentials.";
+    private static readonly TimeSpan LockoutWindow = TimeSpan.FromMinutes(15);
+
     private readonly FitnessAppDbContext _context = context;
     private readonly IJwtTokenService _jwtTokenService = jwtTokenService;
     private readonly IPasswordHasher<User> _passwordHasher = passwordHasher;
     private readonly IAccountMessageSender _messageSender = messageSender;
     private readonly IConfiguration _configuration = configuration;
     private readonly TimeProvider _timeProvider = timeProvider;
+    private readonly IMemoryCache _cache = cache;
+    private readonly string _publicBaseUrl = appOptions.Value.PublicBaseUrl;
     private readonly ILogger<AuthService> _logger = logger;
 
     public async Task<UserDto> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
@@ -105,7 +117,8 @@ public sealed class AuthService(
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        await _messageSender.SendVerificationAsync(email, verificationToken, cancellationToken);
+        await _messageSender.SendAsync(email, AccountEmails.Verification(_publicBaseUrl, verificationToken),
+            cancellationToken);
 
         _logger.LogInformation("User {UserId} registered", user.UserId);
         return ToUserDto(user);
@@ -113,20 +126,31 @@ public sealed class AuthService(
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
-        var username = UsernameRules.Normalize(request.Username);
-        var user = await _context.Users
-            .SingleOrDefaultAsync(user => user.NormalizedUsername == username, cancellationToken);
+        var identifier = request.EmailOrUsername.Trim();
+        var user = await FindByIdentifierAsync(identifier, cancellationToken);
 
-        if (user is null || !user.IsActive || user.EmailVerifiedAt is null || user.DeletedAt is not null)
+        // ponytail: in-memory lockout is per API instance, resets on restart, and a burst racing the very first GetOrCreate can add a few attempts; move it to the database/Redis when the API is scaled out.
+        // Unknown identifiers get their own prefix so a numeric identifier can never lock the account with that id.
+        var key = user is null ? $"login-unknown:{identifier.ToLowerInvariant()}" : $"login:{user.UserId}";
+        var attempts = _cache.GetOrCreate(key, entry =>
         {
-            throw new UnauthorizedException("Invalid username or password.");
-        }
+            entry.AbsoluteExpirationRelativeToNow = LockoutWindow;
+            return new StrongBox<int>();
+        })!;
+        if (Interlocked.Increment(ref attempts.Value) > MaxFailedAttempts)
+            throw new TooManyRequestsException("Too many failed login attempts.");
 
+        if (user is null || user.DeletedAt is not null)
+            throw new UnauthorizedException(InvalidCredentials);
         var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
         if (result == PasswordVerificationResult.Failed)
-        {
-            throw new UnauthorizedException("Invalid username or password.");
-        }
+            throw new UnauthorizedException(InvalidCredentials);
+
+        _cache.Remove(key);
+        if (user.EmailVerifiedAt is null)
+            throw new UnauthorizedAccessException("The e-mail address has not been verified.");
+        if (!user.IsActive)
+            throw new UnauthorizedException(InvalidCredentials);
 
         if (result == PasswordVerificationResult.SuccessRehashNeeded)
         {
@@ -147,6 +171,18 @@ public sealed class AuthService(
         if (user is null || !user.IsActive || user.EmailVerifiedAt is null || user.DeletedAt is not null)
         {
             throw new UnauthorizedException("The account is not active.");
+        }
+
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        // spec 1.5: a refresh token issued today (UTC) is returned unchanged
+        if (identity.IssuedAt.Date == now.Date)
+        {
+            if (!await _context.RefreshTokens.AnyAsync(token => token.TokenId == identity.TokenId
+                    && token.UserId == identity.UserId && token.State == TokenState.Active, cancellationToken))
+                throw new UnauthorizedException("The refresh token is no longer active.");
+            var accessToken = _jwtTokenService.CreateAccessToken(user.UserId, user.Email, user.Username);
+            return new AuthResponse(accessToken.Value, accessToken.ExpiresAt, request.RefreshToken,
+                identity.ExpiresAt, ToUserDto(user));
         }
 
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
@@ -192,65 +228,80 @@ public sealed class AuthService(
 
     public async Task VerifyEmailAsync(VerifyEmailRequest request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Token) || request.Token.Length != 64
-            || !request.Token.All(char.IsAsciiHexDigit))
-            throw new BusinessValidationException("The verification token is invalid or expired.");
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var hash = SecretToken.Hash(request.Token);
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         var token = await _context.EmailVerificationTokens.AsNoTracking()
-            .SingleOrDefaultAsync(candidate => candidate.TokenHash == hash, cancellationToken);
-        if (token is null)
-            throw new BusinessValidationException("The verification token is invalid or expired.");
-        // Lock the account first, consistently with resend and account changes.
-        var updated = await _context.Users.Where(user => user.UserId == token.UserId
-                && user.Email == token.Email && user.DeletedAt == null && user.EmailVerifiedAt == null)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(user => user.EmailVerifiedAt, now)
-                .SetProperty(user => user.IsActive, true), cancellationToken);
+            .SingleOrDefaultAsync(candidate => candidate.TokenHash == hash, cancellationToken)
+            ?? throw InvalidVerification();
+        // Lock the account first, in the same order as resend and account changes.
+        await _context.Users.Where(user => user.UserId == token.UserId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(user => user.Email, user => user.Email), cancellationToken);
+        // Claimed atomically, so a link works once, also when it is opened twice at the same time.
         var claimed = await _context.EmailVerificationTokens.Where(candidate => candidate.TokenHash == hash
                 && candidate.UsedAt == null && candidate.ExpiresAt > now)
             .ExecuteUpdateAsync(setters => setters.SetProperty(candidate => candidate.UsedAt, now), cancellationToken);
-        if (updated != 1 || claimed != 1)
-            throw new BusinessValidationException("The verification token is invalid or expired.");
-        await _context.EmailVerificationTokens.Where(candidate => candidate.UserId == token.UserId && candidate.UsedAt == null)
+        var user = await _context.Users.SingleAsync(candidate => candidate.UserId == token.UserId, cancellationToken);
+        // A token is bound to the account address it was issued for: a changed address voids it. Only an
+        // e-mail change (NewEmail) may verify an already verified account.
+        if (claimed != 1 || user.DeletedAt is not null || user.Email != token.Email
+            || (token.NewEmail is null && user.EmailVerifiedAt is not null))
+            throw InvalidVerification();
+        if (token.NewEmail is { } newEmail)
+        {
+            if (await _context.Users.AnyAsync(candidate => candidate.Email == newEmail
+                    && candidate.UserId != user.UserId, cancellationToken))
+                throw new BusinessValidationException("That e-mail address is already in use.");
+            user.Email = newEmail;
+        }
+
+        user.EmailVerifiedAt = now;
+        user.IsActive = true;
+        await _context.EmailVerificationTokens
+            .Where(candidate => candidate.UserId == user.UserId && candidate.UsedAt == null)
             .ExecuteUpdateAsync(setters => setters.SetProperty(candidate => candidate.UsedAt, now), cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
     public async Task ResendVerificationAsync(ResendVerificationRequest request, CancellationToken cancellationToken)
     {
-        var email = request.Email.Trim().ToLowerInvariant();
+        var user = await FindByIdentifierAsync(request.EmailOrUsername, cancellationToken);
+        if (user is null) return;
+
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-        // A row update serializes concurrent resend/verification/email-change requests across API instances.
-        var locked = await _context.Users.Where(candidate => candidate.Email == email
+        // The row update serializes concurrent resend/verification/e-mail-change requests across API instances.
+        var locked = await _context.Users.Where(candidate => candidate.UserId == user.UserId
                 && candidate.EmailVerifiedAt == null && candidate.DeletedAt == null)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(candidate => candidate.IsActive, false), cancellationToken);
-        if (locked != 1) return;
-        var user = await _context.Users.AsNoTracking().SingleAsync(candidate => candidate.Email == email, cancellationToken);
-        if (await _context.EmailVerificationTokens.AnyAsync(token => token.UserId == user.UserId
-            && token.CreatedAt > now.AddMinutes(-1), cancellationToken)) return;
+            .ExecuteUpdateAsync(setters => setters.SetProperty(candidate => candidate.Email, candidate => candidate.Email),
+                cancellationToken);
+        // At most one mail per account per minute (the endpoint is anonymous).
+        if (locked != 1 || await _context.EmailVerificationTokens.AnyAsync(token => token.UserId == user.UserId
+                && token.CreatedAt > now.AddMinutes(-1), cancellationToken))
+            return;
         var rawToken = SecretToken.Create();
-        await _context.EmailVerificationTokens.Where(token => token.UserId == user.UserId && token.UsedAt == null)
+        await _context.EmailVerificationTokens
+            .Where(token => token.UserId == user.UserId && token.UsedAt == null)
             .ExecuteUpdateAsync(setters => setters.SetProperty(token => token.UsedAt, now), cancellationToken);
         _context.EmailVerificationTokens.Add(new EmailVerificationToken
         {
             UserId = user.UserId,
-            Email = email,
+            Email = user.Email,
             TokenHash = SecretToken.Hash(rawToken),
             CreatedAt = now,
             ExpiresAt = now.AddHours(24)
         });
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        await _messageSender.SendVerificationAsync(email, rawToken, cancellationToken);
+        await _messageSender.SendAsync(user.Email, AccountEmails.Verification(_publicBaseUrl, rawToken),
+            cancellationToken);
     }
 
     public async Task ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken)
     {
-        var email = request.Email.Trim().ToLowerInvariant();
-        var user = await _context.Users.SingleOrDefaultAsync(candidate => candidate.Email == email, cancellationToken);
-        if (user is null || !user.IsActive || user.DeletedAt is not null) return;
+        var user = await FindByIdentifierAsync(request.EmailOrUsername, cancellationToken);
+        if (user is null || !user.IsActive || user.EmailVerifiedAt is null || user.DeletedAt is not null) return;
 
         var now = _timeProvider.GetUtcNow().UtcDateTime;
         var rawToken = SecretToken.Create();
@@ -266,8 +317,17 @@ public sealed class AuthService(
             ExpiresAt = now.AddHours(1)
         });
         await _context.SaveChangesAsync(cancellationToken);
-        await _messageSender.SendAsync(email, "Reset your FitnessApp password",
-            $"Your password reset token is: {rawToken}", cancellationToken);
+        await _messageSender.SendAsync(user.Email, AccountEmails.PasswordReset(_publicBaseUrl, rawToken),
+            cancellationToken);
+    }
+
+    public Task<bool> IsPasswordResetTokenActiveAsync(string token, CancellationToken cancellationToken)
+    {
+        var now = _timeProvider.GetUtcNow().UtcDateTime;
+        var hash = SecretToken.Hash(token);
+        return _context.PasswordResetTokens.AnyAsync(candidate => candidate.TokenId == hash
+            && candidate.State == TokenState.Active && candidate.ExpiresAt > now
+            && candidate.User.DeletedAt == null, cancellationToken);
     }
 
     public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken)
@@ -289,6 +349,7 @@ public sealed class AuthService(
             .ExecuteUpdateAsync(setters => setters.SetProperty(candidate => candidate.State, TokenState.Revoked), cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        _cache.Remove($"login:{token.UserId}");
     }
 
     public async Task ChangePasswordAsync(int userId, ChangePasswordRequest request, CancellationToken cancellationToken)
@@ -312,8 +373,24 @@ public sealed class AuthService(
 
     private static void EnsureMatchingPasswords(string password, string confirmation)
     {
-        if (password.Length < 10 || password != confirmation)
-            throw new BusinessValidationException("Password must be at least 10 characters and match confirmation.");
+        if (password.Length is < 10 or > 200 || password != confirmation)
+            throw new BusinessValidationException("Password must contain 10–200 characters and match confirmation.");
+    }
+
+    private static BusinessValidationException InvalidVerification()
+        => new("The verification token is invalid or expired.");
+
+    private Task<User?> FindByIdentifierAsync(string value, CancellationToken cancellationToken)
+    {
+        var identifier = value.Trim();
+        if (!identifier.Contains('@'))
+        {
+            // Usernames are case-insensitive: the unique NormalizedUsername column folds A-Z the same way.
+            var username = UsernameRules.Normalize(identifier);
+            return _context.Users.SingleOrDefaultAsync(user => user.NormalizedUsername == username, cancellationToken);
+        }
+        var email = identifier.ToLowerInvariant();
+        return _context.Users.SingleOrDefaultAsync(user => user.Email == email, cancellationToken);
     }
 
     private async Task<AuthResponse> IssueTokensAsync(User user, CancellationToken cancellationToken)

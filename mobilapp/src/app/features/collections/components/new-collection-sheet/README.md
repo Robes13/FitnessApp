@@ -1,16 +1,20 @@
 # NewCollectionSheet
 
-Arket "Ny samling" (designets `newColOpen`): navn, "Hører under", ikongitter og en kladde af
-varer. Bunden har "Opret samling", der er slået fra, indtil samlingen har et gyldigt navn.
+Arket "Ny samling" (designets `newColOpen`): navn og en kladde af varer med kladdens samlede
+næring – kcal, protein, kulhydrat og fedt – under listen (spec 4.0/4.1, genberegnet ved hver
+ændring). Bunden har "Opret
+samling", der er slået fra, indtil samlingen har et gyldigt navn og mindst én vare (spec
+4.0-8a) – og mens en ny egen vare stadig gemmes, så `ensureFood` ikke opretter den to gange.
 
-Med `[collection]` bliver det samme ark til **"Rediger samling"**: det åbner udfyldt med
-samlingens navn, måltid, ikon og varer, knappen hedder "Gem ændringer", og arket udsender
-`updated` i stedet for `created`. Varer tilføjes, rettes og fjernes præcis som ved oprettelse.
+Med `[collection]` bliver det samme ark til **"Rediger samling"** (spec 4.1): det åbner udfyldt
+med samlingens navn og varer, knappen hedder "Gem ændringer", og arket udsender `updated` i
+stedet for `created`. Varer tilføjes, rettes og fjernes præcis som ved oprettelse.
 
 ```html
 <app-new-collection-sheet
   [open]="sheetOpen()"
-  [defaultMeal]="defaultMeal()"
+  [busy]="saving()"
+  [error]="saveError()"
   (closed)="sheetOpen.set(false)"
   (created)="onCreated($event)"
 />
@@ -18,41 +22,50 @@ samlingens navn, måltid, ikon og varer, knappen hedder "Gem ændringer", og ark
 <app-new-collection-sheet
   [open]="editOpen()"
   [collection]="collection"
+  [busy]="pending()"
   (closed)="editOpen.set(false)"
   (updated)="onUpdated($event)"
 />
 ```
 
 - **Arket gemmer ikke selv.** `created`/`updated` udsender en `NewCollectionInput`; siden
-  gemmer samlingen (og vælger efter oprettelse det rigtige filter).
+  gemmer samlingen. `busy` giver knappen spinner og blokerer et tryk mere; `error` (oversat)
+  vises over knappen.
+- **1–50 varer, navn højst 100 tegn** (API'ets regler). Er kladden tom, står "Tilføj mindst én
+  vare for at gemme samlingen." under den tomme tilstand. Ved 50 varer er "Søg vare" og "Scan"
+  slået fra. Navnefeltet har `maxlength` 100.
 - **Unikke navne.** Har en anden samling allerede navnet (trimmet, uden hensyn til store og
   små bogstaver), vises "Du har allerede en samling med det navn." med `app-ui-form-error`,
-  feltet får rød kant, og knappen er slået fra. Den samling, der redigeres, må beholde sit
-  eget navn. Arket læser kun `CollectionsService.isNameTaken()`; servicen kaster alligevel
-  `DuplicateCollectionNameError`, hvis nogen forsøger at gemme uden om arket.
-- **Nulstilles ved hver åbning** (navn, ikon `star`, tom kladde, måltid = `defaultMeal`),
-  som designets `openNewCol` — eller til den redigerede samlings værdier. Ligger dens ikon
-  blandt de foldede, vises alle 30 ikoner fra start.
+  feltet får rød kant, og knappen er slået fra. Den samling, der redigeres, må beholde sit eget
+  navn. Reglen findes kun i appen (`CollectionsService.isNameTaken()`); API'et tager dubletter.
+- **Nulstilles ved hver åbning** (tomt navn og tom kladde), som designets `openNewCol` — eller
+  til den redigerede samlings værdier.
 - **To veje til en vare:** "Søg vare" åbner `app-food-picker` i et ark oven på dette
   (`layer="sheet-high"`), og "Scan" åbner `app-barcode-scanner`. Begge lægger varen i
-  kladden. Et tryk på en kladde-række åbner vælgeren i portionstrinnet og erstatter varen.
-- **Egne varer** gemmes samtidig under "Mine varer" (`FoodLogService.addCustomFood` med
-  vælgerens/scannerens id), så de kan søges frem igen — vælgerens egen tekst lover det
-  ("Gemmes under Mine varer"). Er navnet allerede taget (`DuplicateCustomFoodNameError` —
-  scannerens formular tjekker det ikke), lægges varen stadig i kladden, og arket viser
-  "Du har allerede en egen vare med navnet …" under knapperne.
-- Vare-vælgerens primærknap hedder her **"Gem og føj til samlingen"**. Designet genbruger
-  "Gem og log under <måltid>" fra Mad-skærmen, men varen havner i samlingen, ikke i dagens
-  log, så teksten ville være forkert.
-- Kladdens varer får et nyt id (`newId()`), så den samme vare kan ligge i den flere gange, og
-  id'et kan bruges som rute-id for varen i samlingen. Varen i samlingen er derfor en kopi, ikke
-  et link til den egne vare; samlinger logges som én samlet vare, så redigering af en logget
-  egen vare berøres ikke.
-- **Ikongitteret er en rigtig radiogruppe:** kun det valgte ikon er i tab-rækkefølgen, og
-  piletasterne flytter valget (venstre/højre ±1, op/ned ±6, fordi gitteret har seks
-  kolonner) og wrapper rundt om det antal ikoner, der faktisk vises — 12 eller 30. Er det
-  valgte ikon foldet væk med "Vis færre", overtager det første synlige tab-pladsen.
-- Hvert ikon får et rigtigt navn med som `aria-label` ("Æg", "Håndvægt" …) i stedet for
-  "Ikon 1" … "Ikon 30". Nøglerne er `COLLECTION_ICON_LABEL_KEYS` i
-  `core/constants/collection-icons.ts` — ved siden af `COLLECTION_ICON_NAMES`, så enhver
-  ikonvælger bruger de samme navne. Designet har kun tegningerne.
+  kladden; scanneren venter på sin forælder efter `found`, så arket lukker den selv med det samme. Et tryk på en kladde-række åbner vælgeren i portionstrinnet og erstatter varen.
+- **"Ikke fundet" → "Opret varen selv"** åbner vælgerens "Ny egen vare" med den scannede
+  stregkode (`noBarcodeRequested($event)` → vælgerens `[barcode]`), så den egne vare gemmes med
+  den, og næste scanning finder den i kataloget (3.1-6a) – som på Mad-skærmen. "Varen har ingen
+  stregkode" og "Søg vare" giver ingen stregkode.
+- **Varen beholder sit eget id**: katalog-id'et, `off-<stregkode>` for en scannet vare eller
+  `food-…` for en ny egen vare. `CollectionsService` slår det op med `FoodLogService.ensureFood`
+  og opretter madvaren, hvis den mangler. Den samme vare kan ligge i kladden flere gange
+  (rækkerne spores på position).
+- **En rettet vare mister sit `mealItemId`**, når mængden (eller varen) er ændret, så gemningen
+  sletter den gamle række og tilføjer den nye (diffen i `CollectionsService.update()`). Åbnes en
+  vare uden ændringer, beholdes den, som den er.
+- **Egne varer** gemmes samtidig under "Mine varer" i API'et (`FoodLogService.addCustomFood`,
+  både fra "Gem kun under Mine varer" og fra "Gem og føj til samlingen", der kun udsender `picked`), så
+  de kan søges frem igen — vælgerens egen tekst lover det ("Gemmes under Mine varer"). Fejler
+  det (fx `DuplicateCustomFoodNameError`, når navnet er taget på en anden enhed), ligger varen
+  stadig i kladden, og arket viser beskeden under knapperne (og øverst i vælgeren, mens den er
+  åben). Imens gemningen kører, er vælgeren `busy`, så "Gem kun under Mine varer" ikke sender to gange;
+  den bliver på formularen, til varen er gemt. Gemningen afbrydes ikke, når arket lukkes.
+- Vare-vælgerens primærknap hedder her **"Gem og føj til samlingen"** og den sekundære **"Gem
+  kun under Mine varer"** (vælgerens `saveOnlyLabel`). Designet genbruger "Gem og log under
+  <måltid>" og "Gem uden at logge" fra Mad-skærmen, men en samling logger ikke noget, så teksten
+  ville være forkert.
+- Vælgerens ark hedder **"Tilføj til samling"** – og **"Rediger vare"**, mens en kladde-række
+  er åbnet for at rette mængden (`pickerText`).
+- Ikongitteret og "Hører under" er slettet: API'et har hverken ikon eller måltid på en samling
+  (P13). Måltidet vælges, når samlingen logges.

@@ -1,17 +1,17 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
+import { Provider, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
+import { STORAGE_KEY } from '../../../../core/constants/storage-key';
+import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { SessionService } from '../../../../core/services/session/session';
 import { LoginPage } from './login-page';
-import { provideComponentTestEnvironment } from '../../../../core/testing/test-providers';
-
-/** `AuthApi` responds via `timer(0)`; one macrotask tick is enough for the call to finish. */
-async function settle(fixture: ComponentFixture<LoginPage>): Promise<void> {
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, 0);
-  });
-  await fixture.whenStable();
-}
+import { TEST_AUTH_RESPONSE, TEST_EMAIL } from '../../../../core/testing/fixtures';
+import {
+  provideComponentTestEnvironment,
+  resetComponentTestStorage,
+} from '../../../../core/testing/test-providers';
 
 function requireElement<T extends Element>(root: HTMLElement, selector: string): T {
   const element = root.querySelector<T>(selector);
@@ -27,15 +27,21 @@ function typeInto(root: HTMLElement, label: string, value: string): void {
   field.dispatchEvent(new Event('input'));
 }
 
+const IDENTIFIER = 'E-mail eller brugernavn';
+
 describe('LoginPage', () => {
   // Component specs need the right `DOCUMENT` to render, so
   beforeEach(() => {
     localStorage.clear();
   });
 
-  async function setup() {
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
+  });
+
+  async function setup(providers: Provider[] = []) {
     TestBed.configureTestingModule({
-      providers: [...provideComponentTestEnvironment(), provideRouter([])],
+      providers: [...provideComponentTestEnvironment(), provideRouter([]), ...providers],
     });
     const fixture = TestBed.createComponent(LoginPage);
     await fixture.whenStable();
@@ -53,7 +59,10 @@ describe('LoginPage', () => {
       requireElement(root, '.login-page__heading').textContent?.replace(/\s+/g, ' ').trim(),
     ).toBe('Spis klogt.Træn stærkt.');
     expect(requireElement(root, '.login-page__heading-accent').textContent).toBe('Træn stærkt.');
-    expect(root.querySelector('input[aria-label="Brugernavn"]')).not.toBeNull();
+    const identifier = requireElement<HTMLInputElement>(root, `input[aria-label="${IDENTIFIER}"]`);
+    expect(identifier.type).toBe('text');
+    expect(identifier.getAttribute('autocomplete')).toBe('username');
+    expect(identifier.getAttribute('inputmode')).toBeNull();
     expect(requireElement<HTMLInputElement>(root, 'input[aria-label="Adgangskode"]').type).toBe(
       'password',
     );
@@ -72,6 +81,21 @@ describe('LoginPage', () => {
     ]);
   });
 
+  it('darkens the photo while the keyboard pushes the fields up over it', async () => {
+    const keyboardOpen = signal(false);
+    const keyboard: Pick<KeyboardService, 'isOpen'> = { isOpen: keyboardOpen.asReadonly() };
+    const { fixture, root } = await setup([{ provide: KeyboardService, useValue: keyboard }]);
+    expect(root.querySelector('.auth-backdrop__gradient')).toBeNull();
+
+    keyboardOpen.set(true);
+    await fixture.whenStable();
+    expect(root.querySelector('.auth-backdrop__gradient')).not.toBeNull();
+
+    keyboardOpen.set(false);
+    await fixture.whenStable();
+    expect(root.querySelector('.auth-backdrop__gradient')).toBeNull();
+  });
+
   it('keeps the shared button classes next to the page class', async () => {
     const { root } = await setup();
     const submit = requireElement<HTMLButtonElement>(root, '.login-page__submit');
@@ -81,20 +105,86 @@ describe('LoginPage', () => {
     expect(submit.classList.contains('ui-button--block')).toBe(true);
   });
 
-  it('cannot log in without a backend and stays on the page', async () => {
-    const { fixture, root, navigate } = await setup();
-    typeInto(root, 'Brugernavn', 'mads');
-    typeInto(root, 'Adgangskode', 'hemmelig1');
-    await fixture.whenStable();
+  /** Types the identifier and the password, submits and answers the login with `respond`. */
+  async function logIn(identifier: string, respond: (request: TestRequest) => void) {
+    const page = await setup();
+    typeInto(page.root, IDENTIFIER, identifier);
+    typeInto(page.root, 'Adgangskode', 'hemmelig1234');
+    await page.fixture.whenStable();
 
-    requireElement<HTMLFormElement>(root, '.login-page__form').requestSubmit();
-    await settle(fixture);
+    requireElement<HTMLFormElement>(page.root, '.login-page__form').requestSubmit();
+    await page.fixture.whenStable();
+    expect(page.root.querySelector('app-ui-spinner')).not.toBeNull();
+    const request = TestBed.inject(HttpTestingController).expectOne({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+    });
+    respond(request);
+    await page.fixture.whenStable();
+    return { ...page, body: request.request.body as unknown };
+  }
 
-    expect(requireElement(root, 'app-ui-form-error').textContent?.trim()).toBe(
-      'Der er ingen forbindelse til en server endnu.',
+  it.each([TEST_EMAIL, 'mads'])('logs in with %s and goes to Home', async (identifier) => {
+    const { body, navigate } = await logIn(` ${identifier} `, (request) =>
+      request.flush(TEST_AUTH_RESPONSE),
     );
+
+    expect(body).toEqual({ emailOrUsername: identifier, password: 'hemmelig1234' });
+    expect(TestBed.inject(SessionService).isAuthenticated()).toBe(true);
+    expect(navigate).toHaveBeenCalledWith(APP_PATH.HOME);
+  });
+
+  it('goes to Home without an error when the e-mail is not verified yet', async () => {
+    const { root, navigate } = await logIn('mads', (request) =>
+      request.flush(
+        { title: 'Forbidden', status: 403, detail: 'Email is not verified.' },
+        { status: 403, statusText: 'Forbidden' },
+      ),
+    );
+
+    expect(root.querySelector('app-ui-form-error')).toBeNull();
+    expect(TestBed.inject(SessionService).status()).toBe('pending-verification');
+    expect(navigate).toHaveBeenCalledWith(APP_PATH.HOME);
+  });
+
+  it.each([
+    [401, 'Invalid credentials.', 'Forkert brugernavn, e-mail eller adgangskode.'],
+    [
+      429,
+      'Too many requests',
+      'For mange mislykkede forsøg. Vent op til 15 minutter, og prøv igen.',
+    ],
+  ])('explains a %i and stays on the page', async (status, detail, message) => {
+    const { root, navigate } = await logIn(TEST_EMAIL, (request) =>
+      request.flush({ title: 'x', status, detail }, { status, statusText: 'x' }),
+    );
+
+    expect(requireElement(root, 'app-ui-form-error').textContent?.trim()).toBe(message);
     expect(navigate).not.toHaveBeenCalled();
     expect(TestBed.inject(SessionService).isLoggedIn()).toBe(false);
     expect(root.querySelector('app-ui-spinner')).toBeNull();
+  });
+
+  it('sends nothing while a field is empty', async () => {
+    const { fixture, root } = await setup();
+    typeInto(root, IDENTIFIER, TEST_EMAIL);
+    await fixture.whenStable();
+
+    requireElement<HTMLFormElement>(root, '.login-page__form').requestSubmit();
+    await fixture.whenStable();
+
+    // `verify()` in afterEach proves no login was sent.
+    expect(root.querySelector('app-ui-spinner')).toBeNull();
+  });
+
+  it('fills in the e-mail the session remembers', async () => {
+    resetComponentTestStorage({
+      [STORAGE_KEY.SESSION]: { status: 'guest', email: TEST_EMAIL, userId: null, tokens: null },
+    });
+    const { root } = await setup();
+
+    expect(requireElement<HTMLInputElement>(root, `input[aria-label="${IDENTIFIER}"]`).value).toBe(
+      TEST_EMAIL,
+    );
   });
 });

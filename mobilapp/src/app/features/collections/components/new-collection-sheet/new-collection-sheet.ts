@@ -1,7 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
+  booleanAttribute,
   computed,
   effect,
   inject,
@@ -9,27 +9,31 @@ import {
   output,
   signal,
   untracked,
-  viewChildren,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
-import { newId } from '../../../../core/utils/id';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { finalize, map } from 'rxjs';
 import {
-  COLLECTION_ICON_LABEL_KEYS,
-  COLLECTION_ICON_NAMES,
-  COLLECTION_ICON_PREVIEW_COUNT,
-  CollectionIconName,
-} from '../../../../core/constants/collection-icons';
-import { FoodCollection, FoodItem, NewCollectionInput } from '../../../../core/models/food';
-import { MealId } from '../../../../core/models/meal';
+  COLLECTION_MAX_ITEMS,
+  COLLECTION_NAME_MAX_LENGTH,
+} from '../../../../core/constants/collections';
+import {
+  CollectionItem,
+  FoodCollection,
+  FoodItem,
+  NewCollectionInput,
+} from '../../../../core/models/food';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import {
+  CUSTOM_FOOD_ID_PREFIX,
   DuplicateCustomFoodNameError,
   FoodLogService,
 } from '../../../../core/services/food-log/food-log';
 import { injectTranslate } from '../../../../core/services/language/translate';
+import { toApiError } from '../../../../core/utils/api';
+import { formatGrams, formatInteger } from '../../../../core/utils/date-format';
+import { formatQuantity } from '../../../../core/utils/quantity';
 import { BarcodeScanner } from '../../../../shared/components/barcode-scanner/barcode-scanner';
 import {
   FoodPicker,
@@ -42,16 +46,7 @@ import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiSheet } from '../../../../shared/components/ui-sheet/ui-sheet';
 import { UiTextInput } from '../../../../shared/components/ui-text-input/ui-text-input';
-import { MealPicker } from '../meal-picker/meal-picker';
 
-const DEFAULT_ICON: CollectionIconName = 'star';
-const DEFAULT_MEAL: MealId = 'morgen';
-const DRAFT_ID_PREFIX = 'item';
-const HIDDEN_ICON_COUNT = COLLECTION_ICON_NAMES.length - COLLECTION_ICON_PREVIEW_COUNT;
-const MORE_ICONS_LABEL_KEY = {
-  collapsed: 'collections.newCollectionSheet.showMoreIcons',
-  expanded: 'collections.newCollectionSheet.showFewerIcons',
-} as const;
 const DUPLICATE_NAME_MESSAGE_KEY = 'collections.newCollectionSheet.duplicateName';
 /** A new custom food clashed with an existing one's name – it's still put in the draft. Param `foodName`. */
 const DUPLICATE_CUSTOM_FOOD_MESSAGE_KEY = 'collections.newCollectionSheet.duplicateCustomFood';
@@ -69,29 +64,35 @@ const SHEET_TEXT_KEY = {
 } as const;
 /** The food picker's primary button when the food lands in a collection instead of today's log. */
 const SAVE_AND_ADD_LABEL_KEY = 'collections.newCollectionSheet.saveAndAdd';
-/** The icon grid has six columns, so up/down jumps a whole row. */
-const ICON_KEY_DELTAS: Readonly<Record<string, number>> = {
-  ArrowLeft: -1,
-  ArrowRight: 1,
-  ArrowUp: -6,
-  ArrowDown: 6,
-};
+/** Its "Gem uden at logge": a collection logs nothing, the food is only saved under "Mine varer". */
+const SAVE_ONLY_LABEL_KEY = 'collections.newCollectionSheet.saveOnly';
+/** The food picker's sheet – "Tilføj til samling", or "Rediger vare" while an item is edited. */
+const PICKER_TEXT_KEY = {
+  add: {
+    title: 'collections.newCollectionSheet.pickerTitle',
+    accent: 'collections.newCollectionSheet.pickerTitleAccent',
+  },
+  edit: {
+    title: 'collections.newCollectionSheet.pickerTitleEdit',
+    accent: 'collections.newCollectionSheet.pickerTitleEditAccent',
+  },
+} as const;
 
 interface NewCollectionForm {
   name: FormControl<string>;
 }
 
 /**
- * The "New collection" sheet: name, meal, icon and a draft of foods. Given a `collection`, the
- * same sheet edits it instead ("Rediger samling"): it opens prefilled and emits `updated`.
+ * The "New collection" sheet: a name and a draft of 1–50 foods. Given a `collection`, the same
+ * sheet edits it instead ("Rediger samling"): it opens prefilled and emits `updated`.
  *
  * The sheet owns the draft but doesn't write to `CollectionsService` itself – it emits `created`
- * (or `updated`) with a `NewCollectionInput`, so the page can save the collection and select the
- * right filter afterwards (the design's `createCol`, which also sets `colId`). It only reads the
- * service to block a name another collection already has.
+ * (or `updated`) with a `NewCollectionInput`, and the page saves it (`busy`, `error`). It only
+ * reads the service to block a name another collection already has.
  *
  * "Search food" opens `app-food-picker` in a sheet on top of this one (`sheet-high`), and "Scan"
- * opens `app-barcode-scanner`. Both paths end up the same place: the food is put in the draft.
+ * opens `app-barcode-scanner`. Both paths end up the same place: the food is put in the draft
+ * under its own id (catalogue id, `off-…` or `food-…`), which `ensureFood` resolves on save.
  * Custom foods are simultaneously saved under "My foods" via `FoodLogService`, so they can be
  * searched for again.
  */
@@ -100,7 +101,6 @@ interface NewCollectionForm {
   imports: [
     BarcodeScanner,
     FoodPicker,
-    MealPicker,
     ReactiveFormsModule,
     TranslatePipe,
     UiButton,
@@ -117,10 +117,12 @@ interface NewCollectionForm {
 })
 export class NewCollectionSheet {
   readonly open = input.required<boolean>();
-  /** The meal the sheet opens with – the selected filter on the collections screen. */
-  readonly defaultMeal = input<MealId>(DEFAULT_MEAL);
   /** The user collection to edit. `null` (the default) creates a new one. */
   readonly collection = input<FoodCollection | null>(null);
+  /** The page is saving – the button shows a spinner and ignores taps. */
+  readonly busy = input(false, { transform: booleanAttribute });
+  /** Why the last save failed (translated), or `null`. */
+  readonly error = input<string | null>(null);
 
   readonly closed = output<void>();
   readonly created = output<NewCollectionInput>();
@@ -129,6 +131,7 @@ export class NewCollectionSheet {
   private readonly collections = inject(CollectionsService);
   private readonly t = injectTranslate();
 
+  protected readonly nameMaxLength = COLLECTION_NAME_MAX_LENGTH;
   protected readonly form = new FormGroup<NewCollectionForm>({
     name: new FormControl('', { nonNullable: true }),
   });
@@ -144,48 +147,67 @@ export class NewCollectionSheet {
   protected readonly nameError = computed(() =>
     this.nameTaken() ? this.t(DUPLICATE_NAME_MESSAGE_KEY) : null,
   );
-  protected readonly canSave = computed(() => this.name() !== '' && !this.nameTaken());
+  protected readonly draft = signal<readonly CollectionItem[]>([]);
+  /** The API's limit is reached – "Søg vare" and "Scan" are off. */
+  protected readonly draftFull = computed(() => this.draft().length >= COLLECTION_MAX_ITEMS);
+  /**
+   * Spec 4.0/4.1-8a: at least one item; the API holds at most 50. Not while a custom food is
+   * still being saved – `ensureFood` would create it a second time (409).
+   */
+  protected readonly canSave = computed(() => {
+    const count = this.draft().length;
+    return (
+      this.name() !== '' &&
+      !this.nameTaken() &&
+      !this.savingCustomFood() &&
+      count >= 1 &&
+      count <= COLLECTION_MAX_ITEMS
+    );
+  });
+  /** Spec 4.0/4.1: the draft's total nutrition (kcal, protein, carbs, fat), recalculated as items change. */
+  protected readonly totalsText = computed(() => {
+    const totals = this.collections.collectionTotals({ id: '', name: '', items: this.draft() });
+    return this.t('collections.view.totals', {
+      kcal: formatInteger(totals.kcal),
+      protein: formatGrams(totals.protein),
+      carbs: formatGrams(totals.carbs),
+      fat: formatGrams(totals.fat),
+    });
+  });
   protected readonly text = computed(() => {
     const keys = this.collection() ? SHEET_TEXT_KEY.edit : SHEET_TEXT_KEY.create;
     return { title: this.t(keys.title), submit: this.t(keys.submit) };
   });
 
-  protected readonly meal = signal<MealId>(DEFAULT_MEAL);
-  protected readonly icon = signal<CollectionIconName>(DEFAULT_ICON);
-  protected readonly draft = signal<readonly FoodItem[]>([]);
-  /** The custom food whose name was already taken under "My foods"; cleared on reset. */
-  private readonly duplicateCustomFoodName = signal<string | null>(null);
+  /** Why a custom food couldn't be saved under "My foods" (key + params); cleared on reset. */
+  private readonly customFoodFailure = signal<{
+    readonly key: string;
+    readonly params?: Readonly<Record<string, string>>;
+  } | null>(null);
   /** Feedback when a custom food couldn't be saved under "My foods". */
   protected readonly customFoodError = computed(() => {
-    const foodName = this.duplicateCustomFoodName();
-    return foodName === null ? null : this.t(DUPLICATE_CUSTOM_FOOD_MESSAGE_KEY, { foodName });
+    const failure = this.customFoodFailure();
+    return failure === null ? null : this.t(failure.key, failure.params);
   });
 
-  private readonly showAllIcons = signal(false);
-  protected readonly icons = computed<readonly CollectionIconName[]>(() =>
-    this.showAllIcons()
-      ? COLLECTION_ICON_NAMES
-      : COLLECTION_ICON_NAMES.slice(0, COLLECTION_ICON_PREVIEW_COUNT),
-  );
-  protected readonly moreIconsLabel = computed(() =>
-    this.showAllIcons()
-      ? this.t(MORE_ICONS_LABEL_KEY.expanded)
-      : this.t(MORE_ICONS_LABEL_KEY.collapsed, { count: HIDDEN_ICON_COUNT }),
-  );
-
   protected readonly pickerOpen = signal(false);
+  /** A custom food is being saved – the picker blocks a second save meanwhile. */
+  protected readonly savingCustomFood = signal(false);
   protected readonly pickerStartStep = signal<FoodPickerStartStep>('search');
+  /** The barcode a not-found scan hands the picker's new-food form (3.1-6a); `null` otherwise. */
+  protected readonly newFoodBarcode = signal<string | null>(null);
   protected readonly scannerOpen = signal(false);
   private readonly editIndex = signal<number | null>(null);
-  protected readonly editItem = computed<FoodItem | null>(() => {
+  protected readonly editItem = computed<CollectionItem | null>(() => {
     const index = this.editIndex();
     return index === null ? null : (this.draft()[index] ?? null);
   });
   protected readonly saveAndAddLabelKey = SAVE_AND_ADD_LABEL_KEY;
-
-  private readonly iconOptions = viewChildren<ElementRef<HTMLButtonElement>>('iconOption');
-  /** Index of the selected icon in the grid actually shown – −1 when it's folded away. */
-  private readonly selectedIconIndex = computed(() => this.icons().indexOf(this.icon()));
+  protected readonly saveOnlyLabelKey = SAVE_ONLY_LABEL_KEY;
+  protected readonly pickerText = computed(() => {
+    const keys = this.editItem() ? PICKER_TEXT_KEY.edit : PICKER_TEXT_KEY.add;
+    return { title: this.t(keys.title), accent: this.t(keys.accent) };
+  });
 
   constructor() {
     // Every time the sheet opens, it starts over (the design's `openNewCol`) – or from the
@@ -201,46 +223,18 @@ export class NewCollectionSheet {
     this.closed.emit();
   }
 
-  protected selectIcon(icon: CollectionIconName): void {
-    this.icon.set(icon);
-  }
-
-  protected iconLabel(icon: CollectionIconName): string {
-    return this.t(COLLECTION_ICON_LABEL_KEYS[icon]);
-  }
-
   protected removeLabel(item: FoodItem): string {
     return this.t(REMOVE_ITEM_LABEL_KEY, { foodName: item.name });
   }
 
-  /**
-   * Only the selected icon is in the tab order. If the selected one is folded away ("Show fewer"),
-   * the first visible one takes over, so the grid never falls completely out of the tab order.
-   */
-  protected iconTabIndexFor(index: number): number {
-    const selected = this.selectedIconIndex();
-    return (selected < 0 ? index === 0 : index === selected) ? 0 : -1;
+  /** Whole kcal as shown, `'1.600'`. */
+  protected kcal(item: FoodItem): string {
+    return formatInteger(item.kcal);
   }
 
-  protected onIconKeydown(event: KeyboardEvent): void {
-    const delta = ICON_KEY_DELTAS[event.key];
-    const icons = this.icons();
-    if (delta === undefined || icons.length === 0) {
-      return;
-    }
-    event.preventDefault();
-    const current = this.selectedIconIndex();
-    const next = current < 0 ? 0 : (current + delta + icons.length) % icons.length;
-    const icon = icons[next];
-    if (icon === undefined) {
-      return;
-    }
-    this.icon.set(icon);
-    this.iconOptions()[next]?.nativeElement.focus();
-  }
-
-  protected toggleIcons(): void {
-    this.showAllIcons.update((shown) => !shown);
+  /** `'2 portioner'` – the unit in the active language. */
+  protected quantity(item: FoodItem): string {
+    return formatQuantity(this.t, item.quantity);
   }
 
   protected removeAt(index: number): void {
@@ -250,12 +244,14 @@ export class NewCollectionSheet {
   protected editAt(index: number): void {
     this.editIndex.set(index);
     this.pickerStartStep.set('search');
+    this.newFoodBarcode.set(null);
     this.pickerOpen.set(true);
   }
 
   protected openSearch(): void {
     this.editIndex.set(null);
     this.pickerStartStep.set('search');
+    this.newFoodBarcode.set(null);
     this.pickerOpen.set(true);
   }
 
@@ -275,6 +271,10 @@ export class NewCollectionSheet {
   }
 
   protected onPicked(selection: FoodPickerSelection): void {
+    // "Save and add" only emits `picked`, so a new custom food is saved under "My foods" here.
+    if (selection.item.id.startsWith(`${CUSTOM_FOOD_ID_PREFIX}-`)) {
+      this.saveCustomFood(selection.item);
+    }
     this.putInDraft(selection.item);
     this.closePicker();
   }
@@ -284,37 +284,29 @@ export class NewCollectionSheet {
     this.saveCustomFood(item);
   }
 
+  /** The draft can't fail, so the scanner closes right away (it waits for its parent after `found`). */
   protected onScanned(item: FoodItem): void {
     this.putInDraft(item);
-  }
-
-  protected onScannerCustomSaved(item: FoodItem): void {
-    this.saveCustomFood(item);
-    this.putInDraft(item);
+    this.scannerOpen.set(false);
   }
 
   protected onManualRequested(): void {
-    this.editIndex.set(null);
-    this.pickerStartStep.set('search');
-    this.pickerOpen.set(true);
+    this.openSearch();
   }
 
-  protected onNoBarcodeRequested(): void {
+  /** "Opret varen selv" after "not found" carries the barcode, so the next scan finds the food. */
+  protected onNoBarcodeRequested(barcode: string | null): void {
     this.editIndex.set(null);
     this.pickerStartStep.set('new-food');
+    this.newFoodBarcode.set(barcode);
     this.pickerOpen.set(true);
   }
 
   protected save(): void {
-    if (!this.canSave()) {
+    if (!this.canSave() || this.busy()) {
       return;
     }
-    const input: NewCollectionInput = {
-      name: this.name(),
-      icon: this.icon(),
-      meal: this.meal(),
-      items: this.draft(),
-    };
+    const input: NewCollectionInput = { name: this.name(), items: this.draft() };
     if (this.collection()) {
       this.updated.emit(input);
     } else {
@@ -323,46 +315,50 @@ export class NewCollectionSheet {
   }
 
   /**
-   * Saves under "My foods" with the item's own id. A taken name (the scanner's form doesn't
-   * check it) shows a message instead of failing; the draft is unaffected either way.
+   * Saves under "My foods" in the API. A failure (e.g. a name taken on another device) shows a
+   * message; the draft is unaffected either way. Not cancelled on close, so the save isn't lost.
    */
   private saveCustomFood(item: FoodItem): void {
-    this.duplicateCustomFoodName.set(null);
-    try {
-      this.foodLog.addCustomFood(item, item.id);
-    } catch (error) {
-      if (!(error instanceof DuplicateCustomFoodNameError)) {
-        throw error;
-      }
-      this.duplicateCustomFoodName.set(item.name);
-    }
+    this.customFoodFailure.set(null);
+    this.savingCustomFood.set(true);
+    this.foodLog
+      .addCustomFood(item)
+      .pipe(finalize(() => this.savingCustomFood.set(false)))
+      .subscribe({
+        error: (error: unknown) =>
+          this.customFoodFailure.set(
+            error instanceof DuplicateCustomFoodNameError
+              ? { key: DUPLICATE_CUSTOM_FOOD_MESSAGE_KEY, params: { foodName: item.name } }
+              : { key: toApiError(error).messageKey },
+          ),
+      });
   }
 
-  /** Adds the food or replaces the one being edited. Draft foods get their own id. */
+  /**
+   * Adds the food or replaces the one being edited. An item whose food or amount changed loses
+   * its `mealItemId`, so saving the edit deletes the old item and adds the new one.
+   */
   private putInDraft(item: FoodItem): void {
     const index = this.editIndex();
-    if (index !== null) {
-      this.draft.update((items) =>
-        items.map((current, position) =>
-          position === index ? { ...item, id: current.id } : current,
-        ),
-      );
-      this.editIndex.set(null);
+    this.editIndex.set(null);
+    if (index === null) {
+      this.draft.update((items) => [...items, item]);
       return;
     }
-    this.draft.update((items) => [...items, { ...item, id: newId(DRAFT_ID_PREFIX) }]);
+    this.draft.update((items) =>
+      items.map((current, position) =>
+        position !== index || (current.id === item.id && current.quantity === item.quantity)
+          ? current
+          : { ...item, mealItemId: undefined },
+      ),
+    );
   }
 
   private reset(): void {
     const collection = this.collection();
-    const icon = collection?.icon ?? DEFAULT_ICON;
     this.form.reset({ name: collection?.name ?? '' });
-    this.meal.set(collection?.meal ?? this.defaultMeal());
-    this.icon.set(icon);
     this.draft.set(collection?.items ?? []);
-    this.duplicateCustomFoodName.set(null);
-    // An edited collection's icon may sit among the folded-away ones – show them all then.
-    this.showAllIcons.set(COLLECTION_ICON_NAMES.indexOf(icon) >= COLLECTION_ICON_PREVIEW_COUNT);
+    this.customFoodFailure.set(null);
     this.pickerOpen.set(false);
     this.scannerOpen.set(false);
     this.editIndex.set(null);

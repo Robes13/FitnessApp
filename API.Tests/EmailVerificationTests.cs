@@ -1,21 +1,14 @@
 using FitnessApp.Api.Domain.Entities;
-using FitnessApp.Api.DTOs.Auth;
 using FitnessApp.Api.Exceptions;
 using FitnessApp.Api.Services.Auth;
 using FitnessApp.Api.Utilities;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FitnessApp.Api.Tests;
 
 public sealed partial class ApiWorkflowTests
 {
-    private static AuthService VerificationAuth(TestDatabase database, CapturingSender sender)
-        => new(database.Context, new UnusedJwtService(), new PasswordHasher<User>(), sender,
-            new ConfigurationBuilder().Build(), TimeProvider.System, NullLogger<AuthService>.Instance);
-
     private static async Task<(User User, string Token)> SeedVerificationAsync(TestDatabase database)
     {
         var user = await SeedUserAsync(database.Context);
@@ -36,8 +29,8 @@ public sealed partial class ApiWorkflowTests
     public async Task VerificationPersistsAndTokenCannotBeReused()
     {
         await using var database = await TestDatabase.CreateAsync();
-        var (user, raw) = await SeedVerificationAsync(database);
-        var auth = VerificationAuth(database, new CapturingSender());
+        var (_, raw) = await SeedVerificationAsync(database);
+        var auth = CreateAuth(database.Context, new CapturingSender());
         await auth.VerifyEmailAsync(new(raw), default);
         var persisted = await database.Context.Users.AsNoTracking().SingleAsync();
         Assert.True(persisted.IsActive);
@@ -54,7 +47,7 @@ public sealed partial class ApiWorkflowTests
     {
         await using var database = await TestDatabase.CreateAsync();
         await SeedVerificationAsync(database);
-        await Assert.ThrowsAsync<BusinessValidationException>(() => VerificationAuth(database, new CapturingSender())
+        await Assert.ThrowsAsync<BusinessValidationException>(() => CreateAuth(database.Context, new CapturingSender())
             .VerifyEmailAsync(new(raw), default));
         Assert.Null((await database.Context.Users.AsNoTracking().SingleAsync()).EmailVerifiedAt);
     }
@@ -76,8 +69,10 @@ public sealed partial class ApiWorkflowTests
         if (reason == "already-verified") user.EmailVerifiedAt = DateTime.UtcNow;
         await database.Context.SaveChangesAsync();
         database.Context.ChangeTracker.Clear();
-        await Assert.ThrowsAsync<BusinessValidationException>(() => VerificationAuth(database, new CapturingSender())
+        await Assert.ThrowsAsync<BusinessValidationException>(() => CreateAuth(database.Context, new CapturingSender())
             .VerifyEmailAsync(new(raw), default));
+        Assert.Equal(reason == "already-verified",
+            (await database.Context.Users.AsNoTracking().SingleAsync()).EmailVerifiedAt is not null);
     }
 
     [Fact]
@@ -86,15 +81,15 @@ public sealed partial class ApiWorkflowTests
         await using var database = await TestDatabase.CreateAsync();
         var (user, raw) = await SeedVerificationAsync(database);
         var sender = new CapturingSender();
-        var auth = VerificationAuth(database, sender);
+        var auth = CreateAuth(database.Context, sender);
         await auth.ResendVerificationAsync(new(user.Email), default);
-        await auth.ResendVerificationAsync(new(user.Email), default);
-        Assert.Single(sender.Messages);
-        Assert.NotEqual(raw, sender.Messages[0]);
+        await auth.ResendVerificationAsync(new(user.Username), default);
+        var fresh = TokenFrom(Assert.Single(sender.Sent).Body);
+        Assert.NotEqual(raw, fresh);
         await Assert.ThrowsAsync<BusinessValidationException>(() => auth.VerifyEmailAsync(new(raw), default));
-        await auth.VerifyEmailAsync(new(sender.Messages[0]), default);
+        await auth.VerifyEmailAsync(new(fresh), default);
         await auth.ResendVerificationAsync(new(user.Email), default);
-        Assert.Single(sender.Messages);
+        Assert.Single(sender.Sent);
     }
 
     [Fact]
@@ -104,15 +99,15 @@ public sealed partial class ApiWorkflowTests
         var (user, raw) = await SeedVerificationAsync(database);
         var sender = new CapturingSender();
         var account = new UserAccountService(database.Context, TimeProvider.System, sender,
-            new FakeImageStorage(), NullLogger<UserAccountService>.Instance);
+            new FakeImageStorage(), AppSettings, NullLogger<UserAccountService>.Instance);
         var response = await account.UpdateAsync(user.UserId, new("new@example.com", null), default);
-        Assert.False(response.EmailVerified);
-        Assert.False(response.IsActive);
-        Assert.Single(sender.Messages);
+        // The address only changes when the link sent to the new one is used.
+        Assert.Equal(user.Email, response.Email);
+        Assert.Equal("new@example.com", Assert.Single(sender.Sent).Email);
         database.Context.ChangeTracker.Clear();
-        var auth = VerificationAuth(database, sender);
+        var auth = CreateAuth(database.Context, sender);
         await Assert.ThrowsAsync<BusinessValidationException>(() => auth.VerifyEmailAsync(new(raw), default));
-        await auth.VerifyEmailAsync(new(sender.Messages[0]), default);
+        await auth.VerifyEmailAsync(new(TokenFrom(sender.Sent[0].Body)), default);
         var persisted = await database.Context.Users.AsNoTracking().SingleAsync();
         Assert.Equal("new@example.com", persisted.Email);
         Assert.NotNull(persisted.EmailVerifiedAt);
@@ -121,12 +116,14 @@ public sealed partial class ApiWorkflowTests
     [Fact]
     public void TemplateContainsClickableLinkAndPlainTextFallback()
     {
-        var url = "https://eldorado-fts.dk/api/v1/auth/email/verify?token=" + SecretToken.Create();
-        var (html, text) = VerificationEmailTemplate.Create(url);
-        Assert.Contains("Nutrify", html);
-        Assert.Contains("Verify email</a>", html);
-        Assert.Contains(url, html);
-        Assert.Contains(url, text);
-        Assert.Contains("24 hours", text);
+        var token = SecretToken.Create();
+        var url = "https://eldorado-fts.dk/api/v1/auth/email/verify?token=" + token;
+        var mail = AccountEmails.Verification("https://eldorado-fts.dk/", token);
+        Assert.Contains("Nutrify", mail.Subject);
+        Assert.Contains($"<a href=\"{url}\">", mail.Html);
+        Assert.Contains("<meta charset=\"utf-8\">", mail.Html);
+        Assert.Contains(url, mail.Text);
+        Assert.Contains("24 timer", mail.Text);
+        Assert.Contains("24 hours", mail.Html);
     }
 }

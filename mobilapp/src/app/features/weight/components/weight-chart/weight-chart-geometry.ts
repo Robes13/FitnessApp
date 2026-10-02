@@ -3,9 +3,10 @@ import { roundTo } from '../../../../core/utils/math';
 /**
  * The weight chart's geometry – a port of the design's `pts` / `linePath` / `areaPath` / `goalLineY`.
  *
- * All numbers are SVG units in `viewBox="0 0 320 110"`: the curve fills x 0–320 and y 10–100, and
- * the bottom 10 units are room for the rounded end dot. The scale always stretches so both all
- * points and the goal line are included (±0.5 kg padding).
+ * All numbers are SVG units in `viewBox="0 0 320 110"`: x 0–320 is the range's time axis (its start
+ * to now – the footer's "-3 uger" … "I dag"), so each weigh-in sits at its date; y 10–100 is the
+ * weight, and the bottom 10 units are room for the rounded end dot. The scale always stretches so
+ * both all points and the goal line are included (±0.5 kg padding).
  */
 export interface WeightChartGeometry {
   /** `M…L…` through all points. */
@@ -14,9 +15,16 @@ export interface WeightChartGeometry {
   readonly areaPath: string;
   /** The y of the dashed goal line. */
   readonly goalLineY: number;
-  /** The end dot's position (last point). */
+  /** The end dot's position (the newest weigh-in). */
   readonly lastX: number;
   readonly lastY: number;
+}
+
+/** A weigh-in on the chart. `WeightPoint` from `WeightLogService.seriesFor()` fits. */
+export interface WeightChartPoint {
+  readonly kg: number;
+  /** Where the weigh-in sits on the range's time axis: 0 = the range's start, 1 = now. */
+  readonly position: number;
 }
 
 export const WEIGHT_CHART_WIDTH = 320;
@@ -39,30 +47,32 @@ const EMPTY_GEOMETRY: WeightChartGeometry = {
 };
 
 export function computeWeightChartGeometry(
-  valuesKg: readonly number[],
+  points: readonly WeightChartPoint[],
   goalKg: number,
 ): WeightChartGeometry {
-  const lastIndex = valuesKg.length - 1;
-  const lastValue = valuesKg[lastIndex];
-  if (valuesKg.length < 2 || lastValue === undefined) {
+  const first = points[0];
+  const last = points[points.length - 1];
+  if (points.length < 2 || first === undefined || last === undefined) {
     return EMPTY_GEOMETRY;
   }
 
+  const valuesKg = points.map((point) => point.kg);
   const min = Math.min(...valuesKg, goalKg) - PADDING_KG;
   const max = Math.max(...valuesKg, goalKg) + PADDING_KG;
-  const x = (index: number): number => roundTo((index / lastIndex) * WEIGHT_CHART_WIDTH, 1);
+  const x = (position: number): number => roundTo(position * WEIGHT_CHART_WIDTH, 1);
   const y = (kg: number): number =>
     roundTo(BASELINE_Y - ((kg - min) / (max - min)) * PLOT_HEIGHT, 1);
 
-  const linePath = valuesKg
-    .map((kg, index) => `${index ? 'L' : 'M'}${x(index)} ${y(kg)}`)
+  const linePath = points
+    .map((point, index) => `${index ? 'L' : 'M'}${x(point.position)} ${y(point.kg)}`)
     .join(' ');
+  const lastX = x(last.position);
 
   return {
     linePath,
-    areaPath: `${linePath} L${WEIGHT_CHART_WIDTH} ${BASELINE_Y} L0 ${BASELINE_Y} Z`,
+    areaPath: `${linePath} L${lastX} ${BASELINE_Y} L${x(first.position)} ${BASELINE_Y} Z`,
     goalLineY: y(goalKg),
-    lastX: WEIGHT_CHART_WIDTH,
-    lastY: y(lastValue),
+    lastX,
+    lastY: y(last.kg),
   };
 }

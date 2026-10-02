@@ -35,20 +35,82 @@
       />
     }
 
+    @if (notice(); as message) {
+      <app-ui-form-error class="food-add-sheet__error" tone="negative" [message]="message" />
+    }
+
     <div class="food-add-sheet__scroll">
       @if (showPicker()) {
         <app-food-picker
           [startStep]="startStep()"
+          [barcode]="barcode()"
           [editItem]="editEntry()"
-          [editBaseItem]="editBaseItem()"
           [ctaVerb]="ctaVerb()"
           [saveAndLogLabel]="saveAndLogLabel()"
+          [busy]="busy()"
           (picked)="onPicked($event)"
           (customFoodCreated)="customFoodCreated.emit($event)"
-          (customFoodEdited)="customFoodEdited.emit($event)"
           (scanRequested)="scanRequested.emit()"
           (cancelled)="closed.emit()"
         />
+      } @else if (collectionsStatus() === 'loading') {
+        <div class="food-add-sheet__status">
+          <app-ui-spinner size="lg" />
+        </div>
+      } @else if (collectionsStatus() === 'error') {
+        <div class="food-add-sheet__status">
+          <app-ui-empty-state
+            class="food-add-sheet__status-message"
+            [message]="'collections.page.loadError' | translate"
+          />
+          <button
+            app-ui-button
+            type="button"
+            variant="outline"
+            size="md"
+            (click)="retryCollections()"
+          >
+            {{ 'collections.page.retry' | translate }}
+          </button>
+        </div>
+      } @else if (chosen(); as collection) {
+        <div class="food-add-sheet__confirm">
+          <span class="food-add-sheet__collection-main">
+            <span class="food-add-sheet__icon">
+              <app-ui-icon name="utensils" size="sm" />
+            </span>
+            <span class="food-add-sheet__collection-text">
+              <span class="food-add-sheet__collection-name">{{ collection.name }}</span>
+              <span class="food-add-sheet__collection-sub">{{ collection.subtitle }}</span>
+            </span>
+          </span>
+          <p class="food-add-sheet__confirm-totals">{{ collection.totalsLabel }}</p>
+          <button
+            app-ui-button
+            variant="primary"
+            size="lg"
+            block
+            type="button"
+            class="food-add-sheet__confirm-log"
+            [disabled]="busy()"
+            [loading]="logging()"
+            (click)="logChosen()"
+          >
+            {{ logLabel() }}
+          </button>
+          <button
+            app-ui-button
+            variant="subtle"
+            size="sm"
+            block
+            type="button"
+            class="food-add-sheet__confirm-cancel"
+            [disabled]="rowsBusy()"
+            (click)="cancelChosen()"
+          >
+            {{ 'food.addSheet.cancelCollection' | translate }}
+          </button>
+        </div>
       } @else if (collectionRows().length === 0) {
         <app-ui-empty-state [message]="emptyMessageKey | translate" />
       } @else {
@@ -57,11 +119,13 @@
             <button
               type="button"
               class="food-add-sheet__collection"
+              [disabled]="rowsBusy()"
+              [attr.aria-busy]="rowsBusy() || null"
               (click)="onCollectionPicked(row)"
             >
               <span class="food-add-sheet__collection-main">
-                <span class="food-add-sheet__icon" [class]="row.toneClass">
-                  <app-ui-icon [name]="row.icon" size="sm" />
+                <span class="food-add-sheet__icon">
+                  <app-ui-icon name="utensils" size="sm" />
                 </span>
                 <span class="food-add-sheet__collection-text">
                   <span class="food-add-sheet__collection-name">{{ row.name }}</span>

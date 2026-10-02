@@ -5,9 +5,21 @@
   <key>CAPACITOR_DEBUG</key>
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Kameraet bruges til at scanne stregkoder på madvarer, så du kan logge dem.</string>
+	<string>The camera is used to scan barcodes on food so you can log it, and to take your profile photo.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Nutrify reads your steps for the last 28 days when your activity level is due for an update (at most once a month), and sends only the average, so your activity level and calorie target fit you.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>da</string>
+		<string>en</string>
+	</array>
 	<key>CFBundleDisplayName</key>
         <string>Nutrify</string>
 	<key>CFBundleExecutable</key>

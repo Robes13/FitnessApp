@@ -5,22 +5,40 @@
   titleAccentTone="negative"
   titleSize="sm"
   hideClose
+  [closeOnEscape]="!busy()"
   scrollable
   layer="overlay"
+  (closed)="closed.emit()"
 >
   <span sheetLeading class="profile-delete-account-sheet__mark" aria-hidden="true">
     <app-ui-icon name="trash" size="xl" />
   </span>
 
   <p class="profile-delete-account-sheet__body">
-    {{ 'profile.deleteAccountSheet.body' | translate }}
+    {{ body() | translate }}
   </p>
 
+  <app-ui-form-error tone="negative" [message]="errorMessage()" />
+
   <div sheetFooter class="profile-delete-account-sheet__actions">
-    <button app-ui-button type="button" variant="danger" block (click)="confirmed.emit()">
+    <button
+      app-ui-button
+      type="button"
+      variant="danger"
+      block
+      [loading]="busy()"
+      (click)="confirmed.emit()"
+    >
       {{ 'profile.deleteAccountSheet.confirm' | translate }}
     </button>
-    <button app-ui-button type="button" variant="outline" block (click)="closed.emit()">
+    <button
+      app-ui-button
+      type="button"
+      variant="outline"
+      block
+      [disabled]="busy()"
+      (click)="closed.emit()"
+    >
       {{ 'profile.deleteAccountSheet.cancel' | translate }}
     </button>
   </div>

@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  booleanAttribute,
   computed,
   input,
   model,
@@ -26,10 +25,7 @@ const KEY_DELTAS: Readonly<Record<string, number>> = {
   ArrowDown: 2,
 };
 
-/**
- * The four meals as a 2×2 grid (the design's `newColMeals` and `recipeMealPicks`).
- * Used both in "New collection" (`filled`: filled background) and on the recipe screen (transparent).
- */
+/** The four meals as a 2×2 grid (the design's `recipeMealPicks`) – the meal a collection is logged under. */
 @Component({
   selector: 'app-meal-picker',
   imports: [TranslatePipe],
@@ -43,8 +39,6 @@ const KEY_DELTAS: Readonly<Record<string, number>> = {
 })
 export class MealPicker {
   readonly value = model.required<MealId>();
-  /** Unselected buttons get a faint fill instead of being transparent. */
-  readonly filled = input(false, { transform: booleanAttribute });
   /** The group's accessible name – "Vælg måltid" when not given. */
   readonly ariaLabel = input<string>();
 

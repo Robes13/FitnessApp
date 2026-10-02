@@ -1,8 +1,8 @@
+import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of } from 'rxjs';
-import { STORAGE_KEY } from '../../constants/storage-key';
 import { ProductLookupResult, ScannedProduct } from '../../models/barcode';
-import { createFakeStorage } from '../../testing/fake-document';
+import { flushTestFoodLog, testFood } from '../../testing/fixtures';
 import { provideCoreTestEnvironment } from '../../testing/test-providers';
 import { BarcodeFlowService } from './barcode-flow';
 import { BarcodeScannerService } from '../barcode-scanner/barcode-scanner';
@@ -24,30 +24,23 @@ const JUICE: ScannedProduct = {
 };
 
 describe('BarcodeFlowService', () => {
+  /** Barcodes asked of Open Food Facts. */
+  let offLookups: string[];
+
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
   function setup(): BarcodeFlowService {
+    offLookups = [];
     TestBed.configureTestingModule({
       providers: [
-        ...provideCoreTestEnvironment({
-          storage: createFakeStorage({
-            [STORAGE_KEY.CUSTOM_FOODS]: [
-              {
-                id: 'food-1',
-                name: 'Proteinbar',
-                quantity: '1 stk',
-                kcal: 200,
-                protein: 20,
-                carbs: 0,
-                fat: 0,
-                isCustom: true,
-              },
-            ],
-          }),
-        }),
+        ...provideCoreTestEnvironment(),
         {
           provide: ProductLookupService,
           useValue: {
-            lookup: (): ReturnType<ProductLookupService['lookup']> =>
-              of<ProductLookupResult>({ status: 'found', product: JUICE }),
+            lookup: (barcode: string): ReturnType<ProductLookupService['lookup']> => {
+              offLookups.push(barcode);
+              return of<ProductLookupResult>({ status: 'found', product: JUICE });
+            },
           },
         },
       ],
@@ -66,6 +59,52 @@ describe('BarcodeFlowService', () => {
     expect(scanner.scanCount()).toBe(1);
   });
 
+  it('answers from the user own catalogue before Open Food Facts (3.1-6a)', async () => {
+    const flow = setup();
+    flushTestFoodLog([
+      testFood({
+        foodId: 3,
+        name: 'Min juice',
+        barcode: JUICE.barcode,
+        caloriesPer100: 42.5,
+        carbohydratesPer100: 10.6,
+        servings: [{ foodServingId: 1, unit: 'Milliliter', gramsPerUnit: 1 }],
+      }),
+      testFood({
+        foodId: 4,
+        name: 'Ukendt bar',
+        barcode: '5799999999991',
+        caloriesPer100: 180,
+        servings: [{ foodServingId: 2, unit: 'Piece', gramsPerUnit: 100 }],
+      }),
+    ]);
+
+    await expect(firstValueFrom(flow.lookup(JUICE.barcode))).resolves.toEqual({
+      status: 'found',
+      product: {
+        barcode: JUICE.barcode,
+        unit: 'ml',
+        item: {
+          id: '3',
+          name: 'Min juice',
+          quantity: '100 ml',
+          kcal: 42.5,
+          protein: 0,
+          carbs: 10.6,
+          fat: 0,
+          isCustom: true,
+        },
+        servingGrams: null,
+      },
+    });
+    const bar = await firstValueFrom(flow.lookup('5799999999991'));
+    expect(bar.status === 'found' && bar.product).toMatchObject({ unit: 'g', servingGrams: 100 });
+    expect(offLookups).toEqual([]);
+
+    await firstValueFrom(flow.lookup('4000000000000'));
+    expect(offLookups).toEqual(['4000000000000']);
+  });
+
   it('scales a product in its own unit', () => {
     expect(setup().scale(JUICE, 250)).toEqual({
       ...JUICE.item,
@@ -74,34 +113,6 @@ describe('BarcodeFlowService', () => {
       protein: 3,
       carbs: 25,
       fat: 0,
-    });
-  });
-
-  it('checks custom food names trimmed and case-insensitively', () => {
-    const flow = setup();
-
-    expect(flow.isCustomFoodNameTaken('  proteinbar ')).toBe(true);
-    expect(flow.isCustomFoodNameTaken('Skyr')).toBe(false);
-    expect(flow.isCustomFoodNameTaken('   ')).toBe(false);
-  });
-
-  it('builds the custom food from the "Unknown item" form', () => {
-    const food = setup().toCustomFood({
-      name: ' Rugbrød ',
-      quantity: '',
-      kcal: 99.6,
-      protein: null,
-    });
-
-    expect(food).toEqual({
-      id: expect.stringMatching(/^food-/),
-      name: 'Rugbrød',
-      quantity: '1 portion',
-      kcal: 100,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      isCustom: true,
     });
   });
 });

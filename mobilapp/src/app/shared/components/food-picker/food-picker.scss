@@ -46,12 +46,6 @@
     overflow-y: auto;
   }
 
-  &__loading {
-    display: flex;
-    justify-content: center;
-    padding: var(--space-4) 0;
-  }
-
   &__empty {
     margin-top: var(--space-2);
   }
@@ -88,7 +82,7 @@
     padding: var(--space-0-5) var(--space-2);
     border-radius: var(--radius-pill);
     background: var(--color-positive-soft);
-    color: var(--color-positive);
+    color: var(--color-positive-text);
     font-size: var(--font-size-3xs);
     font-weight: var(--font-weight-bold);
     letter-spacing: var(--letter-spacing-wider);
@@ -201,9 +195,13 @@
     }
   }
 
-  /* New custom item */
+  /*
+   * New custom item's fields and the portion step's middle part: only they scroll, so the heading
+   * and the buttons stay in view – also above the keyboard.
+   */
 
-  &__fields {
+  &__fields,
+  &__portion-body {
     @include mixins.hide-scrollbar;
 
     display: flex;
@@ -215,6 +213,10 @@
     margin: 0 calc(-1 * var(--space-1));
     padding: var(--space-0-5) var(--space-1);
     overflow-y: auto;
+  }
+
+  &__portion-body {
+    gap: var(--space-3-5);
   }
 
   &__field {
@@ -328,13 +330,9 @@
     font-size: var(--font-size-display-4xl);
     text-align: right;
     outline: none;
-    appearance: textfield;
 
-    &::-webkit-inner-spin-button,
-    &::-webkit-outer-spin-button {
-      margin: 0;
-      appearance: none;
-    }
+    /* The box takes every pointer, so dragging works on the digits; a tap focuses via the label. */
+    pointer-events: none;
   }
 
   &__amount-unit {
@@ -394,13 +392,6 @@
     margin-top: var(--space-0-5);
     color: var(--color-text-secondary);
     font-size: var(--font-size-2xs);
-  }
-
-  &__edit-macros {
-    display: flex;
-    flex: none;
-    flex-direction: column;
-    gap: var(--space-2-5);
   }
 
   &__confirm {

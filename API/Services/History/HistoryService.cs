@@ -5,6 +5,9 @@ using FitnessApp.Api.Domain.Enums;
 using FitnessApp.Api.DTOs.Common;
 using FitnessApp.Api.DTOs.History;
 using FitnessApp.Api.Exceptions;
+using FitnessApp.Api.Services.FoodLogs;
+using FitnessApp.Api.Services.Goals;
+using FitnessApp.Api.Services.Weights;
 using FitnessApp.Api.Utilities;
 using Microsoft.EntityFrameworkCore;
 
@@ -66,8 +69,26 @@ public sealed class HistoryService(FitnessAppDbContext context) : IHistoryServic
         var last = rows.LastOrDefault();
         var nextCursor = hasMore && last is not null
             ? Encode(last.OccurredAt, last.Type, last.Id) : null;
-        return new CursorPage<HistoryEventDto>(rows.Select(row =>
-            new HistoryEventDto((HistoryEventType)row.Type, row.OccurredAt, row.Id)).ToList(),
+
+        // Hydrate the page with at most three primary-key lookups, each scoped to the owner.
+        int[] IdsOf(HistoryEventType type) => rows.Where(row => row.Type == (int)type).Select(row => row.Id).ToArray();
+        var foodLogIds = IdsOf(HistoryEventType.FoodLogged);
+        var weightLogIds = IdsOf(HistoryEventType.WeightRecorded);
+        var goalIds = IdsOf(HistoryEventType.GoalUpdated);
+        var foodLogs = await _context.FoodLogs.AsNoTracking().Include(log => log.Food)
+            .Where(log => log.UserId == userId && foodLogIds.Contains(log.FoodLogId))
+            .ToDictionaryAsync(log => log.FoodLogId, FoodLogService.ToDto, cancellationToken);
+        var weightLogs = await _context.WeightLogs.AsNoTracking()
+            .Where(log => log.UserId == userId && weightLogIds.Contains(log.WeightLogId))
+            .ToDictionaryAsync(log => log.WeightLogId, WeightLogService.ToDto, cancellationToken);
+        var userGoals = await _context.UserGoals.AsNoTracking()
+            .Where(goal => goal.UserId == userId && goalIds.Contains(goal.UserGoalId))
+            .ToDictionaryAsync(goal => goal.UserGoalId, UserGoalService.ToDto, cancellationToken);
+        return new CursorPage<HistoryEventDto>(rows.Select(row => new HistoryEventDto(
+                (HistoryEventType)row.Type, row.OccurredAt, row.Id,
+                row.Type == (int)HistoryEventType.FoodLogged ? foodLogs.GetValueOrDefault(row.Id) : null,
+                row.Type == (int)HistoryEventType.WeightRecorded ? weightLogs.GetValueOrDefault(row.Id) : null,
+                row.Type == (int)HistoryEventType.GoalUpdated ? userGoals.GetValueOrDefault(row.Id) : null)).ToList(),
             nextCursor, hasMore);
     }
 

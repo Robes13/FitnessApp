@@ -9,6 +9,7 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
   [editItem]="editing()"
   [ctaVerb]="editing() ? 'Gem' : 'Tilføj'"
   [saveAndLogLabel]="'Gem og log under ' + mealLabel().toLowerCase()"
+  [busy]="saving()"
   (picked)="log($event)"
   (customFoodCreated)="saveCustom($event)"
   (scanRequested)="openScanner()"
@@ -19,59 +20,99 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
 
 ## Trin
 
-| Trin       | Indhold                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `search`   | Søgefelt ("Søg mad, f.eks. havregryn") + orange scan-knap. Resultater fra `FoodSearchService` (egne varer først med grøn "Egen vare"-pille, tom søgning viser de første seks). Spinner mens der søges, `UiEmptyState` uden match: "Ingen varer matcher din søgning." efter en søgning, "Du har ingen varer endnu. …" før. Nederst "Opret "…" som ny vare" / "Opret en vare selv".                                                           |
-| `new-food` | "Ny egen vare" med typed reactive form: Navn, Portion (mængde + enhed g/stk/port.), Kalorier, Protein (g) og en fold-ud med Kulhydrat/Fedt. Primær knap (`saveAndLogLabel`) er slået fra, indtil der er navn og kalorier > 0. Findes navnet allerede blandt brugerens egne varer (trimmet, uden forskel på store/små bogstaver), vises fejlen med `app-ui-form-error`, og begge knapper er slået fra. "Gem uden at logge" gemmer kun.       |
-| `portion`  | Varens navn og "Standard: 250 g · 380 kcal", −/+ omkring et tal, der også kan trækkes til siden (8 px pr. trin), hurtigvalg (½ · 1× · 2× · 3× for gram, 1–4 for styk), fire fliser med skalerede makroer og knappen `${ctaVerb} ${mængde} ${enhed}`. Redigeres en egen vare (`editBaseItem`), vises også felter til kcal/protein/kulhydrat/fedt pr. varens standardportion; ugyldige tal vises med `app-ui-form-error` og slår knappen fra. |
+| Trin       | Indhold                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `search`   | Søgefelt ("Søg mad, f.eks. havregryn") + orange scan-knap. Resultater fra `FoodSearchService` (brugerens katalog med grøn "Egen vare"-pille, tom søgning viser de første seks – søges igen, når kataloget ændrer sig). `UiEmptyState` uden match: "Ingen varer matcher din søgning." efter en søgning, "Du har ingen varer endnu. …" før. Nederst "Opret "…" som ny vare" / "Opret en vare selv".                                                                                                                                                                                                                                                      |
+| `new-food` | "Ny egen vare" med typed reactive form: Navn, Portion (mængde + enhed g/stk/port.), Kalorier, Protein (g) og en fold-ud med Kulhydrat/Fedt. Hver fejl står under sit eget felt (se "Grænser"). Knapperne er kun slået fra, mens forælderen gemmer: et tryk på en ugyldig formular gemmer intet, men siger under felterne, hvad der mangler (3.0-7a), og folder Kulhydrat/Fedt ud, hvis fejlen er der. Findes navnet allerede blandt brugerens egne varer (trimmet, uden forskel på store/små bogstaver), står det under Navn. "Gem uden at logge" gemmer kun.                                                                                          |
+| `portion`  | Varens navn og "Standard: 250 g · 380 kcal", −/+ omkring et tal, der også kan trækkes til siden (8 px pr. trin), hurtigvalg (½ · 1× · 2× · 3× for gram og ml, 1–4 for styk), fire fliser med skalerede makroer og knappen `${ctaVerb} ${mængde} ${enhed}`. Kun mængden kan ændres (også under redigering, spec 3.3). Bliver én logning for stor, slås knappen fra med _Det er for meget til én logning – del den op._ Makroerne skaleres fra varens madvare i kataloget (API'ets decimaler), når den findes i samme enhed – en logget række eller samlingsvare har allerede afrundede tal – og afrundes kun én gang, så tallene er dem, API'et logger. |
 
 ## Inputs
 
-| Input             | Standard   | Betydning                                                                                               |
-| ----------------- | ---------- | ------------------------------------------------------------------------------------------------------- |
-| `initialQuery`    | `''`       | Forudfyldt søgetekst                                                                                    |
-| `startStep`       | `'search'` | `search` eller `new-food` (scannerens "Varen har ingen stregkode" åbner direkte i formularen)           |
-| `editItem`        | `null`     | Redigér en logget vare: starter i `portion` med varens egen mængde som basis                            |
-| `editBaseItem`    | `null`     | Den egne vare, `editItem` blev logget fra. Bliver basis for skaleringen og gør kcal/makroer redigerbare |
-| `ctaVerb`         | `'Tilføj'` | `Tilføj` eller `Gem` i portionsknappen (en nøgle – teksten oversættes via `CTA_LABEL_KEY`)              |
-| `saveAndLogLabel` | (påkrævet) | Primær knap i "Ny egen vare", fx `'Gem og log under morgenmad'` – forælderen kender måltidet            |
-| `showScan`        | `true`     | Vis scan-knappen ved søgefeltet                                                                         |
+| Input             | Standard   | Betydning                                                                                                                                     |
+| ----------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `initialQuery`    | `''`       | Forudfyldt søgetekst                                                                                                                          |
+| `startStep`       | `'search'` | `search` eller `new-food` (scannerens "Varen har ingen stregkode" åbner direkte i formularen)                                                 |
+| `barcode`         | `null`     | Stregkoden, scanneren ikke fandt (3.1-6a): den egne vare fra formularen, vælgeren starter på, får den med (ikke en vare fra "Opret …"-rækken) |
+| `editItem`        | `null`     | Redigér en logget vare: starter i `portion` med varens egen mængde som basis; kun mængden kan ændres                                          |
+| `ctaVerb`         | `'Tilføj'` | `Tilføj` eller `Gem` i portionsknappen (en nøgle – teksten oversættes via `CTA_LABEL_KEY`)                                                    |
+| `saveAndLogLabel` | (påkrævet) | Primær knap i "Ny egen vare", fx `'Gem og log under morgenmad'` – forælderen kender måltidet                                                  |
+| `saveOnlyLabel`   | `null`     | Sekundær knap i "Ny egen vare" (kun gem); `null` = "Gem uden at logge". Samlingsarket sender sin egen                                         |
+| `showScan`        | `true`     | Vis scan-knappen ved søgefeltet                                                                                                               |
+| `busy`            | `false`    | Forælderen gemmer: primærknapperne viser spinner, og tryk ignoreres (ingen dobbelte kald)                                                     |
 
 ## Outputs
 
-| Output              | Betydning                                                                                                                                                        |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `picked`            | `{ item, amount, unit }`. `item` har makroer skaleret med `NutritionCalculator.scaleMacros` og `quantity` = `` `${amount} ${unit}` ``, så den kan logges direkte |
-| `customFoodCreated` | Ny egen vare (`isCustom: true`). Udsendes både for "Gem uden at logge" og "Gem og log …" – i det sidste tilfælde følger `picked` med samme vare lige efter       |
-| `customFoodEdited`  | Den egne vare med rettede kcal/makroer (standardportion). Udsendes lige før `picked`, kun når `editBaseItem` er en egen vare                                     |
-| `scanRequested`     | Scan-knappen blev trykket                                                                                                                                        |
-| `stepChange`        | `'search' \| 'new-food' \| 'portion'` – kun ved skift, ikke for starttrinnet                                                                                     |
-| `cancelled`         | Tilbage fra portionstrinnet, når der ikke er en søgning at vende tilbage til (`editItem` sat). Uden `editItem` går tilbage-knappen selv til søgningen            |
+| Output              | Betydning                                                                                                                                                                                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `picked`            | `{ item, amount, unit }`. `item` har makroer skaleret med `NutritionCalculator.scaleMacros` og `quantity` = `` `${amount} ${unit}` ``, så den kan logges direkte. Også "Gem og log …" (en ny egen vare, id `food-…`) – `FoodLogService.add()` opretter den selv |
+| `customFoodCreated` | Ny egen vare (`isCustom: true`) fra "Gem uden at logge"                                                                                                                                                                                                         |
+| `scanRequested`     | Scan-knappen blev trykket                                                                                                                                                                                                                                       |
+| `stepChange`        | `'search' \| 'new-food' \| 'portion'` – kun ved skift, ikke for starttrinnet                                                                                                                                                                                    |
+| `cancelled`         | Tilbage fra portionstrinnet, når der ikke er en søgning at vende tilbage til (`editItem` sat). Uden `editItem` går tilbage-knappen selv til søgningen                                                                                                           |
 
 ## Beslutninger
 
 - **Core-services:** `FoodSearchService` og `NutritionCalculator` som i spec'en, og
   `FoodLogService.hasCustomFoodNamed` til dubletkontrollen af navne. Derudover
   `newId()`, fordi `FoodItem.id` er påkrævet, og den nye vare skal kunne sendes som en
-  hel `FoodItem`. Id'et (præfiks `CUSTOM_FOOD_ID_PREFIX`) er varens endelige id: forælderen
-  gemmer den med `FoodLogService.addCustomFood(input, item.id)`, så en vare fra "Gem og log …"
-  logges med samme id som den gemte egne vare og senere kan redigeres (`editBaseItem`).
-  Dubletreglen håndhæves også i `FoodLogService` (`DuplicateCustomFoodNameError`); vælgeren
-  tjekker blot på forhånd for at vise fejlen i formularen.
-- **Søgningen** er en `toObservable(request) → switchMap(search)`-kæde, så en ny søgetekst
-  afbryder den forrige. Efter en gemt egen vare søges der igen med tom tekst, så den nye
-  vare står øverst, selv om teksten var tom i forvejen (intern `searchVersion`).
+  hel `FoodItem`. Id'et (præfiks `CUSTOM_FOOD_ID_PREFIX`) er midlertidigt: API'et giver varen
+  dens rigtige id, når den gemmes. "Gem og log …" udsender kun `picked`, så forælderens
+  `FoodLogService.add()` opretter varen, før den logges – ingen kapløb mellem to kald.
+  Dubletreglen håndhæves af API'et (409 → `DuplicateCustomFoodNameError`); vælgeren tjekker
+  blot på forhånd for at vise fejlen i formularen.
+- **Trinnet bliver stående efter `picked`.** Begge forældre (Mad-arket og "Ny samling")
+  lukker vælgeren, når valget er gemt, og `busy` dækker ventetiden. Fejler gemningen, står
+  formularen eller portionen der stadig med brugerens tal. "Gem uden at logge" bliver også på
+  formularen, til varen er i kataloget med sin enhed (fejlede dens serving, vises den som
+  `100 g`, og samme tryk heler den), og går så tilbage til en tom søgning, hvor varen står.
+  Et navn, vælgeren lige har sendt, tæller ikke som taget, så længe formularen er uændret – blev
+  varen oprettet, men fejlede logningen, kan samme tryk prøves igen (`ensureFood` /
+  `addCustomFood` genbruger varen ud fra navnet). Ændres formularen bagefter, er navnet taget:
+  varen findes allerede med de første tal, og de nye ville ellers blive logget med dem.
+- **Søgeresultaterne** viser katalogets tal afrundet (`resultRows`); selve varen beholder
+  decimalerne, så portionen skaleres fra dem. Kcal i listen, "Standard: …", fliserne og
+  grænsen i fejlbeskeden skrives med `formatInteger` (`'1.600 kcal'`, `'Højst 9.999 kcal …'`).
+- **Søgningen** er en `toObservable(request) → switchMap(search)`-kæde med søgeteksten og
+  kataloget (`FoodLogService.foods`) som kilde, så en ny tekst afbryder den forrige, og en ny
+  egen vare vises, så snart den er gemt. Søgningen svarer straks, så der er ingen spinner.
+- **Grænser** (API'ets `numeric(7,2)`, ellers 500): kalorier 1–9999 og hver makro 0–999 g pr.
+  portion, mængde ≥ 1, navn højst 150 tegn; for gram også højst 900 kcal pr. 100 g og ikke
+  flere gram makroer end portionen vejer. Hver fejl står under det felt, den handler om
+  (`errors`, `FIELD_ERROR_KEY`): Navn (`nameRequired` · `nameTooLong` · `duplicateName`),
+  Portion (`amountMin`, og `portionTooSmall` for gram-reglen – `amountRequired`, når mængden er
+  tom og derfor tæller som 1 g), Kalorier (`kcalRequired` · `kcalError` · `kcalTooLarge`) og hver
+  makro (`macroNegative` · `macroTooLarge`). De påkrævede felter (navn, kalorier) siger først
+  noget efter et forsøg på at gemme; de andre fejl vises, så snart værdien er forkert.
+  Portionstrinnet blokerer en logning over
+  `FOOD_LOG_MAX_KCAL` / `FOOD_LOG_MAX_MACRO_GRAMS` (`amountTooLarge`) – det gælder også
+  samlingernes varer. Enhederne er stadig g / stk / port.
+- **Enheden vises på brugerens sprog og i flertal** fra 2 (`formatQuantity` /
+  `formatQuantityUnit` i `core/utils/quantity.ts`): "Standard: 1 portion", hurtigvalgene
+  "1 portion · 2 portioner · …", enheden ved tallet og "Tilføj 2 portioner" (engelsk "servings",
+  "pcs"). `picked` og `quantity` beholder tokenet (`'2 portion'`), som API-mapningen læser.
 - **Mængden** er en `linkedSignal` med varen som kilde: hver ny vare nulstiller til dens
   standardportion. `null` betyder, at feltet er tømt under indtastning; knappen er slået
   fra, indtil der står et tal over 0 (designet ville ellers logge "0 g").
-- **Træk-til-justér** sidder på boksen omkring tallet, ikke på selve feltet (som i designet),
-  så almindelig indtastning stadig virker. `touch-action: none` + pointer capture holder
-  gestussen, selv om fingeren forlader boksen.
+- **Kun midten scroller.** I "Ny egen vare" scroller felterne (`__fields`) og i portionstrinnet
+  alt mellem overskriften og knappen (`__portion-body`), mens overskrift og knapper står fast.
+  Så er "Tilføj …" helt synlig over tastaturet – også når fejlen om én logning står der. Folder
+  Kulhydrat/Fedt ud (via "Flere detaljer" eller en fejl i dem), scrolles de frem
+  (`scrollIntoView({ block: 'nearest' })`), for med stor systemskrift lander de under den
+  synlige del af formularen.
+- **Træk-til-justér** sidder på boksen omkring tallet og virker også på selve tallet, som hintet
+  siger ("Hold på tallet og træk"). Feltet har `pointer-events: none`, så et hold aldrig starter
+  en tekstmarkering, og boksen er en `<label>`, så et tryk uden træk fokuserer feltet til
+  indtastning. Under ét trin (8 px) ændres mængden ikke, så et tryk ikke runder fx 0,5 stk op.
+  `touch-action: none` + pointer capture holder gestussen, selv om fingeren forlader boksen.
+- **Talfelterne** (mængde, kalorier, makroer) tager decimalkomma: `UiTextInput type="number"` og
+  portionsfeltet er tekstfelter med `inputmode="decimal"`, der læses med `parseDecimal`
+  (`1,5` stk = 1,5). Androids WebView smed ellers kommaet væk i et `type="number"`-felt.
 - **Egen vare** følger designets `ownFood`: navn og kalorier kræves; tom mængde bliver `1`,
-  tomme makroer `0`. `Validators.required` godtager mellemrum, så navnet har en egen
+  tomme makroer `0`. Makroerne pr. portion omregnes til API'ets pr. 100 i `FoodLogService`
+  (`toPer100`; stk/portion via en syntetisk serving på 100 g). `Validators.required` godtager mellemrum, så navnet har en egen
   `notBlank`-validator.
-- **Genbrug:** `UiTextInput`, `UiIconButton`, `UiIcon`, `UiChip`, `UiButton`, `UiSpinner` og
-  `UiEmptyState`. Enheds- og portionschips er `UiChip` (pille) – designet tegner enhederne
+- **Genbrug:** `UiTextInput`, `UiIconButton`, `UiIcon`, `UiChip`, `UiButton` (`loading`),
+  `UiFormError` og `UiEmptyState`. Enheds- og portionschips er `UiChip` (pille) – designet tegner enhederne
   med 14 px radius, men samme farvelogik. Tallet i portionstrinnet er et nøgent
   display-skrift-felt som i designet og derfor ikke `UiTextInput`.
 - Talfeltet er `--size-portion-field` (designets 96 px) bredt, og plus-cirklen i

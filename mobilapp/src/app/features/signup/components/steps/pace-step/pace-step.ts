@@ -3,6 +3,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { PACES } from '../../../../../core/constants/nutrition';
 import { PaceId } from '../../../../../core/models/profile';
 import { injectTranslate } from '../../../../../core/services/language/translate';
+import { formatInteger } from '../../../../../core/utils/date-format';
 import { UiOptionCard } from '../../../../../shared/components/ui-option-card/ui-option-card';
 import { SignupStateService } from '../../../services/signup-state';
 
@@ -40,7 +41,7 @@ export class PaceStep {
     const params = {
       pace: this.t(pace.labelKey),
       rate: this.t(pace.rateLabelKey),
-      kcal: pace.kcalPerDay,
+      kcal: formatInteger(pace.kcalPerDay),
     };
     return this.state.goal() === 'tage'
       ? this.t('signup.paceStep.summaryGain', params)

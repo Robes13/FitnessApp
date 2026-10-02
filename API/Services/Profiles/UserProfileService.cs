@@ -75,7 +75,7 @@ public sealed class UserProfileService(
         await using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         if (changed && await _context.UserGoals.AnyAsync(goal => goal.UserId == userId, cancellationToken))
-            await _goalService.RecalculateAsync(userId, true, cancellationToken);
+            await _goalService.RecalculateAsync(userId, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return ToDto(profile);
     }

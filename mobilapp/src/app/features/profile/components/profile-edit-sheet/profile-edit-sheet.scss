@@ -40,6 +40,10 @@
     border: var(--border-width-thin) solid var(--color-border-soft);
     border-radius: var(--radius-xl);
     background: var(--color-surface);
+
+    &--invalid {
+      border-color: var(--color-negative);
+    }
   }
 
   &__number-input {

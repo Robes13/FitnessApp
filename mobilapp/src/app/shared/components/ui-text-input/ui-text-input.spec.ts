@@ -117,6 +117,27 @@ describe('UiTextInput', () => {
     expect(host.control.value).toBeNull();
   });
 
+  it('reads a decimal comma in number fields, which are text fields with a decimal keypad', async () => {
+    const { host, field } = await setup('number');
+
+    typeInto(field, '45,5');
+
+    expect(host.control.value).toBe(45.5);
+    expect(field.type).toBe('text');
+    expect(field.getAttribute('inputmode')).toBe('decimal');
+  });
+
+  // iOS keeps an intrinsic width on native date/time fields, so they would overflow the sheet.
+  it.each<TextInputType>(['time', 'date'])(
+    'lays a %s field out as a block that fits its container',
+    async (type) => {
+      const { field } = await setup(type);
+
+      expect(field.type).toBe(type);
+      expect(getComputedStyle(field).display).toBe('block');
+    },
+  );
+
   it('keeps password text verbatim but lets plain text be auto-capitalized', async () => {
     const { fixture, host, field } = await setup('password');
 

@@ -99,7 +99,7 @@ describe('SummaryStep', () => {
 
     expect(terms?.getAttribute('aria-checked')).toBe('false');
     expect(terms?.textContent).toContain(
-      'Jeg accepterer Nutrifys servicevilkår og privatlivspolitik.',
+      'Jeg accepterer Nutrifys servicevilkår og privatlivspolitik, herunder behandling af mine sundheds- og profildata.',
     );
 
     terms?.click();

@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { SignupStateService } from '../../../services/signup-state';
 import { BirthdayStep } from './birthday-step';
+import { MIN_AGE } from '../../../../../core/constants/nutrition';
 import { provideComponentTestEnvironment } from '../../../../../core/testing/test-providers';
 
 describe('BirthdayStep', () => {
@@ -68,7 +69,7 @@ describe('BirthdayStep', () => {
     fixture.detectChanges();
 
     expect(text('.birthday-step__age-hint')).toBe(
-      'Du skal være mindst 16 år for at bruge Nutrify.',
+      `Du skal være mindst ${MIN_AGE} år for at bruge Nutrify.`,
     );
   });
 

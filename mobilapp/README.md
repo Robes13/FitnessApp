@@ -65,7 +65,43 @@ npm install
 npm start
 ```
 
-Appen kører nu på <http://localhost:4200>.
+Appen kører nu på <http://localhost:4200>. Konto og login kræver API'et – se næste afsnit.
+
+---
+
+## Kør med API'et (Docker)
+
+Appen taler med FitnessApp-API'et i `../API` (ASP.NET Core). `dotnet` er ikke nødvendigt:
+API'et køres i Docker på <http://localhost:5210> med `ASPNETCORE_ENVIRONMENT=Development`.
+Compose-filen ligger **uden for repoet** indtil videre. Den starter Postgres, kører
+migrationerne, bygger API'et fra `API/Dockerfile` og monterer API'ets `.dev-outbox` i en lokal
+mappe.
+
+```bash
+docker compose -f <sti-til>/compose.yml up -d --build
+curl http://localhost:5210/health   # → Healthy
+npm start                           # http://localhost:4200 – /api går videre til :5210
+```
+
+- **Browser:** API'et har ingen CORS-politik. `npm start` bruger derfor `proxy.conf.json`
+  (`angular.json` → `serve.options.proxyConfig`): appen kalder `/api/v1` relativt, og
+  dev-serveren sender kaldet videre til `http://localhost:5210`.
+- **Native:** `CapacitorHttp` er slået til i `capacitor.config.ts`, så kaldene går gennem den
+  native HTTP-stak, og WebView'ets CORS-regler gælder ikke. `API_BASE_URL`
+  (`src/app/core/constants/api.ts`) er `http://10.0.2.2:5210/api/v1` på Android-emulatoren og
+  `http://localhost:5210/api/v1` i iOS-simulatoren. En fysisk enhed skal bruge Mac'ens LAN-IP,
+  og en produktions-URL findes ikke endnu.
+- **Android og `http://`:** Android blokerer klartekst-HTTP som standard. Kun **debug**-buildet
+  har en network-security-config (`android/app/src/debug/res/xml/network_security_config.xml`),
+  der tillader klartekst til `10.0.2.2` og `localhost` – dev-API'et. Release-buildet er uden
+  klartekst. **iOS** har `NSAllowsLocalNetworking` i `Info.plist`, så `http://localhost:5210` må
+  kaldes; en LAN-IP kræver en egen ATS-undtagelse.
+- **Mails i dev:** API'et sender ingen rigtige mails i Development, men skriver dem som
+  `.txt`-filer i outbox-mappen (første linje `To: <e-mail>`). Bekræftelses- og nulstillingsmailen
+  har et link til en side på API'et, som åbnes i browseren. Linket bygges af `App:PublicBaseUrl`
+  (`http://localhost:5210`): iOS-simulatoren når det direkte, Android-emulatoren efter
+  `adb reverse tcp:5210 tcp:5210`. En fysisk telefon kræver `App__PublicBaseUrl` med Mac'ens
+  LAN-IP i compose-filens `api.environment`.
 
 ---
 
@@ -109,10 +145,14 @@ cd ios/App
 xcodebuild -project App.xcodeproj -scheme App \
   -configuration Debug -sdk iphonesimulator \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
-  -derivedDataPath build CODE_SIGNING_ALLOWED=NO
+  -derivedDataPath build
 xcrun simctl install booted build/Build/Products/Debug-iphonesimulator/App.app
 xcrun simctl launch booted dk.meploy.fitnessapp
 ```
+
+Byg **uden** `CODE_SIGNING_ALLOWED=NO`: simulator-buildet signeres "Sign to Run Locally" (intet
+team nødvendigt), og kun sådan kommer HealthKit-entitlementet med – ellers kan appen ikke læse
+skridt (se "Skridt fra Apple Sundhed / Health Connect").
 
 Åbn projektet i Xcode med `npm run ios:open`.
 
@@ -142,6 +182,10 @@ Appen er låst til portræt på telefoner (`UISupportedInterfaceOrientations` i 
 `@capacitor/app` håndterer Androids tilbageknap og -gestus i `BackButtonService`: et åbent ark
 eller stregkodescanneren lukkes først, ellers går appen tilbage i historikken, og kun når der
 ikke er mere historik, minimeres appen. Uden servicen lukker Capacitor appen ved hvert tryk.
+På et spørgsmålsark (bekræft sletning, log ud, overskriv vejning, slå skridt fra) er tilbage
+"Annuller", undtagen mens handlingen kører, og i opret-flowet går tilbage ét trin.
+På startsiderne – Hjem og login – minimeres appen, når intet ark er åbent: WebView'ets historik
+kan ikke ryddes, og efter log ud → log ind ligger den forrige sessions sider bag Hjem.
 
 ---
 
@@ -155,7 +199,11 @@ lægger sig over tastaturet. Sheets lander lige over det, footer-knapper forbliv
 det fokuserede felt scrolles frem i sit eget scroll-område. Tab-baren skjules, mens tastaturet
 er åbent. Kamerarammen i stregkodescanneren og signup-forløbets ring og kapitelnavne gør plads
 for felterne, og signup-trinnet scroller, hvis det stadig ikke passer. Et tryk uden for et
-tekstfelt lukker tastaturet, fordi iOS ikke viser en "Færdig"-knap i et WebView.
+tekstfelt lukker tastaturet, fordi iOS ikke viser en "Færdig"-knap i et WebView. Det sker på
+trykkets `click` og ikke ved nedtryk: ellers falder et løftet ark, før klikket når frem, og
+"Gem" rammer scrimmen og lukker arket uden at gemme. Lytteren sidder på app-roden
+(`KeyboardService.closeOnTapsIn`), fordi iOS kun sender et klik for tryk på almindeligt indhold,
+når et element under `<body>` lytter efter det.
 
 Nye skærme med tekstfelter skal derfor bygges på højden af deres forælder (`height: 100%`, flex
 og egne scroll-områder), ikke på `100vh`, `position: fixed` eller dokumentets scroll. Ellers
@@ -206,9 +254,15 @@ npm run sync   # ng build + cap sync
   kameratilladelse, men Googles stregkodemodul. `AndroidManifest.xml` har derfor
   `com.google.mlkit.vision.DEPENDENCIES = barcode_ui`, så modulet hentes, når appen
   installeres. Mangler det alligevel, starter appen installationen og beder brugeren prøve
-  igen om et øjeblik. `CAMERA`-tilladelsen står i manifestet som pluginets dokumentation
-  kræver, og `android.hardware.camera` er `required="false"`, så enheder uden kamera stadig
-  kan installere appen og indtaste stregkoden.
+  igen om et øjeblik. Mangler det stadig næste gang (der bedes kun om det én gang pr.
+  app-kørsel), siger scanneren, at kamerascanneren ikke kan bruges lige nu, og peger på at
+  indtaste stregkoden. Det ses på en emulator uden Play Butik (logcat:
+  `Unable to bind to Phonesky`), hvor modulet aldrig kan hentes – test dér med en indtastet
+  stregkode eller et emulator-image med Google Play. Manifestet har bevidst **ikke**
+  `CAMERA`-tilladelsen, selv om pluginets dokumentation nævner den: den gælder kun `startScan()`,
+  som appen ikke bruger. "Tag et foto" på Profil har heller ikke brug for den (se fotoarkets
+  README). Uden tilladelsen er der intet implicit krav om kamera, så enheder uden kamera kan
+  stadig installere appen og indtaste stregkoden.
 - **iOS:** `Info.plist` har `NSCameraUsageDescription`. Appen spørger om kameraadgang første
   gang; afviser brugeren, forklarer scanneren det og tilbyder "Åbn indstillinger".
   **Obs:** ML Kit-pluginet understøtter kun CocoaPods, mens iOS-projektet bruger Swift
@@ -219,6 +273,130 @@ npm run sync   # ng build + cap sync
   opslaget kører som i appen – så hele forløbet kan testes med `npm start`.
 - Fundne varer gemmes lokalt pr. stregkode (`nutrify.product-cache`, højst 100), så en vare,
   der er scannet før, også virker offline.
+
+## Skridt fra Apple Sundhed / Health Connect
+
+Spec 2.6 og 9.2-3a: Profil → Privatliv har på en telefon rækken "Skridt fra Apple Sundhed" (iOS) /
+"Skridt fra Health Connect" (Android). Slået til læser appen skridtene for de seneste 28 hele dage
+og sender kun gennemsnittet (`PUT me/profile/activity`) – med det samme og derefter ved app-start,
+når der er gået 30 dage siden sidste vellykkede opdatering (indtil da prøves der ved hver start); slået
+fra trækkes samtykket tilbage. Logikken: `core/services/step-sync/` (se `src/app/core/services/README.md`).
+Pluginet er `@capgo/capacitor-health` (v8, HealthKit + Health Connect, SPM); kun
+`core/services/step-sync/health-platform.ts` kalder det. Efter `npm install`: `npm run sync`.
+
+- **Android:**
+  - `minSdkVersion` er **26** (`android/variables.gradle`), Health Connects minimum (Android 8).
+    Android 7 understøttes derfor ikke længere. Health Connect er indbygget fra Android 14; ældre
+    telefoner skal hente "Health Connect" i Play Butik.
+  - Pluginets manifest erklærer ~48 sundhedstilladelser. `app/src/main/AndroidManifest.xml` fjerner
+    dem alle med `tools:node="remove"` undtagen `android.permission.health.READ_STEPS`. Tjek det
+    flettede manifest efter et build:
+    `android/app/build/intermediates/merged_manifest/<variant>/process<Variant>MainManifest/AndroidManifest.xml`.
+  - Health Connect viser kun sin tilladelsesdialog, når appen har "privatlivspolitik"-indgangene.
+    Pluginets manifest leverer dem: `PermissionsRationaleActivity`
+    (`androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE`, Android ≤ 13) og aliasset
+    `ViewPermissionUsageActivity` (`VIEW_PERMISSION_USAGE` + `HEALTH_PERMISSIONS`, Android 14+).
+    Linket "privatlivspolitik" i dialogen åbner `public/privatliv.html` (dansk og engelsk på én side,
+    for siden kører uden JavaScript og kender ikke appens sprog) fra web-buildet
+    (`health_connect_privacy_policy_url` i `res/values/strings.xml` =
+    `file:///android_asset/public/privatliv.html`).
+  - **Kun debug** (`android/app/src/debug/`): `WRITE_STEPS`, så testere kan lægge skridt ind på
+    emulatoren, og network-security-configen til dev-API'et. Release har kun `READ_STEPS`.
+  - Har brugeren afvist dialogen to gange, viser Health Connect den ikke igen (tilladelsen bliver
+    `USER_FIXED`), og `requestAuthorization` svarer straks "nægtet". Rækken siger det og har knappen
+    "Åbn Health Connect" (`openHealthConnectSettings`), hvor adgangen gives under appens
+    tilladelser. Tilbage i appen (`visibilitychange`) indlæser rækken igen, så adgangen slår
+    igennem uden genstart.
+- **iOS:**
+  - HealthKit-capability: `ios/App/App/App.entitlements` (`com.apple.developer.healthkit` = true,
+    `com.apple.developer.healthkit.access` = tom), sat som `CODE_SIGN_ENTITLEMENTS` for Debug og
+    Release i `App.xcodeproj`. En rigtig enhed kræver et team med HealthKit i provisioning-profilen.
+  - `Info.plist`: `NSHealthShareUsageDescription` (engelsk; dansk i `da.lproj/InfoPlist.strings`,
+    og `CFBundleLocalizations` = da, en, så også iOS' egne tekster i appen følger telefonens sprog).
+    Kun læsning – der er ingen `NSHealthUpdateUsageDescription`, og pluginet virker uden.
+  - HealthKit siger aldrig, om læsning er nægtet (Apples privatlivsvalg): efter arket er svaret
+    altid "givet", og en nægtet læsning giver bare ingen data. Trykker brugeren "Tillad ikke", bliver
+    rækken derfor slået til, og samtykket gives – appen kan ikke se forskel. Uden en eneste dag med
+    skridt siger rækken "Nutrify kan ikke se nogen skridt … under Indstillinger → Anonymitet &
+    sikkerhed → Sundhed → Nutrify" (ikke "Ikke nok skridtdata"), og aktivitetsniveauet ændres ikke.
+    iOS lader ikke en app åbne den side, så der er ingen knap; tilbage i appen indlæser rækken igen.
+    "Ingen adgang" kommer kun, når samtykket er aktivt, men appen aldrig har vist arket på
+    telefonen (geninstalleret, ny telefon); knappen "Giv adgang" under rækken viser det.
+- **Browser:** rækken vises ikke, og intet hentes.
+
+### Testskridt og kørsel på emulatorerne
+
+Brug en engangskonto (opret i appen, eller med curl: `POST /api/v1/auth/register` → linket fra
+outboxen `docs/api-integration/docker/outbox/*.txt` med `curl` → log ind i appen). Kun hele dage
+før i dag tæller, og der skal være skridt på mindst 7 af de seneste 28 dage.
+
+**Android** (debug-build på `emulator-5554`, `adb` i `~/Library/Android/sdk/platform-tools`):
+
+```bash
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb shell am start -n dk.meploy.fitnessapp/.MainActivity
+adb forward tcp:9222 localabstract:webview_devtools_remote_$(adb shell pidof dk.meploy.fitnessapp)
+node scripts/android-webview-eval.mjs 'location.pathname'   # JavaScript i appens WebView (CDP)
+```
+
+1. Giv appen læse- og skriveadgang (kun debug kan skrive). Kaldet venter på dialogen, så resultatet
+   gemmes på `window`, og dialogen godkendes med `uiautomator` + `input tap` (koordinaterne står i
+   dumpet; første gang kommer "Get started" før dialogen, og "Allow all" + "Allow" godkender):
+
+   ```bash
+   node scripts/android-webview-eval.mjs 'Capacitor.Plugins.Health.requestAuthorization({ read: ["steps"], write: ["steps"] }).then(r => window.auth = r); "ok"'
+   adb shell uiautomator dump /sdcard/ui.xml && adb shell cat /sdcard/ui.xml | grep -o 'text="[^"]*"[^>]*bounds="[^"]*"'
+   adb shell input tap <x> <y>
+   node scripts/android-webview-eval.mjs 'window.auth'
+   ```
+
+2. Læg én prøve pr. dag ind for de 10 dage før i dag (gennemsnit 8.300):
+
+   ```bash
+   node scripts/android-webview-eval.mjs '(async () => { const steps = [8000, 9000, 7000, 10000, 6000, 8500, 9500, 7500, 11000, 6500]; for (let i = 0; i < steps.length; i++) { const start = new Date(); start.setDate(start.getDate() - (i + 1)); start.setHours(10, 0, 0, 0); const end = new Date(start); end.setHours(11); await Capacitor.Plugins.Health.saveSample({ dataType: "steps", value: steps[i], startDate: start.toISOString(), endDate: end.toISOString() }); } return "seeded"; })()'
+   ```
+
+3. Log ind, Profil → Privatliv → slå "Skridt fra Health Connect" til. Har appen allerede
+   læseadgang fra trin 1, kommer der ingen dialog. For at se den (og for 2.6-4a, når samtykket er
+   givet) fjernes læseadgangen – det lukker appen, så start den igen bagefter:
+
+   ```bash
+   adb shell pm revoke dk.meploy.fitnessapp android.permission.health.READ_STEPS
+   ```
+
+   Kaldene ses som `CapacitorHttp fetch …` i WebView'ets konsol (`chrome://inspect`), ikke i logcat.
+
+Tryk ikke på `KEYCODE_BACK` for at lukke tastaturet: tilbageknappen minimerer appen, og en app i
+baggrunden må ikke åbne Health Connects dialog ("Background activity launch blocked").
+
+**iOS** (simulatoren `Nutrify iPhone 17 Pro`): åbn Sundhed (`xcrun simctl launch <udid>
+com.apple.Health`) → Oversigt → Skridt (eller Gennemse → Aktivitet → Skridt) → "+" (Tilføj data) →
+Dato (kalenderen; forrige måned med "<"), Skridt → ✓. Gentag for mindst 7 forskellige dage før i
+dag (fx 24.–30. sep. med 11.000, 5.000, 6.000, 10.000, 9.000, 8.000 og 7.000 = gennemsnit 8.000).
+Appen styres med tryk i simulatoren; tekst sættes ind via simulatorens udklipsholder
+(`xcrun simctl pbcopy <udid>`, tryk i feltet og vælg "Paste"/"Indsæt"). Første gang rækken slås til, viser iOS HealthKits ark
+("Slå alle til" → "Tillad"). Adgangen fjernes igen i Indstillinger → Sundhed → Dataadgang og
+enheder → Nutrify.
+
+**Den månedlige grænse** gemmes på enheden under `nutrify.step-sync` =
+`{ "syncedAt": "<ISO>", "dailySteps": 8300 }`. Sæt `syncedAt` 31 dage tilbage og genstart appen,
+så synkroniseres der én gang ved start. Android: `localStorage.setItem(…)` via
+`android-webview-eval.mjs`, **vent ~10 s** (WebView'et skriver `localStorage` til disk med
+forsinkelse) og genstart med `adb shell am force-stop` + `am start`. iOS: luk appen
+(`xcrun simctl terminate`), ret rækken i WebKits `localstorage.sqlite3` under
+`$(xcrun simctl get_app_container <udid> dk.meploy.fitnessapp data)/Library/WebKit/…/LocalStorage/`
+(tabellen `ItemTable`; værdien er en **UTF-16LE**-blob, fx med Pythons `sqlite3` og
+`json.dumps(…).encode('utf-16-le')`), og start appen igen.
+
+**Dev-profilbilleder på native:** de serveres over `http://10.0.2.2:5210`, og WebView'et
+(`https://localhost`) blokerer dem som mixed content – også med `MIXED_CONTENT_ALWAYS_ALLOW`
+(afprøvet på WebView 124). Appen henter dem derfor gennem CapacitorHttp's proxy på sin egen origin
+(`resolveApiUrl` i `src/app/core/utils/api.ts`). Produktion (HTTPS) er ikke berørt.
+
+**Logning:** Capacitors egen logning er slået fra – også i debug-builds – med
+`loggingBehavior: 'none'` i `capacitor.config.ts`, fordi den skriver plugin-kaldenes data (login,
+tokens, e-mail, skridt) i logcat og Xcode-konsollen. JavaScript-konsollen ses stadig i
+WebView-inspektøren (`chrome://inspect`, Safari → Udvikler).
 
 ---
 
@@ -261,7 +439,8 @@ mobilapp/
         │   ├── models/     Profile, Food, Meal, Session, Tone …
         │   ├── services/   Storage, Theme, AuthApi, Session, FoodLog, WeightLog …
         │   ├── guards/     authGuard, guestGuard
-        │   ├── utils/      Dato- og talformatering, NOW-token
+        │   ├── interceptors/ authInterceptor (Bearer + token-fornyelse)
+        │   ├── utils/      Dato- og talformatering, API-fejl og paginering, NOW-token
         │   └── testing/    Test-providers, fixtures og fake DOCUMENT
         ├── shared/
         │   └── components/ UiButton, UiSheet, UiRuler, Figure, FoodPicker,
@@ -300,7 +479,7 @@ prototypen findes, og de er koblet sammen gennem `core/`.
 
 | Feature       | Rute                           | Indhold                                                            |
 | ------------- | ------------------------------ | ------------------------------------------------------------------ |
-| `auth`        | `/login`, `/glemt-adgangskode` | Log ind og nulstil adgangskode i tre trin                          |
+| `auth`        | `/login`, `/glemt-adgangskode` | Log ind med e-mail eller brugernavn og glemt adgangskode (link)    |
 | `signup`      | `/opret`                       | 14-trins oprettelsesflow med figur-scener, linealer og opsummering |
 | `shell`       | –                              | Tab-rammen om de fem faner; skjuler tab baren på fuldskærmsruter   |
 | `home`        | `/hjem`                        | Ugeringe, dagens kort, gøremål, målkort og bekræftelses-ark        |
@@ -313,16 +492,18 @@ prototypen findes, og de er koblet sammen gennem `core/`.
 ### Data og tilstand
 
 **Appen indeholder ingen data.** Der er hverken varedatabase, retter, faste
-samlinger, seedede logs eller demo-profil, og `AuthApi` har endnu ingen
-backend at kalde – hvert auth-kald fejler med "Der er ingen forbindelse til en
-server endnu." Login og oprettelse virker derfor først, når backenden findes.
+samlinger, seedede logs eller demo-profil. **Konto og session** går mod FitnessApp-API'et:
+oprettelse, e-mailbekræftelse via link (arket opdager det selv), login med e-mail eller brugernavn,
+token-fornyelse, log ud, glemt adgangskode og slet konto. Tokens gemmes i `localStorage` (sikker
+lagring er opgraderingsstien). `SessionDataService` henter hvert domænes data, når brugeren er
+logget ind, og nulstiller dem ved log ud – domænerne kobles på én ad gangen.
 
 Det, brugeren selv registrerer, gemmes lokalt gennem `StorageService`
 (browserens `localStorage`): profil, madlog, egne varer, vejninger, egne samlinger,
 tema, antal scanninger, påmindelser og opslåede stregkodevarer. Madloggen gemmes pr. dato
 i 90 dage, så Hjems ugeringe, ugens nøgletal og Historik viser tidligere dage. Dage uden
-data vises som `–` eller 0 i stedet for at gætte. Når et API kommer til, skal de lokale
-stores synkroniseres med det.
+data vises som `–` eller 0 i stedet for at gætte. Indtil et domæne er koblet på API'et, ligger
+dets data kun lokalt.
 
 ### Test og build
 
@@ -338,14 +519,17 @@ skal køres manuelt, før man committer. Se «Næste skridt».
 
 `src/app/app-integration.spec.ts` dækker sammenkoblingen mellem features:
 dybe links til Mad, tab barens synlighed, bekræftelses-arket på Hjem,
-omdirigering efter log ud og temaskiftet.
+omdirigering efter log ud og temaskiftet. HTTP i specs går til Angulars testing-backend
+(`HttpTestingController`) – se `src/app/core/testing/README.md`.
+`src/capacitor-config.spec.ts` holder fast, at `capacitor.config.ts` slår Capacitors logning fra
+og ikke injicerer `--safe-area-inset-*`.
 
 ### Næste skridt
 
-- Rigtig backend: HTTP-lag (`provideHttpClient` + interceptor), base-URL i en
-  miljøkonfiguration, token i sessionen og en implementering af `AuthApi`
-- Data fra backenden: varedatabase, retter, faste samlinger og historik – samt
-  loading- og fejltilstande på de skærme, der i dag kun kender tom/udfyldt
+- Kobl de øvrige domæner på API'et (profil, mål, vægt, madlog, samlinger, påmindelser)
+  gennem `SessionDataService` – med loading- og fejltilstande på skærmene
+- Produktions-URL for API'et og en CORS-politik i API'et (i dag omgået med dev-proxy og
+  `CapacitorHttp`)
 - App-ikoner og splash screens (`@capacitor/assets`)
 - ESLint + Stylelint, så reglerne i `ARCHITECTURE.md` håndhæves automatisk
 - `"format": "prettier --write src"` og `"format:check": "prettier --check src"`

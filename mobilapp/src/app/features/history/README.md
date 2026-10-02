@@ -1,56 +1,60 @@
 # Historik
 
-Fanen **Historik** (`/historik`): én liste over dagens og de seneste dages poster, filtreret
-med chips (Alle · Vejning · Mad · Mål) og grupperet pr. dag. Skærmen er designets
-`tabHistorik` (HTML-linje 1066–1096) og logikken bag `historyGroups` / `histFilters` / `relog`.
+Fanen **Historik** (`/historik`, spec 7.0): brugerens hændelser fra registreringen til nu, filtreret
+med chips (Alle · Vejning · Mad · Mål), grupperet pr. dag med nyeste øverst og indlæst løbende,
+når man scroller. Skærmen er designets `tabHistorik` (HTML-linje 1066–1096).
 
-| Fil                   | Indhold                                                                                      |
-| --------------------- | -------------------------------------------------------------------------------------------- |
-| `history.routes.ts`   | `HISTORY_ROUTES` – én rute (`''`) med `HistoryPage`.                                         |
-| `models/history.ts`   | `HistoryEntry`, `HistoryGroup`, `HistoryFilter` og de tre posttyper.                         |
-| `services/history.ts` | `HistoryService` – bygger, filtrerer og grupperer posterne; holder filter og gen-log-status. |
-| `pages/history-page/` | Skærmen.                                                                                     |
+| Fil                   | Indhold                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| `history.routes.ts`   | `HISTORY_ROUTES` – én rute (`''`) med `HistoryPage`.                                       |
+| `models/history.ts`   | API-typerne (`HistoryEventDto`, `HistoryEventType`) og visningstyperne.                    |
+| `services/history.ts` | `HistoryService` – henter siderne, mapper og grupperer posterne; filter og gen-log-status. |
+| `pages/history-page/` | Skærmen.                                                                                   |
 
 ## Data
 
-Alle poster er brugerens egne:
+Kilden er `GET me/history?types=…&limit=50&cursor=…` (plan-v2 P17/A7): 50 hændelser pr. side,
+nyeste først, hver med sin payload. Filteret sendes som `types`, så et filterskift starter forfra.
+`AchievementCompleted` hentes aldrig – præstationerne afledes lokalt (P21).
 
-| Type           | Kilde                         | Bemærkning                                                                                  |
-| -------------- | ----------------------------- | ------------------------------------------------------------------------------------------- |
-| Vejning        | `WeightLogService.entries()`  | Nyeste får underteksten `Seneste vejning`.                                                  |
-| Måltid (`mad`) | `FoodLogService.allEntries()` | Dagens og tidligere dages måltider (90 dage). Har `food` + `meal` og kan logges igen i dag. |
-| Mål (`maal`)   | –                             | Målændringer registreres ikke endnu; filteret er altid tomt.                                |
+| Type             | Filter    | Linje                                                                       |
+| ---------------- | --------- | --------------------------------------------------------------------------- |
+| `WeightRecorded` | `vejning` | "Vejning" · `75,0 kg`. Den første indlæste vejning får `Seneste vejning`.   |
+| `FoodLogged`     | `mad`     | Madvarens navn · måltidet · `210 kcal`. Kan logges igen i dag.              |
+| `GoalUpdated`    | `maal`    | "Mål opdateret" · målet (`Tabe mig` …) · dagligt kaloriemål (`2.010 kcal`). |
+| `AccountCreated` | kun Alle  | "Konto oprettet" uden værdi.                                                |
 
-Madloggen gemmer de seneste 90 dage, så listen viser tidligere logget mad sammen med
-vejningerne. Hver dag med måltider får under etiketten dagens samlede kalorier og makroer
-(`1.970 kcal · P 120 g · K 210 g · F 60 g`, `HistoryGroup.foodSummary`) – det dækker "se
-tidligere logget kalorieindtag" og "se tidligere logget makronæringsstoffer". Opsummeringen
-er hele dagens log, også når kun en del af posterne er synlige. Har brugeren intet
-registreret, viser skærmen sin tomme tilstand.
+`maal`-filteret virker nu: målændringerne kommer fra API'et (også dem, en vejning eller en
+profilændring udløser).
 
-`maal`-filteret bliver stående, fordi målændringer er et rigtigt domænebegreb, backenden
-kommer til at levere – indtil da viser det den tomme tilstand.
+**Registreringens mål skjules.** API'et opretter kontoen og det første mål med samme tidspunkt.
+En `GoalUpdated` med præcis samme `occurredAt` som en indlæst `AccountCreated` vises derfor ikke,
+så en ny konto kun viser "Konto oprettet" ("Kun registrering → vis kun den"). Det regnes over
+**alle** indlæste sider: API'et sorterer `GoalUpdated` før `AccountCreated` ved samme tidspunkt, så
+målet kan ligge sidst på én side og kontoen først på den næste – målet forsvinder, når kontoen er
+hentet. Under "Mål" hentes `AccountCreated` ikke, og det første mål bliver stående.
 
-## Rækkefølge og gruppering
+Hver dag med måltider får under etiketten dagens samlede kalorier og makroer
+(`1.970 kcal · P 120 g · K 210 g · F 60 g`), summeret af måltidernes præcise payload og afrundet én gang. Den sidste indlæste
+dag får ingen opsummering, så længe der er flere sider – dagen kan fortsætte på næste side.
 
-`HistoryService.buildEntries()` lægger vejninger og måltider sammen og sorterer **faldende på
-tidspunkt**.
+## Indlæsning og fejl
 
-Grupperne får designets etiket `I dag · 21. sep` / `I går · 20. sep` / `Tir. · 19. sep`
-(`formatWeekdayAbbreviated` + `formatDayMonth` fra `core/utils/date-format.ts`).
+- Første side hentes, når siden åbnes. Mens en side hentes, står en spinner nederst i listen.
+- Scroller man inden for `HISTORY_LOAD_MORE_THRESHOLD_PX` af bunden, hentes næste side
+  (`nextCursor`). Der spørges ikke, mens en side hentes, efter sidste side eller efter en fejl.
+- Fejler en side, bliver de hentede poster stående, og nederst står fejlbeskeden
+  (`UiFormError`) og "Prøv igen", der henter samme side igen.
+- Tom tilstand (`UiEmptyState`) vises kun, når siden er hentet uden poster (fx under et filter).
 
 ## Beslutninger
 
-- **Servicen leveres af siden**, ikke `providedIn: 'root'`. Både filteret og
-  "Logget i dag"-status hører til skærmen og skal nulstilles, når man forlader fanen.
-  `DestroyRef.onDestroy()` rydder 2,6-sekunders-timeren.
-- **Gen-log** (`redo`-ikonet) kalder `FoodLogService.add(food, meal)`. Som i designet skifter
-  knappen kun farve til grøn, mens teksten `Logget i dag` står i `aria-label` og `title` –
-  der er ingen synlig etiket ved siden af ikonet.
-- **Tal formateres dansk** med `formatInteger` / `formatDecimal` (`1.970 af 2.010 kcal`,
-  `75,0 kg`). Prototypen skrev rå tal her, men brugte dansk formatering på de andre skærme.
-- **Ingen loading- eller fejltilstand.** Skærmen læser kun signals fra `core/` – der er
-  ingen asynkrone kald. Tom tilstand er `UiEmptyState('Ingen poster endnu.')`, som kun kan
-  opstå, hvis et filter ikke rammer noget.
-- Prototypens `histHeading` (`Seneste` / `Vejninger` / `Mad` / `Mål og indstillinger`) er
-  beregnet i logikken, men **tegnes ikke** i designets template. Den er derfor udeladt.
+- **Servicen leveres af siden**, ikke `providedIn: 'root'`. Siderne, filteret og
+  gen-log-status hører til skærmen og nulstilles, når man forlader fanen. `DestroyRef` dropper
+  en side på vej og rydder 2,6-sekunders-timeren.
+- **Gen-log** (`redo`-ikonet) kalder `FoodLogService.add(food, meal)`; historikken genindlæses
+  ikke. Tryk på et måltid, mens dets kald kører, ignoreres – også når et andet måltid gen-logges
+  imens (ét tryk = én logning). Knappen bliver grøn (`Logget i dag`) eller rød med et kryds
+  (`Ikke logget – prøv igen`) i 2,6 sekunder; kun det seneste svar vises. Teksten står i
+  `aria-label` og `title` som i designet.
+- **Tal formateres dansk** med `formatInteger` / `formatDecimal`.

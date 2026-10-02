@@ -110,22 +110,45 @@ describe('KeyboardService', () => {
     expect(root.hasAttribute(KEYBOARD_CSS.STATE_ATTRIBUTE)).toBe(false);
   });
 
-  it('closes the keyboard on a tap outside a text field, but not on a field', () => {
-    const { fake } = setup();
+  it('closes the keyboard on a tap in the app outside a text field, but not on a field', () => {
+    const { fake, keyboard } = setup();
+    const root = document.createElement('div');
     const input = document.createElement('input');
     const button = document.createElement('button');
-    document.body.append(input, button);
+    root.append(input, button);
+    document.body.append(root);
+    keyboard.closeOnTapsIn(root);
     input.scrollIntoView = vi.fn();
     input.focus();
     fake.show(336);
 
-    input.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    input.click();
     expect(document.activeElement).toBe(input);
 
-    button.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    button.click();
     expect(document.activeElement).not.toBe(input);
 
-    input.remove();
-    button.remove();
+    root.remove();
+  });
+
+  it('waits for the click, so the press never moves the layout under the finger', () => {
+    const { fake, keyboard } = setup();
+    const root = document.createElement('div');
+    const input = document.createElement('input');
+    const button = document.createElement('button');
+    root.append(input, button);
+    document.body.append(root);
+    keyboard.closeOnTapsIn(root);
+    input.scrollIntoView = vi.fn();
+    input.focus();
+    fake.show(336);
+
+    button.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+    expect(document.activeElement).toBe(input);
+
+    button.click();
+    expect(document.activeElement).not.toBe(input);
+
+    root.remove();
   });
 });

@@ -16,5 +16,5 @@ public interface IUserGoalService
         string? cursor,
         CancellationToken cancellationToken);
     Task<UserGoalDto> CreateAsync(int userId, CreateUserGoalRequest request, CancellationToken cancellationToken);
-    Task<UserGoalDto> RecalculateAsync(int userId, bool force, CancellationToken cancellationToken);
+    Task<UserGoalDto> RecalculateAsync(int userId, CancellationToken cancellationToken);
 }

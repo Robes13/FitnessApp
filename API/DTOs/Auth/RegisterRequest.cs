@@ -9,7 +9,8 @@ public sealed record RegisterRequest
     [Required, EmailAddress, MaxLength(320)]
     public required string Email { get; init; }
 
-    [Required, MinLength(3), MaxLength(50), RegularExpression(UsernameRules.Pattern)]
+    [Required, MinLength(3), MaxLength(50)]
+    [RegularExpression(UsernameRules.Pattern, ErrorMessage = UsernameRules.Message)]
     public required string Username { get; init; }
 
     [Required, MinLength(10), MaxLength(200)]

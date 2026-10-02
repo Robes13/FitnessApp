@@ -54,5 +54,5 @@ public sealed class GoalsController(IUserGoalService goalService) : ControllerBa
 
     [HttpPost("recalculate")]
     public async Task<ActionResult<UserGoalDto>> Recalculate(CancellationToken cancellationToken)
-        => Ok(await _goalService.RecalculateAsync(User.GetUserId(), false, cancellationToken));
+        => Ok(await _goalService.RecalculateAsync(User.GetUserId(), cancellationToken));
 }

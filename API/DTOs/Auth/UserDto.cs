@@ -6,7 +6,4 @@ public sealed record UserDto(
     string Username,
     bool IsActive,
     DateTime? EmailVerifiedAt,
-    DateTime CreatedAt)
-{
-    public bool EmailVerified => EmailVerifiedAt.HasValue;
-}
+    DateTime CreatedAt);

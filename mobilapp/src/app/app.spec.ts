@@ -5,6 +5,7 @@ import { App } from './app';
 import { routes } from './app.routes';
 import { APP_PATH } from './core/constants/app-route';
 import { STORAGE_KEY } from './core/constants/storage-key';
+import { AUTHENTICATED_SESSION } from './core/testing/fixtures';
 
 describe('App', () => {
   it('renders a router outlet as its only content', async () => {
@@ -30,7 +31,7 @@ describe('routes', () => {
   async function navigate(loggedIn: boolean, url: string): Promise<string> {
     localStorage.setItem(
       STORAGE_KEY.SESSION,
-      JSON.stringify({ isLoggedIn: loggedIn, isEmailVerified: loggedIn }),
+      JSON.stringify(loggedIn ? AUTHENTICATED_SESSION : null),
     );
     TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
     const harness = await RouterTestingHarness.create();

@@ -2,23 +2,27 @@
 
 App-dækkende typer, én fil pr. domæne. Kun typer – ingen logik.
 
-| Fil                  | Typer                                                                                                                                                                                                                  |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `meal.ts`            | `MealId`, `MealDefinition`, `MealTone` (måltidets farve i designets `mealTints`)                                                                                                                                       |
-| `food.ts`            | `Macros`, `FoodItem`, `LoggedFood`, `DailyFoodTotals`, `CustomFoodInput`, `Ingredient`, `Recipe`, `FoodCollection`, `NewCollectionInput`                                                                               |
-| `profile.ts`         | `Gender`, `GoalId`, `PaceId`, `IntensityId`, `UnitSystem`, `ProfilePhoto`, `UserProfile`, `GoalDefinition`, `PaceDefinition`, `ActivityLevel`, `IntensityDefinition`, `GenderDefinition`, `UnitSystemDefinition`       |
-| `weight.ts`          | `WeighEntry`, `WeightRange`, `WeightPoint`                                                                                                                                                                             |
-| `nutrition.ts`       | `GoalWeightBounds`, `ParsedQuantity`, `PasswordStrength` (+ score/label-typer)                                                                                                                                         |
-| `reminder.ts`        | `ReminderId`, `MealReminderId`, `WeekdayIndex`, `ClockTime`, `ReminderSetting(s)`, `ReminderDefinition`, `ReminderPermission`, `ScheduledReminder` og `ReminderNotifier` (platformens notifikationer bag et interface) |
-| `keyboard.ts`        | `KeyboardPlatform` (skærmtastaturet bag et interface) og `KeyboardUnsubscribe`                                                                                                                                         |
-| `session.ts`         | `SessionState`                                                                                                                                                                                                         |
-| `theme.ts`           | `Theme` og `SystemBarsPlatform` (status- og navigationsbaren bag et interface)                                                                                                                                         |
-| `language.ts`        | `Language` (`da` \| `en`)                                                                                                                                                                                              |
-| `tone.ts`            | `Tone` – semantisk farvetone, som UI oversætter til tokens (`accent`, `positive`, `negative`, `info`, `selected`, `neutral`, `secondary`, `muted`, `warning`)                                                          |
-| `api-error.ts`       | `ApiError` – fejl med en oversættelsesnøgle (`messageKey`) til en brugerrettet tekst                                                                                                                                   |
-| `barcode.ts`         | `BarcodeScanOutcome` (hvordan en kamerascanning endte), `CameraPermission`, `BarcodeScannerPlatform` (kameraet bag et interface), `ScannedProduct` (vare pr. 100 g + `servingGrams`) og `ProductLookupResult`          |
-| `open-food-facts.ts` | Open Food Facts' API-model: `OpenFoodFactsProductResponse`, `OpenFoodFactsProduct`, `OpenFoodFactsNutriments`. Mappes til `ScannedProduct` i `ProductLookupService`                                                    |
-| `auth.ts`            | Auth-API'ets kontrakt: `RegisterRequest` (body til registrering) og `VerificationStatusResponse`                                                                                                                       |
+| Fil                  | Typer                                                                                                                                                                                                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `meal.ts`            | `MealId`, `MealDefinition`                                                                                                                                                                                                                                                     |
+| `food.ts`            | `Macros`, `FoodItem`, `LoggedFood`, `DailyFoodTotals`, `CustomFoodInput`, `CollectionItem`, `FoodCollection`, `NewCollectionInput`                                                                                                                                             |
+| `profile.ts`         | `Gender`, `GoalId`, `PaceId`, `IntensityId`, `ProfilePhoto`, `UserProfile`, `GoalDefinition`, `PaceDefinition`, `ActivityLevel`, `IntensityDefinition`, `GenderDefinition`                                                                                                     |
+| `weight.ts`          | `WeighEntry`, `WeightRange` (`1u`/`3u`/`3m`), `WeightPoint` og API'ets kontrakt: `WeightLogDto`, `CreateWeightLogRequest`, `UpdateWeightLogRequest`, `WeightSaveResult` (`saved` + vejningen, eller `exists` + id'et på dagens vejning)                                        |
+| `nutrition.ts`       | `GoalWeightBounds`, `ParsedQuantity`                                                                                                                                                                                                                                           |
+| `reminder.ts`        | `ReminderId`, `MealReminderId`, `WeekdayIndex`, `ClockTime`, `ReminderSetting(s)`, `ReminderDefinition`, `ReminderPermission`, `ScheduledReminder` og `ReminderNotifier` (platformens notifikationer bag et interface)                                                         |
+| `keyboard.ts`        | `KeyboardPlatform` (skærmtastaturet bag et interface) og `KeyboardUnsubscribe`                                                                                                                                                                                                 |
+| `session.ts`         | `SessionStatus` (`guest` · `pending-verification` · `authenticated`), `AuthTokens`, `SessionState`                                                                                                                                                                             |
+| `theme.ts`           | `Theme` og `SystemBarsPlatform` (status- og navigationsbaren bag et interface)                                                                                                                                                                                                 |
+| `language.ts`        | `Language` (`da` \| `en`)                                                                                                                                                                                                                                                      |
+| `tone.ts`            | `Tone` – semantisk farvetone, som UI oversætter til tokens (`accent`, `positive`, `negative`, `info`, `selected`, `neutral`, `secondary`, `muted`, `warning`)                                                                                                                  |
+| `api-error.ts`       | `ApiError` – fejl med en oversættelsesnøgle (`messageKey`) til en brugerrettet tekst og evt. HTTP-`status` (0 = intet svar)                                                                                                                                                    |
+| `api.ts`             | API'ets fælles former: `CursorPage<T>` (`items`, `nextCursor`, `hasMore`), `ProblemDetails` (alle tre fejlformer; `errors` ved valideringsfejl) og `StoreStatus` (`idle` · `loading` · `ready` · `error` for API-baserede stores)                                              |
+| `barcode.ts`         | `BarcodeScanOutcome` (hvordan en kamerascanning endte), `CameraPermission`, `BarcodeScannerPlatform` (kameraet bag et interface), `ScannedProduct` (vare pr. 100 g + `servingGrams`) og `ProductLookupResult`                                                                  |
+| `open-food-facts.ts` | Open Food Facts' API-model: `OpenFoodFactsProductResponse`, `OpenFoodFactsProduct`, `OpenFoodFactsNutriments`. Mappes til `ScannedProduct` i `ProductLookupService`                                                                                                            |
+| `food-api.ts`        | Mad-API'ets kontrakt: `ApiQuantityUnit`, `ApiMealType`, `FoodDto`, `FoodServingDto`, `CreateFoodRequest`, `UpsertFoodServingRequest`, `FoodLogDto`, `CreateFoodLogRequest`, `UpdateFoodLogRequest` – se Konventioner.                                                          |
+| `profile-api.ts`     | Profil-API'ets kontrakt: `UserProfileDto`, `PatchUserProfileRequest` (alle felter valgfri), `UserGoalDto` (API'ets kalorie- og makromål), `CreateUserGoalRequest`, `UserSettingDto`, `UpsertUserSettingRequest`, `LatestWeightDto`. Mappes i `user-profile/profile-mapping.ts` |
+| `step-sync.ts`       | `HealthSource`, `HealthPlatform` (sundhedsdataene bag et interface, kun læsning af skridt), `StepSyncStatus`, `StepSyncRecord` og API'ets kontrakt: `ApiConsentType`, `UserConsentDto`, `GrantConsentRequest`, `UpdateActivityRequest`                                         |
+| `auth.ts`            | Auth-API'ets kontrakt: `RegisterRequest` (fladt), `UserDto`, `LoginRequest` (`emailOrUsername`), `AuthResponse`, `RefreshRequest`, `IdentifierRequest` (gensend og glemt adgangskode) og enum-værdierne `ApiGender`, `ApiTrainingIntensity`, `ApiGoalType`                     |
 
 ## Konventioner
 
@@ -28,4 +32,16 @@ App-dækkende typer, én fil pr. domæne. Kun typer – ingen logik.
 - `DailyFoodTotals` er én dags summerede makroer fra madloggen; `entryCount` er 0 på dage
   uden log. `CustomFoodInput` er de felter, en egen vare oprettes og redigeres med.
   `NutritionCalculator.parseQuantity()` splitter den i tal og enhed.
-- `FoodCollection.icon` er typen `CollectionIconName` fra `constants/collection-icons.ts`.
+- `food-api.ts` er mad-API'ets former: `FoodDto` er brugerens egen vare pr. 100 g med sine
+  `servings`, og `FoodLogDto` har de forbrugte værdier og `mealType`. De mappes i
+  `food-log/food-log-mapping.ts`.
+- `FoodCollection` er en samling fra API'et: `id` = `String(mealCollectionId)`, `name` og
+  `items: CollectionItem[]` – en `FoodItem` med `mealItemId` (fraværende i en kladde, indtil
+  varen er gemt). Ikon, måltid, faste samlinger og retter findes ikke (P13). Samlingernes
+  API-former ligger i `food-api.ts`: `MealCollectionDto`, `MealItemDto` (uden næring),
+  `NutritionTotalsDto`, `CreateMealCollectionRequest`, `CreateMealItemRequest`,
+  `UpdateMealCollectionRequest` og `LogMealCollectionRequest`.
+- **API-modeller er adskilt fra UI-modeller.** Typerne i `auth.ts`/`api.ts` har API'ets
+  camelCase-navne og PascalCase-enums (`'Male'`, `'LoseWeight'`); mapningen til appens egne
+  typer (`'mand'`, `'tabe'`) sker i servicelaget (`auth-mapping.ts`, `profile-mapping.ts`). API'ets tidsstempler er
+  UTC med `Z` – læs dem med `parseApiDateTime()`.

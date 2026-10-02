@@ -3,6 +3,7 @@
   [title]="'weight.editSheet.titleStart' | translate"
   [titleAccent]="'weight.editSheet.titleAccent' | translate"
   scrollable
+  [hideClose]="busy()"
   (closed)="closed.emit()"
 >
   <p class="weight-edit-sheet__when">{{ whenText() }}</p>
@@ -20,9 +21,11 @@
 
   @if (confirmingDelete()) {
     <p class="weight-edit-sheet__confirm">
-      {{ 'weight.editSheet.confirmMessage' | translate: { when: whenText() } }}
+      {{ 'weight.editSheet.confirmMessage' | translate: { when: confirmWhenText() } }}
     </p>
   }
+
+  <app-ui-form-error tone="negative" class="weight-edit-sheet__error" [message]="errorMessage()" />
 
   <div sheetFooter class="weight-edit-sheet__actions">
     @if (confirmingDelete()) {
@@ -32,15 +35,30 @@
         variant="danger"
         block
         class="weight-edit-sheet__confirm-delete"
+        [loading]="busy()"
         (click)="confirmDelete()"
       >
         {{ 'weight.editSheet.confirmDelete' | translate }}
       </button>
-      <button app-ui-button type="button" variant="outline" block (click)="cancelDelete()">
+      <button
+        app-ui-button
+        type="button"
+        variant="outline"
+        block
+        [disabled]="busy()"
+        (click)="cancelDelete()"
+      >
         {{ 'weight.editSheet.cancel' | translate }}
       </button>
     } @else {
-      <button app-ui-button type="button" block class="weight-edit-sheet__save" (click)="save()">
+      <button
+        app-ui-button
+        type="button"
+        block
+        class="weight-edit-sheet__save"
+        [loading]="busy()"
+        (click)="save()"
+      >
         {{ 'common.save' | translate }}
       </button>
       <button
@@ -49,6 +67,7 @@
         variant="outline-danger"
         block
         class="weight-edit-sheet__delete"
+        [disabled]="busy()"
         (click)="askDelete()"
       >
         {{ 'weight.editSheet.delete' | translate }}

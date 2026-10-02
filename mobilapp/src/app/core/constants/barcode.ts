@@ -66,12 +66,12 @@ export const BARCODE_SCANNER_TEXT_KEY = {
   PERMISSION_DENIED: 'core.barcode.permissionDenied',
   UNREADABLE: 'core.barcode.unreadable',
   MODULE_INSTALLING: 'core.barcode.moduleInstalling',
+  MODULE_UNAVAILABLE: 'core.barcode.moduleUnavailable',
   LOOKUP_ERROR: 'core.barcode.lookupError',
   /** Params: `BARCODE_SCANNER_TEXT_PARAMS.INVALID_BARCODE`. */
   INVALID_BARCODE: 'core.barcode.invalidBarcode',
-  /** Params: `BARCODE_SCANNER_TEXT_PARAMS.INVALID_AMOUNT`. */
+  /** Params: `BARCODE_SCANNER_TEXT_PARAMS.INVALID_AMOUNT` and the item's `unit` (g or ml). */
   INVALID_AMOUNT: 'core.barcode.invalidAmount',
-  DUPLICATE_NAME: 'core.barcode.duplicateName',
   SERVING_LABEL: 'core.barcode.servingLabel',
   /** Params: `unit`. */
   AMOUNT_LABEL: 'core.barcode.amountLabel',

@@ -4,7 +4,6 @@ export type Gender = 'mand' | 'kvinde' | 'andet';
 export type GoalId = 'tabe' | 'hold' | 'tage';
 export type PaceId = 'rolig' | 'moderat' | 'hurtig';
 export type IntensityId = 'mildt' | 'moderat' | 'haardt';
-export type UnitSystem = 'metrisk' | 'imperial';
 
 /** Cropping of the profile photo. `zoom` 1..3, `x`/`y` 0..100 (percent). */
 export interface ProfilePhoto {
@@ -33,9 +32,6 @@ export interface UserProfile {
   pace: PaceId | null;
   goalWeightKg: number;
   notificationsEnabled: boolean;
-  units: UnitSystem;
-  /** Manual calorie target that overrides the calculated one. */
-  kcalOverride: number | null;
   photo: ProfilePhoto | null;
 }
 
@@ -58,8 +54,6 @@ export interface PaceDefinition {
 export interface ActivityLevel {
   /** Upper bound (exclusive) for steps per day at this level. */
   maxSteps: number;
-  /** Physical Activity Level – factor on the basal metabolic rate. */
-  pal: number;
   labelKey: string;
 }
 
@@ -79,12 +73,6 @@ export interface IntensityDefinition {
 
 export interface GenderDefinition {
   id: Gender;
-  labelKey: string;
-  descriptionKey: string;
-}
-
-export interface UnitSystemDefinition {
-  id: UnitSystem;
   labelKey: string;
   descriptionKey: string;
 }

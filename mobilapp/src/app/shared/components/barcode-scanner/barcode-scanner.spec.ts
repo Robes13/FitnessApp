@@ -1,13 +1,13 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, Subject } from 'rxjs';
-import { STORAGE_KEY } from '../../../core/constants/storage-key';
 import {
   BarcodeScanOutcome,
   ProductLookupResult,
   ScannedProduct,
 } from '../../../core/models/barcode';
 import { FoodItem } from '../../../core/models/food';
+import { MealId } from '../../../core/models/meal';
 import { injectTranslate } from '../../../core/services/language/translate';
 import { BarcodeScannerService } from '../../../core/services/barcode-scanner/barcode-scanner';
 import { ProductLookupService } from '../../../core/services/product-lookup/product-lookup';
@@ -80,23 +80,27 @@ class FakeProductLookupService {
     <app-barcode-scanner
       [open]="open()"
       [kcalRemaining]="kcalRemaining()"
-      mealLabel="Morgenmad"
+      [(meal)]="meal"
+      [busy]="busy()"
+      [error]="error()"
       (closed)="closedCount = closedCount + 1"
       (found)="found.push($event)"
-      (customSaved)="saved.push($event)"
       (manualRequested)="manualCount = manualCount + 1"
-      (noBarcodeRequested)="noBarcodeCount = noBarcodeCount + 1"
+      (noBarcodeRequested)="noBarcode.push($event)"
     />
   `,
 })
 class Host {
   readonly open = signal(true);
   readonly kcalRemaining = signal<number | null>(500);
+  readonly meal = signal<MealId | null>('morgen');
+  readonly busy = signal(false);
+  readonly error = signal<string | null>(null);
   readonly found: FoodItem[] = [];
-  readonly saved: FoodItem[] = [];
+  /** What each `noBarcodeRequested` carried: the not-found barcode, or `null`. */
+  readonly noBarcode: (string | null)[] = [];
   closedCount = 0;
   manualCount = 0;
-  noBarcodeCount = 0;
 }
 
 describe('BarcodeScanner', () => {
@@ -300,7 +304,99 @@ describe('BarcodeScanner', () => {
     expect(host.found).toEqual([
       { ...PRODUCT.item, quantity: '25 g', kcal: 100, protein: 10, carbs: 8, fat: 3 },
     ]);
-    expect(host.closedCount).toBe(1);
+    // The parent closes the scanner once it has stored the item.
+    expect(host.closedCount).toBe(0);
+    expect(dialogs()).toEqual(['Scan stregkode', 'Proteinbar Choko']);
+  });
+
+  it('keeps the result while the parent saves and after it failed, so "Tilføj" can be retried', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
+    typeInto('Mængde i gram', '25');
+    buttonByText('Tilføj').click();
+    host.busy.set(true);
+    fixture.detectChanges();
+
+    const add = buttonByText('Tilføj');
+    expect(add.getAttribute('aria-busy')).toBe('true');
+    add.click();
+    buttonByText('Scan igen').click();
+    fixture.detectChanges();
+    expect(host.found).toHaveLength(1);
+    expect(dialogs()).toEqual(['Scan stregkode', 'Proteinbar Choko']);
+
+    host.busy.set(false);
+    host.error.set('Ingen forbindelse. Tjek dit internet, og prøv igen.');
+    fixture.detectChanges();
+    expect(root.querySelector('.ui-sheet__footer app-ui-form-error')?.textContent?.trim()).toBe(
+      'Ingen forbindelse. Tjek dit internet, og prøv igen.',
+    );
+    expect(statValues()).toEqual(['100', '10', '8', '3']);
+
+    buttonByText('Tilføj').click();
+    expect(host.found).toHaveLength(2);
+    host.open.set(false);
+    fixture.detectChanges();
+    expect(dialogs()).toEqual([]);
+    expect(host.closedCount).toBe(0);
+  });
+
+  it('lets the result scroll inside its sheet, so the buttons stay in view', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
+
+    const body = root.querySelector('.barcode-scanner__result')?.closest('.ui-sheet__body');
+    expect(body?.classList).toContain('ui-sheet__body--scrollable');
+    expect(root.querySelector('.ui-sheet__footer .barcode-scanner__footer')).not.toBeNull();
+  });
+
+  it('writes numbers from 1000 up with a thousands separator', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
+
+    typeInto('Mængde i gram', '500');
+
+    expect(statValues()).toEqual(['2.000', '200', '150', '60']);
+    expect(verdict()?.textContent?.trim()).toBe(
+      'Den skubber dig 1.500 kcal over dagens mål. Overvej en halv, eller gem den til efter træning.',
+    );
+  });
+
+  it('shows which meal the item goes under and lets the user change it before adding', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
+    const chips = (): HTMLButtonElement[] =>
+      Array.from(root.querySelectorAll<HTMLButtonElement>('.barcode-scanner__meal'));
+
+    expect(root.querySelector('.barcode-scanner__result')?.textContent).toContain(
+      'Hvilket måltid?',
+    );
+    expect(chips().map((chip) => chip.textContent?.trim())).toEqual([
+      'Morgenmad',
+      'Frokost',
+      'Aftensmad',
+      'Snacks',
+    ]);
+    expect(chips().map((chip) => chip.getAttribute('aria-pressed'))).toEqual([
+      'true',
+      'false',
+      'false',
+      'false',
+    ]);
+
+    buttonByText('Frokost').click();
+    fixture.detectChanges();
+
+    expect(host.meal()).toBe('frokost');
+    expect(buttonByText('Frokost').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('hides the meal chips when the parent has no meal (a collection draft)', async () => {
+    await setup();
+    host.meal.set(null);
+    lookup.respond({ status: 'found', product: PRODUCT });
+    fixture.detectChanges();
+
+    expect(root.querySelector('.barcode-scanner__meal')).toBeNull();
+    expect(root.querySelector('.barcode-scanner__result')?.textContent).not.toContain(
+      'Hvilket måltid?',
+    );
   });
 
   it('blocks logging an invalid amount', async () => {
@@ -308,57 +404,60 @@ describe('BarcodeScanner', () => {
 
     typeInto('Mængde i gram', '0');
 
-    expect(formErrors()).toEqual(['Angiv en mængde mellem 1 og 5000 g.']);
+    expect(formErrors()).toEqual(['Angiv en mængde mellem 1 og 5.000 g.']);
     expect(statValues()).toEqual([]);
     expect(buttonByText('Tilføj').disabled).toBe(true);
   });
 
-  it('opens "Unknown item" with the barcode and saves a custom food', async () => {
-    await scanAndRespond({ status: 'not-found', barcode: BARCODE });
+  it('names a liquid’s unit in the invalid-amount message, as the label does', async () => {
+    const cola: ScannedProduct = {
+      ...PRODUCT,
+      unit: 'ml',
+      item: { ...PRODUCT.item, quantity: '100 ml' },
+      servingGrams: null,
+    };
+    await scanAndRespond({ status: 'found', product: cola });
 
-    expect(root.querySelector('.barcode-scanner__badge')?.textContent?.trim()).toBe('Ukendt vare');
-    expect(root.querySelector('.barcode-scanner__code-value')?.textContent?.trim()).toBe(
-      `Stregkode ${BARCODE}`,
-    );
-    const save = buttonByText('Gem og tilføj');
-    expect(save.disabled).toBe(true);
+    typeInto('Mængde i milliliter', '6000');
 
-    typeInto('Navn', '  Proteinbar Karamel ');
-    typeInto('Kalorier', '180');
-    expect(save.disabled).toBe(false);
-
-    save.click();
-    fixture.detectChanges();
-
-    expect(host.saved).toHaveLength(1);
-    expect(host.saved[0]).toMatchObject({
-      name: 'Proteinbar Karamel',
-      quantity: '1 portion',
-      kcal: 180,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      isCustom: true,
-    });
-    expect(host.saved[0]?.id).toMatch(/^food-/);
-    expect(host.closedCount).toBe(1);
+    expect(
+      root.querySelector('.barcode-scanner__field .barcode-scanner__label')?.textContent?.trim(),
+    ).toBe('Mængde (ml)');
+    expect(formErrors()).toEqual(['Angiv en mængde mellem 1 og 5.000 ml.']);
   });
 
-  it('refuses a name the user already has a custom food with', async () => {
-    resetComponentTestStorage({
-      [STORAGE_KEY.CUSTOM_FOODS]: [{ ...TEST_FOOD, name: 'Proteinbar Karamel', isCustom: true }],
-    });
+  it('blocks one log over the per-log cap, which untrusted product data can reach', async () => {
+    // kJ typed as kcal: 2500 "kcal" per 100 g.
+    const wrong = { ...PRODUCT, item: { ...PRODUCT.item, kcal: 2500 } };
+    await scanAndRespond({ status: 'found', product: wrong });
+
+    typeInto('Mængde i gram', '500');
+
+    expect(formErrors()).toEqual(['Det er for meget til én logning – del den op.']);
+    expect(buttonByText('Tilføj').disabled).toBe(true);
+    buttonByText('Tilføj').click();
+    expect(host.found).toEqual([]);
+
+    typeInto('Mængde i gram', '300');
+    expect(formErrors()).toEqual([]);
+    expect(buttonByText('Tilføj').disabled).toBe(false);
+  });
+
+  it('says an unknown product was not found and offers to create it with its barcode', async () => {
     await scanAndRespond({ status: 'not-found', barcode: BARCODE });
 
-    typeInto('Navn', 'proteinbar karamel ');
-    typeInto('Kalorier', '180');
+    expect(hint()).toBe('Varen blev ikke fundet.');
+    expect(root.querySelector('.barcode-scanner__hint--error')).not.toBeNull();
+    expect(dialogs()).toEqual(['Scan stregkode']);
+    expect(findButton('Indtast manuelt i stedet')).toBeDefined();
+    expect(findButton('Varen har ingen stregkode')).toBeUndefined();
 
-    expect(formErrors()).toEqual(['Du har allerede en egen vare med det navn.']);
-    expect(buttonByText('Gem og tilføj').disabled).toBe(true);
+    buttonByText('Opret varen selv').click();
+    fixture.detectChanges();
 
-    typeInto('Navn', 'Proteinbar Vanilje');
-    expect(formErrors()).toEqual([]);
-    expect(buttonByText('Gem og tilføj').disabled).toBe(false);
+    expect(host.noBarcode).toEqual([BARCODE]);
+    expect(host.closedCount).toBe(1);
+    expect(host.found).toEqual([]);
   });
 
   it('shows a network error and retries the same barcode', async () => {
@@ -405,6 +504,18 @@ describe('BarcodeScanner', () => {
     await setup();
 
     expect(hint()).toBe('Stregkodescanneren hentes fra Google Play. Prøv igen om et øjeblik.');
+    expect(findButton('Scan stregkode')).toBeDefined();
+  });
+
+  it('points to typing the barcode, not to retrying, when the scanner module is not coming', async () => {
+    scanner.outcome = { status: 'module-unavailable' };
+    await setup();
+
+    expect(hint()).toBe(
+      'Kamerascanneren kan ikke bruges på telefonen lige nu. Indtast stregkodens tal herunder.',
+    );
+    expect(findButton('Scan stregkode')).toBeUndefined();
+    expect(root.querySelector('input[aria-label="Stregkode"]')).not.toBeNull();
   });
 
   it('closes without logging when the camera is cancelled', async () => {
@@ -440,6 +551,20 @@ describe('BarcodeScanner', () => {
     expect(scanner.scanCalls).toBe(2);
   });
 
+  it('leaves the failed save\'s error behind on "Scan igen"', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
+    host.error.set('Ingen forbindelse. Tjek dit internet, og prøv igen.');
+    fixture.detectChanges();
+    expect(formErrors()).toEqual(['Ingen forbindelse. Tjek dit internet, og prøv igen.']);
+
+    buttonByText('Scan igen').click();
+    await settle(RETRY_DELAY_MS);
+    lookup.respond({ status: 'found', product: PRODUCT });
+    fixture.detectChanges();
+    expect(dialogs()).toEqual(['Scan stregkode', 'Proteinbar Choko']);
+    expect(formErrors()).toEqual([]);
+  });
+
   it('emits manualRequested and noBarcodeRequested and closes', async () => {
     scanner.canScan = false;
     await setup();
@@ -456,7 +581,7 @@ describe('BarcodeScanner', () => {
 
     buttonByText('Varen har ingen stregkode').click();
     fixture.detectChanges();
-    expect(host.noBarcodeCount).toBe(1);
+    expect(host.noBarcode).toEqual([null]);
     expect(host.closedCount).toBe(2);
   });
 
@@ -559,6 +684,10 @@ describe('buildScanVerdict', () => {
     expect(buildScanVerdict(t, 500, { ...item, protein: 10 })).toEqual({
       tone: 'neutral',
       text: 'Passer fint ind. 290 kcal tilbage bagefter.',
+    });
+    expect(buildScanVerdict(t, 2455, { ...item, protein: 10 })).toEqual({
+      tone: 'neutral',
+      text: 'Passer fint ind. 2.245 kcal tilbage bagefter.',
     });
   });
 });

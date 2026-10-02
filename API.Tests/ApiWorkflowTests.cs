@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
+using FitnessApp.Api.Controllers;
 using FitnessApp.Api.Data;
 using FitnessApp.Api.Domain.Entities;
 using FitnessApp.Api.Domain.Enums;
@@ -11,6 +14,7 @@ using FitnessApp.Api.Exceptions;
 using FitnessApp.Api.Options;
 using FitnessApp.Api.Services.Achievements;
 using FitnessApp.Api.Services.Auth;
+using FitnessApp.Api.Services.Export;
 using FitnessApp.Api.Services.FoodLogs;
 using FitnessApp.Api.Services.Goals;
 using FitnessApp.Api.Services.History;
@@ -18,10 +22,14 @@ using FitnessApp.Api.Services.Meals;
 using FitnessApp.Api.Services.Nutrition;
 using FitnessApp.Api.Services.Profiles;
 using FitnessApp.Api.Services.Weights;
+using FitnessApp.Api.Utilities;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -31,34 +39,30 @@ namespace FitnessApp.Api.Tests;
 public sealed partial class ApiWorkflowTests
 {
     private static readonly DateTime Jan1 = new(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+    private const string Password = "LongEnoughPassword1!";
+    private static readonly IOptions<AppOptions> AppSettings =
+        Microsoft.Extensions.Options.Options.Create(new AppOptions { PublicBaseUrl = "http://localhost:5210" });
 
     [Fact]
     public async Task RegistrationRequiresVerificationAndRejectsDuplicateEmail()
     {
         await using var database = await TestDatabase.CreateAsync();
         var sender = new CapturingSender();
-        var auth = new AuthService(database.Context, new UnusedJwtService(),
-            new PasswordHasher<User>(), sender, new ConfigurationBuilder().Build(),
-            TimeProvider.System, NullLogger<AuthService>.Instance);
-        var request = new RegisterRequest
-        {
-            Email = "person@example.com", Username = "person", Password = "LongEnoughPassword1!",
-            PasswordConfirmation = "LongEnoughPassword1!", BirthDate = new DateOnly(2000, 1, 1),
-            Gender = Gender.Female, StartingWeight = 70m, Height = 170m, DailySteps = 5000,
-            TrainingDaysPerWeek = 3, WorkoutDurationMinutes = 45,
-            TrainingIntensity = TrainingIntensity.Moderate, GoalType = GoalType.MaintainWeight,
-            AcceptedTerms = true, TimeZoneId = "UTC"
-        };
+        var auth = CreateAuth(database.Context, sender);
+        var request = CreateRegisterRequest();
 
         await auth.RegisterAsync(request, CancellationToken.None);
         var user = await database.Context.Users.SingleAsync();
         Assert.False(user.IsActive);
         Assert.Null(user.EmailVerifiedAt);
         Assert.Single(await database.Context.UserGoals.ToListAsync());
-        Assert.NotEmpty(sender.Messages);
-        await Assert.ThrowsAsync<UnauthorizedException>(() => auth.LoginAsync(
-            new LoginRequest { Username = request.Username, Password = request.Password }, CancellationToken.None));
-        await Assert.ThrowsAsync<ConflictException>(() => auth.RegisterAsync(request, CancellationToken.None));
+        Assert.NotEmpty(sender.Sent);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => LoginAsync(auth, request.Email, request.Password));
+        var conflict = await Assert.ThrowsAsync<ConflictException>(() => auth.RegisterAsync(request, CancellationToken.None));
+        Assert.Equal("An account with that email already exists.", conflict.Message);
+        conflict = await Assert.ThrowsAsync<ConflictException>(() => auth.RegisterAsync(
+            request with { Email = "other@example.com" }, CancellationToken.None));
+        Assert.Equal("That username is already in use.", conflict.Message);
     }
 
     [Fact]
@@ -81,9 +85,9 @@ public sealed partial class ApiWorkflowTests
         var foodLogs = new FoodLogService(database.Context, achievement, TimeProvider.System,
             NullLogger<FoodLogService>.Instance);
         await foodLogs.CreateAsync(user.UserId,
-            new CreateFoodLogRequest(food.FoodId, 50m, QuantityUnit.Gram, Jan1.AddDays(1)), CancellationToken.None);
+            new CreateFoodLogRequest(food.FoodId, 50m, QuantityUnit.Gram, Jan1.AddDays(1), MealType.Breakfast), CancellationToken.None);
         await foodLogs.CreateAsync(user.UserId,
-            new CreateFoodLogRequest(food.FoodId, 100m, QuantityUnit.Gram, Jan1.AddDays(3)), CancellationToken.None);
+            new CreateFoodLogRequest(food.FoodId, 100m, QuantityUnit.Gram, Jan1.AddDays(3), MealType.Dinner), CancellationToken.None);
 
         var nutrition = new NutritionService(database.Context, TimeProvider.System);
         var history = await nutrition.GetHistoryAsync(user.UserId, Jan1, Jan1.AddDays(5), 20,
@@ -120,9 +124,9 @@ public sealed partial class ApiWorkflowTests
             new AchievementService(database.Context, TimeProvider.System), TimeProvider.System,
             NullLogger<FoodLogService>.Instance);
         var first = await service.CreateAsync(owner.UserId,
-            new CreateFoodLogRequest(food.FoodId, 100m, QuantityUnit.Gram, Jan1), CancellationToken.None);
+            new CreateFoodLogRequest(food.FoodId, 100m, QuantityUnit.Gram, Jan1, MealType.Snack), CancellationToken.None);
         await service.CreateAsync(owner.UserId,
-            new CreateFoodLogRequest(food.FoodId, 100m, QuantityUnit.Gram, Jan1), CancellationToken.None);
+            new CreateFoodLogRequest(food.FoodId, 100m, QuantityUnit.Gram, Jan1, MealType.Snack), CancellationToken.None);
         var page = await service.GetHistoryAsync(owner.UserId, Jan1, Jan1.AddDays(1), 1,
             null, CancellationToken.None);
         Assert.True(page.HasMore);
@@ -178,6 +182,9 @@ public sealed partial class ApiWorkflowTests
             new CreateWeightLogRequest(69m, Jan1.AddDays(5)), CancellationToken.None);
         Assert.Equal(69m, (await service.GetLatestAsync(user.UserId, CancellationToken.None))?.Weight);
         Assert.Equal(2, await database.Context.UserGoals.CountAsync());
+        await service.UpdateAsync(user.UserId, created.WeightLogId,
+            new UpdateWeightLogRequest(69m, null), CancellationToken.None);
+        Assert.Equal(2, await database.Context.UserGoals.CountAsync());
         var conflict = await Assert.ThrowsAsync<WeightDateConflictException>(() => service.CreateAsync(
             user.UserId, new CreateWeightLogRequest(68m, Jan1.AddDays(5).AddHours(1)),
             CancellationToken.None));
@@ -228,40 +235,78 @@ public sealed partial class ApiWorkflowTests
         await Assert.ThrowsAsync<NotFoundException>(() => meals.GetAsync(stranger.UserId,
             meal.MealCollectionId, CancellationToken.None));
         var logs = await meals.LogAsync(owner.UserId, meal.MealCollectionId,
-            new LogMealCollectionRequest(Jan1.AddDays(1)), CancellationToken.None);
+            new LogMealCollectionRequest(Jan1.AddDays(1), MealType.Dinner), CancellationToken.None);
         Assert.Equal(2, logs.Count);
-        Assert.Equal(2, await database.Context.FoodLogs.CountAsync());
+        Assert.All(logs, log => Assert.Equal(MealType.Dinner, log.MealType));
+        Assert.All(await database.Context.FoodLogs.ToListAsync(), log => Assert.Equal(MealType.Dinner, log.MealType));
     }
 
     [Fact]
-    public async Task RefreshRotatesOnceAndPasswordResetRevokesAllSessions()
+    public async Task RefreshReturnsTodaysTokenUnchangedAndRotatesOlderOnes()
     {
         await using var database = await TestDatabase.CreateAsync();
-        var user = await SeedUserAsync(database.Context);
-        const string password = "LongEnoughPassword1!";
-        var hasher = new PasswordHasher<User>();
-        user.PasswordHash = hasher.HashPassword(user, password);
-        await database.Context.SaveChangesAsync();
-        var sender = new CapturingSender();
-        var jwt = new JwtTokenService(Microsoft.Extensions.Options.Options.Create(new JwtOptions
-        {
-            Issuer = "test", Audience = "test", SigningKey = new string('x', 64)
-        }), Microsoft.Extensions.Options.Options.Create(new RefreshTokenOptions { LifetimeDays = 30 }), TimeProvider.System);
-        var auth = new AuthService(database.Context, jwt, hasher, sender,
-            new ConfigurationBuilder().Build(), TimeProvider.System,
-            NullLogger<AuthService>.Instance);
-        var login = await auth.LoginAsync(new LoginRequest { Username = user.Username, Password = password },
+        var user = await SeedUserWithPasswordAsync(database.Context);
+        // Issue "yesterday" so nbf stays before the real clock JwtSecurityTokenHandler validates against.
+        var clock = new MutableTimeProvider(DateTimeOffset.UtcNow.AddDays(-1));
+        var auth = CreateAuth(database.Context, new CapturingSender(), clock);
+        var yesterday = await LoginAsync(auth, user.Email, Password);
+        clock.Now = DateTimeOffset.UtcNow;
+
+        var rotated = await auth.RefreshAsync(new RefreshRequest { RefreshToken = yesterday.RefreshToken },
             CancellationToken.None);
-        var rotated = await auth.RefreshAsync(new RefreshRequest { RefreshToken = login.RefreshToken },
-            CancellationToken.None);
+        Assert.NotEqual(yesterday.RefreshToken, rotated.RefreshToken);
         await Assert.ThrowsAsync<UnauthorizedException>(() => auth.RefreshAsync(
-            new RefreshRequest { RefreshToken = login.RefreshToken }, CancellationToken.None));
-        await auth.ForgotPasswordAsync(new ForgotPasswordRequest(user.Email), CancellationToken.None);
-        var resetToken = sender.Messages.Single().Split(' ').Last();
+            new RefreshRequest { RefreshToken = yesterday.RefreshToken }, CancellationToken.None));
+
+        var rows = await database.Context.RefreshTokens.CountAsync();
+        var same = await auth.RefreshAsync(new RefreshRequest { RefreshToken = rotated.RefreshToken },
+            CancellationToken.None);
+        Assert.Equal(rotated.RefreshToken, same.RefreshToken);
+        Assert.NotEqual(rotated.AccessToken, same.AccessToken);
+        Assert.InRange(same.RefreshTokenExpiresAt, rotated.RefreshTokenExpiresAt.AddSeconds(-1),
+            rotated.RefreshTokenExpiresAt);
+        Assert.Equal(rows, await database.Context.RefreshTokens.CountAsync());
+    }
+
+    [Fact]
+    public async Task PasswordResetLinkIsCheckedWithoutUseThenConsumedAndRevokesSessions()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var user = await SeedUserWithPasswordAsync(database.Context);
+        var sender = new CapturingSender();
+        var auth = CreateAuth(database.Context, sender);
+        var login = await LoginAsync(auth, user.Email, Password);
+
+        await auth.ForgotPasswordAsync(new ForgotPasswordRequest(" owner "), CancellationToken.None);
+        var mail = sender.Sent.Single();
+        Assert.Equal(user.Email, mail.Email);
+        Assert.Equal("Nulstil din adgangskode · Reset your password – Nutrify", mail.Subject);
+        Assert.Contains("http://localhost:5210/api/v1/auth/password/reset?token=", mail.Body);
+        var resetToken = TokenFrom(mail.Body);
+        Assert.True(await auth.IsPasswordResetTokenActiveAsync(resetToken, CancellationToken.None));
+        Assert.True(await auth.IsPasswordResetTokenActiveAsync(resetToken, CancellationToken.None));
+
         await auth.ResetPasswordAsync(new ResetPasswordRequest(resetToken,
             "AnotherLongPassword1!", "AnotherLongPassword1!"), CancellationToken.None);
+        Assert.False(await auth.IsPasswordResetTokenActiveAsync(resetToken, CancellationToken.None));
+        await Assert.ThrowsAsync<BusinessValidationException>(() => auth.ResetPasswordAsync(
+            new ResetPasswordRequest(resetToken, "ThirdLongPassword1!", "ThirdLongPassword1!"), CancellationToken.None));
         await Assert.ThrowsAsync<UnauthorizedException>(() => auth.RefreshAsync(
-            new RefreshRequest { RefreshToken = rotated.RefreshToken }, CancellationToken.None));
+            new RefreshRequest { RefreshToken = login.RefreshToken }, CancellationToken.None));
+        await Assert.ThrowsAsync<UnauthorizedException>(() => LoginAsync(auth, user.Email, Password));
+        await LoginAsync(auth, user.Username, "AnotherLongPassword1!");
+    }
+
+    [Fact]
+    public async Task ForgotPasswordIsSilentForUnknownAndUnverifiedAccounts()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await SeedUserWithPasswordAsync(database.Context, "pending", verified: false);
+        var sender = new CapturingSender();
+        var auth = CreateAuth(database.Context, sender);
+        await auth.ForgotPasswordAsync(new ForgotPasswordRequest("pending"), CancellationToken.None);
+        await auth.ForgotPasswordAsync(new ForgotPasswordRequest("nobody@example.com"), CancellationToken.None);
+        Assert.Empty(sender.Sent);
     }
 
     [Fact]
@@ -375,11 +420,308 @@ public sealed partial class ApiWorkflowTests
         await database.Context.SaveChangesAsync();
         var storage = new FakeImageStorage();
         var accounts = new UserAccountService(database.Context, TimeProvider.System,
-            new CapturingSender(), storage, NullLogger<UserAccountService>.Instance);
+            new CapturingSender(), storage, AppSettings, NullLogger<UserAccountService>.Instance);
         await accounts.SoftDeleteAsync(user.UserId, CancellationToken.None);
         Assert.Contains(key, storage.Deleted);
         Assert.Empty(database.Context.UserProfiles.Where(profile => profile.UserId == user.UserId));
     }
+
+    [Fact]
+    public async Task LoginAcceptsEmailOrUsernameAndSeparatesUnverifiedFromWrongCredentials()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var owner = await SeedUserWithPasswordAsync(database.Context);
+        await SeedUserWithPasswordAsync(database.Context, "pending", verified: false);
+        var auth = CreateAuth(database.Context, new CapturingSender());
+
+        Assert.Equal(owner.UserId, (await LoginAsync(auth, " OWNER@example.com ", Password)).User.UserId);
+        Assert.Equal(owner.UserId, (await LoginAsync(auth, "owner", Password)).User.UserId);
+        Assert.Equal(owner.UserId, (await LoginAsync(auth, " Owner ", Password)).User.UserId);
+        // The app polls with the right password while it waits for verification, so 403 must never lock out.
+        for (var i = 0; i < 7; i++)
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(() => LoginAsync(auth, i % 2 == 0 ? "pending" : "pending@example.com", Password));
+        var wrong = await Assert.ThrowsAsync<UnauthorizedException>(() => LoginAsync(auth, "owner@example.com", "WrongPassword1!"));
+        foreach (var attempt in new Func<Task>[]
+        {
+            () => LoginAsync(auth, "OWNER", "WrongPassword1!"),
+            () => LoginAsync(auth, "pending", "WrongPassword1!"),
+            () => LoginAsync(auth, "pending@example.com", "WrongPassword1!"),
+            () => LoginAsync(auth, "nobody@example.com", Password),
+            () => LoginAsync(auth, "nobody", Password)
+        })
+        {
+            var exception = await Assert.ThrowsAsync<UnauthorizedException>(attempt);
+            Assert.Equal(wrong.Message, exception.Message);
+        }
+    }
+
+    [Fact]
+    public async Task SixthLoginAttemptIsLockedOutEvenWithTheRightPassword()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await SeedUserWithPasswordAsync(database.Context);
+        var auth = CreateAuth(database.Context, new CapturingSender());
+        for (var i = 0; i < 5; i++)
+            await Assert.ThrowsAsync<UnauthorizedException>(() => LoginAsync(auth, i % 2 == 0 ? "owner" : "owner@example.com", "WrongPassword1!"));
+        await Assert.ThrowsAsync<TooManyRequestsException>(() => LoginAsync(auth, "owner", Password));
+        for (var i = 0; i < 5; i++)
+            await Assert.ThrowsAsync<UnauthorizedException>(() => LoginAsync(auth, "nobody", Password));
+        await Assert.ThrowsAsync<TooManyRequestsException>(() => LoginAsync(auth, "NOBODY", Password));
+    }
+
+    [Fact]
+    public async Task UnknownNumericIdentifierDoesNotLockTheAccountWithThatId()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var owner = await SeedUserWithPasswordAsync(database.Context);
+        var auth = CreateAuth(database.Context, new CapturingSender());
+        var id = owner.UserId.ToString();
+        for (var i = 0; i < 5; i++)
+            await Assert.ThrowsAsync<UnauthorizedException>(() => LoginAsync(auth, id, Password));
+        await Assert.ThrowsAsync<TooManyRequestsException>(() => LoginAsync(auth, id, Password));
+        Assert.Equal(owner.UserId, (await LoginAsync(auth, "owner", Password)).User.UserId);
+    }
+
+    [Fact]
+    public async Task SuccessfulLoginResetsTheFailureCounter()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await SeedUserWithPasswordAsync(database.Context);
+        var auth = CreateAuth(database.Context, new CapturingSender());
+        for (var i = 0; i < 4; i++)
+            await Assert.ThrowsAsync<UnauthorizedException>(() => LoginAsync(auth, "owner", "WrongPassword1!"));
+        await LoginAsync(auth, "owner", Password);
+        for (var i = 0; i < 5; i++)
+            await Assert.ThrowsAsync<UnauthorizedException>(() => LoginAsync(auth, "owner", "WrongPassword1!"));
+    }
+
+    [Fact]
+    public async Task PasswordResetLiftsTheLoginLockout()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        await SeedUserWithPasswordAsync(database.Context);
+        var sender = new CapturingSender();
+        var auth = CreateAuth(database.Context, sender);
+        for (var i = 0; i < 5; i++)
+            await Assert.ThrowsAsync<UnauthorizedException>(() => LoginAsync(auth, "owner", "WrongPassword1!"));
+        await auth.ForgotPasswordAsync(new ForgotPasswordRequest("owner"), CancellationToken.None);
+        await auth.ResetPasswordAsync(new ResetPasswordRequest(TokenFrom(sender.Sent.Single().Body),
+            "AnotherLongPassword1!", "AnotherLongPassword1!"), CancellationToken.None);
+        await LoginAsync(auth, "owner", "AnotherLongPassword1!");
+    }
+
+    [Theory]
+    [InlineData("a@b")]
+    [InlineData("has space")]
+    [InlineData(" person")]
+    public void UsernameMustBeLettersNumbersHyphensOrUnderscores(string username)
+    {
+        var results = new List<ValidationResult>();
+        var request = CreateRegisterRequest() with { Username = username };
+        Assert.False(Validator.TryValidateObject(request, new ValidationContext(request), results, true));
+        Assert.Contains(results, result => result.MemberNames.Contains(nameof(RegisterRequest.Username)));
+        var valid = CreateRegisterRequest();
+        Assert.True(Validator.TryValidateObject(valid, new ValidationContext(valid), [], true));
+    }
+
+    [Fact]
+    public async Task VerificationMailLinksToTheGetPageAndResendInvalidatesOlderLinks()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var sender = new CapturingSender();
+        var clock = new MutableTimeProvider(DateTimeOffset.UtcNow);
+        var auth = CreateAuth(database.Context, sender, clock);
+        await auth.RegisterAsync(CreateRegisterRequest(), CancellationToken.None);
+        var mail = sender.Sent.Single();
+        Assert.Equal("Bekræft din e-mail · Confirm your e-mail – Nutrify", mail.Subject);
+        Assert.Contains("bekræfte din e-mail til Nutrify. Linket gælder i 24 timer.", mail.Body);
+        Assert.Contains("http://localhost:5210/api/v1/auth/email/verify?token=", mail.Body);
+        var first = TokenFrom(mail.Body);
+
+        await auth.ResendVerificationAsync(new ResendVerificationRequest("person"), CancellationToken.None);
+        Assert.Single(sender.Sent); // at most one mail per minute
+        clock.Now = clock.Now.AddMinutes(1).AddSeconds(1);
+        await auth.ResendVerificationAsync(new ResendVerificationRequest("PERSON"), CancellationToken.None);
+        var second = TokenFrom(sender.Sent.Last().Body);
+        Assert.Equal(2, sender.Sent.Count);
+        database.Context.ChangeTracker.Clear(); // a new request: the resend invalidated the first token via ExecuteUpdate
+        var controller = CreateAuthController(auth);
+        Assert.Equal(StatusCodes.Status400BadRequest, (await controller.VerifyEmailLink(first, CancellationToken.None)).StatusCode);
+        var page = await controller.VerifyEmailLink(second, CancellationToken.None);
+        Assert.Equal(StatusCodes.Status200OK, page.StatusCode);
+        Assert.Equal("text/html; charset=utf-8", page.ContentType);
+        Assert.Contains("Din e-mail er bekræftet.", page.Content);
+        Assert.Equal("no-store", controller.Response.Headers.CacheControl.ToString());
+        Assert.StartsWith("default-src 'none'", controller.Response.Headers.ContentSecurityPolicy.ToString());
+        Assert.True((await database.Context.Users.SingleAsync()).IsActive);
+        Assert.Equal(StatusCodes.Status400BadRequest, (await controller.VerifyEmailLink(second, CancellationToken.None)).StatusCode);
+        Assert.Equal(StatusCodes.Status400BadRequest, (await controller.VerifyEmailLink(null, CancellationToken.None)).StatusCode);
+        await auth.ResendVerificationAsync(new ResendVerificationRequest("person@example.com"), CancellationToken.None);
+        Assert.Equal(2, sender.Sent.Count);
+        await LoginAsync(auth, "person", Password);
+    }
+
+    [Fact]
+    public async Task ResetPageValidatesTheFormAndEchoesTheTokenEncoded()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var user = await SeedUserWithPasswordAsync(database.Context);
+        var sender = new CapturingSender();
+        var auth = CreateAuth(database.Context, sender);
+        await auth.ForgotPasswordAsync(new ForgotPasswordRequest(user.Email), CancellationToken.None);
+        var token = TokenFrom(sender.Sent.Single().Body);
+        var controller = CreateAuthController(auth);
+
+        var form = await controller.ResetPasswordForm(token, CancellationToken.None);
+        Assert.Equal(StatusCodes.Status200OK, form.StatusCode);
+        Assert.Contains($"name=\"token\" value=\"{token}\"", form.Content);
+        Assert.Equal(StatusCodes.Status400BadRequest,
+            (await controller.ResetPasswordForm("<x>", CancellationToken.None)).StatusCode);
+        var mismatch = await controller.ResetPassword(token, "AnotherLongPassword1!", "Different1!", CancellationToken.None);
+        Assert.Equal(StatusCodes.Status400BadRequest, mismatch.StatusCode);
+        Assert.Contains("Adgangskoderne er ikke ens", mismatch.Content);
+        var tooShort = await controller.ResetPassword("\"><script>", "short", "short", CancellationToken.None);
+        Assert.Contains("Adgangskoden skal være 10–200 tegn", tooShort.Content);
+        Assert.Contains("value=\"&quot;&gt;&lt;script&gt;\"", tooShort.Content);
+        Assert.Contains("Ugyldigt link", (await controller.ResetPassword(null, null, null, CancellationToken.None)).Content);
+        var done = await controller.ResetPassword(token, "AnotherLongPassword1!", "AnotherLongPassword1!", CancellationToken.None);
+        Assert.Equal(StatusCodes.Status200OK, done.StatusCode);
+        Assert.Contains("Adgangskode skiftet", done.Content);
+        var reused = await controller.ResetPassword(token, "ThirdLongPassword1!", "ThirdLongPassword1!", CancellationToken.None);
+        Assert.Equal(StatusCodes.Status400BadRequest, reused.StatusCode);
+        Assert.Contains("Ugyldigt link", reused.Content);
+    }
+
+    [Fact]
+    public async Task EmailChangeKeepsTheAccountActiveUntilTheNewAddressIsVerified()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var user = await SeedUserAsync(database.Context);
+        database.Context.RefreshTokens.Add(new RefreshToken { TokenId = "session", UserId = user.UserId,
+            State = TokenState.Active });
+        await database.Context.SaveChangesAsync();
+        var sender = new CapturingSender();
+        var accounts = new UserAccountService(database.Context, TimeProvider.System, sender,
+            new FakeImageStorage(), AppSettings, NullLogger<UserAccountService>.Instance);
+        var auth = CreateAuth(database.Context, sender);
+
+        var dto = await accounts.UpdateAsync(user.UserId, new UpdateAccountRequest(" New@Example.com ", null),
+            CancellationToken.None);
+        Assert.Equal("owner@example.com", dto.Email);
+        Assert.True(dto.IsActive);
+        Assert.Equal("new@example.com", sender.Sent.Single().Email);
+        Assert.Equal(TokenState.Active, (await database.Context.RefreshTokens.SingleAsync()).State);
+        await database.Context.Entry(user).ReloadAsync();
+        Assert.Equal("owner@example.com", user.Email);
+        Assert.True(user.IsActive);
+
+        await auth.VerifyEmailAsync(new VerifyEmailRequest(TokenFrom(sender.Sent.Single().Body)), CancellationToken.None);
+        await database.Context.Entry(user).ReloadAsync();
+        Assert.Equal("new@example.com", user.Email);
+        Assert.True(user.IsActive);
+    }
+
+    [Fact]
+    public async Task EmailChangeFailsAtVerifyWhenTheAddressWasTakenMeanwhile()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var user = await SeedUserAsync(database.Context);
+        var sender = new CapturingSender();
+        var accounts = new UserAccountService(database.Context, TimeProvider.System, sender,
+            new FakeImageStorage(), AppSettings, NullLogger<UserAccountService>.Instance);
+        await accounts.UpdateAsync(user.UserId, new UpdateAccountRequest("taken@example.com", null), CancellationToken.None);
+        await SeedUserAsync(database.Context, "taken");
+
+        await Assert.ThrowsAsync<BusinessValidationException>(() => CreateAuth(database.Context, sender)
+            .VerifyEmailAsync(new VerifyEmailRequest(TokenFrom(sender.Sent.Single().Body)), CancellationToken.None));
+        await database.Context.Entry(user).ReloadAsync();
+        Assert.Equal("owner@example.com", user.Email);
+    }
+
+    [Fact]
+    public async Task FoodLogRequiresAMealTypeAndReturnsIt()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var user = await SeedUserAsync(database.Context);
+        var food = new Food { Name = "Soup", CreatedByUserId = user.UserId, CaloriesPer100 = 50m, CreatedAt = Jan1 };
+        database.Context.Foods.Add(food);
+        await database.Context.SaveChangesAsync();
+        var service = new FoodLogService(database.Context,
+            new AchievementService(database.Context, TimeProvider.System), TimeProvider.System,
+            NullLogger<FoodLogService>.Instance);
+        await Assert.ThrowsAsync<BusinessValidationException>(() => service.CreateAsync(user.UserId,
+            new CreateFoodLogRequest(food.FoodId, 100m, QuantityUnit.Gram, Jan1, 0), CancellationToken.None));
+        var created = await service.CreateAsync(user.UserId,
+            new CreateFoodLogRequest(food.FoodId, 100m, QuantityUnit.Gram, Jan1, MealType.Lunch), CancellationToken.None);
+        Assert.Equal(MealType.Lunch, created.MealType);
+        var updated = await service.UpdateAsync(user.UserId, created.FoodLogId,
+            new UpdateFoodLogRequest(null, 200m, null, null), CancellationToken.None);
+        Assert.Equal(MealType.Lunch, updated.MealType);
+        Assert.Equal(MealType.Lunch, (await service.GetAsync(user.UserId, created.FoodLogId, CancellationToken.None)).MealType);
+    }
+
+    [Fact]
+    public void NutritionThatWouldOverflowItsColumnIsAValidationError()
+    {
+        var food = new Food { Name = "Dense", CaloriesPer100 = 50_000m };
+        Assert.Equal(99_999.99m, FoodNutritionCalculator.Calculate(food, 199.99998m, QuantityUnit.Gram).Calories);
+        Assert.Throws<BusinessValidationException>(() => FoodNutritionCalculator.Calculate(food, 200m, QuantityUnit.Gram));
+        Assert.Throws<BusinessValidationException>(() => FoodNutritionCalculator.Calculate(food, 10_000_000m, QuantityUnit.Gram));
+    }
+
+    [Fact]
+    public async Task HistoryEventsCarryTheirPayload()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var user = await SeedUserAsync(database.Context);
+        var stranger = await SeedUserAsync(database.Context, "stranger");
+        var food = new Food { Name = "Apple", CreatedByUserId = user.UserId, CaloriesPer100 = 52m, CreatedAt = Jan1 };
+        var goal = new UserGoal { UserId = user.UserId, GoalType = GoalType.MaintainWeight, TargetWeight = 70m,
+            TargetDailyCalories = 2000m, CreatedAt = Jan1.AddDays(1) };
+        var weight = new WeightLog { UserId = user.UserId, Weight = 69.5m, RecordedAt = Jan1.AddDays(2),
+            RecordedDate = new DateOnly(2026, 1, 3) };
+        database.Context.AddRange(food, goal, weight, new WeightLog { UserId = stranger.UserId, Weight = 80m,
+            RecordedAt = Jan1.AddDays(2), RecordedDate = new DateOnly(2026, 1, 3) });
+        await database.Context.SaveChangesAsync();
+        var logs = new FoodLogService(database.Context, new AchievementService(database.Context, TimeProvider.System),
+            TimeProvider.System, NullLogger<FoodLogService>.Instance);
+        var kept = await logs.CreateAsync(user.UserId,
+            new CreateFoodLogRequest(food.FoodId, 100m, QuantityUnit.Gram, Jan1.AddDays(3), MealType.Snack), CancellationToken.None);
+        var removed = await logs.CreateAsync(user.UserId,
+            new CreateFoodLogRequest(food.FoodId, 100m, QuantityUnit.Gram, Jan1.AddDays(4), MealType.Snack), CancellationToken.None);
+        await logs.DeleteAsync(user.UserId, removed.FoodLogId, CancellationToken.None);
+
+        var items = (await new HistoryService(database.Context).GetAsync(user.UserId, null, null, null, 50, null,
+            CancellationToken.None)).Items;
+        Assert.Equal(5, items.Count);
+        Assert.All(items.Where(item => item.Type is HistoryEventType.AccountCreated or HistoryEventType.AchievementCompleted),
+            item => Assert.True(item.FoodLog is null && item.WeightLog is null && item.Goal is null));
+        var foodEvent = items.Single(item => item.Type == HistoryEventType.FoodLogged);
+        Assert.Equal(kept.FoodLogId, foodEvent.FoodLog?.FoodLogId);
+        Assert.Equal("Apple", foodEvent.FoodLog?.FoodName);
+        Assert.True(foodEvent.WeightLog is null && foodEvent.Goal is null);
+        Assert.Equal(69.5m, items.Single(item => item.Type == HistoryEventType.WeightRecorded).WeightLog?.Weight);
+        Assert.Equal(goal.UserGoalId, items.Single(item => item.Type == HistoryEventType.GoalUpdated).Goal?.UserGoalId);
+    }
+
+    [Fact]
+    public async Task ExportDownloadTokenRoundTripsAndRejectsGarbage()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var user = await SeedUserAsync(database.Context);
+        var service = new UserDataExportService(database.Context,
+            new AchievementService(database.Context, TimeProvider.System), new FakeImageStorage(),
+            new EphemeralDataProtectionProvider());
+        var token = service.CreateDownloadToken(user.UserId);
+        Assert.Equal(user.Email, (await service.GetByDownloadTokenAsync(token, CancellationToken.None)).Account.Email);
+        await Assert.ThrowsAsync<NotFoundException>(() => service.GetByDownloadTokenAsync("garbage", CancellationToken.None));
+        await Assert.ThrowsAsync<NotFoundException>(() => service.GetByDownloadTokenAsync(null, CancellationToken.None));
+    }
+
+    private static AuthController CreateAuthController(AuthService auth) => new(auth)
+    {
+        ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
+    };
 
     private static async Task<User> SeedUserAsync(FitnessAppDbContext context, string name = "owner")
     {
@@ -393,14 +735,61 @@ public sealed partial class ApiWorkflowTests
         return user;
     }
 
+    private static AuthService CreateAuth(FitnessAppDbContext context, CapturingSender sender,
+        TimeProvider? clock = null, IMemoryCache? cache = null)
+    {
+        clock ??= TimeProvider.System;
+        var jwt = new JwtTokenService(Microsoft.Extensions.Options.Options.Create(new JwtOptions
+        {
+            Issuer = "test", Audience = "test", SigningKey = new string('x', 64), AccessTokenMinutes = 15
+        }), Microsoft.Extensions.Options.Options.Create(new RefreshTokenOptions { LifetimeDays = 30 }), clock);
+        return new AuthService(context, jwt, new PasswordHasher<User>(), sender,
+            new ConfigurationBuilder().Build(), clock, cache ?? new MemoryCache(new MemoryCacheOptions()),
+            AppSettings, NullLogger<AuthService>.Instance);
+    }
+
+    private static Task<AuthResponse> LoginAsync(AuthService auth, string identifier, string password)
+        => auth.LoginAsync(new LoginRequest { EmailOrUsername = identifier, Password = password },
+            CancellationToken.None);
+
+    private static string TokenFrom(string body) => Regex.Match(body, "token=([0-9A-F]{64})").Groups[1].Value;
+
+    private static RegisterRequest CreateRegisterRequest() => new()
+    {
+        Email = "person@example.com", Username = "person", Password = Password,
+        PasswordConfirmation = Password, BirthDate = new DateOnly(2000, 1, 1),
+        Gender = Gender.Female, StartingWeight = 70m, Height = 170m, DailySteps = 5000,
+        TrainingDaysPerWeek = 3, WorkoutDurationMinutes = 45,
+        TrainingIntensity = TrainingIntensity.Moderate, GoalType = GoalType.MaintainWeight,
+        AcceptedTerms = true, TimeZoneId = "UTC"
+    };
+
+    private static async Task<User> SeedUserWithPasswordAsync(FitnessAppDbContext context, string name = "owner",
+        bool verified = true)
+    {
+        var user = await SeedUserAsync(context, name);
+        user.PasswordHash = new PasswordHasher<User>().HashPassword(user, Password);
+        if (!verified)
+        {
+            user.EmailVerifiedAt = null;
+            user.IsActive = false;
+        }
+        await context.SaveChangesAsync();
+        return user;
+    }
+
+    private sealed class MutableTimeProvider(DateTimeOffset now) : TimeProvider
+    {
+        public DateTimeOffset Now { get; set; } = now;
+        public override DateTimeOffset GetUtcNow() => Now;
+    }
+
     private sealed class CapturingSender : IAccountMessageSender
     {
-        public Task SendVerificationAsync(string email, string token, CancellationToken cancellationToken)
-            => SendAsync(email, "verification", token, cancellationToken);
-        public List<string> Messages { get; } = [];
-        public Task SendAsync(string email, string subject, string message, CancellationToken cancellationToken)
+        public List<(string Email, string Subject, string Body)> Sent { get; } = [];
+        public Task SendAsync(string email, AccountEmail mail, CancellationToken cancellationToken)
         {
-            Messages.Add(message);
+            Sent.Add((email, mail.Subject, mail.Text));
             return Task.CompletedTask;
         }
     }
@@ -425,13 +814,6 @@ public sealed partial class ApiWorkflowTests
             return Task.CompletedTask;
         }
         public string GetUrl(string key) => $"https://fitnessapp.blob.core.windows.net/profilepictures/{key}?si=sudo&sig=test";
-    }
-
-    private sealed class UnusedJwtService : IJwtTokenService
-    {
-        public IssuedToken CreateAccessToken(int userId, string email, string username) => throw new NotImplementedException();
-        public IssuedToken CreateRefreshToken(int userId) => throw new NotImplementedException();
-        public RefreshTokenIdentity ValidateRefreshToken(string token, bool validateLifetime = true) => throw new NotImplementedException();
     }
 
     private sealed class TestDatabase : IAsyncDisposable

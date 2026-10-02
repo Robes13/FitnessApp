@@ -6,6 +6,7 @@ bin/
 obj/
 DataProtection-Keys/
 .dev-outbox/
+.dev-images/
 
 # User-specific files
 *.user

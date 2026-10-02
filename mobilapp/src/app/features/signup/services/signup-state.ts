@@ -1,11 +1,16 @@
 import { Injectable, Signal, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, switchMap, tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { APP_PATH } from '../../../core/constants/app-route';
+import { USERNAME_PATTERN } from '../../../core/constants/auth';
 import { DEFAULT_PROFILE } from '../../../core/constants/profile-defaults';
-import { MAX_AGE, MIN_AGE, PASSWORD_MIN_LENGTH } from '../../../core/constants/nutrition';
+import {
+  MAX_AGE,
+  MIN_AGE,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from '../../../core/constants/nutrition';
 import { Gender, GoalId, PaceId, UserProfile } from '../../../core/models/profile';
-import { AuthApi } from '../../../core/services/auth-api/auth-api';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
 import { SessionService } from '../../../core/services/session/session';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
@@ -91,8 +96,9 @@ const PERCENT_MAX = 100;
 
 /**
  * The draft behind the signup flow: one signal per field, the step navigation and the derived
- * progress. The service is provided by the route (`SIGNUP_ROUTES`), not at the root, so the draft
- * lives exactly as long as the flow and starts over if the user leaves it.
+ * progress. The service is provided by `SignupPage`, not at the root (or the route, whose injector
+ * outlives the page), so the draft – password included – lives exactly as long as the flow and
+ * starts over every time it is entered.
  *
  * The step components inject the service directly and write to the draft signals – they have
  * neither inputs nor outputs.
@@ -102,7 +108,6 @@ export class SignupStateService {
   private readonly calculator = inject(NutritionCalculator);
   private readonly profiles = inject(UserProfileService);
   private readonly session = inject(SessionService);
-  private readonly authApi = inject(AuthApi);
   private readonly router = inject(Router);
   private readonly now = inject(NOW);
   private readonly t = injectTranslate();
@@ -128,6 +133,11 @@ export class SignupStateService {
   readonly notifications = signal<boolean | null>(DEFAULT_PROFILE.notificationsEnabled);
   readonly email = signal('');
   readonly termsAccepted = signal(false);
+
+  /** Something typed that isn't an e-mail – not the empty field. */
+  readonly emailInvalid = computed(
+    () => this.email().length > 0 && !this.calculator.isValidEmail(this.email()),
+  );
 
   private readonly stepState = signal<SignupStepId>(FIRST_STEP);
   private readonly editFromState = signal<SignupStepId | null>(null);
@@ -196,12 +206,15 @@ export class SignupStateService {
   /** Design's `canNext` – one expression per step. */
   readonly canContinue = computed(() => {
     switch (this.stepState()) {
-      case 'account':
+      case 'account': {
+        const password = this.password().length;
         return (
-          /^[A-Za-z0-9_-]{3,50}(?![\s\S])/.test(this.username()) &&
-          this.password().length >= PASSWORD_MIN_LENGTH &&
+          USERNAME_PATTERN.test(this.username()) &&
+          password >= PASSWORD_MIN_LENGTH &&
+          password <= PASSWORD_MAX_LENGTH &&
           this.password() === this.passwordRepeat()
         );
+      }
       case 'birthday': {
         const age = this.age();
         return age >= MIN_AGE && age <= MAX_AGE;
@@ -220,12 +233,15 @@ export class SignupStateService {
         return this.trainingRpe() !== null;
       case 'goal':
         return this.goal() !== null;
-      case 'goal-weight':
-        return this.calculator.isGoalWeightRealistic(
-          this.goal(),
-          this.boundedGoalWeightKg(),
-          this.heightCm(),
-        );
+      case 'goal-weight': {
+        const goal = this.goal();
+        const goalKg = this.boundedGoalWeightKg();
+        // The API only takes a goal weight on the goal's side of the current weight – the scale's
+        // bounds alone can't guarantee that at the extremes (≤ 36 kg to lose, ≥ 200 kg to gain).
+        const onGoalSide =
+          goal === 'tabe' ? goalKg < this.weightKg() : goal !== 'tage' || goalKg > this.weightKg();
+        return onGoalSide && this.calculator.isGoalWeightRealistic(goal, goalKg, this.heightCm());
+      }
       case 'pace':
         return this.pace() !== null;
       case 'notifications':
@@ -237,6 +253,8 @@ export class SignupStateService {
 
   /** Design's `calcNext`: the next visible step. */
   private readonly nextStep = computed<SignupStepId | null>(() => this.neighbour(1));
+  /** `back()` leaves the flow: on the first step, unless the summary opened it. */
+  readonly backLeavesFlow = computed(() => this.neighbour(-1) === null && !this.isEditing());
 
   private readonly editChain = computed<readonly SignupStepId[]>(() => {
     const from = this.editFromState();
@@ -284,7 +302,7 @@ export class SignupStateService {
   back(): void {
     const previous = this.neighbour(-1);
     const editing = this.isEditing();
-    if (previous === null && !editing) {
+    if (this.backLeavesFlow()) {
       void this.router.navigateByUrl(APP_PATH.LOGIN);
       return;
     }
@@ -308,17 +326,16 @@ export class SignupStateService {
   }
 
   /**
-   * Creates the account: registers with the backend, writes the draft as the profile and marks
-   * the session as created but unconfirmed, so Home shows the confirmation sheet. The profile is
-   * only written once registration succeeds. Until a backend exists, `AuthApi` answers with a
-   * stubbed success.
+   * Creates the account: `SessionService.register()` sends the draft to the API, which e-mails
+   * the verification link, and the session waits for it (`pending-verification`), so Home shows
+   * the verification sheet. The draft is written as the local profile only once the API has
+   * created the account.
    */
   submit(): Observable<void> {
     const profile = this.toProfile();
-    return this.authApi.register(profile, this.password()).pipe(
-      tap(() => this.profiles.replace(profile)),
-      switchMap(() => this.session.completeSignup()),
-    );
+    return this.session
+      .register(profile, this.password(), this.passwordRepeat())
+      .pipe(tap(() => this.profiles.replace(profile)));
   }
 
   /**
@@ -363,8 +380,6 @@ export class SignupStateService {
       pace: this.pace(),
       goalWeightKg: this.boundedGoalWeightKg(),
       notificationsEnabled: this.notifications() === true,
-      units: 'metrisk',
-      kcalOverride: null,
       photo: null,
     };
   }

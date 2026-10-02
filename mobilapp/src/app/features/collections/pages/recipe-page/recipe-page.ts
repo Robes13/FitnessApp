@@ -1,36 +1,28 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  linkedSignal,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
+import { Observable, finalize } from 'rxjs';
 import { APP_PATH } from '../../../../core/constants/app-route';
-import { NewCollectionInput } from '../../../../core/models/food';
-import { formatGrams } from '../../../../core/utils/date-format';
+import { CollectionItem, NewCollectionInput } from '../../../../core/models/food';
 import { MealId } from '../../../../core/models/meal';
+import { formatGrams, formatInteger } from '../../../../core/utils/date-format';
 import { CollectionsService } from '../../../../core/services/collections/collections';
-import { FoodLogService } from '../../../../core/services/food-log/food-log';
 import { injectTranslate } from '../../../../core/services/language/translate';
+import { toApiError } from '../../../../core/utils/api';
+import { formatQuantity } from '../../../../core/utils/quantity';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+import { UiConfirmSheet } from '../../../../shared/components/ui-confirm-sheet/ui-confirm-sheet';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
+import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-icon-button';
 import { UiPageHeader } from '../../../../shared/components/ui-page-header/ui-page-header';
-import { DeleteCollectionSheet } from '../../components/delete-collection-sheet/delete-collection-sheet';
+import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
 import { MealPicker } from '../../components/meal-picker/meal-picker';
 import { NewCollectionSheet } from '../../components/new-collection-sheet/new-collection-sheet';
 import { CollectionsViewService } from '../../services/collections-view';
 
 const DEFAULT_MEAL: MealId = 'morgen';
-/** Dishes and bundles are logged as one portion, exactly like the design's `logRecipe`. */
-const LOG_QUANTITY = '1 portion';
-const NOT_FOUND_MESSAGE_KEY = 'collections.recipePage.notFound';
-const NO_CONTENTS_MESSAGE_KEY = 'collections.recipePage.noContents';
 
 interface RecipeStat {
   readonly label: string;
@@ -39,25 +31,26 @@ interface RecipeStat {
 }
 
 /**
- * The recipe screen. The route id can be a dish, a whole collection (`col:<id>`) or a standalone
- * food – `CollectionsViewService.detailFor` looks up all three, and the page shows an empty
- * state if nothing matches. "Log X kcal" puts the entry in today's log and switches to Mad.
- *
- * A user collection (`col:<id>`) can also be edited – the header's pencil reopens
- * `NewCollectionSheet` prefilled – and deleted after a confirmation, which returns to the list.
+ * The recipe screen of one collection (`col:<id>`): its macros and items, "Log X kcal" under the
+ * chosen meal (spec 3.2) and – via the header's pencil and the button at the bottom – edit and
+ * delete (spec 4.1/4.2). One action runs at a time (`pending`); a failure is shown above the log
+ * button. A failed edit closes the sheet: the collection has been fetched again, so a new
+ * attempt starts from what the API kept and never adds an item twice.
  */
 @Component({
   selector: 'app-recipe-page',
   imports: [
-    DeleteCollectionSheet,
     MealPicker,
     NewCollectionSheet,
     TranslatePipe,
     UiButton,
+    UiConfirmSheet,
     UiEmptyState,
+    UiFormError,
     UiIcon,
     UiIconButton,
     UiPageHeader,
+    UiSpinner,
   ],
   templateUrl: './recipe-page.html',
   styleUrl: './recipe-page.scss',
@@ -74,19 +67,25 @@ export class RecipePage {
 
   private readonly view = inject(CollectionsViewService);
   private readonly collections = inject(CollectionsService);
-  private readonly foodLog = inject(FoodLogService);
   private readonly router = inject(Router);
   private readonly t = injectTranslate();
 
-  protected readonly detail = computed(() => this.view.detailFor(this.recipeId()));
-  /** Selected meal – starts on the dish's own meal and resets when a new dish is opened. */
-  protected readonly meal = linkedSignal<MealId>(() => this.detail()?.meal ?? DEFAULT_MEAL);
-  /** The user collection behind the id – only those can be edited and deleted. */
-  protected readonly collection = computed(() => this.view.editableCollectionFor(this.recipeId()));
+  protected readonly status = this.view.status;
+  /** Only once both stores are ready – until the foods are loaded every item would show 0 kcal. */
+  protected readonly detail = computed(() =>
+    this.status() === 'ready' ? this.view.detailFor(this.recipeId()) : null,
+  );
+  protected readonly collection = computed(() =>
+    this.status() === 'ready' ? this.view.collectionFor(this.recipeId()) : null,
+  );
+  /** The meal "Log som spist under" logs under. */
+  protected readonly meal = signal<MealId>(DEFAULT_MEAL);
   protected readonly editOpen = signal(false);
   protected readonly deleteOpen = signal(false);
-  protected readonly notFoundMessageKey = NOT_FOUND_MESSAGE_KEY;
-  protected readonly noContentsMessageKey = NO_CONTENTS_MESSAGE_KEY;
+  /** A log, save or delete is running – further taps are ignored. */
+  protected readonly pending = signal(false);
+  /** Translation key of the last failed action. */
+  protected readonly errorKey = signal<string | null>(null);
 
   protected readonly stats = computed<readonly RecipeStat[]>(() => {
     const macros = this.detail()?.macros;
@@ -97,7 +96,7 @@ export class RecipePage {
     return [
       {
         label: this.t('collections.recipePage.calories'),
-        value: `${Math.round(macros.kcal)}`,
+        value: formatInteger(macros.kcal),
         accent: true,
       },
       {
@@ -109,43 +108,77 @@ export class RecipePage {
       { label: this.t('collections.recipePage.fat'), value: grams(macros.fat), accent: false },
     ];
   });
+  protected readonly logKcal = computed(() => formatInteger(this.detail()?.macros.kcal ?? 0));
 
-  protected readonly toneClass = computed(() => {
-    const tone = this.detail()?.tone;
-    return tone ? `recipe-page__hero--${tone}` : '';
-  });
+  /** `'2 portioner'` – the unit in the active language. */
+  protected quantity(line: CollectionItem): string {
+    return formatQuantity(this.t, line.quantity);
+  }
 
   protected back(): void {
     void this.router.navigateByUrl(APP_PATH.COLLECTIONS);
   }
 
-  /** The sheet has already rejected a duplicate name, so `update()` won't throw here. */
+  protected retry(): void {
+    this.view.retry();
+  }
+
+  protected openEdit(): void {
+    this.errorKey.set(null);
+    this.editOpen.set(true);
+  }
+
+  protected openDelete(): void {
+    this.errorKey.set(null);
+    this.deleteOpen.set(true);
+  }
+
+  /** The sheet closes either way – after an error the collection shows what the API kept. */
   protected onUpdated(input: NewCollectionInput): void {
-    const collection = this.collection();
-    if (collection) {
-      this.collections.update(collection.id, input);
-    }
-    this.editOpen.set(false);
+    this.runOnCollection(
+      (id) => this.collections.update(id, input),
+      () => this.editOpen.set(false),
+      () => this.editOpen.set(false),
+    );
   }
 
+  /** Back to the list once the API has deleted it; a failure closes the confirmation. */
   protected delete(): void {
-    const collection = this.collection();
-    if (collection) {
-      this.collections.remove(collection.id);
-    }
-    this.deleteOpen.set(false);
-    void this.router.navigateByUrl(APP_PATH.COLLECTIONS);
+    this.runOnCollection(
+      (id) => this.collections.remove(id),
+      () => void this.router.navigateByUrl(APP_PATH.COLLECTIONS),
+      () => this.deleteOpen.set(false),
+    );
   }
 
+  /** One food log row per item under the chosen meal (P13), then on to Mad. */
   protected log(): void {
-    const detail = this.detail();
-    if (!detail) {
+    this.runOnCollection(
+      (id) => this.collections.log(id, this.meal()),
+      () => void this.router.navigateByUrl(APP_PATH.FOOD),
+    );
+  }
+
+  /** Runs one action at a time. Not cancelled when the page closes, so a save is never lost. */
+  private runOnCollection(
+    action: (id: string) => Observable<void>,
+    done: () => void,
+    failed?: () => void,
+  ): void {
+    const collection = this.collection();
+    if (!collection || this.pending()) {
       return;
     }
-    this.foodLog.add(
-      { id: detail.id, name: detail.title, quantity: LOG_QUANTITY, ...detail.macros },
-      this.meal(),
-    );
-    void this.router.navigateByUrl(APP_PATH.FOOD);
+    this.pending.set(true);
+    this.errorKey.set(null);
+    action(collection.id)
+      .pipe(finalize(() => this.pending.set(false)))
+      .subscribe({
+        next: done,
+        error: (error: unknown) => {
+          this.errorKey.set(toApiError(error).messageKey);
+          failed?.();
+        },
+      });
   }
 }

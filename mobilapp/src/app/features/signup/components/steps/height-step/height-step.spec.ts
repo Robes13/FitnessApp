@@ -58,10 +58,10 @@ describe('HeightStep', () => {
   });
 
   it('stops at the ends of the scale', () => {
-    state.heightCm.set(55);
+    state.heightCm.set(100);
     fixture.detectChanges();
     stepper('En centimeter mindre').click();
-    expect(state.heightCm()).toBe(55);
+    expect(state.heightCm()).toBe(100);
 
     state.heightCm.set(250);
     fixture.detectChanges();

@@ -198,3 +198,10 @@ export function formatSignedDecimal(value: number, digits = 1): string {
     })
     .replace('-', TYPOGRAPHIC_MINUS);
 }
+
+const FALLBACK_TIME_ZONE_ID = 'UTC';
+
+/** The device's IANA time zone (`'Europe/Copenhagen'`) – what the API's `timeZoneId` expects. */
+export function currentTimeZoneId(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || FALLBACK_TIME_ZONE_ID;
+}

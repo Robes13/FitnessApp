@@ -18,12 +18,41 @@
     </a>
   </header>
 
+  @if (summary.loadFailed()) {
+    <div class="home-page__error">
+      <app-ui-form-error tone="negative" [message]="'home.page.loadError' | translate" />
+      <button app-ui-button type="button" variant="outline" size="sm" (click)="summary.reload()">
+        {{ 'home.page.retry' | translate }}
+      </button>
+    </div>
+  }
+
+  @if (stepSyncFailed()) {
+    <app-ui-form-error
+      class="home-page__notice"
+      tone="negative"
+      [message]="stepSyncFailedKey | translate"
+    />
+  }
+
   <app-home-week-rings
     class="home-page__rings"
     [rings]="summary.weekRings()"
     [celebrating]="celebrating()"
     (selected)="summary.selectDay($event)"
   />
+
+  <button
+    app-ui-button
+    type="button"
+    variant="ghost"
+    size="sm"
+    block
+    class="home-page__month"
+    (click)="monthSheetOpen.set(true)"
+  >
+    {{ 'home.monthSheet.open' | translate }}
+  </button>
 
   @if (summary.nextTodo(); as todo) {
     <app-home-todo-card
@@ -44,8 +73,14 @@
   <div class="home-page__spacer"></div>
 </div>
 
+<app-home-month-sheet
+  [open]="monthSheetOpen()"
+  [rows]="summary.dayRows()"
+  (closed)="monthSheetOpen.set(false)"
+/>
+
 @if (celebrating()) {
   <app-home-celebration-toast (dismissed)="dismissCelebration()" />
 }
 
-<app-verify-email-sheet [open]="!isEmailVerified()" />
+<app-verify-email-sheet [open]="!isAuthenticated()" />

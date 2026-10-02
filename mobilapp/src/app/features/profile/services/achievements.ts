@@ -1,6 +1,4 @@
 import { Injectable, Signal, computed, inject } from '@angular/core';
-import { MACRO_SPLIT, KCAL_PER_GRAM } from '../../../core/constants/nutrition';
-import { AdaptiveGoalService } from '../../../core/services/adaptive-goal/adaptive-goal';
 import { BarcodeScannerService } from '../../../core/services/barcode-scanner/barcode-scanner';
 import { CollectionsService } from '../../../core/services/collections/collections';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
@@ -73,7 +71,6 @@ interface WeekStats {
 @Injectable({ providedIn: 'root' })
 export class AchievementsService {
   private readonly profiles = inject(UserProfileService);
-  private readonly adaptiveGoal = inject(AdaptiveGoalService);
   private readonly foodLog = inject(FoodLogService);
   private readonly weightLog = inject(WeightLogService);
   private readonly collections = inject(CollectionsService);
@@ -89,14 +86,12 @@ export class AchievementsService {
    * can supply the earlier days.
    */
   private readonly weekStats: Signal<WeekStats> = computed(() => {
-    const kcalTarget = this.adaptiveGoal.kcalTarget();
+    const { kcal: kcalTarget, protein: proteinGoalPerDay } = this.profiles.targets();
     const totals = this.foodLog.totals();
-    const proteinGoalPerDay = Math.round(
-      (kcalTarget * MACRO_SPLIT.protein) / KCAL_PER_GRAM.protein,
-    );
     const kcalPart = kcalTarget > 0 ? Math.min(1, totals.kcal / kcalTarget) : 0;
     const kcalHitToday = kcalPart >= DAY_HIT_THRESHOLD;
-    const proteinHitToday = totals.protein >= proteinGoalPerDay * DAY_HIT_THRESHOLD;
+    const proteinHitToday =
+      proteinGoalPerDay > 0 && totals.protein >= proteinGoalPerDay * DAY_HIT_THRESHOLD;
     return {
       hitDays: kcalHitToday ? 1 : 0,
       proteinHitDays: proteinHitToday ? 1 : 0,
@@ -166,7 +161,7 @@ export class AchievementsService {
         id: 'own-collection',
         icon: 'pencil',
         label: t('profile.achievements.ownCollection'),
-        value: this.collections.userCollections().length > 0 ? 1 : 0,
+        value: this.collections.collections().length > 0 ? 1 : 0,
         target: 1,
         unit: '',
         tone: TONE_BY_TARGET.COLLECTION,
