@@ -10,6 +10,7 @@ import { UiSheet } from './ui-sheet';
       title="Ny"
       titleAccent="samling"
       [hideClose]="hideClose()"
+      [closeOnEscape]="closeOnEscape()"
       layer="sheet-high"
       maxHeight="medium"
       column
@@ -25,6 +26,7 @@ import { UiSheet } from './ui-sheet';
 class Host {
   readonly open = signal(false);
   readonly hideClose = signal(false);
+  readonly closeOnEscape = signal(false);
   closedCount = 0;
 
   onClosed(): void {
@@ -264,6 +266,22 @@ describe('UiSheet', () => {
     scrim()?.click();
     pressEscape();
     expect(host.closedCount).toBe(0);
+  });
+
+  it('lets a question sheet cancel on Escape (Android back) but not on the scrim', async () => {
+    const { fixture, host, scrim, closeButton } = await setup();
+
+    host.hideClose.set(true);
+    host.closeOnEscape.set(true);
+    await fixture.whenStable();
+
+    expect(closeButton()).toBeNull();
+    scrim()?.click();
+    expect(host.closedCount).toBe(0);
+    const escape = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+    document.dispatchEvent(escape);
+    expect(host.closedCount).toBe(1);
+    expect(escape.defaultPrevented).toBe(true);
   });
 
   it('renders the sheetTitle slot instead of an empty heading when there is no title', async () => {

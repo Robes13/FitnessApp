@@ -78,6 +78,18 @@ describe('UiConfirmSheet', () => {
     expect(host.closes).toBe(0);
   });
 
+  it('cancels on Escape – Android back – but not while busy', async () => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(host.closes).toBe(1);
+
+    host.busy.set(true);
+    await fixture.whenStable();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    expect(host.closes).toBe(1);
+    expect(host.confirms).toBe(0);
+  });
+
   it('shows a spinner and blocks both buttons while busy', async () => {
     host.busy.set(true);
     await fixture.whenStable();

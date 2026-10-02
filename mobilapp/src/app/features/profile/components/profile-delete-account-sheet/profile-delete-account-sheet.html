@@ -5,8 +5,10 @@
   titleAccentTone="negative"
   titleSize="sm"
   hideClose
+  [closeOnEscape]="!busy()"
   scrollable
   layer="overlay"
+  (closed)="closed.emit()"
 >
   <span sheetLeading class="profile-delete-account-sheet__mark" aria-hidden="true">
     <app-ui-icon name="trash" size="xl" />

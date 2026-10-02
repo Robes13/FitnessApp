@@ -32,7 +32,8 @@ export const BACK_BUTTON_PLATFORM = new InjectionToken<BackButtonPlatform>('BACK
  * Makes back close the topmost sheet or overlay first, then go back in the router, and only
  * leave the app when there is nowhere to go back to. Without it Capacitor closes the app on
  * every back press. Sheets and the barcode scanner already close on Escape and mark the event
- * handled, so back is translated to Escape – core stays free of `shared/` imports.
+ * handled, so back is translated to Escape – core stays free of `shared/` imports. A question
+ * sheet treats it as "Cancel", and the signup flow as a step back.
  */
 @Injectable({ providedIn: 'root' })
 export class BackButtonService {
