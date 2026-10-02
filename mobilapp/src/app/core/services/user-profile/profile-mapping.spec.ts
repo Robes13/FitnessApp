@@ -92,14 +92,16 @@ describe('profile mapping', () => {
     });
   });
 
-  it('resolves a relative photo URL against the API on native, and nothing else', () => {
+  // The http dev image is loaded through CapacitorHttp's proxy on the app's own origin: Android's
+  // https WebView blocks it as mixed content when it is requested directly.
+  it('loads a relative photo URL from the API through the native proxy, and nothing else', () => {
     const devImage = '/api/v1/dev-images/abc.jpg';
+    const androidProxied =
+      '/_capacitor_http_interceptor_?u=http%3A%2F%2F10.0.2.2%3A5210%2Fapi%2Fv1%2Fdev-images%2Fabc.jpg';
 
-    expect(toProfilePhoto(devImage, ANDROID_API)?.dataUrl).toBe(
-      'http://10.0.2.2:5210/api/v1/dev-images/abc.jpg',
-    );
+    expect(toProfilePhoto(devImage, ANDROID_API)?.dataUrl).toBe(androidProxied);
     expect(toProfilePhoto(devImage, 'http://localhost:5210/api/v1')?.dataUrl).toBe(
-      'http://localhost:5210/api/v1/dev-images/abc.jpg',
+      '/_capacitor_http_interceptor_?u=http%3A%2F%2Flocalhost%3A5210%2Fapi%2Fv1%2Fdev-images%2Fabc.jpg',
     );
     expect(toProfilePhoto(devImage, BROWSER_API)?.dataUrl).toBe(devImage);
     expect(toProfilePhoto('https://blob.example/a.jpg?sv=1', ANDROID_API)?.dataUrl).toBe(
@@ -108,7 +110,7 @@ describe('profile mapping', () => {
     expect(toProfilePhoto(null, ANDROID_API)).toBeNull();
     expect(
       toProfileFields({ ...PROFILE_DTO, profileImageUrl: devImage }, ANDROID_API).photo?.dataUrl,
-    ).toBe('http://10.0.2.2:5210/api/v1/dev-images/abc.jpg');
+    ).toBe(androidProxied);
   });
 
   it('turns a training-day count into the first N weekdays', () => {

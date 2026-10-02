@@ -99,8 +99,8 @@ Fra plan-v2 §7. Appen er bygget med standardvalget i parentes.
   iOS-simulator `localhost`). En fysisk telefon kræver Mac'ens LAN-IP (og `App__PublicBaseUrl` med
   samme adresse), produktion en HTTPS-URL. Klartekst-HTTP er kun tilladt i Android-debug-buildet
   (til `10.0.2.2`/`localhost`) og på iOS for lokale adresser (`NSAllowsLocalNetworking`). Relative
-  dev-billed-URL'er gøres absolutte mod API'et; Android-WebView'et blokerer dem alligevel som mixed
-  content (http i en https-side), iOS viser dem.
+  dev-billed-URL'er gøres absolutte mod API'et og hentes gennem CapacitorHttp's proxy på appens
+  egen origin, fordi Android-WebView'et ellers blokerer dem som mixed content (http i en https-side).
 - **Test på en enhed:** kamera- og notifikationstilladelser, eksport via systembrowseren og
   `visibilitychange` i verifikationsmodalen.
 - **Servicevilkår og privatlivspolitik** findes ikke som side; signup-teksten ligner links, men kan
