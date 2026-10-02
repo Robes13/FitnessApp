@@ -246,12 +246,16 @@ sundhedsdata og sender **kun gennemsnittet** til API'et. Den er en `SessionDataS
   midtpunkt, så den time hører til den sidste dag og ikke tæller som en dag for sig.
 - **`enable()`**: `requestStepsAccess()` (systemets dialog) → `POST me/consents { consentType:
 "StepsIntegration", documentVersion: "1" }` (409 = allerede aktivt = fint) → synkronisering med det
-  samme. Afvist adgang giver `false`, og intet ændres.
+  samme. Afvist adgang giver `false` – også når samtykket allerede er aktivt ("Giv adgang") – og
+  intet ændres. Health Connect viser ikke dialogen igen efter to afvisninger; `openSettings()`
+  (kun Android, `canOpenSettings`) åbner så Health Connects indstillinger.
 - **`disable()`** (9.2-3a): `POST me/consents/StepsIntegration/withdraw` (404 = allerede væk = fint)
   → `enabled` `false`, ingen flere synkroniseringer. Aktivitetsniveauet bliver stående og rettes
   manuelt (2.5).
 - **iOS** fortæller aldrig, om læsning er nægtet (privatliv): efter dialogen svarer HealthKit
-  "givet", og en nægtet læsning giver bare ingen data – altså `insufficient`, ikke `no-permission`.
+  "givet", og en nægtet læsning giver bare ingen data. Ikke én dag med skridt er derfor på iOS
+  `no-steps` (ikke `insufficient`), og rækken siger, hvor adgangen gives (Indstillinger →
+  Anonymitet & sikkerhed → Sundhed → Nutrify). Samtykket er givet, for appen kan ikke se forskel.
   `no-permission` kommer på iOS kun, når appen aldrig har vist HealthKits ark på telefonen, mens
   samtykket er aktivt (geninstalleret app, ny telefon, eller slået til på Android). Så står Nutrify
   ikke under Sundhed → Dataadgang endnu, og rækken på Profil har derfor knappen "Giv adgang", der

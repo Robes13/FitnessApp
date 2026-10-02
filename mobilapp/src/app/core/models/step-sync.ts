@@ -19,12 +19,19 @@ export interface HealthPlatform {
   hasStepsAccess(): Promise<boolean>;
   /** The step total of each local day from `from` up to `to` (exclusive) that has steps. */
   dailyStepTotals(from: Date, to: Date): Promise<readonly number[]>;
+  /**
+   * Android: opens Health Connect's settings, where access can be allowed once Health Connect
+   * stops showing its dialog (after two denials). iOS has no such screen: does nothing.
+   */
+  openSettings(): Promise<void>;
 }
 
 /**
  * `StepSyncService.status`: the store's load state (`StoreStatus`), then how the latest sync
- * ended – `synced`, `insufficient` (too few days with steps), `no-permission` (the health store
- * denies reading steps) or `failed` (the health store or the API failed; retried next time).
+ * ended – `synced`, `insufficient` (too few days with steps), `no-steps` (iOS: not one day with
+ * steps – what a denied read looks like, since HealthKit never says it was denied),
+ * `no-permission` (the health store denies reading steps) or `failed` (the health store or the
+ * API failed; retried next time).
  */
 export type StepSyncStatus =
   | 'idle'
@@ -34,6 +41,7 @@ export type StepSyncStatus =
   | 'syncing'
   | 'synced'
   | 'insufficient'
+  | 'no-steps'
   | 'no-permission'
   | 'failed';
 

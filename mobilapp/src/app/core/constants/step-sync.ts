@@ -41,11 +41,13 @@ export const STEP_SYNC_TEXT_KEY = {
   SYNCED: 'core.stepSync.synced',
   /** `{{minDays}}`, `{{days}}`. */
   INSUFFICIENT: 'core.stepSync.insufficient',
+  /** iOS, `{{days}}`: no steps at all may be a denied read, so it says where to allow access. */
+  NO_STEPS: 'core.stepSync.noSteps',
   /** `{{source}}`. */
   NO_PERMISSION: 'core.stepSync.noPermission',
   /** Also shown on Home, so a user who doesn't open Profile hears of it. */
   FAILED: 'core.stepSync.failed',
-  /** `enable()` answered `false`: the user didn't allow reading steps. */
+  /** `enable()` answered `false`: the user didn't allow reading steps. `{{source}}`. */
   ACCESS_DENIED: 'core.stepSync.accessDenied',
   /** `status` `error`: the consent couldn't be read, so whether it is on is unknown. */
   LOAD_FAILED: 'core.stepSync.loadFailed',
