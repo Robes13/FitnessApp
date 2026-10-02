@@ -168,7 +168,7 @@
         </button>
 
         @if (showMore()) {
-          <div class="food-picker__grid">
+          <div #moreFields class="food-picker__grid">
             <label class="food-picker__field">
               <span class="food-picker__label">{{
                 'shared.foodPicker.carbsLabel' | translate
@@ -240,83 +240,85 @@
         </div>
       </div>
 
-      <div class="food-picker__adjust">
-        <button
-          app-ui-icon-button
-          size="lg"
-          tone="outline"
-          type="button"
-          class="food-picker__stepper"
-          [attr.aria-label]="'shared.foodPicker.decrease' | translate"
-          (click)="decrease()"
-        >
-          <app-ui-icon name="minus" size="lg" [strokeWidth]="3" />
-        </button>
-        <label
-          #amountBox
-          class="food-picker__amount"
-          [class.food-picker__amount--dragging]="dragging()"
-          (pointerdown)="onDragStart($event, amountBox)"
-          (pointermove)="onDragMove($event)"
-          (pointerup)="onDragEnd($event, amountBox)"
-          (pointercancel)="onDragEnd($event, amountBox)"
-        >
-          <input
-            #amountField
-            class="food-picker__amount-field"
-            type="text"
-            inputmode="decimal"
-            [attr.aria-label]="'shared.foodPicker.amount' | translate"
-            [value]="amountValue()"
-            (input)="onAmountInput(amountField.value)"
-          />
-          <span class="food-picker__amount-unit">{{ unitLabel() }}</span>
-        </label>
-        <button
-          app-ui-icon-button
-          size="lg"
-          tone="outline"
-          type="button"
-          class="food-picker__stepper"
-          [attr.aria-label]="'shared.foodPicker.increase' | translate"
-          (click)="increase()"
-        >
-          <app-ui-icon name="plus" size="lg" [strokeWidth]="3" />
-        </button>
-      </div>
-      <p class="food-picker__hint">{{ 'shared.foodPicker.dragHint' | translate }}</p>
-
-      <div class="food-picker__chips">
-        @for (chip of chips(); track chip.value) {
+      <div class="food-picker__portion-body">
+        <div class="food-picker__adjust">
           <button
-            app-ui-chip
-            size="sm"
-            class="food-picker__chip"
-            [selected]="chip.value === amount()"
-            (click)="setAmount(chip.value)"
+            app-ui-icon-button
+            size="lg"
+            tone="outline"
+            type="button"
+            class="food-picker__stepper"
+            [attr.aria-label]="'shared.foodPicker.decrease' | translate"
+            (click)="decrease()"
           >
-            {{ chip.label }}
+            <app-ui-icon name="minus" size="lg" [strokeWidth]="3" />
           </button>
-        }
-      </div>
+          <label
+            #amountBox
+            class="food-picker__amount"
+            [class.food-picker__amount--dragging]="dragging()"
+            (pointerdown)="onDragStart($event, amountBox)"
+            (pointermove)="onDragMove($event)"
+            (pointerup)="onDragEnd($event, amountBox)"
+            (pointercancel)="onDragEnd($event, amountBox)"
+          >
+            <input
+              #amountField
+              class="food-picker__amount-field"
+              type="text"
+              inputmode="decimal"
+              [attr.aria-label]="'shared.foodPicker.amount' | translate"
+              [value]="amountValue()"
+              (input)="onAmountInput(amountField.value)"
+            />
+            <span class="food-picker__amount-unit">{{ unitLabel() }}</span>
+          </label>
+          <button
+            app-ui-icon-button
+            size="lg"
+            tone="outline"
+            type="button"
+            class="food-picker__stepper"
+            [attr.aria-label]="'shared.foodPicker.increase' | translate"
+            (click)="increase()"
+          >
+            <app-ui-icon name="plus" size="lg" [strokeWidth]="3" />
+          </button>
+        </div>
+        <p class="food-picker__hint">{{ 'shared.foodPicker.dragHint' | translate }}</p>
 
-      <div class="food-picker__stats">
-        @for (stat of stats(); track stat.label) {
-          <div class="food-picker__stat" [class.food-picker__stat--accent]="stat.accent">
-            <div
-              class="food-picker__stat-value"
-              [class.food-picker__stat-value--accent]="stat.accent"
+        <div class="food-picker__chips">
+          @for (chip of chips(); track chip.value) {
+            <button
+              app-ui-chip
+              size="sm"
+              class="food-picker__chip"
+              [selected]="chip.value === amount()"
+              (click)="setAmount(chip.value)"
             >
-              {{ stat.value }}
+              {{ chip.label }}
+            </button>
+          }
+        </div>
+
+        <div class="food-picker__stats">
+          @for (stat of stats(); track stat.label) {
+            <div class="food-picker__stat" [class.food-picker__stat--accent]="stat.accent">
+              <div
+                class="food-picker__stat-value"
+                [class.food-picker__stat-value--accent]="stat.accent"
+              >
+                {{ stat.value }}
+              </div>
+              <div class="food-picker__stat-label">{{ stat.label }}</div>
             </div>
-            <div class="food-picker__stat-label">{{ stat.label }}</div>
-          </div>
+          }
+        </div>
+
+        @if (amountError()) {
+          <app-ui-form-error tone="negative" [message]="amountError()" />
         }
       </div>
-
-      @if (amountError()) {
-        <app-ui-form-error tone="negative" [message]="amountError()" />
-      }
 
       <button
         app-ui-button

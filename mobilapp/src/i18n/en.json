@@ -147,6 +147,7 @@
       "permissionDenied": "The app doesn't have camera access. Allow access in Settings to scan barcodes – or enter the numbers below.",
       "unreadable": "We couldn't read the barcode. Try again with better light, or enter the numbers below.",
       "moduleInstalling": "The barcode scanner is being downloaded from Google Play. Try again in a moment.",
+      "moduleUnavailable": "The camera scanner can't be used on this phone right now. Enter the barcode number below.",
       "lookupError": "We couldn't look up the item. Check your internet connection and try again.",
       "invalidBarcode": "The barcode must be {{minDigits}}–{{maxDigits}} digits.",
       "invalidAmount": "Enter an amount between {{minGrams}} and {{maxGrams}} {{unit}}.",

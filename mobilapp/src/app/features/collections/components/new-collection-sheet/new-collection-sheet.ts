@@ -284,8 +284,10 @@ export class NewCollectionSheet {
     this.saveCustomFood(item);
   }
 
+  /** The draft can't fail, so the scanner closes right away (it waits for its parent after `found`). */
   protected onScanned(item: FoodItem): void {
     this.putInDraft(item);
+    this.scannerOpen.set(false);
   }
 
   protected onManualRequested(): void {

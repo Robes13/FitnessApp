@@ -127,11 +127,19 @@ interface SetupOptions {
 }
 
 describe('FoodPicker', () => {
+  /** jsdom has no `scrollIntoView`; the form calls it when carbs and fat unfold. */
+  const scrollIntoView = vi.fn();
+
   beforeEach(() => {
     localStorage.clear();
+    scrollIntoView.mockClear();
+    HTMLElement.prototype.scrollIntoView = scrollIntoView;
   });
 
-  afterEach(() => TestBed.inject(HttpTestingController).verify());
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
+    delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
+  });
 
   async function setup(options: SetupOptions = {}): Promise<Setup> {
     TestBed.configureTestingModule({ imports: [Host], providers: TEST_PROVIDERS });
@@ -569,6 +577,16 @@ describe('FoodPicker', () => {
       expect(root.querySelector('.food-picker__confirm')?.getAttribute('aria-busy')).toBe('true');
       expect(host.picked).toEqual([]);
     });
+
+    it('scrolls only the middle part, so the button stays in view above the keyboard', async () => {
+      const { root } = await setup({ configure: (h) => h.editItem.set(SALAD) });
+
+      const body = root.querySelector('.food-picker__portion-body');
+      expect(body?.querySelector('.food-picker__amount-field')).not.toBeNull();
+      expect(body?.querySelector('.food-picker__stats')).not.toBeNull();
+      expect(body?.querySelector('.food-picker__confirm')).toBeNull();
+      expect(body?.parentElement?.querySelector(':scope > .food-picker__confirm')).not.toBeNull();
+    });
   });
 
   describe('new-food step', () => {
@@ -598,6 +616,20 @@ describe('FoodPicker', () => {
       await typeInto(formFields(root)[1] ?? null, amount);
       await typeInto(formFields(root)[2] ?? null, kcal);
     }
+
+    it('scrolls carbs and fat into view when they unfold', async () => {
+      const { root, click } = await setup();
+      await click('.food-picker__create');
+      expect(scrollIntoView).not.toHaveBeenCalled();
+
+      await click('.food-picker__more');
+
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+      expect(scrollIntoView.mock.contexts[0]).toBe(
+        formFields(root)[4]?.closest('.food-picker__grid'),
+      );
+    });
 
     it('rejects a name the user already has, ignoring case and spaces', async () => {
       const { host, root, click, typeInto, buttonByText, settle } = await setup({

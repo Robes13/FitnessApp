@@ -81,6 +81,8 @@ class FakeProductLookupService {
       [open]="open()"
       [kcalRemaining]="kcalRemaining()"
       [(meal)]="meal"
+      [busy]="busy()"
+      [error]="error()"
       (closed)="closedCount = closedCount + 1"
       (found)="found.push($event)"
       (manualRequested)="manualCount = manualCount + 1"
@@ -92,6 +94,8 @@ class Host {
   readonly open = signal(true);
   readonly kcalRemaining = signal<number | null>(500);
   readonly meal = signal<MealId | null>('morgen');
+  readonly busy = signal(false);
+  readonly error = signal<string | null>(null);
   readonly found: FoodItem[] = [];
   /** What each `noBarcodeRequested` carried: the not-found barcode, or `null`. */
   readonly noBarcode: (string | null)[] = [];
@@ -300,7 +304,48 @@ describe('BarcodeScanner', () => {
     expect(host.found).toEqual([
       { ...PRODUCT.item, quantity: '25 g', kcal: 100, protein: 10, carbs: 8, fat: 3 },
     ]);
-    expect(host.closedCount).toBe(1);
+    // The parent closes the scanner once it has stored the item.
+    expect(host.closedCount).toBe(0);
+    expect(dialogs()).toEqual(['Scan stregkode', 'Proteinbar Choko']);
+  });
+
+  it('keeps the result while the parent saves and after it failed, so "Tilføj" can be retried', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
+    typeInto('Mængde i gram', '25');
+    buttonByText('Tilføj').click();
+    host.busy.set(true);
+    fixture.detectChanges();
+
+    const add = buttonByText('Tilføj');
+    expect(add.getAttribute('aria-busy')).toBe('true');
+    add.click();
+    buttonByText('Scan igen').click();
+    fixture.detectChanges();
+    expect(host.found).toHaveLength(1);
+    expect(dialogs()).toEqual(['Scan stregkode', 'Proteinbar Choko']);
+
+    host.busy.set(false);
+    host.error.set('Ingen forbindelse. Tjek dit internet, og prøv igen.');
+    fixture.detectChanges();
+    expect(root.querySelector('.ui-sheet__footer app-ui-form-error')?.textContent?.trim()).toBe(
+      'Ingen forbindelse. Tjek dit internet, og prøv igen.',
+    );
+    expect(statValues()).toEqual(['100', '10', '8', '3']);
+
+    buttonByText('Tilføj').click();
+    expect(host.found).toHaveLength(2);
+    host.open.set(false);
+    fixture.detectChanges();
+    expect(dialogs()).toEqual([]);
+    expect(host.closedCount).toBe(0);
+  });
+
+  it('lets the result scroll inside its sheet, so the buttons stay in view', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
+
+    const body = root.querySelector('.barcode-scanner__result')?.closest('.ui-sheet__body');
+    expect(body?.classList).toContain('ui-sheet__body--scrollable');
+    expect(root.querySelector('.ui-sheet__footer .barcode-scanner__footer')).not.toBeNull();
   });
 
   it('writes numbers from 1000 up with a thousands separator', async () => {
@@ -459,6 +504,18 @@ describe('BarcodeScanner', () => {
     await setup();
 
     expect(hint()).toBe('Stregkodescanneren hentes fra Google Play. Prøv igen om et øjeblik.');
+    expect(findButton('Scan stregkode')).toBeDefined();
+  });
+
+  it('points to typing the barcode, not to retrying, when the scanner module is not coming', async () => {
+    scanner.outcome = { status: 'module-unavailable' };
+    await setup();
+
+    expect(hint()).toBe(
+      'Kamerascanneren kan ikke bruges på telefonen lige nu. Indtast stregkodens tal herunder.',
+    );
+    expect(findButton('Scan stregkode')).toBeUndefined();
+    expect(root.querySelector('input[aria-label="Stregkode"]')).not.toBeNull();
   });
 
   it('closes without logging when the camera is cancelled', async () => {

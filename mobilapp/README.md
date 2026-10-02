@@ -251,11 +251,15 @@ npm run sync   # ng build + cap sync
   kameratilladelse, men Googles stregkodemodul. `AndroidManifest.xml` har derfor
   `com.google.mlkit.vision.DEPENDENCIES = barcode_ui`, så modulet hentes, når appen
   installeres. Mangler det alligevel, starter appen installationen og beder brugeren prøve
-  igen om et øjeblik. Manifestet har bevidst **ikke** `CAMERA`-tilladelsen, selv om pluginets
-  dokumentation nævner den: den gælder kun `startScan()`, som appen ikke bruger. "Tag et foto" på
-  Profil har heller ikke brug for den (se fotoarkets README). Uden tilladelsen er der intet
-  implicit krav om kamera, så enheder uden kamera kan stadig installere appen og indtaste
-  stregkoden.
+  igen om et øjeblik. Mangler det stadig næste gang (der bedes kun om det én gang pr.
+  app-kørsel), siger scanneren, at kamerascanneren ikke kan bruges lige nu, og peger på at
+  indtaste stregkoden. Det ses på en emulator uden Play Butik (logcat:
+  `Unable to bind to Phonesky`), hvor modulet aldrig kan hentes – test dér med en indtastet
+  stregkode eller et emulator-image med Google Play. Manifestet har bevidst **ikke**
+  `CAMERA`-tilladelsen, selv om pluginets dokumentation nævner den: den gælder kun `startScan()`,
+  som appen ikke bruger. "Tag et foto" på Profil har heller ikke brug for den (se fotoarkets
+  README). Uden tilladelsen er der intet implicit krav om kamera, så enheder uden kamera kan
+  stadig installere appen og indtaste stregkoden.
 - **iOS:** `Info.plist` har `NSCameraUsageDescription`. Appen spørger om kameraadgang første
   gang; afviser brugeren, forklarer scanneren det og tilbyder "Åbn indstillinger".
   **Obs:** ML Kit-pluginet understøtter kun CocoaPods, mens iOS-projektet bruger Swift

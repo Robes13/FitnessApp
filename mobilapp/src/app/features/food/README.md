@@ -62,8 +62,10 @@ viser spinner på knappen og blokerer et nyt kald, og en fejl vises i arket (og 
   `input(…, { alias })`, så parameternavnet står skrevet ud i `food-page.ts` — konstanten
   `ADD_MEAL_PARAM` er typet mod `QUERY_PARAM.ADD_MEAL` og fejler i build, hvis de to skilles ad.
 - **Scanneren er en søskende til arket, ikke en del af det.** `app-barcode-scanner` udsender
-  altid `closed` til sidst, så siden lukker overlayet ét sted og håndterer resultatet
-  (`found`, `manualRequested`, `noBarcodeRequested`) for sig. En scannet vare bliver brugerens
+  `closed` til sidst, så siden lukker overlayet ét sted og håndterer `manualRequested` og
+  `noBarcodeRequested` for sig. `found` logges pessimistisk som arket: scanneren lukker først,
+  når API'et har svaret (`[busy]="pending()"`), og en fejl står i resultat-arket
+  (`[error]="notice()"`) med varen, mængden og måltidet intakt. En scannet vare bliver brugerens
   egen vare, når den logges (`FoodLogService.add` → `ensureFood`), under det måltid,
   scannerens resultat-ark viser og lader brugeren skifte (`[(meal)]="addMeal"` – samme måltid
   som arket). "Ikke fundet" → "Opret varen selv" åbner vælgerens fulde "Ny egen vare" med

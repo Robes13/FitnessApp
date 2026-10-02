@@ -147,6 +147,7 @@
       "permissionDenied": "Appen har ikke adgang til kameraet. Giv adgang under Indstillinger for at scanne stregkoder – eller indtast tallene herunder.",
       "unreadable": "Vi kunne ikke læse stregkoden. Prøv igen med bedre lys, eller indtast tallene herunder.",
       "moduleInstalling": "Stregkodescanneren hentes fra Google Play. Prøv igen om et øjeblik.",
+      "moduleUnavailable": "Kamerascanneren kan ikke bruges på telefonen lige nu. Indtast stregkodens tal herunder.",
       "lookupError": "Vi kunne ikke slå varen op. Tjek din internetforbindelse, og prøv igen.",
       "invalidBarcode": "Stregkoden skal være {{minDigits}}–{{maxDigits}} cifre.",
       "invalidAmount": "Angiv en mængde mellem {{minGrams}} og {{maxGrams}} {{unit}}.",

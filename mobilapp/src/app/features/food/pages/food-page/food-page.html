@@ -122,6 +122,8 @@
   [open]="scannerOpen()"
   [kcalRemaining]="view.kcalRemaining()"
   [(meal)]="addMeal"
+  [busy]="pending()"
+  [error]="notice()"
   (found)="onScanFound($event)"
   (manualRequested)="onScanManual()"
   (noBarcodeRequested)="onScanNoBarcode($event)"

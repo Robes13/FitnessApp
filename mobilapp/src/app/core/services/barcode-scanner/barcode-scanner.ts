@@ -88,6 +88,8 @@ export class BarcodeScannerService implements SessionDataStore {
   private readonly storage = inject(StorageService);
   private readonly platform = inject(BARCODE_SCANNER_PLATFORM);
   private readonly scanCountState = signal(0);
+  /** Google's barcode module is asked for once per app run (see `installModuleOnce`). */
+  private moduleRequested = false;
 
   readonly scanCount: Signal<number> = this.scanCountState.asReadonly();
   /** `false` in the browser: the UI offers typing the barcode instead. */
@@ -113,8 +115,7 @@ export class BarcodeScannerService implements SessionDataStore {
         return { status: 'permission-denied' };
       }
       if (!(await this.platform.isScannerModuleAvailable())) {
-        await this.platform.installScannerModule();
-        return { status: 'module-installing' };
+        return await this.installModuleOnce();
       }
       const barcode = (await this.platform.scan()).find((value) => BARCODE_PATTERN.test(value));
       return barcode ? { status: 'scanned', barcode } : { status: 'unreadable' };
@@ -137,6 +138,26 @@ export class BarcodeScannerService implements SessionDataStore {
     const count = this.scanCountState() + 1;
     this.scanCountState.set(count);
     this.storage.write(STORAGE_KEY.SCAN_COUNT, count);
+  }
+
+  /**
+   * The first time the module is missing its download is started ("try again in a moment").
+   * After that – or when Google refuses the request – it's `module-unavailable`: a download that
+   * fails or stalls (no Play Store, no network, throttled) never reports back, and asking again
+   * would only repeat "try again" forever. The typed barcode is the way then.
+   */
+  private async installModuleOnce(): Promise<BarcodeScanOutcome> {
+    if (this.moduleRequested) {
+      return { status: 'module-unavailable' };
+    }
+    this.moduleRequested = true;
+    try {
+      await this.platform.installScannerModule();
+      return { status: 'module-installing' };
+    } catch (error: unknown) {
+      console.warn('BarcodeScannerService: Googles stregkodemodul kunne ikke hentes.', error);
+      return { status: 'module-unavailable' };
+    }
   }
 
   private async hasCameraAccess(): Promise<boolean> {

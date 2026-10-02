@@ -93,6 +93,12 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
 - **Mængden** er en `linkedSignal` med varen som kilde: hver ny vare nulstiller til dens
   standardportion. `null` betyder, at feltet er tømt under indtastning; knappen er slået
   fra, indtil der står et tal over 0 (designet ville ellers logge "0 g").
+- **Kun midten scroller.** I "Ny egen vare" scroller felterne (`__fields`) og i portionstrinnet
+  alt mellem overskriften og knappen (`__portion-body`), mens overskrift og knapper står fast.
+  Så er "Tilføj …" helt synlig over tastaturet – også når fejlen om én logning står der. Folder
+  Kulhydrat/Fedt ud (via "Flere detaljer" eller en fejl i dem), scrolles de frem
+  (`scrollIntoView({ block: 'nearest' })`), for med stor systemskrift lander de under den
+  synlige del af formularen.
 - **Træk-til-justér** sidder på boksen omkring tallet og virker også på selve tallet, som hintet
   siger ("Hold på tallet og træk"). Feltet har `pointer-events: none`, så et hold aldrig starter
   en tekstmarkering, og boksen er en `<label>`, så et tryk uden træk fokuserer feltet til
