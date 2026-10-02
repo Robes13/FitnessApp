@@ -4578,7 +4578,7 @@
           "username": {
             "maxLength": 50,
             "minLength": 3,
-            "pattern": "^[^@]+$",
+            "pattern": "^[A-Za-z0-9_-]{3,50}$",
             "type": "string"
           },
           "password": {
