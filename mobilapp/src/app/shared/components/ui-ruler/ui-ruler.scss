@@ -80,13 +80,16 @@
     transform: translateX(-50%);
   }
 
-  /* Invisible layer over the entire ruler that receives dragging and keyboard input. */
+  /*
+   * Invisible layer over the entire ruler that receives dragging and keyboard input. Vertical
+   * swipes stay with the browser, so the page still scrolls when the swipe starts on the ruler.
+   */
   &__range {
     position: absolute;
     inset: 0;
     z-index: var(--z-index-base);
     cursor: ew-resize;
-    touch-action: none;
+    touch-action: pan-y;
     -webkit-tap-highlight-color: transparent;
   }
 }
