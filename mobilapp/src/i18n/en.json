@@ -568,7 +568,7 @@
       "rangeStart": {
         "threeMonths": "-3 mo",
         "threeWeeks": "-3 weeks",
-        "week": "-week"
+        "week": "-1 week"
       },
       "ranges": {
         "threeMonths": "3 mo",

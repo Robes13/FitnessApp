@@ -7,13 +7,17 @@
 | `weight-chart.ts`          | Komponenten: inputs og geometrien som `computed()`.         |
 | `weight-chart.html`        | Hoved, SVG og fodnote – eller en tom tilstand uden punkter. |
 | `weight-chart.scss`        | Kortet, typografien og kurvens farver.                      |
-| `weight-chart-geometry.ts` | Ren funktion: punkter + målvægt → paths og y-værdier.       |
+| `weight-chart-geometry.ts` | Ren funktion: punkter (kg + tid) + målvægt → paths.         |
 | `*.spec.ts`                | Låser paths, skalering og den tomme geometri.               |
 
 ## Geometri
 
-`computeWeightChartGeometry(valuesKg, goalKg)` er designets `linePath` / `areaPath` /
-`goalLineY`. Kurven fylder `viewBox="0 0 320 110"`: x strækkes over alle punkter, og
+`computeWeightChartGeometry(points, goalKg)` er designets `linePath` / `areaPath` /
+`goalLineY`. Kurven ligger i `viewBox="0 0 320 110"`. x er **tid**: 0 er intervallets start og
+320 er nu – fodnotens "-3 uger" … "I dag" – og hver vejning står på sin dato (`position` fra
+`WeightLogService.seriesFor()`), så huller og tempo kan ses. Designet fordelte sine 12
+demo-punkter jævnt; med rigtige vejninger ville det tegne en vejning for 5 dage siden ved "-1 uge".
+Fladen lukkes ned under første og sidste vejning, og endeprikken står ved den nyeste.
 y-skalaen spænder fra den laveste til den højeste værdi – **inklusive mållinjen** – med 0,5 kg
 luft i hver ende. De nederste 10 enheder er luft, så endeprikken ikke skæres af.
 

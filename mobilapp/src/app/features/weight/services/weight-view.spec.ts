@@ -117,7 +117,7 @@ describe('WeightViewService', () => {
     expect(view.range()).toBe('3u');
     expect(view.rangeLabel()).toBe('Sidste 3 uger');
     expect(view.rangeStartLabel()).toBe('-3 uger');
-    expect(view.seriesKg()).toEqual([76.1, 75.6, 75]);
+    expect(view.series().map((point) => point.kg)).toEqual([76.1, 75.6, 75]);
     expect(view.rangeDeltaTone()).toBe('positive');
     expect(view.rangeDeltaText()).toBe('−1,1 kg');
 
@@ -125,8 +125,8 @@ describe('WeightViewService', () => {
 
     expect(view.range()).toBe('1u');
     expect(view.rangeLabel()).toBe('Sidste uge');
-    expect(view.rangeStartLabel()).toBe('-uge');
-    expect(view.seriesKg()).toEqual([75]);
+    expect(view.rangeStartLabel()).toBe('-1 uge');
+    expect(view.series().map((point) => point.kg)).toEqual([75]);
     expect(view.rangeDeltaTone()).toBe('muted');
   });
 

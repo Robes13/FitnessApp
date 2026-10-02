@@ -16,7 +16,7 @@ som skærmen. Persistent tilstand ligger i `WeightLogService` og `UserProfileSer
 | Kladde     | `draftKg`, `draftText`, `draftIsWide` (fra 100 kg skifter tallet til et mindre trin)                                |
 | Forskel    | `deltaKg`, `deltaText`, `deltaTone`, `progressKg` (designets `good`)                                                |
 | Mål        | `goalWeightKg`, `goalWeightText`, `toGoalKg`, `toGoalText`                                                          |
-| Graf       | `range`, `rangeOptions`, `rangeLabel`, `rangeStartLabel`, `seriesKg`, `rangeDeltaText/-Tone`                        |
+| Graf       | `range`, `rangeOptions`, `rangeLabel`, `rangeStartLabel`, `series`, `rangeDeltaText/-Tone`                          |
 | Liste      | `allLogRows`, `logRows`, `logExpanded`, `hiddenLogCount`, `logEmptyMessage`, `hasEntries`, `lastWeighLabel`         |
 | Indlæsning | `loadStatus` (`loading` hvis en af vægt- og profil-storen indlæser, ellers `error` hvis en fejlede, ellers `ready`) |
 | Gem        | `saving`, `saveError`, `overwriteId` (overskrivningsarket er åbent), `overwriteError`                               |

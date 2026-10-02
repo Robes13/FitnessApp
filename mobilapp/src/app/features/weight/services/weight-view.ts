@@ -5,7 +5,7 @@ import { WEIGHT_LOG_HISTORY_RANGE } from '../../../core/constants/weight';
 import { StoreStatus } from '../../../core/models/api';
 import { GoalId } from '../../../core/models/profile';
 import { Tone } from '../../../core/models/tone';
-import { WeightRange } from '../../../core/models/weight';
+import { WeightPoint, WeightRange } from '../../../core/models/weight';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { toApiError } from '../../../core/utils/api';
@@ -57,7 +57,10 @@ export const WEIGHT_RANGE_OPTIONS: readonly WeightRangeOption[] = [
   { id: '3m', labelKey: 'weight.view.ranges.threeMonths' },
 ];
 
-/** The chart's left-hand footer per range – design's `rangeLabel` with `'Sidste '` swapped for `'-'`. */
+/**
+ * The chart's left-hand footer per range – design's `rangeLabel` with `'Sidste '` swapped for
+ * `'-'`, and `'-1 uge'` for the week (`'-uge'` doesn't read).
+ */
 const WEIGHT_RANGE_START_LABEL_KEY: Readonly<Record<WeightRange, string>> = {
   '1u': 'weight.view.rangeStart.week',
   '3u': 'weight.view.rangeStart.threeWeeks',
@@ -221,10 +224,11 @@ export class WeightViewService {
     return this.t('weight.view.lastWeighed', { day });
   });
 
-  /** The weigh-ins in the selected range, oldest first. Empty until the user has weighed in. */
-  readonly seriesKg = computed<readonly number[]>(() =>
-    this.log.seriesFor(this.rangeState()).map((point) => point.kg),
-  );
+  /**
+   * The chart's weigh-ins in the selected range, oldest first, each placed by its time in the
+   * range. Empty until the user has weighed in.
+   */
+  readonly series = computed<readonly WeightPoint[]>(() => this.log.seriesFor(this.rangeState()));
 
   /** `'Sidste 3 uger'` – the heading on the right in the chart card. */
   readonly rangeLabel = computed(() => this.log.rangeLabel(this.rangeState()));
@@ -235,20 +239,20 @@ export class WeightViewService {
 
   /** The difference between the chart's first and last point. */
   readonly rangeDeltaKg = computed(() => {
-    const series = this.seriesKg();
+    const series = this.series();
     const first = series[0];
     const last = series[series.length - 1];
     if (first === undefined || last === undefined || series.length < 2) {
       return 0;
     }
-    return last - first;
+    return last.kg - first.kg;
   });
   readonly rangeDeltaText = computed(() =>
     this.t('weight.view.rangeDelta', { delta: formatSignedDecimal(this.rangeDeltaKg()) }),
   );
   /** Neutral until the range holds two weigh-ins – a lone point has no change to judge. */
   readonly rangeDeltaTone = computed<WeightChangeTone>(() =>
-    this.seriesKg().length < 2 ? 'muted' : rangeTone(this.rangeDeltaKg(), this.goal()),
+    this.series().length < 2 ? 'muted' : rangeTone(this.rangeDeltaKg(), this.goal()),
   );
 
   /** The profile's weight without a redundant `,0` – design's `weightText`. */

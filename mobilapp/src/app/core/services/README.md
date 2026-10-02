@@ -160,7 +160,8 @@ stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under
   `POST auth/logout` med det refresh-token, der er _aktuelt, når kaldet sendes_, og ender altid som
   gæst (best effort). Afviser API'et bearer-tokenet alligevel, fornyes én gang, og det nye
   refresh-token revokeres. E-mailen og konto-id'et huskes.
-- **`seriesFor(range)`** er brugerens egne vejninger inden for intervallet, ældste først.
+- **`seriesFor(range)`** er brugerens egne vejninger inden for intervallet, ældste først, hver med
+  `position` på intervallets tidsakse (0 = start, 1 = nu), så grafen sætter dem på deres dato.
   Uden vejninger er den tom, og grafen viser sin tomme tilstand.
 - **Stregkodescanning** bruger pluginets færdige `scan()`-UI. På Android er det Googles
   kodescanner (ingen kameratilladelse, men Googles stregkodemodul – mangler det, startes
