@@ -179,6 +179,8 @@ Appen er låst til portræt på telefoner (`UISupportedInterfaceOrientations` i 
 `@capacitor/app` håndterer Androids tilbageknap og -gestus i `BackButtonService`: et åbent ark
 eller stregkodescanneren lukkes først, ellers går appen tilbage i historikken, og kun når der
 ikke er mere historik, minimeres appen. Uden servicen lukker Capacitor appen ved hvert tryk.
+På startsiderne – Hjem og login – minimeres appen altid: WebView'ets historik kan ikke ryddes,
+og efter log ud → log ind ligger den forrige sessions sider bag Hjem.
 
 ---
 
