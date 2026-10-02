@@ -11,3 +11,14 @@ export function roundTo(value: number, decimals: number): number {
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
+
+/**
+ * A typed number with a decimal comma or point (`'45,5'` and `'45.5'` → 45.5), for number
+ * fields that are `type="text"`: Android's WebView drops the comma in a `type="number"` field
+ * (`'45,5'` → `455`). `null` when the text is empty or not a number, like a native number field.
+ */
+export function parseDecimal(text: string): number | null {
+  const trimmed = text.trim();
+  const value = Number(trimmed.replace(',', '.'));
+  return trimmed === '' || !Number.isFinite(value) ? null : value;
+}

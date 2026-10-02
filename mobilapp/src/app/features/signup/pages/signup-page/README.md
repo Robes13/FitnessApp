@@ -26,6 +26,10 @@ med siden, og hvert besøg på `/opret` starter tomt. Siden ejer kun det, der h�
   (`core.auth.error.invalidEmail`), når `SignupStateService.emailInvalid` er sand.
 - **Tilbage-cirklen** kalder `back()`. Fra første trin fører den ud af flowet til login –
   det står i servicen, fordi den kender trin-rækkefølgen.
+- **Androids tilbageknap** kommer som Escape (`BackButtonService`) og går ét trin tilbage som
+  cirklen, så kladden bevares (1.0-14a). På første trin (`backLeavesFlow`) lader siden den være,
+  så appen går tilbage i historikken til login. Flowet har ingen ark, så siden er den eneste,
+  der lytter på Escape her.
 
 ## Layout
 

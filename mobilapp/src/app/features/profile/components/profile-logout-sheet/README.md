@@ -12,9 +12,10 @@
 | `confirmed` | "Ja, log mig ud" |
 | `closed`    | "Annuller"       |
 
-Arket er sat med `hideClose`. Det betyder ingen luk-knap, og at hverken scrimmen eller
-Escape lukker det – som i designet, hvor arket kun har de to knapper. Et utilsigtet tryk
-uden for arket må ikke føre til et log ud, og "Annuller" er den tydelige vej ud.
+Arket er sat med `hideClose`. Det betyder ingen luk-knap, og at scrimmen ikke lukker det – som
+i designet, hvor arket kun har de to knapper. Et utilsigtet tryk uden for arket må ikke føre til
+et log ud, og "Annuller" er den tydelige vej ud. Escape og Androids tilbageknap virker som
+"Annuller" (`closeOnEscape`), undtagen mens log ud kører.
 
 Designet placerer det røde log ud-mærke **over** overskriften. Her ligger det til højre for
 den, i arkets `[sheetHeaderExtra]`-plads, fordi `app-ui-sheet` altid tegner overskriften

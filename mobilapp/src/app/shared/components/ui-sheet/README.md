@@ -26,7 +26,15 @@ brugeren
 Arket lukker ikke sig selv – forælderen sætter `open` til `false` som svar på `closed`.
 
 `hideClose` gør arket **ikke-afviseligt**: luk-knappen forsvinder, og både scrim-klik og
-Escape ignoreres. Det bruges til verificerings-arket på Hjem, som brugeren ikke må lukke.
+Escape ignoreres. Det bruges til verificerings-arket på Hjem, som brugeren ikke må lukke, og
+mens et ark gemmer (`[hideClose]="busy()"`).
+
+Et **spørgsmålsark** (bekræft sletning, log ud, overskriv vejning) sætter `hideClose` plus
+`closeOnEscape`: ingen luk-knap og intet scrim-klik, men Escape – og dermed Androids
+tilbageknap, som `BackButtonService` oversætter til Escape – udsender `closed`, ligesom
+"Annuller". Bind det til "ikke optaget" (`[closeOnEscape]="!busy()"`), så tilbage ikke
+afbryder en handling, der kører. Escape markeres altid som håndteret, mens arket er øverst, så
+tilbage aldrig navigerer væk bag et åbent ark.
 
 ### Escape og stablede ark
 
@@ -108,6 +116,7 @@ der skal scrolle.
 | `titleAccentJoined` | `false`    | Intet mellemrum mellem `title` og `titleAccent` ("Profilbillede")         |
 | `closeLabel`        | `'Luk'`    | `aria-label` på luk-knappen                                               |
 | `hideClose`         | `false`    | Skjul luk-knap og slå luk via scrim/Escape fra                            |
+| `closeOnEscape`     | `false`    | Med `hideClose`: Escape/Android-tilbage udsender stadig `closed`          |
 | `layer`             | `'sheet'`  | z-index: `sheet` 20 · `sheet-high` 25 · `overlay` 30 · `top` 40           |
 | `maxHeight`         | `'auto'`   | `auto` 78 % · `medium` 88 % · `tall` 96 % · `full` 100 % − 24 px          |
 | `scrollable`        | `false`    | Kroppen scroller inden i panelet (skjult scrollbar) i stedet for at vokse |

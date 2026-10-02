@@ -21,7 +21,8 @@
 4. "Gem vejning" (spinner, mens der gemmes), der kvitterer med "Gemt ✓" i 1,4 s, og en fejllinje
    under knappen. Er der allerede vejet i dag, åbner "Overskriv **dagens vejning?**" – et
    `UiSheet` direkte i siden (samme mønster som log ud-arket, ingen egen komponent) uden
-   luk-knap: "Ja, overskriv" (spinner) eller "Annuller".
+   luk-knap: "Ja, overskriv" (spinner) eller "Annuller". Androids tilbageknap er "Annuller"
+   (`closeOnEscape`), undtagen mens der gemmes.
 5. Grafkortet, og **under det** intervalchipsene 1 uge / 3 uger / 3 mdr.
 6. "Seneste vejninger" (højst 3 mdr. tilbage, "Vis alle" folder ud) og til sidst en spacer, så
    indholdet kan scrolles fri af tab baren. Tryk på en række åbner `WeightEditSheet`.

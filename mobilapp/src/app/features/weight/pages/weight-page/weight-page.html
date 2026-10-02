@@ -143,8 +143,10 @@
   [title]="'weight.overwriteSheet.titleStart' | translate"
   [titleAccent]="'weight.overwriteSheet.titleAccent' | translate"
   hideClose
+  [closeOnEscape]="!view.saving()"
   scrollable
   layer="overlay"
+  (closed)="view.cancelOverwrite()"
 >
   <p class="weight-page__overwrite-body">
     {{ 'weight.overwriteSheet.body' | translate: { kg: view.draftText() } }}

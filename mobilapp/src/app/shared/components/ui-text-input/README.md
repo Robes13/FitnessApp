@@ -19,7 +19,7 @@ Implementerer `ControlValueAccessor`, så feltet bruges med typed reactive forms
 | -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `type`         | `'text'`     | `text` · `password` · `email` · `number` · `time` (værdien er `'HH:MM'`) · `date` (native datovælger, værdien er `'YYYY-MM-DD'`)                                                |
 | `placeholder`  | `''`         |                                                                                                                                                                                 |
-| `inputMode`    | `null`       | `numeric`, `decimal`, `email` … til det native tastatur                                                                                                                         |
+| `inputMode`    | `null`       | `numeric`, `decimal`, `email` … til det native tastatur. `type="number"` får `decimal`, når feltet ikke beder om andet                                                          |
 | `maxLength`    | `null`       | Fx `4` til bekræftelseskoden                                                                                                                                                    |
 | `min` / `max`  | `null`       | Native `min`/`max`, fx `'YYYY-MM-DD'`-grænser til datovælgeren (profilens fødselsdato)                                                                                          |
 | `autocomplete` | `null`       | Native `autocomplete`-værdi. `username`, `email`, adgangskoder og koder (samt `type="email"`/`"password"`) får intet stort begyndelsesbogstav, autokorrektur eller stavekontrol |
@@ -39,6 +39,10 @@ Implementerer `ControlValueAccessor`, så feltet bruges med typed reactive forms
 
 - **Værdi-typen** følger Angulars egne accessors: tekstfelter giver `string`, `type="number"`
   giver `number` eller `null`, når feltet er tomt (`TextInputValue`).
+- **`type="number"` er et native tekstfelt** og læses med `parseDecimal` (`core/utils/math.ts`),
+  så både `45,5` og `45.5` bliver 45,5. Androids WebView smider ellers et indtastet komma væk i et
+  `type="number"`-felt (`45,5` blev til 455, uden fejl). Tekst, der ikke er et tal, giver `null`
+  som et tomt felt – ligesom et native talfelt.
 - **Øjet skifter kun tilstand**, ikke tekst: designet har én label, "Vis adgangskode", og
   knappen fortæller med `aria-pressed`, om koden er vist.
 - `invalid` bruger `--color-negative` (rød = fejl). Designets ene eksempel på en fejlkant er

@@ -93,9 +93,14 @@ så arket kan skjule måltidsvalg og faner uden for søgetrinnet.
 - **Mængden** er en `linkedSignal` med varen som kilde: hver ny vare nulstiller til dens
   standardportion. `null` betyder, at feltet er tømt under indtastning; knappen er slået
   fra, indtil der står et tal over 0 (designet ville ellers logge "0 g").
-- **Træk-til-justér** sidder på boksen omkring tallet, ikke på selve feltet (som i designet),
-  så almindelig indtastning stadig virker. `touch-action: none` + pointer capture holder
-  gestussen, selv om fingeren forlader boksen.
+- **Træk-til-justér** sidder på boksen omkring tallet og virker også på selve tallet, som hintet
+  siger ("Hold på tallet og træk"). Feltet har `pointer-events: none`, så et hold aldrig starter
+  en tekstmarkering, og boksen er en `<label>`, så et tryk uden træk fokuserer feltet til
+  indtastning. Under ét trin (8 px) ændres mængden ikke, så et tryk ikke runder fx 0,5 stk op.
+  `touch-action: none` + pointer capture holder gestussen, selv om fingeren forlader boksen.
+- **Talfelterne** (mængde, kalorier, makroer) tager decimalkomma: `UiTextInput type="number"` og
+  portionsfeltet er tekstfelter med `inputmode="decimal"`, der læses med `parseDecimal`
+  (`1,5` stk = 1,5). Androids WebView smed ellers kommaet væk i et `type="number"`-felt.
 - **Egen vare** følger designets `ownFood`: navn og kalorier kræves; tom mængde bliver `1`,
   tomme makroer `0`. Makroerne pr. portion omregnes til API'ets pr. 100 i `FoodLogService`
   (`toPer100`; stk/portion via en syntetisk serving på 100 g). `Validators.required` godtager mellemrum, så navnet har en egen

@@ -54,6 +54,8 @@
   --color-text-muted: var(--palette-slate-500);
   --color-text-soft: var(--palette-slate-300);
   --color-text-soft-strong: var(--palette-slate-200);
+  /* Green text (a confirmation): the light theme needs a darker green to stay readable. */
+  --color-positive-text: var(--palette-success);
 
   /* Not yet occurred (the week rings' upcoming days) — weaker than `muted`. */
   --color-text-inactive: var(--palette-slate-600);
@@ -97,6 +99,7 @@
   --palette-success: #4ade80;
   --palette-success-soft: #a7d8b8;
   --palette-success-pale: #eafbf0;
+  --palette-success-strong: #15803d;
   --palette-danger: #f87171;
   --palette-danger-strong: #dc2626;
   --palette-danger-light: #fca5a5;
@@ -526,7 +529,8 @@
  * Light theme ("Lys tilstand"). Opt-in only: `ThemeService` sets
  * `data-theme="light"` on <html>. Values from the design's `.theme-light`.
  * Only the semantic layer changes; accent, selected, feedback and figure
- * colours are the same in both themes.
+ * colours are the same in both themes – except green text, which needs a
+ * darker green on light paper (`--color-positive-text`).
  */
 :root[data-theme='light'] {
   --color-background: var(--palette-light-bg);
@@ -556,6 +560,8 @@
   --color-text-soft: var(--palette-light-ink-soft);
   --color-text-soft-strong: var(--palette-light-ink);
   --color-text-inactive: var(--palette-slate-400);
+  /* `--color-positive` on the light paper is 1.6:1; this green is 4.6:1 (WCAG AA). */
+  --color-positive-text: var(--palette-success-strong);
 }
 
 /*

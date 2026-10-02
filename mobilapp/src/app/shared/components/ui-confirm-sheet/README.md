@@ -3,7 +3,8 @@
 Bekræftelsen før noget slettes – en samling (4.2) eller en logget vare (3.4). Flyttet hertil fra
 `features/collections/components/delete-collection-sheet`, så begge features kan bruge den. Mønstret
 er profilens log ud-bekræftelse: intet luk-kryds, kun den røde bekræft-knap og "Annuller", så et
-utilsigtet tryk på baggrunden (eller Escape) aldrig sletter noget.
+utilsigtet tryk på baggrunden aldrig sletter noget. Escape – og Androids tilbageknap, der kommer
+som Escape – er "Annuller" (`closeOnEscape` på `UiSheet`), undtagen mens handlingen kører.
 
 ```html
 <app-ui-confirm-sheet
@@ -31,10 +32,10 @@ utilsigtet tryk på baggrunden (eller Escape) aldrig sletter noget.
 | `cancelKey`  | Nøgle til "Annuller"                                               |
 | `busy`       | Handlingen kører: spinner på bekræft-knappen, "Annuller" slået fra |
 
-| Output      | Betydning                    |
-| ----------- | ---------------------------- |
-| `closed`    | "Annuller" blev trykket      |
-| `confirmed` | Bekræft-knappen blev trykket |
+| Output      | Betydning                        |
+| ----------- | -------------------------------- |
+| `closed`    | "Annuller", Escape eller tilbage |
+| `confirmed` | Bekræft-knappen blev trykket     |
 
 Arket sletter ikke selv; forælderen kalder sin service og lukker arket (også efter en fejl, som
 den selv viser).

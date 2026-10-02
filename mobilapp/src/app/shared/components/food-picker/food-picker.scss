@@ -322,13 +322,9 @@
     font-size: var(--font-size-display-4xl);
     text-align: right;
     outline: none;
-    appearance: textfield;
 
-    &::-webkit-inner-spin-button,
-    &::-webkit-outer-spin-button {
-      margin: 0;
-      appearance: none;
-    }
+    /* The box takes every pointer, so dragging works on the digits; a tap focuses via the label. */
+    pointer-events: none;
   }
 
   &__amount-unit {

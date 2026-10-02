@@ -71,7 +71,9 @@ function isTopmost(sheet: UiSheet): boolean {
  * scrim, the close button or Escape – all three emit `closed`; the parent owns `open`.
  *
  * `hideClose` makes the sheet non-dismissible (no close button, scrim and Escape are ignored) –
- * used for "Check your email", which the user must not be able to close.
+ * used for "Check your email", which the user must not be able to close. A question sheet adds
+ * `closeOnEscape`: no close button or scrim, but Escape – and Android's back button, which
+ * arrives as Escape – emits `closed` like its "Cancel" button.
  *
  * The title is composed of `title` + `titleAccent` (orange or red, with or without a space) in
  * three sizes, so all of the design's sheets can be expressed with inputs alone.
@@ -107,6 +109,11 @@ export class UiSheet {
   readonly closeLabel = input<string>();
   /** Hides the close button and disables closing via the scrim and Escape. */
   readonly hideClose = input(false, { transform: booleanAttribute });
+  /**
+   * With `hideClose`: Escape (and Android back) still emits `closed`. For question sheets whose
+   * `closed` means "Cancel" – bind it to "not busy", like the cancel button's `disabled`.
+   */
+  readonly closeOnEscape = input(false, { transform: booleanAttribute });
   readonly layer = input<SheetLayer>('sheet');
   readonly maxHeight = input<SheetMaxHeight>('auto');
   /** Lets the content scroll inside the panel instead of growing out of it. */
@@ -174,7 +181,9 @@ export class UiSheet {
       return;
     }
     event.preventDefault();
-    this.requestClose();
+    if (this.dismissible() || this.closeOnEscape()) {
+      this.closed.emit();
+    }
   }
 
   /**

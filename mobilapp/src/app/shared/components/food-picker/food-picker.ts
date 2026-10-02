@@ -39,6 +39,7 @@ import { FoodSearchService } from '../../../core/services/food-search/food-searc
 import { injectTranslate } from '../../../core/services/language/translate';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
 import { formatInteger } from '../../../core/utils/date-format';
+import { parseDecimal } from '../../../core/utils/math';
 import { normalizeName } from '../../../core/utils/name';
 import { formatQuantity, formatQuantityUnit } from '../../../core/utils/quantity';
 import { UiFormError } from '../ui-form-error/ui-form-error';
@@ -188,7 +189,7 @@ const CTA_LABEL_KEY: Readonly<Record<FoodPickerCtaVerb, string>> = {
 
 interface DragState {
   readonly startX: number;
-  readonly startAmount: number;
+  readonly startAmount: number | null;
 }
 
 /**
@@ -663,16 +664,18 @@ export class FoodPicker {
   }
 
   protected onAmountInput(rawValue: string): void {
-    const parsed = Number.parseFloat(rawValue);
-    this.amount.set(Number.isNaN(parsed) ? null : Math.max(0, parsed));
+    const parsed = parseDecimal(rawValue);
+    this.amount.set(parsed === null ? null : Math.max(0, parsed));
   }
 
+  /**
+   * The drag starts anywhere on the box, also on the digits: the field ignores pointers
+   * (`pointer-events: none`), so a hold never starts a text selection, and a tap focuses it
+   * through the box's `<label>`.
+   */
   protected onDragStart(event: PointerEvent, box: HTMLElement): void {
-    if (event.target instanceof HTMLInputElement) {
-      return;
-    }
     box.setPointerCapture(event.pointerId);
-    this.drag = { startX: event.clientX, startAmount: this.amount() ?? 0 };
+    this.drag = { startX: event.clientX, startAmount: this.amount() };
     this.dragging.set(true);
   }
 
@@ -682,7 +685,12 @@ export class FoodPicker {
     }
     const step = this.amountStep();
     const steps = Math.round((event.clientX - this.drag.startX) / DRAG_PX_PER_STEP);
-    this.amount.set(Math.max(step, this.drag.startAmount + steps * step));
+    // A tap moves a pixel or two: under one step the amount stays as typed (e.g. 0,5 stk).
+    this.amount.set(
+      steps === 0
+        ? this.drag.startAmount
+        : Math.max(step, (this.drag.startAmount ?? 0) + steps * step),
+    );
   }
 
   protected onDragEnd(event: PointerEvent, box: HTMLElement): void {

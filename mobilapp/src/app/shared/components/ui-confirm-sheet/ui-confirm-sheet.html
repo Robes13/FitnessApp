@@ -5,8 +5,10 @@
   titleAccentTone="negative"
   titleSize="sm"
   hideClose
+  [closeOnEscape]="!busy()"
   scrollable
   layer="overlay"
+  (closed)="closed.emit()"
 >
   <p class="ui-confirm-sheet__body">
     {{ bodyKey() | translate: bodyParams() }}
