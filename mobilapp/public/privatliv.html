@@ -2,22 +2,38 @@
 <html lang="da">
   <head>
     <meta charset="utf-8" />
-    <title>Nutrify – privatliv og skridtdata</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Nutrify – privatliv og skridtdata / privacy and step data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <!--
       Health Connect's "Privatlivspolitik" link (Android): the Health plugin's
       PermissionsRationaleActivity opens this page from the app's assets
       (string health_connect_privacy_policy_url). Its WebView runs no
-      JavaScript, so the page is plain HTML/CSS. Colors mirror the palette in
-      src/styles/_tokens.scss (a static page cannot load the app's tokens).
+      JavaScript, so the page is plain HTML/CSS and can't know the app's
+      language: it is in Danish and English, like the API's pages. Colors
+      mirror the palette in src/styles/_tokens.scss (a static page cannot load
+      the app's tokens).
     -->
     <style>
+      :root {
+        /* The activity is edge to edge, under a status bar with white icons, and env() is 0 on
+           WebViews before 140: a fixed dark band behind the bar keeps the icons readable and the
+           scrolled text out from under them. */
+        --status-bar: max(56px, env(safe-area-inset-top, 0px));
+        scroll-padding-top: var(--status-bar);
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: var(--status-bar);
+        background: #0f172a;
+      }
       body {
         margin: 0;
-        padding: 24px;
-        /* The rationale screen is edge to edge: keep the text below the status bar. */
-        padding-top: max(48px, env(safe-area-inset-top));
+        padding: calc(var(--status-bar) + 24px) 24px calc(24px + env(safe-area-inset-bottom, 0px));
         font-family:
           system-ui,
           -apple-system,
@@ -43,6 +59,9 @@
         font-size: 16px;
         color: #334155;
       }
+      hr {
+        margin: 32px 0;
+      }
       @media (prefers-color-scheme: dark) {
         body {
           background: #0f172a;
@@ -57,6 +76,7 @@
   </head>
   <body>
     <main>
+      <p><a href="#en" lang="en">English</a></p>
       <h1>Nutrify og dine skridt</h1>
       <p>
         Slår du «Skridt fra Health Connect» (eller «Skridt fra Apple Sundhed» på iPhone) til under
@@ -91,6 +111,45 @@
         plan → Aktivitet. Du kan også fjerne Nutrifys adgang i Health Connect eller Apple Sundhed.
         Vil du have dine data slettet, kan du slette din konto under Profil.
       </p>
+
+      <hr />
+
+      <section id="en" lang="en">
+        <h1>Nutrify and your steps</h1>
+        <p>
+          If you turn on “Steps from Health Connect” (or “Steps from Apple Health” on iPhone) under
+          Profile → Privacy, you allow Nutrify to read your step count.
+        </p>
+
+        <h2>What Nutrify reads</h2>
+        <ul>
+          <li>Only steps – no other health data.</li>
+          <li>
+            Your steps per day for the last 28 full days. They are read when you turn the feature
+            on, and after that when the app opens and a month has passed since the last update. If
+            an update doesn't succeed (for example because there are steps from too few days), they
+            are read again the next time the app opens.
+          </li>
+        </ul>
+
+        <h2>What is sent to Nutrify</h2>
+        <p>
+          Just one number: your average steps per day. It is saved as the activity level in your
+          profile and used to calculate your daily calorie and macro targets. The steps of the
+          individual days never leave your phone.
+        </p>
+
+        <h2>What Nutrify doesn't do</h2>
+        <p>Nutrify never writes anything to Health Connect or Apple Health.</p>
+
+        <h2>How to stop it</h2>
+        <p>
+          Turn the switch off under Profile → Privacy. This withdraws your consent, and Nutrify
+          fetches no more steps. Your activity level stays as it is, and you can change it yourself
+          under My plan → Activity. You can also remove Nutrify's access in Health Connect or Apple
+          Health. If you want your data deleted, you can delete your account under Profile.
+        </p>
+      </section>
     </main>
   </body>
 </html>

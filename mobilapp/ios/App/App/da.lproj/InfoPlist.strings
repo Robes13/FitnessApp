@@ -1,0 +1,3 @@
+/* Danish permission texts; Info.plist holds the English ones (the development region). */
+"NSCameraUsageDescription" = "Kameraet bruges til at scanne stregkoder på madvarer, så du kan logge dem, og til at tage dit profilbillede.";
+"NSHealthShareUsageDescription" = "Nutrify læser dine skridt for de seneste 28 dage, når dit aktivitetsniveau skal opdateres (højst én gang om måneden), og sender kun gennemsnittet, så dit aktivitetsniveau og kaloriemål passer til dig.";

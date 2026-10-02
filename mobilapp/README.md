@@ -98,7 +98,10 @@ npm start                           # http://localhost:4200 – /api går videre
   kaldes; en LAN-IP kræver en egen ATS-undtagelse.
 - **Mails i dev:** API'et sender ingen rigtige mails i Development, men skriver dem som
   `.txt`-filer i outbox-mappen (første linje `To: <e-mail>`). Bekræftelses- og nulstillingsmailen
-  har et link til en side på API'et, som åbnes i browseren.
+  har et link til en side på API'et, som åbnes i browseren. Linket bygges af `App:PublicBaseUrl`
+  (`http://localhost:5210`): iOS-simulatoren når det direkte, Android-emulatoren efter
+  `adb reverse tcp:5210 tcp:5210`. En fysisk telefon kræver `App__PublicBaseUrl` med Mac'ens
+  LAN-IP i compose-filens `api.environment`.
 
 ---
 
@@ -293,7 +296,8 @@ Pluginet er `@capgo/capacitor-health` (v8, HealthKit + Health Connect, SPM); kun
     Pluginets manifest leverer dem: `PermissionsRationaleActivity`
     (`androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE`, Android ≤ 13) og aliasset
     `ViewPermissionUsageActivity` (`VIEW_PERMISSION_USAGE` + `HEALTH_PERMISSIONS`, Android 14+).
-    Linket "privatlivspolitik" i dialogen åbner `public/privatliv.html` fra web-buildet
+    Linket "privatlivspolitik" i dialogen åbner `public/privatliv.html` (dansk og engelsk på én side,
+    for siden kører uden JavaScript og kender ikke appens sprog) fra web-buildet
     (`health_connect_privacy_policy_url` i `res/values/strings.xml` =
     `file:///android_asset/public/privatliv.html`).
   - **Kun debug** (`android/app/src/debug/`): `WRITE_STEPS`, så testere kan lægge skridt ind på
@@ -307,8 +311,9 @@ Pluginet er `@capgo/capacitor-health` (v8, HealthKit + Health Connect, SPM); kun
   - HealthKit-capability: `ios/App/App/App.entitlements` (`com.apple.developer.healthkit` = true,
     `com.apple.developer.healthkit.access` = tom), sat som `CODE_SIGN_ENTITLEMENTS` for Debug og
     Release i `App.xcodeproj`. En rigtig enhed kræver et team med HealthKit i provisioning-profilen.
-  - `Info.plist`: `NSHealthShareUsageDescription` (dansk). Kun læsning – der er ingen
-    `NSHealthUpdateUsageDescription`, og pluginet virker uden.
+  - `Info.plist`: `NSHealthShareUsageDescription` (engelsk; dansk i `da.lproj/InfoPlist.strings`,
+    og `CFBundleLocalizations` = da, en, så også iOS' egne tekster i appen følger telefonens sprog).
+    Kun læsning – der er ingen `NSHealthUpdateUsageDescription`, og pluginet virker uden.
   - HealthKit siger aldrig, om læsning er nægtet (Apples privatlivsvalg): efter arket er svaret
     altid "givet", og en nægtet læsning giver bare ingen data. Trykker brugeren "Tillad ikke", bliver
     rækken derfor slået til, og samtykket gives – appen kan ikke se forskel. Uden en eneste dag med
@@ -359,7 +364,7 @@ node scripts/android-webview-eval.mjs 'location.pathname'   # JavaScript i appen
    adb shell pm revoke dk.meploy.fitnessapp android.permission.health.READ_STEPS
    ```
 
-   Kaldene ses i `adb logcat | grep "CapacitorHttp fetch"`.
+   Kaldene ses som `CapacitorHttp fetch …` i WebView'ets konsol (`chrome://inspect`), ikke i logcat.
 
 Tryk ikke på `KEYCODE_BACK` for at lukke tastaturet: tilbageknappen minimerer appen, og en app i
 baggrunden må ikke åbne Health Connects dialog ("Background activity launch blocked").
@@ -388,8 +393,10 @@ forsinkelse) og genstart med `adb shell am force-stop` + `am start`. iOS: luk ap
 (afprøvet på WebView 124). Appen henter dem derfor gennem CapacitorHttp's proxy på sin egen origin
 (`resolveApiUrl` i `src/app/core/utils/api.ts`). Produktion (HTTPS) er ikke berørt.
 
-**Kendte begrænsninger i dev:** Debug-builds logger Capacitors plugin-kald i logcat, også
-`CapacitorHttp`-headere med `Authorization` – det gør release-builds ikke.
+**Logning:** Capacitors egen logning er slået fra – også i debug-builds – med
+`loggingBehavior: 'none'` i `capacitor.config.ts`, fordi den skriver plugin-kaldenes data (login,
+tokens, e-mail, skridt) i logcat og Xcode-konsollen. JavaScript-konsollen ses stadig i
+WebView-inspektøren (`chrome://inspect`, Safari → Udvikler).
 
 ---
 
@@ -514,6 +521,8 @@ skal køres manuelt, før man committer. Se «Næste skridt».
 dybe links til Mad, tab barens synlighed, bekræftelses-arket på Hjem,
 omdirigering efter log ud og temaskiftet. HTTP i specs går til Angulars testing-backend
 (`HttpTestingController`) – se `src/app/core/testing/README.md`.
+`src/capacitor-config.spec.ts` holder fast, at `capacitor.config.ts` slår Capacitors logning fra
+og ikke injicerer `--safe-area-inset-*`.
 
 ### Næste skridt
 
