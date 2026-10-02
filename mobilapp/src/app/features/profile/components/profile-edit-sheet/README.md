@@ -81,3 +81,5 @@ intet ændret.
   orange her i arket.
 - Talfeltet er et almindeligt `<input type="number">`, fordi `app-ui-text-input` ikke har en
   display-størrelse på 38 px. Feltet har ingen egen ramme – kortet omkring det er rammen.
+- Fødselsdatoen er den native datovælger, så den viser datoen i enhedens sprog og format, ikke
+  appens (se [`UiTextInput`](../../../../shared/components/ui-text-input/README.md)).

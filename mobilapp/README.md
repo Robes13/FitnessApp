@@ -251,9 +251,11 @@ npm run sync   # ng build + cap sync
   kameratilladelse, men Googles stregkodemodul. `AndroidManifest.xml` har derfor
   `com.google.mlkit.vision.DEPENDENCIES = barcode_ui`, så modulet hentes, når appen
   installeres. Mangler det alligevel, starter appen installationen og beder brugeren prøve
-  igen om et øjeblik. `CAMERA`-tilladelsen står i manifestet som pluginets dokumentation
-  kræver, og `android.hardware.camera` er `required="false"`, så enheder uden kamera stadig
-  kan installere appen og indtaste stregkoden.
+  igen om et øjeblik. Manifestet har bevidst **ikke** `CAMERA`-tilladelsen, selv om pluginets
+  dokumentation nævner den: den gælder kun `startScan()`, som appen ikke bruger. "Tag et foto" på
+  Profil har heller ikke brug for den (se fotoarkets README). Uden tilladelsen er der intet
+  implicit krav om kamera, så enheder uden kamera kan stadig installere appen og indtaste
+  stregkoden.
 - **iOS:** `Info.plist` har `NSCameraUsageDescription`. Appen spørger om kameraadgang første
   gang; afviser brugeren, forklarer scanneren det og tilbyder "Åbn indstillinger".
   **Obs:** ML Kit-pluginet understøtter kun CocoaPods, mens iOS-projektet bruger Swift
@@ -377,10 +379,12 @@ forsinkelse) og genstart med `adb shell am force-stop` + `am start`. iOS: luk ap
 (tabellen `ItemTable`; værdien er en **UTF-16LE**-blob, fx med Pythons `sqlite3` og
 `json.dumps(…).encode('utf-16-le')`), og start appen igen.
 
-**Kendte begrænsninger i dev:** På Android-emulatoren vises dev-profilbilleder ikke: de serveres
-over `http://10.0.2.2:5210`, og WebView'et (`https://localhost`) blokerer dem som mixed content –
-også med `MIXED_CONTENT_ALWAYS_ALLOW` (afprøvet på WebView 124). iOS-simulatoren viser dem.
-Produktion (HTTPS) er ikke berørt. Debug-builds logger Capacitors plugin-kald i logcat, også
+**Dev-profilbilleder på native:** de serveres over `http://10.0.2.2:5210`, og WebView'et
+(`https://localhost`) blokerer dem som mixed content – også med `MIXED_CONTENT_ALWAYS_ALLOW`
+(afprøvet på WebView 124). Appen henter dem derfor gennem CapacitorHttp's proxy på sin egen origin
+(`resolveApiUrl` i `src/app/core/utils/api.ts`). Produktion (HTTPS) er ikke berørt.
+
+**Kendte begrænsninger i dev:** Debug-builds logger Capacitors plugin-kald i logcat, også
 `CapacitorHttp`-headere med `Authorization` – det gør release-builds ikke.
 
 ---

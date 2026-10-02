@@ -29,6 +29,8 @@ export type ApiErrorResolver = (problem: ApiProblem) => string | null;
 const JSON_PATH_PREFIX = /^\$\./;
 /** Starts with a scheme (`http:`, `capacitor:`, `data:` …). */
 const ABSOLUTE_URL = /^[a-z][a-z\d+.-]*:/i;
+/** CapacitorHttp's native proxy on the app's own origin (needs `CapacitorHttp.enabled`). */
+const CAPACITOR_HTTP_PROXY_PATH = '/_capacitor_http_interceptor_';
 /** The API sends up to seven fraction digits; `Date` only needs (and reliably parses) three. */
 const EXTRA_FRACTION_DIGITS = /(\.\d{3})\d+/;
 
@@ -84,14 +86,20 @@ export function injectApiUrl(): (endpoint: string) => string {
 
 /**
  * A URL the API answers relative to its own origin (Development's `/api/v1/dev-images/…`) made
- * absolute against `API_BASE_URL`. The native apps load the page from their own origin, so a
- * relative URL would point there. In the browser the base is relative too and the URL stays as it
- * is (the dev proxy serves it). Absolute and `data:` URLs are returned unchanged.
+ * loadable on native. The native apps load the page from their own origin, so the URL is resolved
+ * against `API_BASE_URL` – and, since the dev API is plain http, which Android's https WebView
+ * blocks as mixed content (even with `MIXED_CONTENT_ALWAYS_ALLOW`), loaded through CapacitorHttp's
+ * proxy on the page's own origin: the path its patched `fetch` sends every GET to (Capacitor's
+ * `Bridge.CAPACITOR_HTTP_INTERCEPTOR_START`, query parameter `u`). In the browser the base is
+ * relative too and the URL stays as it is (the dev proxy serves it). Absolute and `data:` URLs
+ * (production's https photos, a picked image) are returned unchanged.
  */
 export function resolveApiUrl(url: string, apiBaseUrl: string): string {
-  return ABSOLUTE_URL.test(url) || !ABSOLUTE_URL.test(apiBaseUrl)
-    ? url
-    : new URL(url, apiBaseUrl).href;
+  if (ABSOLUTE_URL.test(url) || !ABSOLUTE_URL.test(apiBaseUrl)) {
+    return url;
+  }
+  const query = new URLSearchParams({ u: new URL(url, apiBaseUrl).href });
+  return `${CAPACITOR_HTTP_PROXY_PATH}?${query.toString()}`;
 }
 
 /** Parses an API timestamp (UTC with `Z`, 0–7 fraction digits). */

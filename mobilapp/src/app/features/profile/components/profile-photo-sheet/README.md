@@ -61,13 +61,17 @@ skærmlæsere og ændrer ikke designets tekst.
 
 To `<input type="file" accept="image/*">` – ingen Capacitor Camera-pakke: "Vælg foto" åbner
 galleriet, og "Tag et foto" har `capture="user"`, fordi Android-WebView'et (Capacitors
-`BridgeWebChromeClient`) kun åbner kameraet, når inputtet har `capture` (tilladelsen `CAMERA` står
-i `AndroidManifest.xml`). iOS tilbyder også kameraet fra "Vælg foto" (`NSCameraUsageDescription`
-nævner profilbilledet), og desktop-browsere ignorerer `capture`. Inputtet kan
-kun åbnes af brugerens eget klik, så knapperne er `<label>`-elementer med et gennemsigtigt input
-ovenpå – ikke `app-ui-button`. Filen læses med `FileReader` til en data-URL, nedskaleres til højst
-768 pixels på længste led, og billedformatet måles, fordi det afgør, om beskæringen skalerer efter
-højden eller bredden.
+`BridgeWebChromeClient`) kun åbner kameraet, når inputtet har `capture`. Android starter så
+telefonens kamera-app (`ACTION_IMAGE_CAPTURE`), og den skal stå under `<queries>` i
+`AndroidManifest.xml` – ellers kan Android 11+ ikke finde den, og galleriet åbner i stedet.
+Appen har bevidst **ikke** tilladelsen `CAMERA`: kamera-appen har sin egen adgang og beder selv om
+den. Var tilladelsen erklæret, ville Capacitor bede om den først, og et afslag gav intet kamera og
+ingen besked – spec 2.4-3a "tilladelse mangler" håndteres derfor af kamera-appen på Android og af
+systemet på iOS. iOS tilbyder også kameraet fra "Vælg foto" (`NSCameraUsageDescription` nævner
+profilbilledet), og desktop-browsere ignorerer `capture`. Inputtet kan kun åbnes af brugerens eget
+klik, så knapperne er `<label>`-elementer med et gennemsigtigt input ovenpå – ikke `app-ui-button`.
+Filen læses med `FileReader` til en data-URL, nedskaleres til højst 768 pixels på længste led, og
+billedformatet måles, fordi det afgør, om beskæringen skalerer efter højden eller bredden.
 
 Kan browseren ikke læse eller afkode filen (spec 4a, "billedet overholder ikke kravene" – fx en
 tekstfil, der hedder `x.jpg`), vises "Billedet kan ikke bruges – vælg et andet (fx JPEG, PNG eller
