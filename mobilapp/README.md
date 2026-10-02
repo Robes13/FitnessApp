@@ -289,8 +289,9 @@ Pluginet er `@capgo/capacitor-health` (v8, HealthKit + Health Connect, SPM); kun
   - HealthKit-capability: `ios/App/App/App.entitlements` (`com.apple.developer.healthkit` = true,
     `com.apple.developer.healthkit.access` = tom), sat som `CODE_SIGN_ENTITLEMENTS` for Debug og
     Release i `App.xcodeproj`. En rigtig enhed kræver et team med HealthKit i provisioning-profilen.
-  - `Info.plist`: `NSHealthShareUsageDescription` (dansk). Kun læsning – der er ingen
-    `NSHealthUpdateUsageDescription`, og pluginet virker uden.
+  - `Info.plist`: `NSHealthShareUsageDescription` (engelsk; dansk i `da.lproj/InfoPlist.strings`,
+    og `CFBundleLocalizations` = da, en, så også iOS' egne tekster i appen følger telefonens sprog).
+    Kun læsning – der er ingen `NSHealthUpdateUsageDescription`, og pluginet virker uden.
   - HealthKit siger aldrig, om læsning er nægtet: efter dialogen er svaret altid "givet", og en
     nægtet læsning giver bare ingen data. Appen viser da "Ikke nok skridtdata endnu", ikke "ingen
     adgang". "Ingen adgang" kommer kun, når samtykket er aktivt, men appen aldrig har vist arket på
