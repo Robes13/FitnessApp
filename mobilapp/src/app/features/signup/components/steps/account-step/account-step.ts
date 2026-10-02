@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DOCUMENT,
+  ElementRef,
+  afterRenderEffect,
+  computed,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -8,6 +17,7 @@ import {
   USERNAME_PATTERN,
 } from '../../../../../core/constants/auth';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../../../../../core/constants/nutrition';
+import { KeyboardService } from '../../../../../core/services/keyboard/keyboard';
 import { injectTranslate } from '../../../../../core/services/language/translate';
 import { UiFormError } from '../../../../../shared/components/ui-form-error/ui-form-error';
 import { UiTextInput } from '../../../../../shared/components/ui-text-input/ui-text-input';
@@ -45,6 +55,13 @@ interface AccountForm {
 export class AccountStep {
   private readonly state = inject(SignupStateService);
   private readonly t = injectTranslate();
+  private readonly document = inject(DOCUMENT);
+  private readonly host: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly keyboardOpen = inject(KeyboardService).isOpen;
+  private readonly hintLine = viewChild.required<UiFormError, ElementRef<HTMLElement>>(
+    UiFormError,
+    { read: ElementRef },
+  );
 
   protected readonly usernameMaxLength = USERNAME_MAX_LENGTH;
   protected readonly passwordMaxLength = PASSWORD_MAX_LENGTH;
@@ -86,5 +103,22 @@ export class AccountStep {
       this.state.password.set(password);
       this.state.passwordRepeat.set(passwordRepeat);
     });
+
+    // Above the on-screen keyboard the step shows little more than the fields, and the hint –
+    // why "Next" is disabled – would sit just out of view (only the focused field is revealed).
+    afterRenderEffect(() => {
+      if (this.keyboardOpen() && this.hint() !== '') {
+        this.revealHint();
+      }
+    });
+  }
+
+  /** The hint into view, then the field being typed in again, so it wins if both don't fit. */
+  private revealHint(): void {
+    this.hintLine().nativeElement.scrollIntoView({ block: 'nearest' });
+    const focused = this.document.activeElement;
+    if (focused instanceof HTMLElement && this.host.nativeElement.contains(focused)) {
+      focused.scrollIntoView({ block: 'nearest' });
+    }
   }
 }
