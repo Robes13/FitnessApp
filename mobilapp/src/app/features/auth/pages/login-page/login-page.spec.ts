@@ -63,6 +63,7 @@ describe('LoginPage', () => {
     expect(identifier.type).toBe('text');
     expect(identifier.getAttribute('autocomplete')).toBe('username');
     expect(identifier.getAttribute('inputmode')).toBeNull();
+    expect(identifier.maxLength).toBe(320);
     expect(requireElement<HTMLInputElement>(root, 'input[aria-label="Adgangskode"]').type).toBe(
       'password',
     );

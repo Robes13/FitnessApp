@@ -57,6 +57,8 @@ export class LoginPage {
   protected readonly logoSrc = AUTH_ASSET.LOGO;
   protected readonly signupPath = APP_PATH.SIGNUP;
   protected readonly forgotPasswordPath = APP_PATH.FORGOT_PASSWORD;
+  /** As the API's `LoginRequest` – the field stops there, so the validator never fails silently. */
+  protected readonly identifierMaxLength = LOGIN_IDENTIFIER_MAX_LENGTH;
   /**
    * Above the on-screen keyboard the fields move up over the photo's light middle, so the
    * backdrop's gradient keeps the heading and the error line readable.
