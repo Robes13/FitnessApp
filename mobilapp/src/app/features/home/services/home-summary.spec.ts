@@ -492,6 +492,13 @@ describe('HomeSummaryService', () => {
     expect(goal.progress).toBeCloseTo(1 - 5 / 6.1, 5);
   });
 
+  it('says "1 uge" in the singular', () => {
+    storeProfile({ goal: 'tabe', weightKg: 75, goalWeightKg: 74.6 });
+    const service = setup();
+
+    expect(service.goalSummary().coach).toBe('Med dit tempo på 0,5 kg/uge er du der om ca. 1 uge.');
+  });
+
   it('falls back to the profile weight when nothing is weighed yet', () => {
     storeProfile({ goal: 'tabe', weightKg: 75, goalWeightKg: 70 });
     const service = setup();

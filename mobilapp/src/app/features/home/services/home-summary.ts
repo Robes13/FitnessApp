@@ -401,7 +401,7 @@ export class HomeSummaryService {
         ? this.t('home.summary.goal.coachReached')
         : goal === 'hold'
           ? this.t('home.summary.goal.coachHold', { kg: formatDecimal(left) })
-          : this.t('home.summary.goal.coachPace', {
+          : this.t(weeks === 1 ? 'home.summary.goal.coachPaceOne' : 'home.summary.goal.coachPace', {
               pace: this.t(pace ? pace.rateLabelKey : DEFAULT_PACE_RATE_LABEL_KEY),
               weeks,
             }),

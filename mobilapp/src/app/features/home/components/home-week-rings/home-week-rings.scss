@@ -16,10 +16,12 @@
     cursor: pointer;
   }
 
+  /* `overflow: visible`, so the halo (scaled to 1.8) grows beyond the 40×40 view box unclipped. */
   &__ring {
     display: block;
     width: var(--size-control-xs);
     height: var(--size-control-xs);
+    overflow: visible;
     transform: rotate(-90deg);
     transform-box: view-box;
     transform-origin: center;

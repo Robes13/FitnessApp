@@ -11,4 +11,5 @@ markering og midterprik – `app-ui-progress-ring` dækker kun selve fremdriften
 Inputs `rings` (fra `HomeSummaryService.weekRings()`) og `celebrating`; output `selected`
 med dagens indeks i den rullende uge (0 = for seks dage siden, 6 = i dag). Når `celebrating`
 er sat, lukker dagens ring med `ringClose` og en grøn `ringHalo` – begge globale keyframes fra
-`src/styles/_animations.scss`.
+`src/styles/_animations.scss`. Haloen skaleres op til 1,8 og når ud over viewBox'en, så SVG'en har
+`overflow: visible` – ellers klippes den til en firkant.

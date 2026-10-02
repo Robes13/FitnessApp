@@ -45,6 +45,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- The WebView's navigator.vibrate() (Home's "Dagsmål nået" celebration) needs it. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Barcode scanning (@capacitor-mlkit/barcode-scanning). -->
     <uses-permission android:name="android.permission.CAMERA" />
     <!-- The barcode can also be typed, so devices without a camera stay supported. -->

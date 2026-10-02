@@ -29,6 +29,11 @@ logning er fjernet), bortfalder fejringen. Toasten vibrerer, hvor enheden kan, l
 3,4 s og kan trykkes væk. Timeren ryddes i `DestroyRef.onDestroy`, så der ikke er noget tilbage,
 når siden forlades.
 
+Vibrationen er `navigator.vibrate()`. På Android kræver WebView'en `android.permission.VIBRATE`
+(i `AndroidManifest.xml` – en normal tilladelse uden dialog). **iOS vibrerer ikke:** WKWebView har
+ingen `navigator.vibrate`, så kaldet springes over, og toasten vises uden. Det ville kræve et
+haptics-plugin (en ny afhængighed), og det er fravalgt for en "hvor enheden kan"-effekt.
+
 ## Avataren
 
 Headeren bruger den delte `ProfileAvatar` (`shared/components/profile-avatar`) med
