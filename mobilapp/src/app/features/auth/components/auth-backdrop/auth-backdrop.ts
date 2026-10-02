@@ -6,7 +6,8 @@ import { AUTH_ASSET } from '../../auth-assets';
  * (`object-fit: cover`, anchored to the top as in the design).
  *
  * `gradient` lays the design's dark gradient over the photo so the text at the bottom stays readable.
- * Only forgot password uses it – login has its text over the dark part of the photo.
+ * Forgot password always uses it; login has its text over the dark part of the photo and only
+ * uses it while the on-screen keyboard pushes the text up.
  */
 @Component({
   selector: 'app-auth-backdrop',

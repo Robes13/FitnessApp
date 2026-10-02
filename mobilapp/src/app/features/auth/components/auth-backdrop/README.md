@@ -16,6 +16,8 @@ lægge sit indhold ovenpå i et almindeligt flow.
   over – al information står i teksten ovenpå.
 - **Forløbet er et input, ikke en kopi.** Login lægger teksten på fotoets i forvejen mørke del
   og har intet forløb; glemt adgangskode har fire tekstafsnit i bunden og har brug for det.
+  Mens skærmtastaturet er åbent, rykker logins tekst op over fotoets lyse midte – så slår login
+  forløbet til (`KeyboardService.isOpen`), så overskriften og fejllinjen forbliver læsbare.
 - **Forløbet er ens i begge temaer.** Det kommer fra `--gradient-photo-overlay`, som er
   defineret én gang i `_tokens.scss` og ikke har en lys-override – fotoskærmene er altid mørke
   (siderne sætter `data-theme="dark"` på sig selv, se feature-README'en).

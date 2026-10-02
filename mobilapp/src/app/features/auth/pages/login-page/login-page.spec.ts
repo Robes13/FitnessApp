@@ -1,8 +1,10 @@
 import { HttpTestingController, TestRequest } from '@angular/common/http/testing';
+import { Provider, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { STORAGE_KEY } from '../../../../core/constants/storage-key';
+import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { SessionService } from '../../../../core/services/session/session';
 import { LoginPage } from './login-page';
 import { TEST_AUTH_RESPONSE, TEST_EMAIL } from '../../../../core/testing/fixtures';
@@ -37,9 +39,9 @@ describe('LoginPage', () => {
     TestBed.inject(HttpTestingController).verify();
   });
 
-  async function setup() {
+  async function setup(providers: Provider[] = []) {
     TestBed.configureTestingModule({
-      providers: [...provideComponentTestEnvironment(), provideRouter([])],
+      providers: [...provideComponentTestEnvironment(), provideRouter([]), ...providers],
     });
     const fixture = TestBed.createComponent(LoginPage);
     await fixture.whenStable();
@@ -77,6 +79,21 @@ describe('LoginPage', () => {
       APP_PATH.SIGNUP,
       APP_PATH.FORGOT_PASSWORD,
     ]);
+  });
+
+  it('darkens the photo while the keyboard pushes the fields up over it', async () => {
+    const keyboardOpen = signal(false);
+    const keyboard: Pick<KeyboardService, 'isOpen'> = { isOpen: keyboardOpen.asReadonly() };
+    const { fixture, root } = await setup([{ provide: KeyboardService, useValue: keyboard }]);
+    expect(root.querySelector('.auth-backdrop__gradient')).toBeNull();
+
+    keyboardOpen.set(true);
+    await fixture.whenStable();
+    expect(root.querySelector('.auth-backdrop__gradient')).not.toBeNull();
+
+    keyboardOpen.set(false);
+    await fixture.whenStable();
+    expect(root.querySelector('.auth-backdrop__gradient')).toBeNull();
   });
 
   it('keeps the shared button classes next to the page class', async () => {

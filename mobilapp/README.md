@@ -181,6 +181,8 @@ eller stregkodescanneren lukkes først, ellers går appen tilbage i historikken,
 ikke er mere historik, minimeres appen. Uden servicen lukker Capacitor appen ved hvert tryk.
 På et spørgsmålsark (bekræft sletning, log ud, overskriv vejning, slå skridt fra) er tilbage
 "Annuller", undtagen mens handlingen kører, og i opret-flowet går tilbage ét trin.
+På startsiderne – Hjem og login – minimeres appen altid: WebView'ets historik kan ikke ryddes,
+og efter log ud → log ind ligger den forrige sessions sider bag Hjem.
 
 ---
 

@@ -1,5 +1,7 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { KeyboardService } from '../../../../../core/services/keyboard/keyboard';
 import { SignupStateService } from '../../../services/signup-state';
 import { AccountStep } from './account-step';
 import { provideComponentTestEnvironment } from '../../../../../core/testing/test-providers';
@@ -7,11 +9,19 @@ import { provideComponentTestEnvironment } from '../../../../../core/testing/tes
 describe('AccountStep', () => {
   let fixture: ComponentFixture<AccountStep>;
   let state: SignupStateService;
+  const keyboardOpen = signal(false);
 
   beforeEach(() => {
     localStorage.clear();
+    keyboardOpen.set(false);
+    const keyboard: Pick<KeyboardService, 'isOpen'> = { isOpen: keyboardOpen.asReadonly() };
     TestBed.configureTestingModule({
-      providers: [SignupStateService, provideRouter([]), ...provideComponentTestEnvironment()],
+      providers: [
+        SignupStateService,
+        provideRouter([]),
+        ...provideComponentTestEnvironment(),
+        { provide: KeyboardService, useValue: keyboard },
+      ],
     });
     fixture = TestBed.createComponent(AccountStep);
     state = TestBed.inject(SignupStateService);
@@ -81,5 +91,27 @@ describe('AccountStep', () => {
 
     expect(root().textContent).toContain('Brugernavnet må ikke indeholde @.');
     expect(state.canContinue()).toBe(false);
+  });
+
+  it('keeps the hint in view above the keyboard, and the field being typed in', () => {
+    const reveals: string[] = [];
+    const hint = root().querySelector<HTMLElement>('app-ui-form-error');
+    const field = inputs()[0];
+    if (!hint || !field) {
+      throw new Error('Hint-linjen eller feltet mangler');
+    }
+    hint.scrollIntoView = () => reveals.push('hint');
+    field.scrollIntoView = () => reveals.push('field');
+    field.focus();
+
+    type(0, 'ma');
+    expect(reveals).toEqual([]);
+
+    keyboardOpen.set(true);
+    fixture.detectChanges();
+    expect(reveals).toEqual(['hint', 'field']);
+
+    type(0, 'ma@');
+    expect(reveals).toEqual(['hint', 'field', 'hint', 'field']);
   });
 });

@@ -165,6 +165,10 @@ overskrift er typisk orange (`--color-accent`).
 sætter en body-størrelse — tekst uden eksplicit størrelse er 16px.
 Komponenter sætter deres egen størrelse.
 
+Tekstfelter (`input`, `textarea`) er mindst 16px (`--font-size-xl`), også hvor
+designet er mindre: under 16px zoomer iOS WebView'et ind, når feltet får fokus,
+og zoomet bliver stående, efter at tastaturet er lukket.
+
 ## Mixins
 
 `src/styles` er tilføjet som `includePaths` i `angular.json`, så en

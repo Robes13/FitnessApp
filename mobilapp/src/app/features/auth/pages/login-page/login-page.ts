@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { APP_PATH } from '../../../../core/constants/app-route';
 import { PHOTO_SCREEN_THEME } from '../../../../core/constants/theme';
+import { KeyboardService } from '../../../../core/services/keyboard/keyboard';
 import { SessionService } from '../../../../core/services/session/session';
 import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
@@ -55,6 +56,11 @@ export class LoginPage {
   protected readonly logoSrc = AUTH_ASSET.LOGO;
   protected readonly signupPath = APP_PATH.SIGNUP;
   protected readonly forgotPasswordPath = APP_PATH.FORGOT_PASSWORD;
+  /**
+   * Above the on-screen keyboard the fields move up over the photo's light middle, so the
+   * backdrop's gradient keeps the heading and the error line readable.
+   */
+  protected readonly keyboardOpen = inject(KeyboardService).isOpen;
 
   protected readonly loading = signal(false);
   /** Translation key of the error shown below the fields – translated in the template. */

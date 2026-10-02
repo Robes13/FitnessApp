@@ -85,6 +85,7 @@
     text-transform: uppercase;
   }
 
+  /* 16px, not the design's 15px: below that iOS zooms the WebView in on focus, and it stays. */
   &__year {
     @include mixins.tabular-nums;
 
@@ -96,7 +97,7 @@
     background: transparent;
     color: var(--color-text);
     font-family: var(--font-family-base);
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-xl);
     font-weight: var(--font-weight-bold);
     text-align: center;
     outline: none;

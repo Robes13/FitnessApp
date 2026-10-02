@@ -12,7 +12,10 @@ Signup-trin 1 (`account`, designets `s1`): brugernavn og adgangskode to gange.
   `Brugernavnet skal være 3–50 tegn.`, hvis brugernavnet er påbegyndt, men for kort (begge er
   API'ets regler, ikke i designet), og ellers designets `pwHint`: `Adgangskoderne er ikke ens.` når
   gentagelsen er udfyldt og forskellig, ellers `Mindst 10 tegn.` når koden er for kort. Linjen
-  reserverer altid sin højde.
+  reserverer altid sin højde. Mens skærmtastaturet er åbent, rulles linjen ind i trinnets synlige
+  del, når den får en tekst (eller tastaturet åbner med en), og derefter feltet med fokus igen –
+  `KeyboardService` viser kun feltet, så hintet om hvorfor `Næste` er slået fra lå lige under kanten.
+  Er der ikke plads til begge (små telefoner, fokus i brugernavnet), vinder feltet.
 - Felterne har `maxLength` efter API'et: 50 tegn til brugernavnet, 200 til adgangskoderne.
 
 ## Beslutninger

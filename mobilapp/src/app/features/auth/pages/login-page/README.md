@@ -14,6 +14,9 @@
 Værten er `position: relative; height: 100%`. Fotoet (`app-auth-backdrop`) ligger absolut bag
 indholdet, og `.login-page__content` er en flex-kolonne med logoet øverst, en `flex: 1`-spacer
 og resten i bunden – præcis som designets `padding: 80px 24px 44px`.
+Mens skærmtastaturet er åbent, krymper siden over det, og felterne ligger oven på fotoets lyse
+midte: da får fotoet forløbet (`[gradient]="keyboardOpen()"`), så fejllinjen er lige så læsbar
+som på den mørke bund.
 
 ## Login
 
