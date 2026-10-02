@@ -20,8 +20,9 @@ with a clickable link), and `AccountMessageSender` hands them to the transport.
 `.dev-outbox/` in the content root (with the Docker compose in `mobilapp/docs/api-integration/docker/`:
 `docker/outbox/*.txt`), exactly as before.
 
-Links are built only from `App:PublicBaseUrl` (`appsettings.json`: `https://eldorado-fts.dk`, Development:
-`http://localhost:5210`), never from the request's Host header.
+Links are built only from `App:PublicBaseUrl`, never from the request's Host header. `appsettings.json` leaves
+it empty, so the API refuses to start outside Development until production sets `App__PublicBaseUrl` (Robert's
+`https://eldorado-fts.dk` once the API is served there); Development uses `http://localhost:5210`.
 
 Resend reported eldorado-fts.dk as verified during setup on 2026-09-30. The service checks Resend
 authorization before each send and refuses delivery if verification cannot be confirmed. The key must have

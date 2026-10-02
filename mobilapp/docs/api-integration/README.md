@@ -64,8 +64,9 @@ Senere rettelser:
   `nutrify@eldorado-fts.dk`, nøglen i `appsettings.Local.json`) med vores tekster og links fra
   `AccountEmails` (tekst + samme tekst som HTML med klikbart link). Development skriver stadig til
   outboxen. En fejlet afsendelse logges og giver ikke længere 500 (kontoen findes, mailen kan bedes om
-  igen). Links bygges fra `App:PublicBaseUrl` (`appsettings.json`: `https://eldorado-fts.dk`, Roberts
-  domæne; Development: `http://localhost:5210`).
+  igen). Links bygges fra `App:PublicBaseUrl` (`appsettings.json`: tom, så produktion skal sætte
+  `App__PublicBaseUrl` – Roberts `https://eldorado-fts.dk` er kandidaten, når API'et kører der;
+  Development: `http://localhost:5210`).
 - **Verifikation:** `EMAIL_VERIFICATION_TOKEN.Email` (Robert) binder et token til kontoens adresse
   ved udstedelsen – ændres adressen, virker linket ikke; `NewEmail` (vores) er den ventende nye adresse
   ved e-mailskift. Tokenet tages atomisk i én transaktion, og en allerede bekræftet konto kan kun
@@ -128,8 +129,9 @@ Fra plan-v2 §7. Appen er bygget med standardvalget i parentes.
   skal derfor **roteres**. Rotér alle tre, hold dem i miljøvariabler/`appsettings.Local.json`, og stop
   med at sende container-SAS'en i `profileImageUrl` (SAS pr. blob med kun læseret, eller billedet via
   API'et).
-- **`App__PublicBaseUrl`** skal sættes til API'ets offentlige HTTPS-URL. Links i mails bygges herfra,
-  og API'et starter ikke uden en absolut http(s)-URL uden for Development.
+- **`App__PublicBaseUrl`** skal sættes til API'ets offentlige HTTPS-URL (Roberts
+  `https://eldorado-fts.dk`, når API'et kører der). Links i mails bygges herfra, og API'et starter ikke
+  uden en absolut http(s)-URL uden for Development (`appsettings.json` er tom).
 - **SMTP:** uden for Development sendes mails via Resend (`API/EMAIL_SETUP.md`): `Smtp:Password` i
   `appsettings.Local.json`, og domænet skal være verificeret hos Resend. En fejl logges som en
   advarsel; brugeren får ingen mail, men kan bede om den igen.
