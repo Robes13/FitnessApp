@@ -98,7 +98,10 @@ npm start                           # http://localhost:4200 – /api går videre
   kaldes; en LAN-IP kræver en egen ATS-undtagelse.
 - **Mails i dev:** API'et sender ingen rigtige mails i Development, men skriver dem som
   `.txt`-filer i outbox-mappen (første linje `To: <e-mail>`). Bekræftelses- og nulstillingsmailen
-  har et link til en side på API'et, som åbnes i browseren.
+  har et link til en side på API'et, som åbnes i browseren. Linket bygges af `App:PublicBaseUrl`
+  (`http://localhost:5210`): iOS-simulatoren når det direkte, Android-emulatoren efter
+  `adb reverse tcp:5210 tcp:5210`. En fysisk telefon kræver `App__PublicBaseUrl` med Mac'ens
+  LAN-IP i compose-filens `api.environment`.
 
 ---
 
