@@ -336,7 +336,7 @@ node scripts/android-webview-eval.mjs 'location.pathname'   # JavaScript i appen
    adb shell pm revoke dk.meploy.fitnessapp android.permission.health.READ_STEPS
    ```
 
-   Kaldene ses i `adb logcat | grep "CapacitorHttp fetch"`.
+   Kaldene ses som `CapacitorHttp fetch …` i WebView'ets konsol (`chrome://inspect`), ikke i logcat.
 
 Tryk ikke på `KEYCODE_BACK` for at lukke tastaturet: tilbageknappen minimerer appen, og en app i
 baggrunden må ikke åbne Health Connects dialog ("Background activity launch blocked").
@@ -363,8 +363,10 @@ forsinkelse) og genstart med `adb shell am force-stop` + `am start`. iOS: luk ap
 **Kendte begrænsninger i dev:** På Android-emulatoren vises dev-profilbilleder ikke: de serveres
 over `http://10.0.2.2:5210`, og WebView'et (`https://localhost`) blokerer dem som mixed content –
 også med `MIXED_CONTENT_ALWAYS_ALLOW` (afprøvet på WebView 124). iOS-simulatoren viser dem.
-Produktion (HTTPS) er ikke berørt. Debug-builds logger Capacitors plugin-kald i logcat, også
-`CapacitorHttp`-headere med `Authorization` – det gør release-builds ikke.
+Produktion (HTTPS) er ikke berørt. Capacitors egen logning er slået fra – også i debug-builds –
+med `loggingBehavior: 'none'` i `capacitor.config.ts`, fordi den skriver plugin-kaldenes data
+(login, tokens, e-mail, skridt) i logcat og Xcode-konsollen. JavaScript-konsollen ses stadig i
+WebView-inspektøren (`chrome://inspect`, Safari → Udvikler).
 
 ---
 
@@ -489,6 +491,8 @@ skal køres manuelt, før man committer. Se «Næste skridt».
 dybe links til Mad, tab barens synlighed, bekræftelses-arket på Hjem,
 omdirigering efter log ud og temaskiftet. HTTP i specs går til Angulars testing-backend
 (`HttpTestingController`) – se `src/app/core/testing/README.md`.
+`src/capacitor-config.spec.ts` holder fast, at `capacitor.config.ts` slår Capacitors logning fra
+og ikke injicerer `--safe-area-inset-*`.
 
 ### Næste skridt
 

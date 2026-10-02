@@ -11,6 +11,10 @@ const config: CapacitorConfig = {
   appId: 'dk.meploy.fitnessapp',
   appName: 'Nutrify',
   webDir: 'dist/mobilapp/browser',
+  // Capacitor's bridge logs every plugin call and result with its data (login bodies, tokens,
+  // step counts) to logcat / the Xcode console – by default ('debug') in every debug build.
+  // No sensitive data in device logs (kravspec); the WebView inspector still shows the console.
+  loggingBehavior: 'none',
   android: {
     backgroundColor: '#F8FAFC',
     // Angular 22 targets "baseline widely available", whose Chrome floor is 119.
@@ -40,6 +44,11 @@ const config: CapacitorConfig = {
     Keyboard: {
       // WebView'et ændrer ikke størrelse; appen krymper sin egen rod med --keyboard-inset.
       resize: KeyboardResize.None,
+    },
+    SystemBars: {
+      // Android: the app reads env(safe-area-inset-*), so it doesn't need the --safe-area-inset-*
+      // variables 'css' injects (whose first injection runs before the page exists and errors).
+      insetsHandling: 'native',
     },
   },
 };
