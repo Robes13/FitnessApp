@@ -43,7 +43,8 @@ Fordi `closed` kommer sidst, behøver forælderen kun én handler, der sætter `
 **`found` er undtagelsen:** resultatet bliver stående, til forælderen har gemt varen og selv
 sætter `open` til `false` – pessimistisk som "Tilføj mad". Fejler gemningen (fx uden net), viser
 `error` beskeden over knapperne, og vare, mængde og måltid står der stadig til et nyt tryk på
-"Tilføj"; `busy` blokerer imens et dobbelt tryk og "Scan igen". Mad-siden logger varen med
+"Tilføj"; `busy` blokerer imens et dobbelt tryk og "Scan igen". "Scan igen" lader beskeden blive
+tilbage, så næste vare ikke viser den gamle fejl. Mad-siden logger varen med
 `FoodLogService.add()`, der opretter den som brugerens egen vare (`ensureFood`); "Ny samling"
 lægger den i kladden og lukker straks.
 

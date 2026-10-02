@@ -551,6 +551,20 @@ describe('BarcodeScanner', () => {
     expect(scanner.scanCalls).toBe(2);
   });
 
+  it('leaves the failed save\'s error behind on "Scan igen"', async () => {
+    await scanAndRespond({ status: 'found', product: PRODUCT });
+    host.error.set('Ingen forbindelse. Tjek dit internet, og prøv igen.');
+    fixture.detectChanges();
+    expect(formErrors()).toEqual(['Ingen forbindelse. Tjek dit internet, og prøv igen.']);
+
+    buttonByText('Scan igen').click();
+    await settle(RETRY_DELAY_MS);
+    lookup.respond({ status: 'found', product: PRODUCT });
+    fixture.detectChanges();
+    expect(dialogs()).toEqual(['Scan stregkode', 'Proteinbar Choko']);
+    expect(formErrors()).toEqual([]);
+  });
+
   it('emits manualRequested and noBarcodeRequested and closes', async () => {
     scanner.canScan = false;
     await setup();

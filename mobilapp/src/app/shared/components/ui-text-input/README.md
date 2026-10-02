@@ -51,7 +51,6 @@ Implementerer `ControlValueAccessor`, så feltet bruges med typed reactive forms
   `rgba(15,23,42,.55)`, ens i begge temaer, fordi fotoet bag feltet altid er mørkt).
 - Host-styling står som `:host(.ui-text-input--invalid) .ui-text-input__field { … }`; under
   emuleret encapsulation rammer en `.ui-text-input--invalid`-regel aldrig værten selv.
-- Tal-felter skjuler browserens pile (`appearance: textfield`), fordi designet bruger −/+ knapper.
 - `time` og `date` er `display: block` uden native `appearance`: ellers giver iOS feltet en
   indbygget bredde, og det løber ud over arket (fødselsdatoen på Profil blev skåret af i højre side).
 - `date` er den native datovælger, så **datoformatet og vælgerens sprog følger enhedens sprog og

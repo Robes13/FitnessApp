@@ -309,7 +309,7 @@ export class SignupStateService {
   back(): void {
     const previous = this.neighbour(-1);
     const editing = this.isEditing();
-    if (previous === null && !editing) {
+    if (this.backLeavesFlow()) {
       void this.router.navigateByUrl(APP_PATH.LOGIN);
       return;
     }

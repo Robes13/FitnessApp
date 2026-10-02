@@ -54,7 +54,7 @@
   --color-text-muted: var(--palette-slate-500);
   --color-text-soft: var(--palette-slate-300);
   --color-text-soft-strong: var(--palette-slate-200);
-  /* Green text (a confirmation): the light theme needs a darker green to stay readable. */
+  /* All green text: the light theme needs a darker green to stay readable. */
   --color-positive-text: var(--palette-success);
 
   /* Not yet occurred (the week rings' upcoming days) — weaker than `muted`. */

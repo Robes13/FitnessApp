@@ -62,7 +62,6 @@
     font-weight: var(--font-weight-medium);
     outline: none;
     backdrop-filter: blur(var(--blur-lg));
-    appearance: textfield;
     transition:
       border-color var(--duration-quick) var(--easing-standard),
       box-shadow var(--duration-quick) var(--easing-standard);
@@ -86,13 +85,6 @@
 
     &::placeholder {
       color: var(--color-text-muted);
-    }
-
-    /* The design uses −/+ buttons instead of the browser's number spinners. */
-    &::-webkit-inner-spin-button,
-    &::-webkit-outer-spin-button {
-      margin: 0;
-      appearance: none;
     }
 
     &:focus-visible {

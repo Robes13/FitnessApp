@@ -129,9 +129,9 @@ eller en font-størrelse direkte. Mangler der en værdi, tilføjes en token i
 ligger i `:root[data-theme='light']` i `_tokens.scss` og svarer til
 designets `.theme-light`. Kun baggrund, flader, kanter, tekst, den runde
 knaps fyld og `sm/md/lg`-skyggerne skifter — accent, valgt, positiv,
-negativ og figurens farver er ens i begge temaer. Undtagelsen er grøn tekst
-(`--color-positive-text`, fx `UiFormError tone="positive"`): `--color-positive`
-står i 1,6:1 på det lyse papir, så det lyse tema bruger en mørkere grøn (4,6:1).
+negativ og figurens farver er ens i begge temaer. Undtagelsen er grøn tekst:
+al grøn tekst bruger `--color-positive-text`, for `--color-positive` står i 1,6:1
+på det lyse papir, så det lyse tema bruger en mørkere grøn (4,6:1).
 
 **Operativsystemets `prefers-color-scheme` følges bevidst ikke.**
 Brugeren slår "Lys tilstand" til og fra under Profil, og valget gemmes.

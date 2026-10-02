@@ -10,6 +10,7 @@ import {
   effect,
   inject,
   input,
+  linkedSignal,
   model,
   output,
   signal,
@@ -301,6 +302,8 @@ export class BarcodeScanner {
   protected readonly product = signal<ScannedProduct | null>(null);
   /** The last barcode looked up – retried after a network error. */
   protected readonly barcode = signal('');
+  /** The parent's `error`, hidden once "Scan igen" leaves that result; a new failure shows. */
+  protected readonly shownError = linkedSignal(() => this.error());
 
   protected readonly barcodeForm = new FormGroup<BarcodeForm>({
     barcode: new FormControl('', {
@@ -561,6 +564,7 @@ export class BarcodeScanner {
     if (this.busy()) {
       return;
     }
+    this.shownError.set(null);
     this.cancelPending();
     this.screen.set('scanner');
     this.status.set('idle');

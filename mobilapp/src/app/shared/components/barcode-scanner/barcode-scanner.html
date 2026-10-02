@@ -192,7 +192,7 @@
         }
       </div>
     }
-    @if (error(); as message) {
+    @if (shownError(); as message) {
       <app-ui-form-error sheetFooter tone="negative" [message]="message" />
     }
     <div class="barcode-scanner__footer" sheetFooter>
