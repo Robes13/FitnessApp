@@ -289,6 +289,21 @@ describe('WeightLogService', () => {
       expect(service.seriesFor('1u').map((point) => point.kg)).toEqual([74]);
       expect(service.seriesFor('3m').map((point) => point.kg)).toEqual([76, 75.5, 75, 74]);
     });
+
+    it('places each weighing by its time in the range: 0 = the start, 1 = now', () => {
+      const service = setup();
+      flushTestWeighIns([
+        weightLogDto(3, 74, 0, TEST_NOW),
+        weightLogDto(2, 75, 2, TEST_NOW),
+        weightLogDto(1, 75.5, 5, TEST_NOW),
+      ]);
+
+      const positions = service.seriesFor('1u').map((point) => point.position);
+      expect(positions).toHaveLength(3);
+      expect(positions[0]).toBeCloseTo(2 / 7, 2);
+      expect(positions[1]).toBeCloseTo(5 / 7, 2);
+      expect(positions[2]).toBe(1);
+    });
   });
 
   it('labels ranges in Danish', () => {

@@ -45,6 +45,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- The WebView's navigator.vibrate() (Home's "Dagsmål nået" celebration) needs it. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- No CAMERA permission: the barcode scanner (Google's code scanner) and "Tag et foto" (the
          camera app via ACTION_IMAGE_CAPTURE) don't need it. Declared, it makes Capacitor's file
          chooser ask for it first, and a denial leaves "Tag et foto" doing nothing. -->

@@ -452,6 +452,7 @@
       "goal": {
         "coachHold": "You're staying within ±{{kg}} kg of your goal weight.",
         "coachPace": "At your pace of {{pace}}, you'll get there in about {{weeks}} weeks.",
+        "coachPaceOne": "At your pace of {{pace}}, you'll get there in about 1 week.",
         "coachReached": "You've hit your goal – consider switching to \"Maintain weight\".",
         "reached": "Reached!",
         "toGoal": "{{kg}} kg"
@@ -569,7 +570,7 @@
       "rangeStart": {
         "threeMonths": "-3 mo",
         "threeWeeks": "-3 weeks",
-        "week": "-week"
+        "week": "-1 week"
       },
       "ranges": {
         "threeMonths": "3 mo",

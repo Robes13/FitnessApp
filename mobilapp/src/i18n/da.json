@@ -452,6 +452,7 @@
       "goal": {
         "coachHold": "Du holder dig inden for ±{{kg}} kg af din målvægt.",
         "coachPace": "Med dit tempo på {{pace}} er du der om ca. {{weeks}} uger.",
+        "coachPaceOne": "Med dit tempo på {{pace}} er du der om ca. 1 uge.",
         "coachReached": "Du har ramt dit mål – overvej at skifte til \"Holde vægten\".",
         "reached": "Nået!",
         "toGoal": "{{kg}} kg"
@@ -569,7 +570,7 @@
       "rangeStart": {
         "threeMonths": "-3 mdr.",
         "threeWeeks": "-3 uger",
-        "week": "-uge"
+        "week": "-1 uge"
       },
       "ranges": {
         "threeMonths": "3 mdr.",

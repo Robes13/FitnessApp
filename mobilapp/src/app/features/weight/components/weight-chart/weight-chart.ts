@@ -6,6 +6,7 @@ import { WeightChangeTone } from '../../services/weight-view';
 import {
   WEIGHT_CHART_HEIGHT,
   WEIGHT_CHART_WIDTH,
+  WeightChartPoint,
   computeWeightChartGeometry,
 } from './weight-chart-geometry';
 
@@ -33,8 +34,8 @@ const EMPTY_MESSAGE_KEY = {
 export class WeightChart {
   /** The weight without a unit, e.g. `'75'` or `'74,5'`. */
   readonly weightText = input.required<string>();
-  /** The curve's points in kg, oldest first. */
-  readonly seriesKg = input.required<readonly number[]>();
+  /** The curve's weigh-ins, oldest first, each placed on the range's time axis. */
+  readonly points = input.required<readonly WeightChartPoint[]>();
   readonly goalWeightKg = input.required<number>();
   readonly goalWeightText = input.required<string>();
   /** `'Sidste 3 uger'`. */
@@ -52,11 +53,11 @@ export class WeightChart {
   protected readonly viewBox = `0 0 ${WEIGHT_CHART_WIDTH} ${WEIGHT_CHART_HEIGHT}`;
 
   protected readonly geometry = computed(() =>
-    computeWeightChartGeometry(this.seriesKg(), this.goalWeightKg()),
+    computeWeightChartGeometry(this.points(), this.goalWeightKg()),
   );
   protected readonly hasSeries = computed(() => this.geometry().linePath !== '');
   protected readonly emptyMessage = computed(() =>
-    this.t(this.seriesKg().length === 0 ? EMPTY_MESSAGE_KEY.none : EMPTY_MESSAGE_KEY.single),
+    this.t(this.points().length === 0 ? EMPTY_MESSAGE_KEY.none : EMPTY_MESSAGE_KEY.single),
   );
   protected readonly chartLabel = computed(() =>
     this.t('weight.chart.ariaLabel', {

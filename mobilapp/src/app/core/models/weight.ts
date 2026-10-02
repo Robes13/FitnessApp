@@ -11,6 +11,8 @@ export interface WeightPoint {
   kg: number;
   /** ISO-datotid for punktet. */
   at: string;
+  /** Where the point sits on the range's time axis: 0 = the range's start, 1 = now. */
+  position: number;
 }
 
 /** A weigh-in as the API sends it (`GET`/`POST`/`PATCH me/weight-logs`, the history payload). */

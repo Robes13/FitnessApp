@@ -28,8 +28,8 @@ interface RulerTickView extends RulerTick {
 
 interface DragStart {
   readonly clientX: number;
-  /** The value under the finger at touch-down – dragging is measured relative to it. */
-  readonly base: number;
+  /** The value at touch-down – dragging is measured from it, and a cancelled touch restores it. */
+  readonly value: number;
 }
 
 const DEFAULT_STEP = 1;
@@ -40,6 +40,8 @@ const DEFAULT_MID_EVERY = 5;
 const DEFAULT_LABEL_EVERY = 10;
 /** The design rounds the committed value to three decimals (`Math.round(q * 1000) / 1000`). */
 const COMMIT_PRECISION = 1000;
+/** Horizontal movement (px) before a touch drags the ruler – below it, a tap changes nothing. */
+const DRAG_SLOP_PX = 6;
 
 const KEY_STEP_DIRECTION: Record<string, number> = {
   ArrowRight: 1,
@@ -61,10 +63,13 @@ function tickClass(tick: RulerTick): string {
 
 /**
  * The design's ruler: a track of ticks that is dragged horizontally under a fixed orange
- * center line. The user drags the ruler directly (pointer capture) or uses the arrow keys
+ * center line. The user drags the track with the finger (pointer capture) or uses the arrow keys
  * (`role="slider"`). `value` is committed in `step` increments and clamped to `min..max`;
  * `dragging` reports whether dragging is in progress (the glow gets stronger, and the parent
  * can react).
+ *
+ * Only a horizontal drag changes the value: a tap does nothing, and a vertical swipe scrolls the
+ * page (`touch-action: pan-y`) – the browser then cancels the pointer, and the value is restored.
  *
  * The host is `display: block` with `overflow: hidden`; the parent sets margin, background and
  * radius as needed (the weight page places it in a card with `--color-surface-3`).
@@ -138,15 +143,9 @@ export class UiRuler {
   protected readonly ariaLabelAttr = computed(() => this.ariaLabel() || null);
 
   protected onPointerDown(event: PointerEvent): void {
-    const element = this.range().nativeElement;
-    const rect = element.getBoundingClientRect();
-    const centreX = rect.left + rect.width / 2;
-    const base = this.value() + (event.clientX - centreX) / this.pxPerUnit();
-    this.dragStart = { clientX: event.clientX, base };
-    this.dragging.set(true);
-    this.commit(base);
+    this.dragStart = { clientX: event.clientX, value: this.value() };
     try {
-      element.setPointerCapture(event.pointerId);
+      this.range().nativeElement.setPointerCapture(event.pointerId);
     } catch {
       // Pointer capture is an enhancement (dragging continues outside the element), not a
       // requirement – older WebViews and test environments without Pointer Events must still
@@ -155,15 +154,34 @@ export class UiRuler {
   }
 
   protected onPointerMove(event: PointerEvent): void {
-    if (!this.dragStart) {
+    const start = this.dragStart;
+    if (!start) {
       return;
     }
-    this.commit(this.dragStart.base + (event.clientX - this.dragStart.clientX) / this.pxPerUnit());
+    if (!this.dragging()) {
+      if (Math.abs(event.clientX - start.clientX) < DRAG_SLOP_PX) {
+        return;
+      }
+      // Measure from here, so passing the slop doesn't make the value jump.
+      this.dragStart = { ...start, clientX: event.clientX };
+      this.dragging.set(true);
+      return;
+    }
+    // The track follows the finger: dragging to the right brings lower values under the line.
+    this.commit(start.value - (event.clientX - start.clientX) / this.pxPerUnit());
   }
 
   protected onPointerUp(): void {
     this.dragStart = null;
     this.dragging.set(false);
+  }
+
+  /** The browser took the touch over (a vertical swipe scrolls the page): undo what it dragged. */
+  protected onPointerCancel(): void {
+    if (this.dragStart) {
+      this.value.set(this.dragStart.value);
+    }
+    this.onPointerUp();
   }
 
   protected onKeyDown(event: KeyboardEvent): void {

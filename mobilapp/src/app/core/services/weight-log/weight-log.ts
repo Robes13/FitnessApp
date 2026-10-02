@@ -146,19 +146,35 @@ export class WeightLogService implements SessionDataStore {
 
   /** The weigh-ins within the range, newest first. */
   entriesWithin(range: WeightRange): readonly WeighEntry[] {
-    const from = addDays(this.now(), -WEIGHT_RANGE_DAYS[range]).getTime();
+    const from = this.rangeStart(range);
     return this.entriesState().filter((entry) => new Date(entry.at).getTime() >= from);
   }
 
-  /** The weigh-ins within the range, oldest first. Empty until the user has weighed in. */
+  /**
+   * The chart's points: the weigh-ins within the range, oldest first, each placed by its time on
+   * the range's axis (`position` 0 = the range's start, 1 = now). Empty until the user has
+   * weighed in.
+   */
   seriesFor(range: WeightRange): readonly WeightPoint[] {
+    const from = this.rangeStart(range);
+    const span = this.now().getTime() - from;
     return this.entriesWithin(range)
-      .map((entry) => ({ kg: entry.kg, at: entry.at }))
+      .map((entry) => ({
+        kg: entry.kg,
+        at: entry.at,
+        // A weigh-in timed after now (another device's clock) sits at "now".
+        position: Math.min(1, (new Date(entry.at).getTime() - from) / span),
+      }))
       .reverse();
   }
 
   rangeLabel(range: WeightRange): string {
     return this.t(WEIGHT_RANGE_LABEL_KEY[range]);
+  }
+
+  /** The range's start in ms: the same time of day, `WEIGHT_RANGE_DAYS` calendar days back. */
+  private rangeStart(range: WeightRange): number {
+    return addDays(this.now(), -WEIGHT_RANGE_DAYS[range]).getTime();
   }
 
   /** Puts the API's weigh-in into the list (replacing the one with its id) and syncs the profile. */
