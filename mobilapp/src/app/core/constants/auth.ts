@@ -47,8 +47,7 @@ export const DATA_EXPORT_ENDPOINT = 'data-export';
 /** `POST`: withdraws the consent to the terms, which deletes and anonymises the account. */
 export const WITHDRAW_TERMS_CONSENT_ENDPOINT = 'me/consents/Terms/withdraw';
 
-/** The API's rules for a username (`UsernameRules`); the value is checked as typed, untrimmed. */
-export const USERNAME_MIN_LENGTH = 3;
+/** The API's longest username (`UsernameRules`); the value is checked as typed, untrimmed. */
 export const USERNAME_MAX_LENGTH = 50;
 
 /**
