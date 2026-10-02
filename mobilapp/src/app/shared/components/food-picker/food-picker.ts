@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   Signal,
+  afterRenderEffect,
   booleanAttribute,
   computed,
   effect,
@@ -11,6 +13,7 @@ import {
   output,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { newId } from '../../../core/utils/id';
@@ -444,6 +447,8 @@ export class FoodPicker {
   protected readonly moreIcon = computed(() =>
     this.showMore() ? MORE_ICON.expanded : MORE_ICON.collapsed,
   );
+  /** Carbs and fat, once unfolded – by "More details" or by an error in one of them. */
+  private readonly moreFields = viewChild<ElementRef<HTMLElement>>('moreFields');
 
   // --- Portion -------------------------------------------------------------------------------
 
@@ -569,6 +574,8 @@ export class FoodPicker {
         untracked(() => this.finishNewFood());
       }
     });
+    // Unfolded fields land below the form's visible part, so they're scrolled into view.
+    afterRenderEffect(() => this.moreFields()?.nativeElement.scrollIntoView({ block: 'nearest' }));
   }
 
   // --- Search --------------------------------------------------------------------------------
