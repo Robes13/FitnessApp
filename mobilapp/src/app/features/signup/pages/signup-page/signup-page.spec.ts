@@ -214,6 +214,26 @@ describe('SignupPage', () => {
     expect((harness.routeNativeElement as HTMLElement).textContent).toContain('Trin 1 af 12');
   });
 
+  it('steps back on Android back (Escape) and keeps the draft, but leaves the first step alone', async () => {
+    const { harness, state } = await setup();
+    state.username.set('mads');
+    state.next();
+    harness.detectChanges();
+    const back = () => {
+      const escape = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+      document.dispatchEvent(escape);
+      return escape.defaultPrevented;
+    };
+
+    expect(back()).toBe(true);
+    expect(state.step()).toBe('account');
+    expect(state.username()).toBe('mads');
+
+    // Unhandled, so `BackButtonService` goes back in the history – to login.
+    expect(back()).toBe(false);
+    expect(state.step()).toBe('account');
+  });
+
   it('asks to create the account on the summary', async () => {
     const { harness, page, state } = await setup();
 

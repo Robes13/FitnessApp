@@ -68,7 +68,7 @@ import { SignupStateService } from '../../services/signup-state';
   templateUrl: './signup-page.html',
   styleUrl: './signup-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'signup-page' },
+  host: { class: 'signup-page', '(document:keydown.escape)': 'onEscape($event)' },
   providers: [SignupStateService],
 })
 export class SignupPage {
@@ -95,6 +95,19 @@ export class SignupPage {
     const key = this.errorKey() ?? (invalidEmail ? AUTH_ERROR_MESSAGE_KEY.INVALID_EMAIL : null);
     return key === null ? null : this.t(key);
   });
+
+  /**
+   * Android's back button arrives as Escape (`BackButtonService`): it steps back like the ‹
+   * circle, so the draft survives. On the first step it is left unhandled, and the router goes
+   * back to where the flow was opened from (login).
+   */
+  protected onEscape(event: Event): void {
+    if (event.defaultPrevented || this.state.backLeavesFlow()) {
+      return;
+    }
+    event.preventDefault();
+    this.state.back();
+  }
 
   /** On the summary, the button creates the account – otherwise it just moves on. */
   protected onNext(): void {

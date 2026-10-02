@@ -260,6 +260,8 @@ export class SignupStateService {
 
   /** Design's `calcNext`: the next visible step. */
   private readonly nextStep = computed<SignupStepId | null>(() => this.neighbour(1));
+  /** `back()` leaves the flow: on the first step, unless the summary opened it. */
+  readonly backLeavesFlow = computed(() => this.neighbour(-1) === null && !this.isEditing());
 
   private readonly editChain = computed<readonly SignupStepId[]>(() => {
     const from = this.editFromState();
