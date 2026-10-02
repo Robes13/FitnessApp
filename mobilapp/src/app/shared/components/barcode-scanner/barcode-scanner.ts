@@ -68,6 +68,7 @@ export type BarcodeScannerStatus =
   | 'permission-denied'
   | 'unreadable'
   | 'module-installing'
+  | 'module-unavailable'
   | 'lookup-error'
   | 'not-found';
 
@@ -139,6 +140,7 @@ const STATUS_MESSAGE_KEY: Readonly<Record<Exclude<BarcodeScannerStatus, 'idle'>,
   'permission-denied': BARCODE_SCANNER_TEXT_KEY.PERMISSION_DENIED,
   unreadable: BARCODE_SCANNER_TEXT_KEY.UNREADABLE,
   'module-installing': BARCODE_SCANNER_TEXT_KEY.MODULE_INSTALLING,
+  'module-unavailable': BARCODE_SCANNER_TEXT_KEY.MODULE_UNAVAILABLE,
   'lookup-error': BARCODE_SCANNER_TEXT_KEY.LOOKUP_ERROR,
   // 3.1-6a: the buttons below the line offer the manual 3.0 form instead.
   'not-found': 'shared.barcodeScanner.notFound',
@@ -147,6 +149,7 @@ const ERROR_STATUSES: readonly BarcodeScannerStatus[] = [
   'permission-denied',
   'unreadable',
   'module-installing',
+  'module-unavailable',
   'lookup-error',
   'not-found',
 ];
@@ -158,6 +161,7 @@ const OUTCOME_STATUS: Readonly<
   'permission-denied': 'permission-denied',
   unreadable: 'unreadable',
   'module-installing': 'module-installing',
+  'module-unavailable': 'module-unavailable',
   unavailable: 'idle',
 };
 
@@ -211,8 +215,10 @@ export function buildScanVerdict(t: Translate, kcalRemaining: number, item: Food
  * with the barcode). In the browser – and after a failed scan – the barcode can be typed instead.
  *
  * The parent owns `open`. Every way out of the scanner ultimately emits `closed` – even after
- * `found`, `manualRequested` and `noBarcodeRequested` – so the parent only needs one handler
- * that sets `open` to `false`. Cancelling the camera closes the scanner.
+ * `manualRequested` and `noBarcodeRequested` – so the parent only needs one handler that sets
+ * `open` to `false`. Cancelling the camera closes the scanner. `found` is the exception: the
+ * result stays open until the parent has stored the item and sets `open` to `false`, so a failed
+ * save (`error`) keeps the product, amount and meal for another try – as in "Add food".
  */
 @Component({
   selector: 'app-barcode-scanner',
@@ -250,9 +256,16 @@ export class BarcodeScanner {
   readonly meal = model<MealId | null>(null);
   /** Open the camera automatically when the overlay opens (native only). Otherwise the user taps "Scan". */
   readonly autoStart = input(true, { transform: booleanAttribute });
+  /** The parent is storing the `found` item: "Add" shows a spinner, and the result can't be left. */
+  readonly busy = input(false, { transform: booleanAttribute });
+  /** Why the parent couldn't store the `found` item, shown above the result's buttons. */
+  readonly error = input<string | null>(null);
 
   readonly closed = output<void>();
-  /** The scanned item, scaled to the chosen amount (`quantity` e.g. `'150 g'`). */
+  /**
+   * The scanned item, scaled to the chosen amount (`quantity` e.g. `'150 g'`). The scanner stays
+   * open – the parent closes it (`open` = `false`) once the item is stored.
+   */
   readonly found = output<FoodItem>();
   /** "Enter manually instead". */
   readonly manualRequested = output<void>();
@@ -324,8 +337,13 @@ export class BarcodeScanner {
   );
   protected readonly isPermissionDenied = computed(() => this.status() === 'permission-denied');
   protected readonly isLookupError = computed(() => this.status() === 'lookup-error');
+  /** Not after a lookup error ("Try again" instead), nor once Google's scanner module isn't coming. */
   protected readonly showScanButton = computed(
-    () => this.canScan && !this.isBusy() && !this.isLookupError(),
+    () =>
+      this.canScan &&
+      !this.isBusy() &&
+      !this.isLookupError() &&
+      this.status() !== 'module-unavailable',
   );
   protected readonly hint = computed(() => {
     const status = this.status();
@@ -540,6 +558,9 @@ export class BarcodeScanner {
 
   /** "Scan again" and closing the result sheet: back to the overlay, and the camera again after a pause. */
   protected rescan(): void {
+    if (this.busy()) {
+      return;
+    }
     this.cancelPending();
     this.screen.set('scanner');
     this.status.set('idle');
@@ -550,13 +571,13 @@ export class BarcodeScanner {
     }
   }
 
+  /** The parent stores the item and then closes the scanner; until then the result stays. */
   protected addScanned(): void {
     const item = this.scaledItem();
-    if (!item || !this.canAddScanned()) {
+    if (!item || !this.canAddScanned() || this.busy()) {
       return;
     }
     this.found.emit(item);
-    this.finish();
   }
 
   protected requestManual(): void {

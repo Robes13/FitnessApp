@@ -251,11 +251,15 @@ export class FoodPage {
   }
 
   /**
-   * The scanner closes itself; a scanned product becomes the user's own food as it is logged –
-   * under the meal picked on the scanner's result sheet (`[(meal)]`, the sheet's meal too).
+   * A scanned product becomes the user's own food as it is logged – under the meal picked on the
+   * scanner's result sheet (`[(meal)]`, the sheet's meal too). Pessimistic like the sheet: the
+   * scanner closes once the API has answered; a failure keeps its result open with the notice.
    */
   protected onScanFound(item: FoodItem): void {
-    this.run(this.foodLog.add(item, this.addMeal()), SAVE_ERROR_KEY, () => this.closeAdd());
+    this.run(this.foodLog.add(item, this.addMeal()), SAVE_ERROR_KEY, () => {
+      this.scannerOpen.set(false);
+      this.closeAdd();
+    });
   }
 
   protected onScanManual(): void {

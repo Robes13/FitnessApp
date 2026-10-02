@@ -330,6 +330,15 @@ describe('NewCollectionSheet', () => {
     // The next scan finds it in the user's own catalogue – no Open Food Facts request.
     await lookUp();
     expect(root.querySelector('.barcode-scanner__result')).not.toBeNull();
+
+    // The draft can't fail, so "Tilføj" closes the scanner right away.
+    await click(buttonByText('Tilføj'));
+    expect(root.querySelector('.barcode-scanner__overlay')).toBeNull();
+    expect(
+      Array.from(root.querySelectorAll('.new-collection-sheet__item-name')).map((el) =>
+        normalize(el.textContent),
+      ),
+    ).toEqual(['UI Samlingsscan']);
   });
 
   it('resets everything when the sheet is reopened', async () => {

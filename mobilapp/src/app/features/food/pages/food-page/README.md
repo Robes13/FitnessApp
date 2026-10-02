@@ -22,7 +22,8 @@ måltidsgrupper og knapperne "Tilføj mad" og scan — og den ejer tilstanden om
   ingen makroredigering og intet `PATCH foods` (P12).
 - "Gem og log …" og en scannet vare logges med `add()`, der selv opretter varen (`ensureFood`).
   "Gem uden at logge" gemmer med `addCustomFood()`.
-- **Fejl** vises med `app-ui-form-error` – i arket, mens det er åbent, og under knapperne.
+- **Fejl** vises med `app-ui-form-error` – i arket eller scannerens resultat-ark, mens det er
+  åbent, og under knapperne.
   API'ets generelle "noget gik galt" bliver _Varen blev ikke gemt/fjernet. Prøv igen._;
   netværk, server og "findes ikke længere" beholder deres egen tekst, og 409 giver
   `food.page.duplicateCustomFood` med navnet. Beskeden forsvinder, når arket eller scanneren

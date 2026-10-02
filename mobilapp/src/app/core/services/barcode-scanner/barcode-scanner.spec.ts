@@ -15,6 +15,7 @@ class FakeScannerPlatform implements BarcodeScannerPlatform {
   permission: CameraPermission = 'granted';
   permissionAfterRequest: CameraPermission = 'granted';
   moduleAvailable = true;
+  installError: Error | null = null;
   scanned: readonly string[] | Error = [EAN_13];
   readonly calls: string[] = [];
 
@@ -36,6 +37,9 @@ class FakeScannerPlatform implements BarcodeScannerPlatform {
   }
   async installScannerModule(): Promise<void> {
     this.calls.push('install');
+    if (this.installError) {
+      throw this.installError;
+    }
   }
   async scan(): Promise<readonly string[]> {
     this.calls.push('scan');
@@ -106,11 +110,25 @@ describe('BarcodeScannerService', () => {
     expect(platform.calls).toEqual(['request', 'scan']);
   });
 
-  it('starts installing the Google barcode module when it is missing', async () => {
+  it('starts installing the Google barcode module once, then says it is unavailable', async () => {
     platform.moduleAvailable = false;
+    const scanner = setup();
 
-    await expect(setup().scan()).resolves.toEqual({ status: 'module-installing' });
+    await expect(scanner.scan()).resolves.toEqual({ status: 'module-installing' });
+    // A failed or stalled download never reports back – asking again would repeat "try again".
+    await expect(scanner.scan()).resolves.toEqual({ status: 'module-unavailable' });
     expect(platform.calls).toEqual(['install']);
+
+    platform.moduleAvailable = true;
+    await expect(scanner.scan()).resolves.toEqual({ status: 'scanned', barcode: EAN_13 });
+  });
+
+  it('says the module is unavailable when Google refuses to install it', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    platform.moduleAvailable = false;
+    platform.installError = new Error('API unavailable');
+
+    await expect(setup().scan()).resolves.toEqual({ status: 'module-unavailable' });
   });
 
   it('maps the plugin errors to cancelled / permission-denied / unreadable', async () => {

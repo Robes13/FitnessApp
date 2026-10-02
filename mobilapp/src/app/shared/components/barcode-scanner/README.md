@@ -12,6 +12,8 @@ vare med stregkoden (3.1-6a → 3.0), så næste scanning finder den.
   [open]="scannerOpen()"
   [kcalRemaining]="kcalRemaining()"
   [(meal)]="meal"
+  [busy]="saving()"
+  [error]="saveError()"
   (closed)="scannerOpen.set(false)"
   (found)="log($event)"
   (manualRequested)="openSearch()"
@@ -27,17 +29,23 @@ vare med stregkoden (3.1-6a → 3.0), så næste scanning finder den.
 | `kcalRemaining` | `null`   | Dagens mål minus det spiste. Bruges til verdict-boksen; `null` skjuler den                                                                                                                         |
 | `meal`          | `null`   | Måltidet varen logges under (`model`, tovejs). Sat viser resultat-arket måltids-chips, så måltidet ses og kan skiftes før "Tilføj" (3.2); `null` skjuler dem (en samlings kladde har intet måltid) |
 | `autoStart`     | `true`   | Åbn kameraet med det samme (kun native). Ellers trykker brugeren "Scan stregkode"                                                                                                                  |
+| `busy`          | `false`  | Forælderen gemmer `found`-varen: "Tilføj" viser spinner, og resultat-arket kan ikke forlades                                                                                                       |
+| `error`         | `null`   | Hvorfor forælderen ikke kunne gemme varen – vises over resultat-arkets knapper                                                                                                                     |
 
 | Output               | Betydning                                                                                                                                                          |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `closed`             | Scanneren skal lukkes. **Udsendes til sidst på alle veje ud** – også efter de tre outputs herunder og når kameraet annulleres                                      |
-| `found`              | Den fundne vare skaleret til den valgte mængde, `quantity` fx `'150 g'`, id `off-<stregkode>`                                                                      |
+| `closed`             | Scanneren skal lukkes. **Udsendes til sidst på alle veje ud** – også efter `manualRequested` og `noBarcodeRequested` og når kameraet annulleres – undtagen `found` |
+| `found`              | Den fundne vare skaleret til den valgte mængde, `quantity` fx `'150 g'`, id `off-<stregkode>`. Scanneren bliver åben, til forælderen lukker den                    |
 | `manualRequested`    | "Indtast manuelt i stedet" (søg i varerne)                                                                                                                         |
 | `noBarcodeRequested` | Forælderen åbner vælgerens "Ny egen vare". Efter "ikke fundet" ("Opret varen selv") med stregkoden, som varen gemmes med; "Varen har ingen stregkode" giver `null` |
 
-Fordi `closed` altid kommer sidst, behøver forælderen kun én handler, der sætter `open` til
-`false`. `found` skal ikke selv lukke noget. Forælderen logger varen med
-`FoodLogService.add()`, der opretter den som brugerens egen vare (`ensureFood`).
+Fordi `closed` kommer sidst, behøver forælderen kun én handler, der sætter `open` til `false`.
+**`found` er undtagelsen:** resultatet bliver stående, til forælderen har gemt varen og selv
+sætter `open` til `false` – pessimistisk som "Tilføj mad". Fejler gemningen (fx uden net), viser
+`error` beskeden over knapperne, og vare, mængde og måltid står der stadig til et nyt tryk på
+"Tilføj"; `busy` blokerer imens et dobbelt tryk og "Scan igen". Mad-siden logger varen med
+`FoodLogService.add()`, der opretter den som brugerens egen vare (`ensureFood`); "Ny samling"
+lægger den i kladden og lukker straks.
 
 ## Forløb
 
@@ -51,6 +59,9 @@ Fordi `closed` altid kommer sidst, behøver forælderen kun én handler, der sæ
    - `permission-denied` → dansk forklaring + "Åbn indstillinger" (3a).
    - `unreadable` → _Vi kunne ikke læse stregkoden …_ + "Scan stregkode" igen (5a).
    - `module-installing` → Googles stregkodemodul hentes; brugeren prøver igen om lidt.
+   - `module-unavailable` → modulet mangler stadig efter den ene anmodning (eller Google afviste
+     den): _Kamerascanneren kan ikke bruges på telefonen lige nu. Indtast stregkodens tal
+     herunder._ uden "Scan stregkode" – ingen uendelig "prøv igen". Se `BarcodeScannerService`.
      Stregkodefeltet står under beskeden i alle tilfælde, så tallene altid kan indtastes.
 3. **Opslag.** Indtastet stregkode valideres først (8–14 cifre, fejlen vises efter "Slå op").
    Under opslaget vises `UiSpinner` og _Slår varen op…_, og feltet skjules. Hvert opslag
@@ -73,11 +84,12 @@ når komponenten destrueres og ved hver genstart (`scanRun` gør et sent kameras
 
 ## Resultat-arket
 
-`UiSheet` (lag `top`) med varens navn som titel, `brand · mængde`, "Hvilket måltid?" med de
-fire måltids-chips (når `meal` er sat), "Hvor meget tog du?" med mængdefliser, et felt
+`UiSheet` (lag `top`, `scrollable`) med varens navn som titel, `brand · mængde`, "Hvilket
+måltid?" med de fire måltids-chips (når `meal` er sat), "Hvor meget tog du?" med mængdefliser, et felt
 "Mængde (g)" (eller "Mængde (ml)" for væsker), fire nøgletal og verdict-boksen. Måltidet er
 forælderens (Mad-sidens `addMeal`, det samme som arket "Tilføj mad" står på), så varen aldrig
-logges under et skjult måltid.
+logges under et skjult måltid. Indholdet scroller inden i arket, så "Scan igen" / "Tilføj"
+altid står synligt – også med tastaturet åbent over mængdefeltet og med stor systemskrift.
 
 - Open Food Facts' tal er pr. 100 g (100 ml for væsker; mængder vises da i ml). Fliserne er pakkens portion (`Portion`, fx `50 g · 200 kcal`)
   når den kendes i gram, og forvalgene 50 / 100 / 200 g (`SCAN_AMOUNT_PRESETS_GRAMS`, uden det

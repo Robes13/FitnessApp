@@ -164,7 +164,11 @@ stregkode)`; alt andet (en ny egen vare, `food-…`, eller en samlingsvare under
   Uden vejninger er den tom, og grafen viser sin tomme tilstand.
 - **Stregkodescanning** bruger pluginets færdige `scan()`-UI. På Android er det Googles
   kodescanner (ingen kameratilladelse, men Googles stregkodemodul – mangler det, startes
-  installationen, og udfaldet er `module-installing`). På iOS spørges om kameraadgang først.
+  installationen, og udfaldet er `module-installing`). Modulet bedes der kun om én gang pr.
+  app-kørsel: mangler det stadig bagefter, eller afviser Google anmodningen, er udfaldet
+  `module-unavailable`, for en download, der fejler eller går i stå (ingen Play Butik, intet net,
+  droslet), melder aldrig tilbage, og en ny anmodning ville bare gentage "prøv igen" i det
+  uendelige. På iOS spørges om kameraadgang først.
   Pluginets afvisninger `scan canceled.` / `User denied access to camera.` oversættes til
   `cancelled` / `permission-denied`; alt andet logges og bliver `unreadable`.
 - **Vareopslag**: status 0, HTTP 404 eller en vare helt uden energi er `not-found`;

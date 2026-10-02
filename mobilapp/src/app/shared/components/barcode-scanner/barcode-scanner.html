@@ -112,7 +112,13 @@
     </div>
   </div>
 
-  <app-ui-sheet [open]="isResultOpen()" [title]="resultTitle()" layer="top" (closed)="rescan()">
+  <app-ui-sheet
+    [open]="isResultOpen()"
+    [title]="resultTitle()"
+    layer="top"
+    scrollable
+    (closed)="rescan()"
+  >
     @if (product()) {
       <div class="barcode-scanner__result">
         <p class="barcode-scanner__subtitle">{{ resultSubtitle() }}</p>
@@ -187,12 +193,16 @@
         }
       </div>
     }
+    @if (error(); as message) {
+      <app-ui-form-error sheetFooter tone="negative" [message]="message" />
+    }
     <div class="barcode-scanner__footer" sheetFooter>
       <button
         app-ui-button
         variant="outline"
         type="button"
         class="barcode-scanner__action"
+        [disabled]="busy()"
         (click)="rescan()"
       >
         {{ 'shared.barcodeScanner.rescan' | translate }}
@@ -202,6 +212,7 @@
         type="button"
         class="barcode-scanner__action"
         [disabled]="!canAddScanned()"
+        [loading]="busy()"
         (click)="addScanned()"
       >
         {{ 'shared.barcodeScanner.add' | translate }}

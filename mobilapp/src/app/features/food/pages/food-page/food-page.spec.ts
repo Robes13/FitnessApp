@@ -398,6 +398,40 @@ describe('FoodPage', () => {
     expect(normalize(lunchGroup?.textContent)).toContain('Havregryn');
   });
 
+  it('keeps the scanned item open with the notice when saving it fails, and closes after a retry', async () => {
+    const { page, click, buttonByText, typeInto, lookUp, settle, texts } = await setup();
+
+    await lookUp(HAVREGRYN_BARCODE);
+    await typeInto(
+      page.querySelector<HTMLInputElement>('input[aria-label="Mængde i gram"]'),
+      '150',
+    );
+    await click(buttonByText('Frokost'));
+    await click(buttonByText('Tilføj'));
+    expect(buttonByText('Tilføj')?.getAttribute('aria-busy')).toBe('true');
+    http.expectOne({ method: 'POST', url: FOOD_LOGS_URL }).error(new ProgressEvent('error'));
+    await settle();
+
+    // The scanned item, its amount and meal are still there to try again.
+    expect(texts('.ui-sheet__footer app-ui-form-error')).toEqual([
+      'Ingen forbindelse. Tjek dit internet, og prøv igen.',
+    ]);
+    expect(page.querySelector<HTMLInputElement>('input[aria-label="Mængde i gram"]')?.value).toBe(
+      '150',
+    );
+    await click(buttonByText('Tilføj'));
+    const retry = http.expectOne({ method: 'POST', url: FOOD_LOGS_URL });
+    expect(retry.request.body).toMatchObject({ foodId: 3, quantity: 150, mealType: 'Lunch' });
+    retry.flush({
+      ...testFoodLog({ ...SKYR_BOWL, name: 'Havregryn', quantity: '150 g' }, 'frokost'),
+      foodId: 3,
+    });
+    await settle();
+
+    expect(page.querySelector('.barcode-scanner__overlay')).toBeNull();
+    expect(page.querySelector('.food-page__notice')).toBeNull();
+  });
+
   it('creates a barcode Open Food Facts does not know as the user own food with it', async () => {
     const { page, click, buttonByText, typeInto, lookUp, settle, texts } = await setup();
 
