@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, defer, of } from 'rxjs';
+import { Observable, defer, of, switchMap } from 'rxjs';
 import { PRODUCT_BASE_GRAMS, PRODUCT_BASE_UNIT } from '../../constants/barcode';
 import { BarcodeScanOutcome, ProductLookupResult, ScannedProduct } from '../../models/barcode';
 import { FoodItem } from '../../models/food';
@@ -38,7 +38,7 @@ export class BarcodeFlowService {
   /**
    * Counts the scan when subscribed, then looks the barcode up: first in the user's own
    * catalogue (a food scanned before, or one created for a barcode Open Food Facts doesn't
-   * know – 3.1-6a), then in Open Food Facts. Never errors.
+   * know – 3.1-6a), then in the API's shared catalogue, then in Open Food Facts. Never errors.
    */
   lookup(barcode: string): Observable<ProductLookupResult> {
     return defer(() => {
@@ -46,7 +46,18 @@ export class BarcodeFlowService {
       const own = this.foodLog.foods().find((food) => food.barcode === barcode);
       return own
         ? of<ProductLookupResult>({ status: 'found', product: toCatalogueProduct(barcode, own) })
-        : this.productLookup.lookup(barcode);
+        : this.foodLog
+            .findCatalogueFood(barcode)
+            .pipe(
+              switchMap((food) =>
+                food
+                  ? of<ProductLookupResult>({
+                      status: 'found',
+                      product: toCatalogueProduct(barcode, food),
+                    })
+                  : this.productLookup.lookup(barcode),
+              ),
+            );
     });
   }
 
@@ -91,7 +102,7 @@ function toCatalogueProduct(barcode: string, food: FoodDto): ScannedProduct {
       protein: food.proteinPer100,
       carbs: food.carbohydratesPer100,
       fat: food.fatPer100,
-      isCustom: true,
+      isCustom: food.createdByUserId !== null,
     },
     servingGrams: perUnit?.gramsPerUnit ?? null,
   };

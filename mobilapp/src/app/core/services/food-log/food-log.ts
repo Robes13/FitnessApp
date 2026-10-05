@@ -39,6 +39,7 @@ import { ApiErrorResolver, fetchAllPages, injectApiUrl, toApiError } from '../..
 import { addDays, startOfDay, toIsoDate } from '../../utils/date-format';
 import { normalizeName } from '../../utils/name';
 import { NOW } from '../../utils/now';
+import { FoodCatalogueService } from '../food-catalogue/food-catalogue';
 import { NutritionCalculator } from '../nutrition-calculator/nutrition-calculator';
 import { ProductLookupService } from '../product-lookup/product-lookup';
 import { SessionDataStore } from '../session-data/session-data';
@@ -89,15 +90,18 @@ export class FoodLogService implements SessionDataStore {
   private readonly document = inject(DOCUMENT);
   private readonly calculator = inject(NutritionCalculator);
   private readonly productLookup = inject(ProductLookupService);
+  private readonly catalogue = inject(FoodCatalogueService);
   private readonly activeDate = signal(this.currentIsoDate());
   private readonly statusState = signal<StoreStatus>('idle');
   private readonly foodsState = signal<readonly FoodDto[]>([]);
   private readonly logsState = signal<readonly LoggedFood[]>([]);
+  /** Shared-catalogue foods seen in a barcode or name lookup, so logging one reuses it. */
+  private readonly catalogueFoods = new Map<number, FoodDto>();
   /** Local date (`YYYY-MM-DD`) → that day's entries in logged order. */
   private readonly days = computed(() => groupByDay(this.logsState()));
 
   readonly status: Signal<StoreStatus> = this.statusState.asReadonly();
-  /** The user's own catalogue, newest first (the API has no shared food database). */
+  /** The user's own catalogue, newest first (the shared catalogue is only searched). */
   readonly foods: Signal<readonly FoodDto[]> = this.foodsState.asReadonly();
   /**
    * Today's local date (`YYYY-MM-DD`). Changes at midnight and when the app returns to the
@@ -289,6 +293,23 @@ export class FoodLogService implements SessionDataStore {
     }).pipe(mapFoodError());
   }
 
+  /**
+   * The shared-catalogue food (`FoodCatalogueService`) with `barcode`, or `null` – the caller
+   * then asks Open Food Facts. It is remembered, so logging it reuses the food.
+   */
+  findCatalogueFood(barcode: string): Observable<FoodDto | null> {
+    return this.catalogue
+      .findByBarcode(barcode)
+      .pipe(tap((food) => food && this.rememberCatalogue([food])));
+  }
+
+  /** Shared-catalogue foods whose name contains `query` (max `limit`) as picker items. */
+  searchCatalogue(query: string, limit: number): Observable<readonly FoodItem[]> {
+    return this.catalogue
+      .search(query, limit)
+      .pipe(map((foods) => this.rememberCatalogue(foods).map(toFoodItem)));
+  }
+
   /** Case-insensitive, trimmed name match against the catalogue – the API's 409 rule. */
   hasCustomFoodNamed(name: string): boolean {
     const needle = normalizeName(name);
@@ -303,6 +324,7 @@ export class FoodLogService implements SessionDataStore {
     const name = normalizeName(item.name);
     const existing =
       foods.find((food) => String(food.foodId) === item.id) ??
+      this.catalogueFoods.get(Number(item.id)) ??
       foods.find((food) => normalizeName(food.name) === name);
     return existing ? of(existing) : this.createOwnFood(item, quantity);
   }
@@ -313,6 +335,12 @@ export class FoodLogService implements SessionDataStore {
     if (existing) {
       return of(existing);
     }
+    return this.findCatalogueFood(barcode).pipe(
+      switchMap((catalogue) => (catalogue ? of(catalogue) : this.createScannedFood(barcode))),
+    );
+  }
+
+  private createScannedFood(barcode: string): Observable<FoodDto> {
     return this.productLookup.lookup(barcode).pipe(
       switchMap((result) => {
         if (result.status !== 'found') {
@@ -373,12 +401,20 @@ export class FoodLogService implements SessionDataStore {
       .pipe(
         map((serving) => {
           const updated: FoodDto = { ...food, servings: [...food.servings, serving] };
+          if (this.catalogueFoods.has(food.foodId)) {
+            this.catalogueFoods.set(food.foodId, updated);
+          }
           this.foodsState.update((foods) =>
             foods.map((candidate) => (candidate.foodId === food.foodId ? updated : candidate)),
           );
           return updated;
         }),
       );
+  }
+
+  private rememberCatalogue(foods: readonly FoodDto[]): readonly FoodDto[] {
+    foods.forEach((food) => this.catalogueFoods.set(food.foodId, food));
+    return foods;
   }
 
   private toLogQuantity(quantity: string): { quantity: number; unit: ApiQuantityUnit } {

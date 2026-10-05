@@ -1,4 +1,6 @@
 import { DOCUMENT, Provider } from '@angular/core';
+import { of } from 'rxjs';
+import { FoodCatalogueService } from '../services/food-catalogue/food-catalogue';
 import { NOW } from '../utils/now';
 import { FakeStorage, createFakeDocument, createFakeStorage } from './fake-document';
 
@@ -14,9 +16,18 @@ export interface ComponentTestEnvironmentOptions {
   readonly now?: Date;
 }
 
-/** A frozen `NOW` – shared by both environments. */
+/**
+ * A frozen `NOW` and an empty shared food catalogue – shared by both environments. A spec of the
+ * catalogue provides `FoodCatalogueService` itself (or uses the real one via `TestBed.overrideProvider`).
+ */
 function deterministicProviders(now: Date): Provider[] {
-  return [{ provide: NOW, useValue: () => new Date(now) }];
+  return [
+    { provide: NOW, useValue: () => new Date(now) },
+    {
+      provide: FoodCatalogueService,
+      useValue: { findByBarcode: () => of(null), search: () => of([]) },
+    },
+  ];
 }
 
 /**

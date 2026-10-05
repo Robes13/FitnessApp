@@ -180,6 +180,10 @@ export const TRAINING_FALLBACK_INTENSITY: IntensityId = 'moderat';
 
 /** Max number of results in food search. */
 export const FOOD_SEARCH_MAX_RESULTS = 6;
+/** The shared catalogue is searched from this many characters (one letter matches too much). */
+export const CATALOGUE_SEARCH_MIN_LENGTH = 2;
+/** Pause in typing before the shared catalogue is searched, so each keystroke isn't a request. */
+export const CATALOGUE_SEARCH_DEBOUNCE_MS = 300;
 
 /** Default unit when a quantity string doesn't include one. */
 export const DEFAULT_QUANTITY_UNIT = 'g';

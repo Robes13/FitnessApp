@@ -48,7 +48,7 @@ export function toFoodItem(food: FoodDto): FoodItem {
     protein: scale(food.proteinPer100),
     carbs: scale(food.carbohydratesPer100),
     fat: scale(food.fatPer100),
-    isCustom: true,
+    isCustom: food.createdByUserId !== null,
   };
 }
 

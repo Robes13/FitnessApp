@@ -21,7 +21,8 @@ export interface FoodDto {
   proteinPer100: number;
   carbohydratesPer100: number;
   fatPer100: number;
-  createdByUserId: number;
+  /** `null`: the shared, read-only catalogue (Open Food Facts products). */
+  createdByUserId: number | null;
   createdAt: string;
   servings: FoodServingDto[];
 }
