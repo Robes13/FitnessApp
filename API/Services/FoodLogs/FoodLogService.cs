@@ -169,7 +169,7 @@ public sealed class FoodLogService(
 
         var food = await _context.Foods
             .Include(food => food.Servings)
-            .SingleOrDefaultAsync(food => food.FoodId == foodId && food.CreatedByUserId == userId, cancellationToken)
+            .SingleOrDefaultAsync(food => food.FoodId == foodId && (food.CreatedByUserId == userId || food.CreatedByUserId == null), cancellationToken)
             ?? throw new NotFoundException("Food not found.");
 
         ApplyNutrition(log, food, quantity, unit, consumedAt);
@@ -227,7 +227,7 @@ public sealed class FoodLogService(
         var food = await _context.Foods
             .AsNoTracking()
             .Include(food => food.Servings)
-            .SingleOrDefaultAsync(food => food.FoodId == request.FoodId && food.CreatedByUserId == userId, cancellationToken)
+            .SingleOrDefaultAsync(food => food.FoodId == request.FoodId && (food.CreatedByUserId == userId || food.CreatedByUserId == null), cancellationToken)
             ?? throw new NotFoundException("Food not found.");
 
         var consumedAt = RequestGuards.NormalizeUtc(request.ConsumedAt);

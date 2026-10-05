@@ -8,6 +8,6 @@ public sealed record FoodDto(
     decimal ProteinPer100,
     decimal CarbohydratesPer100,
     decimal FatPer100,
-    int CreatedByUserId,
+    int? CreatedByUserId,
     DateTime CreatedAt,
     IReadOnlyList<FoodServingDto> Servings);

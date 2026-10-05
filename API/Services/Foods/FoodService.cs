@@ -24,8 +24,11 @@ public sealed class FoodService(FitnessAppDbContext context, TimeProvider timePr
         CancellationToken cancellationToken)
     {
         limit = RequestGuards.NormalizeLimit(limit, defaultValue: 30, maximum: 100);
+        // The shared catalogue is searchable (a name or barcode) but never listed with the user's own foods.
+        var includeCatalogue = !createdByMe
+            && (!string.IsNullOrWhiteSpace(query) || !string.IsNullOrWhiteSpace(barcode));
         var foodsQuery = _context.Foods.AsNoTracking()
-            .Where(food => food.CreatedByUserId == userId);
+            .Where(food => food.CreatedByUserId == userId || (includeCatalogue && food.CreatedByUserId == null));
 
         if (!string.IsNullOrWhiteSpace(query))
         {
@@ -75,7 +78,7 @@ public sealed class FoodService(FitnessAppDbContext context, TimeProvider timePr
         var food = await _context.Foods
             .AsNoTracking()
             .Include(food => food.Servings)
-            .SingleOrDefaultAsync(food => food.FoodId == foodId && food.CreatedByUserId == userId, cancellationToken)
+            .SingleOrDefaultAsync(food => food.FoodId == foodId && (food.CreatedByUserId == userId || food.CreatedByUserId == null), cancellationToken)
             ?? throw new NotFoundException("Food not found.");
 
         return ToDto(food);
@@ -170,7 +173,10 @@ public sealed class FoodService(FitnessAppDbContext context, TimeProvider timePr
         UpsertFoodServingRequest request,
         CancellationToken cancellationToken)
     {
-        _ = await GetOwnedFoodAsync(userId, foodId, cancellationToken);
+        // A catalogue food may gain a missing unit, but its existing servings are read-only.
+        var food = await _context.Foods.AsNoTracking()
+            .SingleOrDefaultAsync(food => food.FoodId == foodId && (food.CreatedByUserId == userId || food.CreatedByUserId == null), cancellationToken)
+            ?? throw new NotFoundException("Food not found.");
 
         if (!Enum.IsDefined(request.Unit))
         {
@@ -194,6 +200,10 @@ public sealed class FoodService(FitnessAppDbContext context, TimeProvider timePr
                 GramsPerUnit = request.GramsPerUnit
             };
             _context.FoodServings.Add(serving);
+        }
+        else if (food.CreatedByUserId is null)
+        {
+            return new FoodServingDto(serving.FoodServingId, serving.Unit, serving.GramsPerUnit);
         }
         else
         {

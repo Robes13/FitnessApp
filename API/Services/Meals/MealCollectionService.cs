@@ -85,7 +85,7 @@ public sealed class MealCollectionService(
 
         var foodIds = request.Items.Select(item => item.FoodId).Distinct().ToArray();
         var foods = await _context.Foods.Include(food => food.Servings)
-            .Where(food => food.CreatedByUserId == userId && foodIds.Contains(food.FoodId))
+            .Where(food => (food.CreatedByUserId == userId || food.CreatedByUserId == null) && foodIds.Contains(food.FoodId))
             .ToDictionaryAsync(food => food.FoodId, cancellationToken);
         if (foods.Count != foodIds.Length)
             throw new NotFoundException("One or more foods were not found.");
@@ -155,7 +155,7 @@ public sealed class MealCollectionService(
 
         ValidateItem(request.FoodId, request.Quantity, request.Unit);
         var food = await _context.Foods.AsNoTracking().Include(candidate => candidate.Servings)
-            .SingleOrDefaultAsync(food => food.FoodId == request.FoodId && food.CreatedByUserId == userId, cancellationToken)
+            .SingleOrDefaultAsync(food => food.FoodId == request.FoodId && (food.CreatedByUserId == userId || food.CreatedByUserId == null), cancellationToken)
             ?? throw new NotFoundException("Food not found.");
         _ = FoodNutritionCalculator.Calculate(food, request.Quantity, request.Unit);
 
@@ -190,7 +190,7 @@ public sealed class MealCollectionService(
         ValidateItem(foodId, quantity, unit);
 
         var food = await _context.Foods.AsNoTracking().Include(candidate => candidate.Servings)
-            .SingleOrDefaultAsync(food => food.FoodId == foodId && food.CreatedByUserId == userId, cancellationToken)
+            .SingleOrDefaultAsync(food => food.FoodId == foodId && (food.CreatedByUserId == userId || food.CreatedByUserId == null), cancellationToken)
             ?? throw new NotFoundException("Food not found.");
         _ = FoodNutritionCalculator.Calculate(food, quantity, unit);
 

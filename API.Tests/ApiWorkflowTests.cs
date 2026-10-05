@@ -6,6 +6,7 @@ using FitnessApp.Api.Domain.Entities;
 using FitnessApp.Api.Domain.Enums;
 using FitnessApp.Api.DTOs.Auth;
 using FitnessApp.Api.DTOs.FoodLogs;
+using FitnessApp.Api.DTOs.Foods;
 using FitnessApp.Api.DTOs.Goals;
 using FitnessApp.Api.DTOs.Meals;
 using FitnessApp.Api.DTOs.Profile;
@@ -16,6 +17,7 @@ using FitnessApp.Api.Services.Achievements;
 using FitnessApp.Api.Services.Auth;
 using FitnessApp.Api.Services.Export;
 using FitnessApp.Api.Services.FoodLogs;
+using FitnessApp.Api.Services.Foods;
 using FitnessApp.Api.Services.Goals;
 using FitnessApp.Api.Services.History;
 using FitnessApp.Api.Services.Meals;
@@ -108,6 +110,43 @@ public sealed partial class ApiWorkflowTests
         Assert.Equal(0m, days[1].Consumed.Calories);
         Assert.Equal(first.UserGoalId, days[0].Goal?.UserGoalId);
         Assert.Equal(second.UserGoalId, days[2].Goal?.UserGoalId);
+    }
+
+    [Fact]
+    public async Task CatalogueFoodsAreFoundByBarcodeLoggableAndReadOnly()
+    {
+        await using var database = await TestDatabase.CreateAsync();
+        var user = await SeedUserAsync(database.Context);
+        var cola = new Food { Name = "Coca-Cola", Barcode = "5449000000996", CaloriesPer100 = 42m,
+            CarbohydratesPer100 = 10.6m, CreatedAt = Jan1,
+            Servings = [new FoodServing { Unit = ServingUnit.Milliliter, GramsPerUnit = 1m }] };
+        database.Context.Foods.Add(cola);
+        await database.Context.SaveChangesAsync();
+        var foods = new FoodService(database.Context, TimeProvider.System);
+
+        Assert.Empty((await foods.SearchAsync(null, null, false, user.UserId, 30, null, CancellationToken.None)).Items);
+        var found = Assert.Single((await foods.SearchAsync(null, "5449000000996", false, user.UserId, 30, null,
+            CancellationToken.None)).Items);
+        Assert.Null(found.CreatedByUserId);
+        Assert.Empty((await foods.SearchAsync(null, "5449000000996", true, user.UserId, 30, null,
+            CancellationToken.None)).Items);
+        Assert.Equal("Coca-Cola", (await foods.GetAsync(user.UserId, cola.FoodId, CancellationToken.None)).Name);
+
+        var log = await new FoodLogService(database.Context,
+            new AchievementService(database.Context, TimeProvider.System), TimeProvider.System,
+            NullLogger<FoodLogService>.Instance).CreateAsync(user.UserId,
+            new CreateFoodLogRequest(cola.FoodId, 330m, QuantityUnit.Milliliter, Jan1, MealType.Snack), CancellationToken.None);
+        Assert.Equal(138.6m, log.CaloriesConsumed);
+
+        // A missing unit may be added; existing servings and the food itself stay read-only.
+        Assert.Equal(1m, (await foods.UpsertServingAsync(user.UserId, cola.FoodId,
+            new UpsertFoodServingRequest(ServingUnit.Milliliter, 5m), CancellationToken.None)).GramsPerUnit);
+        Assert.Equal(100m, (await foods.UpsertServingAsync(user.UserId, cola.FoodId,
+            new UpsertFoodServingRequest(ServingUnit.Serving, 100m), CancellationToken.None)).GramsPerUnit);
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => foods.UpdateAsync(user.UserId, cola.FoodId,
+            new UpdateFoodRequest { Name = "Mine" }, CancellationToken.None));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => foods.DeleteAsync(user.UserId, cola.FoodId,
+            CancellationToken.None));
     }
 
     [Fact]

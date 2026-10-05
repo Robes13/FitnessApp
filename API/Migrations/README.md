@@ -7,6 +7,7 @@
 | `20260930082029_BindEmailVerificationTokensToEmail` | `EMAIL_VERIFICATION_TOKEN.Email varchar(320) NOT NULL` (kontoens adresse, da tokenet blev udstedt); markerer alle ubrugte tokens som brugt |
 | `20260930084037_AddNormalizedUsername` | Genereret `USER.NormalizedUsername` (A–Z → a–z) med unikt indeks; afbryder ved tomme brugernavne eller kollisioner, der kun adskiller sig i store/små bogstaver |
 | `20260930115857_AddMealTypeAndPendingEmail` | `FOOD_LOG.MealType integer NOT NULL DEFAULT 4` (Snack) og `EMAIL_VERIFICATION_TOKEN.NewEmail varchar(320) NULL` |
+| `20261005083735_AddSharedFoodCatalogue` | `FOOD.CreatedByUserId` bliver `NULL`-bar: en vare uden ejer hører til det fælles, skrivebeskyttede katalog (`Data/FoodCatalogSeeder.cs`) |
 
 Alle er genereret med `dotnet ef migrations add` og gennemgået. I `AddMealTypeAndPendingEmail` er
 EF's scaffoldede `defaultValue: 0` rettet til `4`, fordi `0` ikke er en gyldig `MealType`.

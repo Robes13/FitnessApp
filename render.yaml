@@ -15,6 +15,8 @@ services:
         value: "8080"
       - key: Database__MigrateOnStartup
         value: "true"
+      - key: Database__SeedFoodCatalog
+        value: "true"
       - key: App__PublicBaseUrl
         value: https://nutrify-api-dl81.onrender.com
       - key: Jwt__SigningKey

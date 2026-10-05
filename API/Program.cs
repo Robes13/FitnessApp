@@ -195,7 +195,13 @@ var app = builder.Build();
 if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
 {
     using var scope = app.Services.CreateScope();
-    scope.ServiceProvider.GetRequiredService<FitnessAppDbContext>().Database.Migrate();
+    var database = scope.ServiceProvider.GetRequiredService<FitnessAppDbContext>();
+    database.Database.Migrate();
+    if (app.Configuration.GetValue<bool>("Database:SeedFoodCatalog"))
+    {
+        var added = FoodCatalogSeeder.Seed(database, app.Environment.ContentRootPath, DateTime.UtcNow);
+        app.Logger.LogInformation("Food catalogue: {Added} foods added.", added);
+    }
 }
 
 app.UseExceptionHandler();
