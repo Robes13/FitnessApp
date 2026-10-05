@@ -5,7 +5,7 @@ import { Capacitor } from '@capacitor/core';
 const BROWSER_API_BASE_URL = '/api/v1';
 
 /** The hosted API (Render, `render.yaml`) that production builds of the native apps call. */
-const NATIVE_API_BASE_URL = 'https://nutrify-api.onrender.com/api/v1';
+const NATIVE_API_BASE_URL = 'https://nutrify-api-dl81.onrender.com/api/v1';
 
 /**
  * The native apps have no dev proxy, so they call the API directly through CapacitorHttp. A

@@ -16,7 +16,7 @@ services:
       - key: Database__MigrateOnStartup
         value: "true"
       - key: App__PublicBaseUrl
-        value: https://nutrify-api.onrender.com
+        value: https://nutrify-api-dl81.onrender.com
       - key: Jwt__SigningKey
         generateValue: true
       # Udfyldes i Render-dashboardet ved oprettelse
