@@ -35,7 +35,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// Neon's "Copy snippet" wraps the .NET string in quotes; tolerate them when pasted as-is.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")?.Trim().Trim('"');
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException(
