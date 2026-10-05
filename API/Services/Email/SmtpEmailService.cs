@@ -1,4 +1,4 @@
-using System.Net;
+using System.Net.Http.Json;
 using System.Net.Mail;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -42,19 +42,21 @@ public sealed class SmtpEmailService(IOptions<SmtpOptions> options, IHttpClientF
             if (!verified)
                 throw new ExternalServiceConfigurationException("Verify eldorado-fts.dk in Resend before sending email.");
 
-            using var client = new SmtpClient(settings.Host, settings.Port)
+            // Resend's HTTPS API instead of SMTP: hosts such as Render's free tier block outbound port 587.
+            using var send = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails")
             {
-                EnableSsl = true, // SmtpClient requires STARTTLS; it fails if the server does not support it.
-                DeliveryMethod = SmtpDeliveryMethod.Network,
-                Credentials = new NetworkCredential(settings.Username, settings.Password)
+                Content = JsonContent.Create(new
+                {
+                    from = new MailAddress(settings.From, settings.DisplayName).ToString(),
+                    to = new[] { new MailAddress(to).Address },
+                    subject,
+                    html,
+                    text
+                })
             };
-            using var mail = new MailMessage { From = new MailAddress(settings.From, settings.DisplayName), Subject = subject };
-            mail.To.Add(new MailAddress(to));
-            mail.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(text, System.Text.Encoding.UTF8, "text/plain"));
-            mail.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(html, System.Text.Encoding.UTF8, "text/html"));
-            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeout.CancelAfter(TimeSpan.FromSeconds(30));
-            await client.SendMailAsync(mail, timeout.Token);
+            send.Headers.Authorization = new AuthenticationHeaderValue("Bearer", settings.Password);
+            using var sent = await http.SendAsync(send, cancellationToken);
+            sent.EnsureSuccessStatusCode();
         }
         catch (ExternalServiceConfigurationException) { throw; }
         catch (Exception)

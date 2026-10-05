@@ -11,8 +11,9 @@ server configuration is Git-ignored and excluded from output, publish, and Docke
 file separately in the deployed API content root (for containers, mount it at `/app/appsettings.Local.json`),
 with access restricted to the server account. Do not serve configuration files through a static file server.
 
-Sender: Nutrify <nutrify@eldorado-fts.dk>. Transport: smtp.resend.com:587, STARTTLS required, username
-resend. `IEmailService.SendEmailAsync(to, subject, html, text, cancellationToken)` (`SmtpEmailService`) owns
+Sender: Nutrify <nutrify@eldorado-fts.dk>. Transport: Resend's HTTPS API (`POST https://api.resend.com/emails`)
+with the key as Bearer token – not SMTP, because hosts such as Render's free tier block outbound port 587. The
+Smtp settings (smtp.resend.com:587, username resend) are still validated as before. `IEmailService.SendEmailAsync(to, subject, html, text, cancellationToken)` (`SmtpEmailService`) owns
 the transport; `Utilities/AccountEmails.cs` owns the templates (Danish + English text, the same text as HTML
 with a clickable link), and `AccountMessageSender` hands them to the transport.
 
