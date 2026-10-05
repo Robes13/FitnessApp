@@ -88,9 +88,12 @@ npm start                           # http://localhost:4200 – /api går videre
   dev-serveren sender kaldet videre til `http://localhost:5210`.
 - **Native:** `CapacitorHttp` er slået til i `capacitor.config.ts`, så kaldene går gennem den
   native HTTP-stak, og WebView'ets CORS-regler gælder ikke. `API_BASE_URL`
-  (`src/app/core/constants/api.ts`) er `http://10.0.2.2:5210/api/v1` på Android-emulatoren og
-  `http://localhost:5210/api/v1` i iOS-simulatoren. En fysisk enhed skal bruge Mac'ens LAN-IP,
-  og en produktions-URL findes ikke endnu.
+  (`src/app/core/constants/api.ts`) er det hostede API, `https://nutrify-api.onrender.com/api/v1`
+  (Render, se `render.yaml` i roden), i production-buildet, som `npm run sync`, `android:run` og
+  `ios:run` laver. `npm run sync:local` laver et development-build, der i stedet kalder det lokale
+  API: `http://10.0.2.2:5210/api/v1` på Android-emulatoren og `http://localhost:5210/api/v1` i
+  iOS-simulatoren. En fysisk enhed skal bruge Mac'ens LAN-IP. Det hostede API sover efter 15
+  minutter uden trafik, så det første kald derefter tager op mod et minut.
 - **Android og `http://`:** Android blokerer klartekst-HTTP som standard. Kun **debug**-buildet
   har en network-security-config (`android/app/src/debug/res/xml/network_security_config.xml`),
   der tillader klartekst til `10.0.2.2` og `localhost` – dev-API'et. Release-buildet er uden

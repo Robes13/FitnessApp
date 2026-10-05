@@ -8,6 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "sync": "npm run build && cap sync",
+    "sync:local": "ng build --configuration development && cap sync",
     "android:build": "npm run sync && cap build android",
     "android:open": "cap open android",
     "android:run": "npm run sync && cap run android",
