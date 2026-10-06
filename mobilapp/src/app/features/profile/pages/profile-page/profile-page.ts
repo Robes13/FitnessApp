@@ -21,6 +21,7 @@ import { ThemeService } from '../../../../core/services/theme/theme';
 import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { toApiError } from '../../../../core/utils/api';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
+import { UiConfirmSheet } from '../../../../shared/components/ui-confirm-sheet/ui-confirm-sheet';
 import { UiEmptyState } from '../../../../shared/components/ui-empty-state/ui-empty-state';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
@@ -31,9 +32,7 @@ import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
 import { UiSwitch } from '../../../../shared/components/ui-switch/ui-switch';
 import { Achievements } from '../../components/achievements/achievements';
 import { ProfileAvatar } from '../../../../shared/components/profile-avatar/profile-avatar';
-import { ProfileDeleteAccountSheet } from '../../components/profile-delete-account-sheet/profile-delete-account-sheet';
 import { ProfileEditSheet } from '../../components/profile-edit-sheet/profile-edit-sheet';
-import { ProfileLogoutSheet } from '../../components/profile-logout-sheet/profile-logout-sheet';
 import { ProfilePhotoSheet } from '../../components/profile-photo-sheet/profile-photo-sheet';
 import { ProfileRemindersSheet } from '../../components/profile-reminders-sheet/profile-reminders-sheet';
 import { ProfileStepSync } from '../../components/profile-step-sync/profile-step-sync';
@@ -49,6 +48,7 @@ const REMINDERS_VALUE_KEY = {
   ACTIVE_MANY: 'profile.page.remindersActiveMany',
 } as const;
 
+const DELETE_BODY_KEY = 'profile.deleteAccountSheet.body';
 /** Withdrawing the consent deletes the account, so it asks with the deletion's sheet and this text. */
 const WITHDRAW_CONSENT_BODY_KEY = 'profile.deleteAccountSheet.withdrawBody';
 
@@ -69,14 +69,13 @@ const WITHDRAW_CONSENT_BODY_KEY = 'profile.deleteAccountSheet.withdrawBody';
   imports: [
     Achievements,
     ProfileAvatar,
-    ProfileDeleteAccountSheet,
     ProfileEditSheet,
-    ProfileLogoutSheet,
     ProfilePhotoSheet,
     ProfileRemindersSheet,
     ProfileStepSync,
     TranslatePipe,
     UiButton,
+    UiConfirmSheet,
     UiEmptyState,
     UiFormError,
     UiIcon,
@@ -154,7 +153,7 @@ export class ProfilePage {
   /** The deletion sheet confirms withdrawing the consent (spec 9.2-3b) rather than "Slet konto". */
   private readonly withdrawingConsent = signal(false);
   protected readonly deleteBodyKey = computed(() =>
-    this.withdrawingConsent() ? WITHDRAW_CONSENT_BODY_KEY : null,
+    this.withdrawingConsent() ? WITHDRAW_CONSENT_BODY_KEY : DELETE_BODY_KEY,
   );
   protected readonly deletingAccount = signal(false);
   private readonly deleteErrorKey = signal<string | null>(null);

@@ -291,7 +291,7 @@ describe('ProfilePage', () => {
     expect(row?.textContent).toContain('Træk tilbage');
     row?.click();
     await fixture.whenStable();
-    const sheet = host.querySelector('app-profile-delete-account-sheet');
+    const sheet = host.querySelector('app-ui-confirm-sheet [role="dialog"]');
     expect(sheet?.textContent).toContain('Samtykket er en forudsætning for Nutrify.');
     expect(withdraw).not.toHaveBeenCalled();
 
@@ -330,7 +330,7 @@ describe('ProfilePage', () => {
       ?.click();
     await fixture.whenStable();
 
-    const sheet = host.querySelector('app-profile-logout-sheet');
+    const sheet = host.querySelector('app-ui-confirm-sheet [role="dialog"]');
     expect(sheet?.textContent).toContain('Dine data bliver gemt.');
 
     Array.from(sheet?.querySelectorAll<HTMLButtonElement>('button') ?? [])
@@ -357,7 +357,7 @@ describe('ProfilePage', () => {
       ?.click();
     await fixture.whenStable();
 
-    const sheet = host.querySelector('app-profile-delete-account-sheet');
+    const sheet = host.querySelector('app-ui-confirm-sheet [role="dialog"]');
     expect(sheet?.textContent).toContain('Din konto og alle dine data bliver slettet');
     expect(deleteAccount).not.toHaveBeenCalled();
 
@@ -382,7 +382,7 @@ describe('ProfilePage', () => {
       .find((element) => element.textContent?.trim() === 'Slet konto')
       ?.click();
     await fixture.whenStable();
-    const sheet = host.querySelector('app-profile-delete-account-sheet');
+    const sheet = host.querySelector('app-ui-confirm-sheet [role="dialog"]');
     Array.from(sheet?.querySelectorAll<HTMLButtonElement>('button') ?? [])
       .find((element) => element.textContent?.trim() === 'Ja, slet min konto')
       ?.click();

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, booleanAttribute, input, output } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { UiButton } from '../ui-button/ui-button';
+import { UiFormError } from '../ui-form-error/ui-form-error';
 import { UiSheet } from '../ui-sheet/ui-sheet';
 
 /**
@@ -12,7 +13,7 @@ import { UiSheet } from '../ui-sheet/ui-sheet';
  */
 @Component({
   selector: 'app-ui-confirm-sheet',
-  imports: [TranslatePipe, UiButton, UiSheet],
+  imports: [TranslatePipe, UiButton, UiFormError, UiSheet],
   templateUrl: './ui-confirm-sheet.html',
   styleUrl: './ui-confirm-sheet.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +30,8 @@ export class UiConfirmSheet {
   readonly cancelKey = input.required<string>();
   /** The confirmed action is running. */
   readonly busy = input(false, { transform: booleanAttribute });
+  /** Why the confirmed action failed – already translated. */
+  readonly errorMessage = input<string | null>(null);
 
   readonly closed = output<void>();
   readonly confirmed = output<void>();

@@ -19,9 +19,7 @@ profile/
 │   ├── profile-edit-sheet/           "Rediger profil" – alle fire feltvarianter
 │   ├── profile-photo-sheet/          "Profilbillede" – filvalg, træk og zoom
 │   ├── profile-reminders-sheet/      "Dine påmindelser" – typer, tidspunkter og vejedag
-│   ├── profile-step-sync/            "Skridt fra Apple Sundhed / Health Connect" – kontakt, status, slå fra-ark
-│   ├── profile-logout-sheet/         "Log ud?" – bekræftelsen
-│   └── profile-delete-account-sheet/ "Slet konto?" – bekræftelsen (også ved tilbagetrækning af samtykke)
+│   └── profile-step-sync/            "Skridt fra Apple Sundhed / Health Connect" – kontakt, status, slå fra-ark
 └── services/                         Rækker, redigeringsdefinitioner, præstationer og dataeksport
 ```
 
@@ -79,7 +77,7 @@ og deres tidspunkt. Selve planlægningen af lokale notifikationer ligger i
 
 ## Log ud
 
-Bekræftelsen kalder `SessionService.logout()` (tilbagekalder refresh-tokenet i API'et med et
+Bekræftelsen er `app-ui-confirm-sheet` (`shared/`) og kalder `SessionService.logout()` (tilbagekalder refresh-tokenet i API'et med et
 friskt access-token) og navigerer til `APP_PATH.LOGIN`, når kaldet er færdigt. Imens viser
 "Ja, log mig ud" en spinner (`busy`). Log ud er _best effort_: kan API'et ikke nås, slutter
 sessionen alligevel lokalt, så der er ingen fejltilstand. Kun sessionen ryddes – brugerens data
@@ -119,7 +117,7 @@ logikken ligger i `core/services/step-sync/` (se [`core/services/README.md`](../
 ## Slet konto
 
 Kravet kommer fra GDPR: brugeren skal selv kunne slette sine data. Bekræftelsen
-(`profile-delete-account-sheet`) forklarer, at kontoen og **alle** data slettes, og kalder
+(`app-ui-confirm-sheet` med `bodyKey` og `errorMessage`) forklarer, at kontoen og **alle** data slettes, og kalder
 derefter `SessionService.deleteAccount()`, som
 
 1. sletter kontoen i API'et (`DELETE /me` – anonymiserer brugeren og sletter alle data),

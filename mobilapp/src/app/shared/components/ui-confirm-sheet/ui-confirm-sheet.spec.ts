@@ -15,6 +15,7 @@ import { UiConfirmSheet } from './ui-confirm-sheet';
       confirmKey="food.removeSheet.confirm"
       cancelKey="food.removeSheet.cancel"
       [busy]="busy()"
+      [errorMessage]="error()"
       (confirmed)="confirms = confirms + 1"
       (closed)="closes = closes + 1"
     />
@@ -23,6 +24,7 @@ import { UiConfirmSheet } from './ui-confirm-sheet';
 class Host {
   readonly open = signal(true);
   readonly busy = signal(false);
+  readonly error = signal<string | null>(null);
   confirms = 0;
   closes = 0;
 }
@@ -88,6 +90,16 @@ describe('UiConfirmSheet', () => {
 
     expect(host.closes).toBe(1);
     expect(host.confirms).toBe(0);
+  });
+
+  it('shows the error message only when there is one', async () => {
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('app-ui-form-error')).toBeNull();
+
+    host.error.set('Ingen forbindelse.');
+    await fixture.whenStable();
+
+    expect(root.querySelector('app-ui-form-error')?.textContent?.trim()).toBe('Ingen forbindelse.');
   });
 
   it('shows a spinner and blocks both buttons while busy', async () => {

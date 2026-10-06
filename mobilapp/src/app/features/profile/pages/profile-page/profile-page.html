@@ -180,17 +180,26 @@
 <app-profile-edit-sheet [row]="editRow()" (closed)="closeEdit()" />
 <app-profile-photo-sheet [open]="photoOpen()" (closed)="closePhoto()" />
 <app-profile-reminders-sheet [open]="remindersOpen()" (closed)="closeReminders()" />
-<app-profile-logout-sheet
+<app-ui-confirm-sheet
   [open]="logoutOpen()"
+  titleKey="profile.logoutSheet.titleStart"
+  accentKey="profile.logoutSheet.titleAccent"
+  bodyKey="profile.logoutSheet.body"
+  confirmKey="profile.logoutSheet.confirm"
+  cancelKey="profile.logoutSheet.cancel"
   [busy]="loggingOut()"
   (closed)="closeLogout()"
   (confirmed)="logout()"
 />
-<app-profile-delete-account-sheet
+<app-ui-confirm-sheet
   [open]="deleteAccountOpen()"
+  titleKey="profile.deleteAccountSheet.titleStart"
+  accentKey="profile.deleteAccountSheet.titleAccent"
+  [bodyKey]="deleteBodyKey()"
+  confirmKey="profile.deleteAccountSheet.confirm"
+  cancelKey="profile.deleteAccountSheet.cancel"
   [busy]="deletingAccount()"
   [errorMessage]="deleteError()"
-  [bodyKey]="deleteBodyKey()"
   (closed)="closeDeleteAccount()"
   (confirmed)="deleteAccount()"
 />

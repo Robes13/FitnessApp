@@ -14,6 +14,10 @@
     {{ bodyKey() | translate: bodyParams() }}
   </p>
 
+  @if (errorMessage(); as message) {
+    <app-ui-form-error tone="negative" [message]="message" />
+  }
+
   <div sheetFooter class="ui-confirm-sheet__actions">
     <button
       app-ui-button

@@ -1,8 +1,8 @@
 # UiConfirmSheet
 
-Bekræftelsen før noget slettes – en samling (4.2) eller en logget vare (3.4). Flyttet hertil fra
-`features/collections/components/delete-collection-sheet`, så begge features kan bruge den. Mønstret
-er profilens log ud-bekræftelse: intet luk-kryds, kun den røde bekræft-knap og "Annuller", så et
+Bekræftelsen før noget slettes – en samling (4.2) eller en logget vare (3.4) – og profilens log ud og
+slet konto. Flyttet hertil fra `features/collections/components/delete-collection-sheet`, så alle
+features kan bruge den. Intet luk-kryds, kun den røde bekræft-knap og "Annuller", så et
 utilsigtet tryk på baggrunden aldrig sletter noget. Escape – og Androids tilbageknap, der kommer
 som Escape – er "Annuller" (`closeOnEscape` på `UiSheet`), undtagen mens handlingen kører.
 
@@ -21,16 +21,17 @@ som Escape – er "Annuller" (`closeOnEscape` på `UiSheet`), undtagen mens hand
 />
 ```
 
-| Input        | Betydning                                                          |
-| ------------ | ------------------------------------------------------------------ |
-| `open`       | Om arket er åbent (påkrævet)                                       |
-| `titleKey`   | Oversættelsesnøgle til titlens første del                          |
-| `accentKey`  | Nøgle til titlens røde del (fx "samling?")                         |
-| `bodyKey`    | Nøgle til spørgsmålet                                              |
-| `bodyParams` | Parametre til `bodyKey` (valgfri)                                  |
-| `confirmKey` | Nøgle til den røde knap                                            |
-| `cancelKey`  | Nøgle til "Annuller"                                               |
-| `busy`       | Handlingen kører: spinner på bekræft-knappen, "Annuller" slået fra |
+| Input          | Betydning                                                                        |
+| -------------- | -------------------------------------------------------------------------------- |
+| `open`         | Om arket er åbent (påkrævet)                                                     |
+| `titleKey`     | Oversættelsesnøgle til titlens første del                                        |
+| `accentKey`    | Nøgle til titlens røde del (fx "samling?")                                       |
+| `bodyKey`      | Nøgle til spørgsmålet                                                            |
+| `bodyParams`   | Parametre til `bodyKey` (valgfri)                                                |
+| `confirmKey`   | Nøgle til den røde knap                                                          |
+| `cancelKey`    | Nøgle til "Annuller"                                                             |
+| `busy`         | Handlingen kører: spinner på bekræft-knappen, "Annuller" slået fra               |
+| `errorMessage` | Hvorfor handlingen fejlede (allerede oversat); vises under spørgsmålet (valgfri) |
 
 | Output      | Betydning                        |
 | ----------- | -------------------------------- |
