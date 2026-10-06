@@ -25,8 +25,7 @@ goal · goal-weight · pace · notifications · summary
 `visibleOrder` fjerner de trin, brugerens svar gør overflødige:
 
 - **ingen træningsdage valgt** → `training-duration` og `training-intensity` springes over
-- **mål = "hold"** → `goal-weight` springes over
-- **mål = "hold"** og `SKIP_PACE_FOR_MAINTAIN` → `pace` springes over
+- **mål = "hold"** → `goal-weight` og `pace` springes over
 
 `next()` og `back()` går til naboen i `visibleOrder`, så spring-reglerne kun står ét sted.
 Fremdriften (`stepNumber`, `stepTotal`, `chapters`) tæller de samme synlige trin, og

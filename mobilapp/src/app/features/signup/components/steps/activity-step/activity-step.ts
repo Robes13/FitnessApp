@@ -191,7 +191,6 @@ export class ActivityStep {
   protected readonly trotDuration = TROT_DURATION_S;
   protected readonly tvGlowDuration = TV_GLOW_DURATION_S;
 
-  protected readonly dragging = signal(false);
   /** Alternates between the two identical keyframes, so the number jump can restart. */
   private readonly tickFlip = signal(false);
   private readonly confettiOn = signal(false);

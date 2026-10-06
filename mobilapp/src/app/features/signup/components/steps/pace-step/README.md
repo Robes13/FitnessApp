@@ -12,5 +12,5 @@ Den grønne boks nederst oversætter valget til et dagligt kalorietal —
 `Moderat · 0,5 kg/uge svarer til ca. 500 kcal mindre om dagen.` (`ekstra` ved `tage`).
 Er der ikke valgt et tempo endnu, står der "Vælg et tempo for at se dagligt kalorietal.".
 
-Trinnet vises ikke, når målet er "holde vægten" (`SKIP_PACE_FOR_MAINTAIN`), og det er
+Trinnet vises ikke, når målet er "holde vægten" (springes over i `visibleOrder`), og det er
 `SignupStateService.canContinue`, der kræver et valg, før man kan gå videre.

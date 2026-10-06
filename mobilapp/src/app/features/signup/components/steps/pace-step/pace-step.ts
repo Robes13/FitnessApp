@@ -13,7 +13,7 @@ const SUMMARY_EMPTY_KEY = 'signup.paceStep.summaryEmpty';
 
 /**
  * Step `pace` (the design's `s5`): the tempo of the weight change. The step is skipped when
- * the goal is "maintain weight" (`SKIP_PACE_FOR_MAINTAIN`). The green box at the bottom
+ * the goal is "maintain weight" (filtered out in `visibleOrder`). The green box at the bottom
  * translates the tempo into a daily calorie figure.
  */
 @Component({

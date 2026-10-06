@@ -6,7 +6,7 @@ import { clamp, roundTo } from '../../../../../../core/utils/math';
  * and one candle per year (up to 25) is distributed across up to three concentric rings on top of the cake.
  */
 
-export interface CakeTier {
+interface CakeTier {
   readonly x: number;
   readonly y: number;
   readonly width: number;
@@ -17,7 +17,7 @@ export interface CakeTier {
   readonly icingClass: string;
 }
 
-export interface CakeCandle {
+interface CakeCandle {
   readonly x: number;
   readonly y: number;
   readonly width: number;
@@ -34,7 +34,7 @@ export interface CakeCandle {
   readonly delay: number;
 }
 
-export interface CakeGeometry {
+interface CakeGeometry {
   readonly tiers: number;
   /** Y for the cake's top surface – the candles stand here. */
   readonly top: number;

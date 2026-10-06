@@ -72,7 +72,6 @@ export class NotificationsStep {
   protected readonly choices = computed<readonly SegmentOption<boolean>[]>(() =>
     CHOICES.map(({ value, labelKey }) => ({ value, label: this.t(labelKey) })),
   );
-  protected readonly bellX = BELL_X;
 
   protected readonly caption = computed(() => {
     switch (this.state.notifications()) {

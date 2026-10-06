@@ -61,9 +61,6 @@ export interface SignupChapter {
   done: boolean;
 }
 
-/** Design's prop `skipPaceForMaintain`: the pace step is skipped for the "maintain weight" goal. */
-export const SKIP_PACE_FOR_MAINTAIN = true;
-
 const FIRST_STEP: SignupStepId = 'account';
 const SUMMARY_STEP: SignupStepId = 'summary';
 
@@ -151,7 +148,6 @@ export class SignupStateService {
 
   private readonly trainingDayCount = computed(() => this.trainingDays().filter(Boolean).length);
   private readonly maintainsWeight = computed(() => this.goal() === 'hold');
-  private readonly skipsPace = computed(() => SKIP_PACE_FOR_MAINTAIN && this.maintainsWeight());
   private readonly age = computed(() =>
     this.calculator.ageFromBirthday(this.birthday(), this.now()),
   );
@@ -165,15 +161,12 @@ export class SignupStateService {
   readonly visibleOrder: Signal<readonly SignupStepId[]> = computed(() => {
     const noTrainingDays = this.trainingDayCount() === 0;
     const maintains = this.maintainsWeight();
-    const skipsPace = this.skipsPace();
     return SIGNUP_STEP_ORDER.filter((id) => {
       if (noTrainingDays && (id === 'training-duration' || id === 'training-intensity')) {
         return false;
       }
-      if (maintains && id === 'goal-weight') {
-        return false;
-      }
-      return !(skipsPace && id === 'pace');
+      // Maintaining the weight needs neither a goal weight nor a pace.
+      return !(maintains && (id === 'goal-weight' || id === 'pace'));
     });
   });
 

@@ -1,9 +1,9 @@
 # Signup – services
 
-| Fil                    | Indhold                                                                                                |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ |
-| `signup-state.ts`      | `SignupStateService` + `SignupStepId`, `SIGNUP_STEP_ORDER`, `SignupChapter`, `SKIP_PACE_FOR_MAINTAIN`. |
-| `signup-state.spec.ts` | Rækkefølge, spring-regler, `canContinue` pr. trin, knaptekster, kapitler, rette-kæder og oprettelse.   |
+| Fil                    | Indhold                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------- |
+| `signup-state.ts`      | `SignupStateService` + `SignupStepId`, `SIGNUP_STEP_ORDER`, `SignupChapter`.                         |
+| `signup-state.spec.ts` | Rækkefølge, spring-regler, `canContinue` pr. trin, knaptekster, kapitler, rette-kæder og oprettelse. |
 
 `SignupStateService` er **ikke** `providedIn: 'root'`. Den leveres af `SignupPage`
 (`providers`), så kladden – adgangskoden med – lever præcis lige så længe som siden: forlader

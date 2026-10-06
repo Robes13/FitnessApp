@@ -1,5 +1,5 @@
 import { FigureTempo } from '../../../../../shared/components/figure';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { injectTranslate } from '../../../../../core/services/language/translate';
 import {
@@ -74,8 +74,6 @@ export class TrainingDurationStep {
   protected readonly bobDuration = BOB_DURATION_S;
   /** The stopwatch figure has no cheeks in the design. */
   protected readonly expression: Partial<FigureExpression> = { cheekRadius: 0 };
-
-  protected readonly dragging = signal(false);
 
   protected readonly minutes = computed(() =>
     clamp(this.state.trainingMinutes(), TRAINING_MIN_MINUTES, TRAINING_MAX_MINUTES),
