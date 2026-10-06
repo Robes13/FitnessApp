@@ -1,6 +1,7 @@
 import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MEAL_TYPE_BY_MEAL } from '../constants/meals';
+import { MS_PER_DAY } from '../constants/time';
 import { CursorPage } from '../models/api';
 import { AuthResponse } from '../models/auth';
 import { FoodItem } from '../models/food';
@@ -16,8 +17,6 @@ import { UserProfileService } from '../services/user-profile/user-profile';
 import { WeightLogService } from '../services/weight-log/weight-log';
 import { toIsoDate } from '../utils/date-format';
 import { TEST_NOW } from './test-providers';
-
-const MS_PER_DAY = 86_400_000;
 
 /** A weigh-in as the API sends it, `daysAgo` days before `now` at the same time of day. */
 export function weightLogDto(id: number, kg: number, daysAgo: number, now: Date): WeightLogDto {

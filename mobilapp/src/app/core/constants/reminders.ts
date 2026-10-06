@@ -71,13 +71,9 @@ export const REMINDER_NOTIFICATION_IDS: readonly number[] = REMINDER_DEFINITIONS
   (definition) => definition.notificationId,
 );
 
-export const DEFAULT_REMINDER_SETTINGS: ReminderSettings = {
-  morgen: definitionFor('morgen').defaults,
-  frokost: definitionFor('frokost').defaults,
-  aften: definitionFor('aften').defaults,
-  'weigh-in': definitionFor('weigh-in').defaults,
-  'daily-log': definitionFor('daily-log').defaults,
-};
+export const DEFAULT_REMINDER_SETTINGS = Object.fromEntries(
+  REMINDER_DEFINITIONS.map((definition) => [definition.id, definition.defaults]),
+) as ReminderSettings;
 
 /** Translation keys of what the user sees when scheduling on the device fails. */
 export const REMINDER_ERROR_KEY = {

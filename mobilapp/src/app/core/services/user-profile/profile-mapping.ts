@@ -17,6 +17,7 @@ import {
   UserSettingDto,
 } from '../../models/profile-api';
 import { resolveApiUrl } from '../../utils/api';
+import { GOAL_TO_API, INTENSITY_TO_API } from '../auth-api/auth-mapping';
 
 /** The inverse of `GENDER_TO_API`. The API's "not chosen" values are the app's `null`. */
 export const GENDER_FROM_API: Readonly<Record<ApiGender, Gender | null>> = {
@@ -28,18 +29,14 @@ export const GENDER_FROM_API: Readonly<Record<ApiGender, Gender | null>> = {
 };
 
 /** The inverse of `GOAL_TO_API`. */
-export const GOAL_FROM_API: Readonly<Record<ApiGoalType, GoalId>> = {
-  LoseWeight: 'tabe',
-  MaintainWeight: 'hold',
-  GainWeight: 'tage',
-};
+export const GOAL_FROM_API = Object.fromEntries(
+  Object.entries(GOAL_TO_API).map(([goal, api]) => [api, goal]),
+) as Readonly<Record<ApiGoalType, GoalId>>;
 
 /** The inverse of `INTENSITY_TO_API`. */
-export const INTENSITY_FROM_API: Readonly<Record<ApiTrainingIntensity, IntensityId>> = {
-  Low: 'mildt',
-  Moderate: 'moderat',
-  High: 'haardt',
-};
+export const INTENSITY_FROM_API = Object.fromEntries(
+  Object.entries(INTENSITY_TO_API).map(([intensity, api]) => [api, intensity]),
+) as Readonly<Record<ApiTrainingIntensity, IntensityId>>;
 
 /** The uploaded photo is already a square crop: shown as it is, centred and unzoomed. */
 const UPLOADED_PHOTO_CROP: Omit<ProfilePhoto, 'dataUrl'> = {

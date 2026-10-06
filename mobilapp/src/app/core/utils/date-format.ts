@@ -167,21 +167,19 @@ export function formatDecimal(value: number, digits = 1): string {
 }
 
 /**
- * Weight as the design's `weightText`: at most one decimal with a Danish comma, and
- * without the decimal when it's zero (`75` / `74,5`). Used by the sign-up flow, Weight,
- * Home and Profile.
- */
-export function formatWeightKg(kg: number): string {
-  return kg.toLocaleString(numberLocale(), { maximumFractionDigits: 1 });
-}
-
-/**
  * Grams (or another summed amount) with at most one decimal and a Danish comma, so float
  * noise from summing never reaches the screen: `188.70000000000002` → `'188,7'`, `65` → `'65'`.
  */
 export function formatGrams(value: number): string {
   return value.toLocaleString(numberLocale(), { maximumFractionDigits: 1 });
 }
+
+/**
+ * Weight as the design's `weightText`: at most one decimal with a Danish comma, and
+ * without the decimal when it's zero (`75` / `74,5`). Used by the sign-up flow, Weight,
+ * Home and Profile. The same formatting as `formatGrams`, kept under its own name for them.
+ */
+export const formatWeightKg = formatGrams;
 
 /** Danish integer with a thousands separator: `formatInteger(6000)` → `'6.000'`. */
 export function formatInteger(value: number): string {

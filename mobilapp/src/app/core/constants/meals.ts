@@ -19,9 +19,6 @@ export const MEAL_TYPE_BY_MEAL: Readonly<Record<MealId, ApiMealType>> = {
 };
 
 /** The reverse of `MEAL_TYPE_BY_MEAL` – a logged row's meal. */
-export const MEAL_BY_MEAL_TYPE: Readonly<Record<ApiMealType, MealId>> = {
-  Breakfast: 'morgen',
-  Lunch: 'frokost',
-  Dinner: 'aften',
-  Snack: 'snack',
-};
+export const MEAL_BY_MEAL_TYPE = Object.fromEntries(
+  Object.entries(MEAL_TYPE_BY_MEAL).map(([meal, mealType]) => [mealType, meal]),
+) as Readonly<Record<ApiMealType, MealId>>;

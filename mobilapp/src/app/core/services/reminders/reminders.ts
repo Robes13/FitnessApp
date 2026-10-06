@@ -261,13 +261,9 @@ export class ReminderService {
   private restore(): ReminderSettings {
     const stored = this.storage.read<Partial<Record<ReminderId, unknown>>>(STORAGE_KEY.REMINDERS);
     const value = typeof stored === 'object' && stored !== null ? stored : {};
-    return {
-      morgen: restoreSetting(value.morgen, DEFAULT_REMINDER_SETTINGS.morgen),
-      frokost: restoreSetting(value.frokost, DEFAULT_REMINDER_SETTINGS.frokost),
-      aften: restoreSetting(value.aften, DEFAULT_REMINDER_SETTINGS.aften),
-      'weigh-in': restoreSetting(value['weigh-in'], DEFAULT_REMINDER_SETTINGS['weigh-in']),
-      'daily-log': restoreSetting(value['daily-log'], DEFAULT_REMINDER_SETTINGS['daily-log']),
-    };
+    return Object.fromEntries(
+      REMINDER_IDS.map((id) => [id, restoreSetting(value[id], DEFAULT_REMINDER_SETTINGS[id])]),
+    ) as ReminderSettings;
   }
 }
 
