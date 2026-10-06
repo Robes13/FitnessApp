@@ -591,8 +591,8 @@ Efter `docker compose … up -d --build` fra API-worktreet: curl-scenarier for h
 engangsbrugere (`<navn>+<random>@example.test`, slettes med `DELETE /api/v1/me` bagefter), links
 læses fra outboxen. `curl -s -D - -o /dev/null` (GET; HEAD giver 405) på de fire HTML-sider viser
 `Content-Type: text/html; charset=utf-8`;
-`PATCH me {"username":"a@b"}` → 400 `errors.Username`. Swagger regenereres til
-`docs/api-integration/docker/swagger.json`.
+`PATCH me {"username":"a@b"}` → 400 `errors.Username`. Swagger hentes ved behov fra
+`/swagger/v1/swagger.json` i Development (ingen snapshot i repoet).
 
 ### 5.4 UI-testplan (browser, efter alle merges)
 

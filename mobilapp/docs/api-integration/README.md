@@ -208,7 +208,6 @@ Se også `API/Migrations/README.md`. Appens kontrakter står i `core/services/RE
 | `map/<domæne>.md`     | Mapping app ↔ API pr. domæne fra før integrationen (baggrund om koden, ikke om beslutningerne).           |
 | `map/critic.md`       | Rettelser til mapping-rapporterne. Går forud for dem, men ikke for `plan-v2.md`.                          |
 | `docker/compose.yml`  | Postgres + migration + API i Development.                                                                 |
-| `docker/swagger.json` | Swagger fra API'et efter mergen med main 2026-10-02.                                                      |
 | `docker/outbox/`      | Dev-mails som tekstfiler (ignoreret af git).                                                              |
 
 Sletter du mappen, så flyt `docker/compose.yml` og `api-gaps.md` et sted hen, hvor de bliver ved med
