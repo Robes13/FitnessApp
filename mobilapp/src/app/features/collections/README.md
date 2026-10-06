@@ -6,7 +6,7 @@ slettes.
 
 | Fil / mappe                        | Indhold                                                                                            |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `collections.routes.ts`            | `COLLECTIONS_ROUTES`: listen på `''` og opskriften på `:recipeId` (uden tab bar).                  |
+| `collections.routes.ts`            | `COLLECTIONS_ROUTES` (listen på `''`) og `RECIPE_ROUTES` (opskriften).                             |
 | `services/collections-view.ts`     | `CollectionsViewService` – listens rækker, opskriftens data og skærmenes fælles indlæsningsstatus. |
 | `components/meal-picker/`          | De fire måltider som 2×2-gitter. Vælger måltidet, samlingen logges under, på opskriften.           |
 | `components/new-collection-sheet/` | Arket "Ny samling" / "Rediger samling" med navn, kladde, vare-søgning og stregkodescanner.         |
@@ -19,8 +19,8 @@ Opskriftsskærmen nås med samlingens id (`<mealCollectionId>`). `CollectionsVie
 svarer `null` for et ukendt id – så viser skærmen en tom tilstand med en vej tilbage (eller en
 spinner/fejl, mens samlingerne hentes). `APP_PATH.recipe(id)` bygger stien.
 
-Opskriften er en fuldskærm: ruten sætter `data: { [ROUTE_DATA.HIDE_TAB_BAR]: true }`, og
-shell'en fjerner tab baren (designets `navVisible`).
+Opskriften er en fuldskærm (designets `navVisible`): `app.routes.ts` mounter `RECIPE_ROUTES` på
+`/samling/:recipeId` uden for shell'en, ligesom Profil, så den ikke har en tab bar.
 
 ## Beslutninger
 

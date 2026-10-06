@@ -3,10 +3,10 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router, Routes, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
+import { APP_PATH, APP_ROUTE, ROUTE_PARAM } from '../../../../core/constants/app-route';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
-import { COLLECTIONS_ROUTES } from '../../collections.routes';
+import { COLLECTIONS_ROUTES, RECIPE_ROUTES } from '../../collections.routes';
 import {
   TEST_FOOD,
   flushTestCollections,
@@ -22,6 +22,7 @@ class Blank {}
 
 const ROUTES: Routes = [
   { path: APP_ROUTE.FOOD, component: Blank },
+  { path: `${APP_ROUTE.COLLECTIONS}/:${ROUTE_PARAM.RECIPE_ID}`, children: RECIPE_ROUTES },
   { path: APP_ROUTE.COLLECTIONS, children: COLLECTIONS_ROUTES },
 ];
 

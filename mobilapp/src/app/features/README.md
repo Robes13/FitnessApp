@@ -29,6 +29,7 @@ lazy loader den med `loadChildren` og forventer præcis disse konstanter:
 | `food`        | `food.routes.ts`            | `FOOD_ROUTES`            | `FOOD` (`/mad`)            |
 | `weight`      | `weight.routes.ts`          | `WEIGHT_ROUTES`          | `WEIGHT` (`/vaegt`)        |
 | `collections` | `collections.routes.ts`     | `COLLECTIONS_ROUTES`     | `COLLECTIONS` (`/samling`) |
+|               |                             | `RECIPE_ROUTES`          | `/samling/:recipeId`       |
 | `history`     | `history.routes.ts`         | `HISTORY_ROUTES`         | `HISTORY` (`/historik`)    |
 | `profile`     | `profile.routes.ts`         | `PROFILE_ROUTES`         | `PROFILE` (`/profil`)      |
 
@@ -37,6 +38,7 @@ lazy loader den med `loadChildren` og forventer præcis disse konstanter:
 ```
 /login, /glemt-adgangskode, /opret     guestGuard  – kun for udloggede
 /profil                                authGuard   – uden tab bar (åbnes fra avataren på Hjem)
+/samling/:recipeId                     authGuard   – opskriften, uden tab bar
 /                                      authGuard   – ShellLayout med tab bar
    ├── ''  → /hjem
    ├── /hjem, /mad, /vaegt, /samling, /historik   (lazy loadede tab-features)
@@ -49,9 +51,8 @@ stier) fra `core/constants/app-route.ts`. Guards ligger i `core/guards/`.
 ## Shell
 
 [`shell/`](shell/README.md) er ikke en skærm men rammen om tab-skærmene: en `<router-outlet>`
-plus `<app-ui-tab-bar>`. En rute under shell'en kan skjule tab baren med
-`data: { [ROUTE_DATA.HIDE_TAB_BAR]: true }` (fx opskriftsiden under Samling) – nøglen ligger i
-`core/constants/route-data.ts`.
+plus `<app-ui-tab-bar>`. En fuldskærm uden tab bar (Profil, opskriften under Samling) lægges uden
+for shell'en i `app.routes.ts`, så den ikke arver baren.
 
 ## Konventioner for sider
 

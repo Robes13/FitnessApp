@@ -71,11 +71,11 @@ describe('sammenkobling mellem features', () => {
     expect(root.querySelector('app-ui-tab-bar')).not.toBeNull();
   });
 
-  it('skjuler tab baren på en opskrift (ROUTE_DATA.HIDE_TAB_BAR)', async () => {
+  it('viser ingen tab bar på en opskrift', async () => {
     const { harness, root } = await navigateTo(APP_PATH.recipe('omelet'));
     expect(root.querySelector('app-ui-tab-bar')).toBeNull();
 
-    // Back to the list: the bar reappears, so the hiding follows the deepest route.
+    // Back to the list: it is under the shell again, so the bar is back.
     await harness.navigateByUrl(APP_PATH.COLLECTIONS);
     await harness.fixture.whenStable();
 

@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
-import { APP_ROUTE } from './core/constants/app-route';
+import { APP_ROUTE, ROUTE_PARAM } from './core/constants/app-route';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
 
 /**
  * Top-level routing. All features are lazy loaded. Guest screens (login, forgot password,
- * sign up) are for logged-out users only; Profile and the shell (tabs) require login.
+ * sign up) are for logged-out users only; Profile, the recipe and the shell (tabs) require login.
  * Unknown paths end up on Home – if the user isn't logged in, `authGuard` redirects to login.
  */
 export const routes: Routes = [
@@ -28,6 +28,13 @@ export const routes: Routes = [
     path: APP_ROUTE.PROFILE,
     canActivate: [authGuard],
     loadChildren: () => import('./features/profile/profile.routes').then((m) => m.PROFILE_ROUTES),
+  },
+  {
+    // The recipe is a full screen without a tab bar, so it sits outside the shell like Profile.
+    path: `${APP_ROUTE.COLLECTIONS}/:${ROUTE_PARAM.RECIPE_ID}`,
+    canActivate: [authGuard],
+    loadChildren: () =>
+      import('./features/collections/collections.routes').then((m) => m.RECIPE_ROUTES),
   },
   {
     path: APP_ROUTE.ROOT,

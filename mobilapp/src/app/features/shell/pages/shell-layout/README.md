@@ -3,24 +3,20 @@
 `app-shell-layout` – rammen om tab-skærmene: en `<router-outlet>` til den aktive side og
 `<app-ui-tab-bar [items]="tabBarItems()">` nederst – `TAB_BAR_ITEMS` med teksterne oversat til det aktive sprog, så fanerne skifter sprog live.
 
-| Fil                    | Indhold                                                                                                |
-| ---------------------- | ------------------------------------------------------------------------------------------------------ |
-| `shell-layout.ts`      | Komponenten. Beregner `showTabBar` som signal ud fra routerens snapshot-træ.                           |
-| `shell-layout.html`    | Outlet + tab bar i `@if (showTabBar())`.                                                               |
-| `shell-layout.scss`    | `:host { position: relative; height: 100%; overflow: hidden }`.                                        |
-| `shell-layout.spec.ts` | Tester at baren skjules på ruter med `hideTabBar` og mens tastaturet er åbent, og vises igen bagefter. |
+| Fil                    | Indhold                                                                                               |
+| ---------------------- | ----------------------------------------------------------------------------------------------------- |
+| `shell-layout.ts`      | Komponenten. Beregner `showTabBar` ud fra `KeyboardService.isOpen`.                                   |
+| `shell-layout.html`    | Outlet + tab bar i `@if (showTabBar())`.                                                              |
+| `shell-layout.scss`    | `:host { position: relative; height: 100%; overflow: hidden }`.                                       |
+| `shell-layout.spec.ts` | Tester outlet og de fem faner, og at baren skjules, mens tastaturet er åbent, og vises igen bagefter. |
 
 ## Sådan skjules tab baren
 
-Baren skjules også, mens skærmtastaturet er åbent (`KeyboardService.isOpen`), som i native iOS-apps: tastaturet tager dens plads, og skærmen over beholder hele højden til det fokuserede felt.
+Baren skjules, mens skærmtastaturet er åbent (`KeyboardService.isOpen`), som i native iOS-apps:
+tastaturet tager dens plads, og skærmen over beholder hele højden til det fokuserede felt.
 
-Efter hver `NavigationEnd` følges `ActivatedRouteSnapshot.firstChild` til den dybeste rute, og
-dennes `data[ROUTE_DATA.HIDE_TAB_BAR]` afgør, om baren tegnes. Snapshot-træet bruges frem for
-`ActivatedRoute.firstChild`, fordi det er komplet, allerede når shell'en oprettes –
-`initialValue` på `toSignal` giver derfor det rigtige svar på første render uden et ekstra
-navigationsevent. Nøglen ligger i `core/constants/route-data.ts`, så featuren, der ejer ruten
-(opskriftsiden under Samling), kan skrive `data: { [ROUTE_DATA.HIDE_TAB_BAR]: true }` uden at
-importere fra shell'en.
+Skærme, der slet ikke skal have en tab bar (Profil, opskriften under Samling), ligger uden for
+shell'en i `app.routes.ts` og får derfor aldrig baren.
 
 ## Layout
 
