@@ -23,9 +23,12 @@ Forælderen ejer, hvad der er åbent. Komponenten slår selv definitionen op i
 | `date`    | Fødselsdato i `app-ui-text-input type="date"` (native) | Med "Gem"       |
 | `text`    | E-mail i `app-ui-text-input`                           | Med "Gem"       |
 
-Alle felter er typede reactive forms. Grænser (`min`/`max`) kommer fra definitionen og sættes
-som validators, når arket åbner, så "Gem" er slået fra, indtil tallet er gyldigt – præcis som
-designets `editSaveDisabled`.
+De tre feltvarianter deler én formularkontrol (`form.value`, typet `number | string | null`) og
+én `<form>`; skabelonen skifter kun selve feltet efter definitionens `kind`. Kontrollen fyldes med
+rækkens nuværende værdi, hver gang arket åbner (eller definitionen skifter). Reglerne – `min`/`max`
+fra definitionen, målvægtens `goalWeightError`, fødselsdatoens `isBirthdayValid` og e-mailens
+`isValidEmail` – står ét sted, i `fieldError`, som både giver teksten og afgør `canSave`: "Gem"
+er slået fra, indtil feltet er udfyldt og uden fejl – præcis som designets `editSaveDisabled`.
 
 ## Gem, fejl og fortryd
 
@@ -66,8 +69,8 @@ værdien er i orden. Datovælgeren får fødselsdatoens grænser som native `min
 
 ## Målvægt og skift af mål
 
-Målvægtsfeltet har en ekstra validator fra `ProfileEditService.goalWeightError`, og fejlen
-vises i `app-ui-form-error` under feltet (under/over vægten i dag, eller urealistisk BMI).
+Målvægtsfeltet har en ekstra regel i `fieldError` fra `ProfileEditService.goalWeightError`, og
+fejlen vises i `app-ui-form-error` under feltet (under/over vægten i dag, eller urealistisk BMI).
 
 Returnerer `applyOption('goal', …)` `needs-goal-weight`, lukker arket ikke. Det gemmer målet i
 `pendingGoal` (et `linkedSignal`, der nulstilles, når en ny række åbnes) og viser

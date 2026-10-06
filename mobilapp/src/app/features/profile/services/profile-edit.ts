@@ -24,21 +24,18 @@ import { NOW } from '../../../core/utils/now';
 import { injectTranslate } from '../../../core/services/language/translate';
 
 /** The rows in Profile that can be edited. The ids are the design's `editDefs` keys. */
-export const PROFILE_EDIT_ROWS = [
-  'goal',
-  'pace',
-  'birthday',
-  'gender',
-  'height',
-  'goalWeight',
-  'steps',
-  'trainFreq',
-  'trainDur',
-  'trainInt',
-  'email',
-] as const;
-
-export type ProfileEditRowId = (typeof PROFILE_EDIT_ROWS)[number];
+export type ProfileEditRowId =
+  | 'goal'
+  | 'pace'
+  | 'birthday'
+  | 'gender'
+  | 'height'
+  | 'goalWeight'
+  | 'steps'
+  | 'trainFreq'
+  | 'trainDur'
+  | 'trainInt'
+  | 'email';
 
 export interface ProfileEditOption {
   readonly id: string;

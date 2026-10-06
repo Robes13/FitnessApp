@@ -7,95 +7,28 @@
   [hideClose]="saving()"
   (closed)="onClose()"
 >
-  @if (hint()) {
-    <p class="profile-edit-sheet__hint">{{ hint() }}</p>
-  }
+  @if (definition(); as def) {
+    @if (def.hint) {
+      <p class="profile-edit-sheet__hint">{{ def.hint }}</p>
+    }
 
-  @if (optionsDefinition(); as options) {
-    <div class="profile-edit-sheet__options">
-      @for (option of options.options; track option.id) {
-        <button
-          app-ui-option-card
-          selectionStyle="accent"
-          density="compact"
-          [label]="option.label"
-          [description]="option.description"
-          [selected]="option.id === options.selectedId"
-          [disabled]="saving()"
-          (click)="pickOption(option.id)"
-        ></button>
-      }
-      <app-ui-form-error tone="negative" [message]="formError()" />
-    </div>
-  }
-
-  @if (numberDefinition(); as number) {
-    <form class="profile-edit-sheet__form" [formGroup]="numberForm" (ngSubmit)="saveNumber()">
-      <div class="profile-edit-sheet__stepper">
-        <button
-          app-ui-icon-button
-          type="button"
-          size="lg"
-          tone="outline"
-          [attr.aria-label]="'profile.editSheet.decrease' | translate"
-          (click)="stepNumber(-1)"
-        >
-          <app-ui-icon name="minus" size="lg" />
-        </button>
-        <div
-          class="profile-edit-sheet__number"
-          [class.profile-edit-sheet__number--invalid]="invalid()"
-        >
-          <input
-            class="profile-edit-sheet__number-input"
-            type="number"
-            inputmode="numeric"
-            formControlName="value"
-            [attr.aria-label]="'profile.editSheet.value' | translate"
-            [attr.min]="number.min"
-            [attr.max]="number.max"
-            [attr.step]="number.step"
-          />
-          <span class="profile-edit-sheet__number-unit">{{ number.unit }}</span>
-        </div>
-        <button
-          app-ui-icon-button
-          type="button"
-          size="lg"
-          tone="outline"
-          [attr.aria-label]="'profile.editSheet.increase' | translate"
-          (click)="stepNumber(1)"
-        >
-          <app-ui-icon name="plus" size="lg" />
-        </button>
+    @if (def.kind === 'options') {
+      <div class="profile-edit-sheet__options">
+        @for (option of def.options; track option.id) {
+          <button
+            app-ui-option-card
+            selectionStyle="accent"
+            density="compact"
+            [label]="option.label"
+            [description]="option.description"
+            [selected]="option.id === def.selectedId"
+            [disabled]="saving()"
+            (click)="pickOption(option.id)"
+          ></button>
+        }
+        <app-ui-form-error tone="negative" [message]="formError()" />
       </div>
-      <app-ui-form-error tone="negative" [message]="formError()" />
-      <button app-ui-button type="submit" block [loading]="saving()" [disabled]="!canSaveNumber()">
-        {{ 'common.save' | translate }}
-      </button>
-    </form>
-  }
-
-  @if (dateDefinition(); as date) {
-    <form class="profile-edit-sheet__form" [formGroup]="dateForm" (ngSubmit)="saveDate()">
-      <app-ui-text-input
-        type="date"
-        autocomplete="bday"
-        [ariaLabel]="date.title"
-        [min]="date.min"
-        [max]="date.max"
-        [invalid]="invalid()"
-        formControlName="value"
-      />
-      <app-ui-form-error tone="negative" [message]="formError()" />
-      <button app-ui-button type="submit" block [loading]="saving()" [disabled]="!canSaveDate()">
-        {{ 'common.save' | translate }}
-      </button>
-    </form>
-  }
-
-  @if (textDefinition(); as text) {
-    @if (emailSentText(); as sent) {
+    } @else if (emailSentText(); as sent) {
       <div class="profile-edit-sheet__form">
         <p class="profile-edit-sheet__hint">{{ sent }}</p>
         <button app-ui-button type="button" block (click)="onClose()">
@@ -103,17 +36,72 @@
         </button>
       </div>
     } @else {
-      <form class="profile-edit-sheet__form" [formGroup]="textForm" (ngSubmit)="saveText()">
-        <app-ui-text-input
-          type="email"
-          autocomplete="email"
-          [ariaLabel]="'profile.editSheet.email' | translate"
-          formControlName="value"
-          [placeholder]="text.placeholder"
-          [invalid]="invalid()"
-        />
+      <form class="profile-edit-sheet__form" [formGroup]="form" (ngSubmit)="save()">
+        @switch (def.kind) {
+          @case ('number') {
+            <div class="profile-edit-sheet__stepper">
+              <button
+                app-ui-icon-button
+                type="button"
+                size="lg"
+                tone="outline"
+                [attr.aria-label]="'profile.editSheet.decrease' | translate"
+                (click)="stepNumber(-1)"
+              >
+                <app-ui-icon name="minus" size="lg" />
+              </button>
+              <div
+                class="profile-edit-sheet__number"
+                [class.profile-edit-sheet__number--invalid]="invalid()"
+              >
+                <input
+                  class="profile-edit-sheet__number-input"
+                  type="number"
+                  inputmode="numeric"
+                  formControlName="value"
+                  [attr.aria-label]="'profile.editSheet.value' | translate"
+                  [attr.min]="def.min"
+                  [attr.max]="def.max"
+                  [attr.step]="def.step"
+                />
+                <span class="profile-edit-sheet__number-unit">{{ def.unit }}</span>
+              </div>
+              <button
+                app-ui-icon-button
+                type="button"
+                size="lg"
+                tone="outline"
+                [attr.aria-label]="'profile.editSheet.increase' | translate"
+                (click)="stepNumber(1)"
+              >
+                <app-ui-icon name="plus" size="lg" />
+              </button>
+            </div>
+          }
+          @case ('date') {
+            <app-ui-text-input
+              type="date"
+              autocomplete="bday"
+              [ariaLabel]="def.title"
+              [min]="def.min"
+              [max]="def.max"
+              [invalid]="invalid()"
+              formControlName="value"
+            />
+          }
+          @case ('text') {
+            <app-ui-text-input
+              type="email"
+              autocomplete="email"
+              [ariaLabel]="'profile.editSheet.email' | translate"
+              formControlName="value"
+              [placeholder]="def.placeholder"
+              [invalid]="invalid()"
+            />
+          }
+        }
         <app-ui-form-error tone="negative" [message]="formError()" />
-        <button app-ui-button type="submit" block [loading]="saving()" [disabled]="!canSaveText()">
+        <button app-ui-button type="submit" block [loading]="saving()" [disabled]="!canSave()">
           {{ 'common.save' | translate }}
         </button>
       </form>
