@@ -16,19 +16,17 @@ describe('MealPicker', () => {
     TestBed.configureTestingModule({ imports: [Host] });
     const fixture = TestBed.createComponent(Host);
     await fixture.whenStable();
-    const root = fixture.nativeElement as HTMLElement;
-    const picker = root.querySelector('app-meal-picker') as HTMLElement;
+    const picker = (fixture.nativeElement as HTMLElement).querySelector(
+      'app-meal-picker',
+    ) as HTMLElement;
     const options = () =>
-      Array.from(picker.querySelectorAll<HTMLButtonElement>('.meal-picker__option'));
-    async function press(key: string): Promise<void> {
-      picker.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
-      await fixture.whenStable();
-    }
-    return { fixture, host: fixture.componentInstance, picker, options, press };
+      Array.from(picker.querySelectorAll<HTMLLabelElement>('.meal-picker__option'));
+    const radios = () => Array.from(picker.querySelectorAll<HTMLInputElement>('input[type=radio]'));
+    return { fixture, host: fixture.componentInstance, picker, options, radios };
   }
 
-  it('renders the four meals as a radiogroup', async () => {
-    const { picker, options } = await setup();
+  it('renders the four meals as native radios in a labelled group', async () => {
+    const { picker, options, radios } = await setup();
     const group = picker.querySelector('.meal-picker__grid') as HTMLElement;
 
     expect(group.getAttribute('role')).toBe('radiogroup');
@@ -39,62 +37,28 @@ describe('MealPicker', () => {
       'Aftensmad',
       'Snacks',
     ]);
+    expect(new Set(radios().map((radio) => radio.name)).size).toBe(1);
   });
 
-  it('keeps only the selected meal in the tab order', async () => {
-    const { fixture, host, options } = await setup();
+  it('checks the selected meal and follows the bound value', async () => {
+    const { fixture, host, radios } = await setup();
 
-    expect(options().map((option) => option.tabIndex)).toEqual([0, -1, -1, -1]);
+    expect(radios().map((radio) => radio.checked)).toEqual([true, false, false, false]);
 
     host.meal.set('aften');
     await fixture.whenStable();
 
-    expect(options().map((option) => option.tabIndex)).toEqual([-1, -1, 0, -1]);
+    expect(radios().map((radio) => radio.checked)).toEqual([false, false, true, false]);
   });
 
-  it('moves one place sideways and a whole row up or down', async () => {
-    const { host, press } = await setup();
+  it('selects the meal that was tapped', async () => {
+    const { fixture, host, options, radios } = await setup();
 
-    await press('ArrowRight');
-    expect(host.meal()).toBe('frokost');
+    options()[3]?.click();
+    await fixture.whenStable();
 
-    await press('ArrowDown');
     expect(host.meal()).toBe('snack');
-
-    await press('ArrowLeft');
-    expect(host.meal()).toBe('aften');
-
-    await press('ArrowUp');
-    expect(host.meal()).toBe('morgen');
-  });
-
-  it('wraps around both ends of the grid', async () => {
-    const { host, press } = await setup();
-
-    await press('ArrowLeft');
-    expect(host.meal()).toBe('snack');
-
-    await press('ArrowRight');
-    expect(host.meal()).toBe('morgen');
-
-    await press('ArrowUp');
-    expect(host.meal()).toBe('aften');
-  });
-
-  it('moves focus to the meal the arrow keys land on', async () => {
-    const { options, press } = await setup();
-
-    await press('ArrowRight');
-
-    expect(document.activeElement).toBe(options()[1]);
-  });
-
-  it('ignores keys that are not arrows', async () => {
-    const { host, press } = await setup();
-
-    await press('Enter');
-    await press('a');
-
-    expect(host.meal()).toBe('morgen');
+    expect(radios().map((radio) => radio.checked)).toEqual([false, false, false, true]);
+    expect(options()[3]?.classList).toContain('meal-picker__option--selected');
   });
 });

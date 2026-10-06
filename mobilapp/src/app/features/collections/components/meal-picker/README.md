@@ -7,14 +7,14 @@ opskriftsskærmen – måltidstypen, samlingen logges under (spec 3.2).
 <app-meal-picker [(value)]="meal" [ariaLabel]="'collections.recipePage.logUnder' | translate" />
 ```
 
-| Input       | Betydning                                                                                              |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| `value`     | `model<MealId>` – det valgte måltid (tovejsbinding).                                                   |
-| `ariaLabel` | Gruppens (oversatte) navn, ellers "Vælg måltid". Knapperne er `role="radio"` i en `role="radiogroup"`. |
+| Input       | Betydning                                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------------------------ |
+| `value`     | `model<MealId>` – det valgte måltid (tovejsbinding).                                                         |
+| `ariaLabel` | Gruppens (oversatte) navn, ellers "Vælg måltid". Hvert måltid er en `<label>` med en `<input type="radio">`. |
 
-**Tastatur:** gruppen følger radiogruppe-mønstret. Kun det valgte måltid er i
-tab-rækkefølgen (roving tabindex), og piletasterne flytter valget og fokus. Gitteret har to
-kolonner, så venstre/højre rykker én plads og op/ned en hel række (±2); der wrappes rundt.
+**Tastatur:** hvert valg er en native radioknap (med samme `name`), så browseren giver
+radiogruppens tastatur selv: kun det valgte måltid er i tab-rækkefølgen, og piletasterne flytter
+valget og fokus. Radioknappen ligger usynligt oven på sin label og viser fokusringen.
 
 Ligger i featuren og ikke i `shared/`, fordi den kender `MEALS` og kun bruges her. Skal en
 anden feature bruge den, flyttes den til `shared/components/`.

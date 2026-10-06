@@ -79,6 +79,10 @@ describe('RecipePage', () => {
       Array.from(page.querySelectorAll<HTMLButtonElement>('button')).find(
         (el) => normalize(el.textContent) === label,
       );
+    const mealOption = (label: string) =>
+      Array.from(page.querySelectorAll('.meal-picker__option')).find(
+        (el) => normalize(el.textContent) === label,
+      );
     const settle = async () => {
       await harness.fixture.whenStable();
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -88,7 +92,7 @@ describe('RecipePage', () => {
       (element as HTMLElement | null)?.click();
       await settle();
     };
-    return { harness, page, text, texts, button, settle, click };
+    return { harness, page, text, texts, button, mealOption, settle, click };
   }
 
   it('shows the macros and items of a collection', async () => {
@@ -117,9 +121,9 @@ describe('RecipePage', () => {
 
   it('logs the collection under the chosen meal in one call and switches to Mad', async () => {
     loadMealPrep();
-    const { page, button, click } = await setup(BUNDLE_ID);
+    const { page, mealOption, click } = await setup(BUNDLE_ID);
 
-    await click(button('Aftensmad'));
+    await click(mealOption('Aftensmad'));
     await click(page.querySelector('.recipe-page__log-button'));
     await click(page.querySelector('.recipe-page__log-button'));
     const log = http.expectOne({ method: 'POST', url: `${COLLECTION_URL}/log` });

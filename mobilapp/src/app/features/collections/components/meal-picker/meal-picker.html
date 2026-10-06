@@ -1,16 +1,14 @@
 <div class="meal-picker__grid" role="radiogroup" [attr.aria-label]="groupLabel()">
   @for (meal of meals; track meal.id) {
-    <button
-      #option
-      type="button"
-      class="meal-picker__option"
-      [class.meal-picker__option--selected]="value() === meal.id"
-      role="radio"
-      [attr.aria-checked]="value() === meal.id"
-      [tabindex]="tabIndexFor(meal.id)"
-      (click)="select(meal.id)"
-    >
+    <label class="meal-picker__option" [class.meal-picker__option--selected]="value() === meal.id">
+      <input
+        class="meal-picker__input"
+        type="radio"
+        name="meal"
+        [checked]="value() === meal.id"
+        (change)="value.set(meal.id)"
+      />
       {{ meal.labelKey | translate }}
-    </button>
+    </label>
   }
 </div>

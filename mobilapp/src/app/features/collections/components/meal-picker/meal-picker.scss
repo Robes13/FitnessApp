@@ -10,6 +10,10 @@
   }
 
   &__option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     min-height: var(--size-control-sm);
     padding: 0 var(--space-2);
     border: var(--border-width-thin) solid var(--color-border-strong);
@@ -30,5 +34,15 @@
       background: var(--color-accent-soft);
       color: var(--color-accent);
     }
+  }
+
+  /* The native radio covers its label, invisible: it takes the taps and shows the focus ring. */
+  &__input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    border-radius: inherit;
+    opacity: 0;
+    cursor: pointer;
   }
 }
