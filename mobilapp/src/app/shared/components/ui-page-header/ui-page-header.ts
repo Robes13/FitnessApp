@@ -21,10 +21,9 @@ import { UiIconButton } from '../ui-icon-button/ui-icon-button';
 })
 export class UiPageHeader {
   readonly title = input.required<string>();
-  readonly backLabel = input<string>();
 
   readonly back = output<void>();
 
   private readonly t = injectTranslate();
-  protected readonly backLabelText = computed(() => this.backLabel() ?? this.t('common.back'));
+  protected readonly backLabelText = computed(() => this.t('common.back'));
 }

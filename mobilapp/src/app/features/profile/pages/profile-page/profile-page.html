@@ -1,8 +1,4 @@
-<app-ui-page-header
-  [title]="'profile.page.title' | translate"
-  [backLabel]="'common.back' | translate"
-  (back)="goBack()"
-/>
+<app-ui-page-header [title]="'profile.page.title' | translate" (back)="goBack()" />
 
 <div class="profile-page__scroll">
   @switch (profiles.status()) {
