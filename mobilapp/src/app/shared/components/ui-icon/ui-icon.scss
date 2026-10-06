@@ -7,49 +7,12 @@
   color: inherit;
 }
 
-:host(.ui-icon--2xs) {
-  width: var(--size-icon-2xs);
-  height: var(--size-icon-2xs);
-}
-
-:host(.ui-icon--xs) {
-  width: var(--size-icon-xs);
-  height: var(--size-icon-xs);
-}
-
-:host(.ui-icon--sm) {
-  width: var(--size-icon-sm);
-  height: var(--size-icon-sm);
-}
-
-:host(.ui-icon--md) {
-  width: var(--size-icon-md);
-  height: var(--size-icon-md);
-}
-
-:host(.ui-icon--lg) {
-  width: var(--size-icon-lg);
-  height: var(--size-icon-lg);
-}
-
-:host(.ui-icon--xl) {
-  width: var(--size-icon-xl);
-  height: var(--size-icon-xl);
-}
-
-:host(.ui-icon--2xl) {
-  width: var(--size-icon-2xl);
-  height: var(--size-icon-2xl);
-}
-
-:host(.ui-icon--3xl) {
-  width: var(--size-icon-3xl);
-  height: var(--size-icon-3xl);
-}
-
-:host(.ui-icon--hero) {
-  width: var(--size-icon-hero);
-  height: var(--size-icon-hero);
+/* `md` is the base size above. */
+@each $size in '2xs', 'xs', 'sm', 'lg', 'xl', '2xl', '3xl', 'hero' {
+  :host(.ui-icon--#{$size}) {
+    width: var(--size-icon-#{$size});
+    height: var(--size-icon-#{$size});
+  }
 }
 
 .ui-icon {

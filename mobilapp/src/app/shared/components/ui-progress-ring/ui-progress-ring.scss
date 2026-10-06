@@ -43,24 +43,8 @@
       stroke: var(--color-info);
     }
 
-    &--selected {
-      stroke: var(--color-selected);
-    }
-
     &--neutral {
       stroke: var(--color-neutral-strong);
-    }
-
-    &--secondary {
-      stroke: var(--color-text-secondary);
-    }
-
-    &--muted {
-      stroke: var(--color-text-muted);
-    }
-
-    &--warning {
-      stroke: var(--color-warning);
     }
   }
 

@@ -10,11 +10,11 @@ orange "Til mål"-kort.
 <app-ui-progress-bar [value]="goalPct()" tone="inverse" />
 ```
 
-| Input       | Standard    | Betydning                                                                                                                                              |
-| ----------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `value`     | `0`         | Andel 0..1; klemmes fast, ugyldige tal (NaN, ∞) bliver 0                                                                                               |
-| `tone`      | `'accent'`  | `Tone` (`accent`, `positive`, `negative`, `info`, `selected`, `neutral`, `secondary`, `muted`, `warning`) eller `inverse` (mørk bjælke på orange kort) |
-| `thickness` | `'regular'` | `regular` 6 px · `thin` 4 px                                                                                                                           |
+| Input       | Standard    | Betydning                                                                                                              |
+| ----------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `value`     | `0`         | Andel 0..1; klemmes fast, ugyldige tal (NaN, ∞) bliver 0                                                               |
+| `tone`      | `'accent'`  | `ProgressBarTone`: `accent`, `positive`, `selected`, `secondary`, `muted` eller `inverse` (mørk bjælke på orange kort) |
+| `thickness` | `'regular'` | `regular` 6 px · `thin` 4 px                                                                                           |
 
 Værten har `role="progressbar"` med `aria-valuemin/max/now` i procent. `percent` er offentligt
 (0–100, afrundet), og `clampFraction()` er eksporteret og testet for sig.

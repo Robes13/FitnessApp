@@ -27,20 +27,8 @@
       background: var(--color-positive);
     }
 
-    &--negative {
-      background: var(--color-negative);
-    }
-
-    &--info {
-      background: var(--color-info);
-    }
-
     &--selected {
       background: var(--color-selected);
-    }
-
-    &--neutral {
-      background: var(--color-neutral-strong);
     }
 
     &--secondary {
@@ -49,10 +37,6 @@
 
     &--muted {
       background: var(--color-text-muted);
-    }
-
-    &--warning {
-      background: var(--color-warning);
     }
 
     &--inverse {

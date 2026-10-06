@@ -2,7 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { Tone } from '../../../core/models/tone';
 import { clamp } from '../../../core/utils/math';
 
-export type ProgressBarTone = Tone | 'inverse';
+/** The tones a bar is drawn in (the macros, the day's progress and the inverse card bar). */
+export type ProgressBarTone =
+  Extract<Tone, 'accent' | 'positive' | 'selected' | 'secondary' | 'muted'> | 'inverse';
 export type ProgressBarThickness = 'thin' | 'regular';
 
 const PERCENT_MAX = 100;

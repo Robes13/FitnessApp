@@ -32,46 +32,13 @@
   cursor: not-allowed;
 }
 
-/* Sizes */
+/* Sizes – `xl` is the base size above. */
 
-:host(.ui-icon-button--xl) {
-  width: var(--size-control-xl);
-  height: var(--size-control-xl);
-}
-
-:host(.ui-icon-button--lg) {
-  width: var(--size-control-lg);
-  height: var(--size-control-lg);
-}
-
-:host(.ui-icon-button--md) {
-  width: var(--size-control-md);
-  height: var(--size-control-md);
-}
-
-:host(.ui-icon-button--sm) {
-  width: var(--size-control-sm);
-  height: var(--size-control-sm);
-}
-
-:host(.ui-icon-button--xs) {
-  width: var(--size-control-xs);
-  height: var(--size-control-xs);
-}
-
-:host(.ui-icon-button--2xs) {
-  width: var(--size-control-2xs);
-  height: var(--size-control-2xs);
-}
-
-:host(.ui-icon-button--3xs) {
-  width: var(--size-control-3xs);
-  height: var(--size-control-3xs);
-}
-
-:host(.ui-icon-button--4xs) {
-  width: var(--size-control-4xs);
-  height: var(--size-control-4xs);
+@each $size in 'lg', 'md', 'sm', 'xs', '2xs', '3xs', '4xs' {
+  :host(.ui-icon-button--#{$size}) {
+    width: var(--size-control-#{$size});
+    height: var(--size-control-#{$size});
+  }
 }
 
 /* Tones */

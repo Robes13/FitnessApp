@@ -48,13 +48,13 @@ Alt mellem taggene projiceres i et absolut centreret lag over SVG'en:
 
 ## Inputs
 
-| Input         | Standard   | Betydning                                                       |
-| ------------- | ---------- | --------------------------------------------------------------- |
-| `value`       | `0`        | Andel 0..1                                                      |
-| `diameter`    | `48`       | Ydre diameter i px                                              |
-| `strokeWidth` | `4`        | Stregtykkelse i px                                              |
-| `tone`        | `'accent'` | Fyldets farve (`Tone`)                                          |
-| `trackTone`   | `'line'`   | Skinne: `line` (hairline), `neutral` (grå 30 %), `none` (ingen) |
-| `animated`    | `true`     | Animerer `stroke-dashoffset` ved ændring                        |
+| Input         | Standard   | Betydning                                                                               |
+| ------------- | ---------- | --------------------------------------------------------------------------------------- |
+| `value`       | `0`        | Andel 0..1                                                                              |
+| `diameter`    | `48`       | Ydre diameter i px                                                                      |
+| `strokeWidth` | `4`        | Stregtykkelse i px                                                                      |
+| `tone`        | `'accent'` | Fyldets farve (`ProgressRingTone`: `accent`, `positive`, `negative`, `info`, `neutral`) |
+| `trackTone`   | `'line'`   | Skinne: `line` (hairline), `neutral` (grå 30 %), `none` (ingen)                         |
+| `animated`    | `true`     | Animerer `stroke-dashoffset` ved ændring                                                |
 
 Host-elementet har `role="progressbar"` med `aria-valuenow` i procent.

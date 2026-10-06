@@ -18,24 +18,11 @@
   background-color: var(--color-primary);
 }
 
-:host(.profile-avatar--sm) {
-  width: var(--size-avatar-sm);
-  height: var(--size-avatar-sm);
-}
-
-:host(.profile-avatar--md) {
-  width: var(--size-avatar-md);
-  height: var(--size-avatar-md);
-}
-
-:host(.profile-avatar--lg) {
-  width: var(--size-avatar-lg);
-  height: var(--size-avatar-lg);
-}
-
-:host(.profile-avatar--xl) {
-  width: var(--size-avatar-xl);
-  height: var(--size-avatar-xl);
+@each $size in 'sm', 'md', 'lg', 'xl' {
+  :host(.profile-avatar--#{$size}) {
+    width: var(--size-avatar-#{$size});
+    height: var(--size-avatar-#{$size});
+  }
 }
 
 .profile-avatar {

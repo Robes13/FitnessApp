@@ -39,11 +39,7 @@
   cursor: not-allowed;
 }
 
-/* Sizes */
-
-:host(.ui-button--xl) {
-  min-height: var(--ui-button-min-height, var(--size-control-xl));
-}
+/* Sizes – `xl` is the base size above. */
 
 :host(.ui-button--lg) {
   min-height: var(--ui-button-min-height, var(--size-control-lg));

@@ -9,6 +9,11 @@ import {
 import { Tone } from '../../../core/models/tone';
 import { clampFraction } from '../ui-progress-bar/ui-progress-bar';
 
+/** The tones a ring is drawn in (the achievement medals and the default accent). */
+export type ProgressRingTone = Extract<
+  Tone,
+  'accent' | 'positive' | 'negative' | 'info' | 'neutral'
+>;
 export type ProgressRingTrackTone = 'line' | 'neutral' | 'none';
 
 const DEFAULT_DIAMETER = 48;
@@ -43,7 +48,7 @@ export class UiProgressRing {
   readonly diameter = input(DEFAULT_DIAMETER, { transform: numberAttribute });
   /** Stroke width in px (= SVG units, since the viewBox follows the diameter). */
   readonly strokeWidth = input(DEFAULT_STROKE_WIDTH, { transform: numberAttribute });
-  readonly tone = input<Tone>('accent');
+  readonly tone = input<ProgressRingTone>('accent');
   readonly trackTone = input<ProgressRingTrackTone>('line');
   readonly animated = input(true, { transform: booleanAttribute });
 
