@@ -8,8 +8,7 @@ Servicen er ren udledning oven på `CollectionsService` og `FoodLogService` i `c
 ingenting og ejer ingen state, så metoderne kan kaldes fra en `computed()` og testes uden
 komponenter.
 
-- `BUNDLE_ID_PREFIX` (`col:`) er præfikset foran en samlings id i opskriftens rute.
-  `collectionFor(routeId)` giver samlingen bag et `col:`-id, ellers `null`.
+- `collectionFor(routeId)` giver samlingen bag opskriftens rute-id (samlingens id), ellers `null`.
 - `status` er `error`, hvis samlingerne eller madloggen fejlede, `loading`, mens en af dem
   hentes, og ellers `ready` – næringen kommer fra madloggens madvarer. `retry()` genindlæser kun
   den eller de stores, der fejlede.

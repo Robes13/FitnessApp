@@ -95,7 +95,7 @@ describe('CollectionsPage', () => {
 
     await click(page.querySelector('.collections-page__card'));
 
-    expect(TestBed.inject(Router).url).toBe(APP_PATH.recipe('col:3'));
+    expect(TestBed.inject(Router).url).toBe(APP_PATH.recipe('3'));
   });
 
   it('shows a spinner while loading and a retry after a failed load', async () => {

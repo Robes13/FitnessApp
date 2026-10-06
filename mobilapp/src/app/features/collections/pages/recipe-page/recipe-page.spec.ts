@@ -7,7 +7,6 @@ import { APP_PATH, APP_ROUTE } from '../../../../core/constants/app-route';
 import { CollectionsService } from '../../../../core/services/collections/collections';
 import { FoodLogService } from '../../../../core/services/food-log/food-log';
 import { COLLECTIONS_ROUTES } from '../../collections.routes';
-import { BUNDLE_ID_PREFIX } from '../../services/collections-view';
 import {
   TEST_FOOD,
   flushTestCollections,
@@ -32,7 +31,7 @@ const TEST_PROVIDERS: (Provider | EnvironmentProviders)[] = [
 ];
 
 const COLLECTION_URL = '/api/v1/me/meal-collections/3';
-const BUNDLE_ID = `${BUNDLE_ID_PREFIX}3`;
+const BUNDLE_ID = '3';
 const MEAL_PREP = testCollection(3, 'Meal prep', [
   { foodId: 5, foodName: 'Tunsalat', quantity: 200, unit: 'Gram' },
 ]);

@@ -51,7 +51,7 @@ export interface WeightRangeOption {
 }
 
 /** The chip texts from the design's `ranges` – shorter than the chart's `rangeLabel`. */
-export const WEIGHT_RANGE_OPTIONS: readonly WeightRangeOption[] = [
+const WEIGHT_RANGE_OPTIONS: readonly WeightRangeOption[] = [
   { id: '1u', labelKey: 'weight.view.ranges.week' },
   { id: '3u', labelKey: 'weight.view.ranges.threeWeeks' },
   { id: '3m', labelKey: 'weight.view.ranges.threeMonths' },
@@ -68,7 +68,7 @@ const WEIGHT_RANGE_START_LABEL_KEY: Readonly<Record<WeightRange, string>> = {
 };
 
 /** The default range – the spec's 3 weeks instead of the design's 4 (plan-v2 P16). */
-export const DEFAULT_WEIGHT_RANGE: WeightRange = '3u';
+const DEFAULT_WEIGHT_RANGE: WeightRange = '3u';
 /** The step for −/+ and the ruler. */
 export const WEIGHT_STEP_KG = 0.1;
 
@@ -301,11 +301,6 @@ export class WeightViewService {
   setDraftKg(kg: number): void {
     const clamped = clamp(kg, WEIGHT_MIN_KG, WEIGHT_MAX_KG);
     this.draftTenths.set(Math.round(clamped * TENTHS_PER_KG));
-  }
-
-  /** The −/+ buttons: one step of 0.1 kg. */
-  adjustDraftKg(stepKg: number): void {
-    this.setDraftKg(this.draftKg() + stepKg);
   }
 
   selectRange(range: WeightRange): void {

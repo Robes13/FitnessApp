@@ -6,12 +6,9 @@ import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { Translate, injectTranslate } from '../../../core/services/language/translate';
 import { formatGrams, formatInteger } from '../../../core/utils/date-format';
 
-/** The prefix in front of a collection's id in the recipe screen's route (`col:<id>`). */
-export const BUNDLE_ID_PREFIX = 'col:';
-
 /** A collection as a row in the list on the collections screen. */
 export interface CollectionEntry {
-  /** The route id, `col:<id>`. */
+  /** The collection's id – also the recipe screen's route id. */
   readonly id: string;
   readonly title: string;
   /** The names of the items. */
@@ -75,7 +72,7 @@ export class CollectionsViewService {
     this.collections.collections().map((collection) => {
       const totals = this.collections.collectionTotals(collection);
       return {
-        id: `${BUNDLE_ID_PREFIX}${collection.id}`,
+        id: collection.id,
         title: collection.name,
         subtitle: itemNames(collection),
         meta: countLabel(this.t, totals.count),
@@ -101,10 +98,8 @@ export class CollectionsViewService {
     };
   }
 
-  /** The collection behind a route id (`col:<id>`); `null` for anything else. */
+  /** The collection behind a route id, or `null` when no collection has it. */
   collectionFor(routeId: string): FoodCollection | null {
-    return routeId.startsWith(BUNDLE_ID_PREFIX)
-      ? (this.collections.collectionById(routeId.slice(BUNDLE_ID_PREFIX.length)) ?? null)
-      : null;
+    return this.collections.collectionById(routeId) ?? null;
   }
 }

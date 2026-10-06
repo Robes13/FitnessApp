@@ -70,10 +70,10 @@ describe('WeightViewService', () => {
     expect(view.draftIsWide()).toBe(true);
   });
 
-  it('klemmer kladden fast mellem 30 og 300 kg og skruer i trin på 0,1', () => {
+  it('klemmer kladden fast mellem 30 og 300 kg og runder til hele tiendedele', () => {
     const view = setup();
 
-    view.adjustDraftKg(-0.1);
+    view.setDraftKg(74.93);
     expect(view.draftKg()).toBe(74.9);
 
     view.setDraftKg(1000);

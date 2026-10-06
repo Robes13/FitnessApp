@@ -96,6 +96,15 @@ function filterOf(id: HistoryFilterId): HistoryFilter {
   return filter;
 }
 
+/** The id a loaded event gets as an entry – how the specs tell which events are loaded. */
+function entryId(event: HistoryEventDto): string {
+  return `${event.type}-${event.referenceId}`;
+}
+
+function loadedIds(history: HistoryService): readonly string[] {
+  return history.entries().map((entry) => entry.id);
+}
+
 function titles(history: HistoryService): readonly string[] {
   return history.entries().map((entry) => entry.title);
 }
@@ -143,8 +152,7 @@ describe('HistoryService', () => {
       expectPage().flush(page([ACCOUNT_CREATED]));
 
       expect(history.status()).toBe('ready');
-      expect(history.hasMore()).toBe(false);
-      expect(history.events()).toEqual([ACCOUNT_CREATED]);
+      expect(loadedIds(history)).toEqual([entryId(ACCOUNT_CREATED)]);
     });
 
     it('sender filterets typer som types', () => {
@@ -164,15 +172,13 @@ describe('HistoryService', () => {
       const today = weighEvent(weightLogDto(1, 75, 0, TEST_NOW));
       const older = weighEvent(weightLogDto(2, 76, 5, TEST_NOW));
       open([today], 'c2');
-      expect(history.nextCursor()).toBe('c2');
-      expect(history.hasMore()).toBe(true);
 
       history.loadMore();
       expectPage(ALL_TYPES, 'c2').flush(page([older]));
 
-      expect(history.events()).toEqual([today, older]);
-      expect(history.hasMore()).toBe(false);
-      expect(history.nextCursor()).toBeNull();
+      expect(loadedIds(history)).toEqual([today, older].map(entryId));
+      history.loadMore();
+      http.expectNone(() => true);
     });
 
     it('beder ikke om en side, mens en indlæses, eller efter den sidste', () => {
@@ -192,11 +198,11 @@ describe('HistoryService', () => {
       history.setFilter(filterOf('mad'));
 
       expect(pending.cancelled).toBe(true);
-      expect(history.events()).toEqual([]);
+      expect(loadedIds(history)).toEqual([]);
       expect(history.status()).toBe('loading');
       const meal = foodEvent(testFoodLog(TEST_FOOD, 'aften'));
       expectPage('FoodLogged').flush(page([meal]));
-      expect(history.events()).toEqual([meal]);
+      expect(loadedIds(history)).toEqual([entryId(meal)]);
     });
 
     it('melder fejl, beder ikke selv igen og henter den fejlede side ved retry()', () => {
@@ -206,7 +212,7 @@ describe('HistoryService', () => {
       expectPage(ALL_TYPES, 'c2').flush(null, { status: 500, statusText: 'Error' });
 
       expect(history.status()).toBe('error');
-      expect(history.events()).toEqual([today]);
+      expect(loadedIds(history)).toEqual([entryId(today)]);
       history.loadMore();
       http.expectNone(() => true);
 
@@ -215,7 +221,7 @@ describe('HistoryService', () => {
       expectPage(ALL_TYPES, 'c2').flush(page([ACCOUNT_CREATED]));
 
       expect(history.status()).toBe('ready');
-      expect(history.events()).toEqual([today, ACCOUNT_CREATED]);
+      expect(loadedIds(history)).toEqual([today, ACCOUNT_CREATED].map(entryId));
     });
 
     it('er kun tom, når siden er hentet uden poster', () => {
@@ -235,7 +241,7 @@ describe('HistoryService', () => {
       history.setFilter(filterOf('alle'));
 
       http.expectNone(() => true);
-      expect(history.events()).toEqual([today]);
+      expect(loadedIds(history)).toEqual([entryId(today)]);
       expect(history.status()).toBe('ready');
     });
   });

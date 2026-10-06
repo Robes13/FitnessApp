@@ -1,8 +1,8 @@
 # Historik – services
 
-| Fil          | Indhold                                                                                                            |
-| ------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `history.ts` | `HistoryService` samt `HISTORY_ENDPOINT`, `HISTORY_PAGE_SIZE`, `HISTORY_FILTERS`, gen-log-nøglerne og -varigheden. |
+| Fil          | Indhold                                                                   |
+| ------------ | ------------------------------------------------------------------------- |
+| `history.ts` | `HistoryService` samt `HISTORY_FILTERS`, gen-log-nøglerne og -varigheden. |
 
 ## HistoryService
 
@@ -11,7 +11,6 @@ gen-log-status nulstilles, når man forlader fanen.
 
 | Medlem                                      | Formål                                                                                                                                           |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `events` / `nextCursor` / `hasMore`         | De indlæste hændelser (API'ets rækkefølge) og cursoren til næste side.                                                                           |
 | `status`                                    | `idle` → `loading` → `ready` / `error` for den seneste side.                                                                                     |
 | `loadMore()`                                | `GET me/history?types&limit=50[&cursor]` + `mapApiError()`, lægges efter de hentede. No-op under indlæsning, efter sidste side og efter en fejl. |
 | `retry()`                                   | Henter den fejlede side igen.                                                                                                                    |

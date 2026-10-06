@@ -21,7 +21,7 @@ som skærmen. Persistent tilstand ligger i `WeightLogService` og `UserProfileSer
 | Indlæsning | `loadStatus` (`loading` hvis en af vægt- og profil-storen indlæser, ellers `error` hvis en fejlede, ellers `ready`) |
 | Gem        | `saving`, `saveError`, `overwriteId` (overskrivningsarket er åbent), `overwriteError`                               |
 | Ret-ark    | `editingRow`, `editBusy`, `editError`                                                                               |
-| Handlinger | `setDraftKg`, `adjustDraftKg`, `selectRange`, `toggleLogExpanded`, `startEdit`, `cancelEdit`, `cancelOverwrite`     |
+| Handlinger | `setDraftKg`, `selectRange`, `toggleLogExpanded`, `startEdit`, `cancelEdit`, `cancelOverwrite`                      |
 | API        | `save`, `confirmOverwrite`, `saveEdit`, `removeEditing`, `retryLoad` – alle `Observable<void>`                      |
 
 `weightChangeTone(deltaKg, goal)` er eksporteret som ren funktion: "tage på" belønner en

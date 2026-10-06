@@ -30,9 +30,9 @@ import {
 } from '../models/history';
 
 /** `GET me/history`, relative to `API_BASE_URL` (plan-v2 A7). */
-export const HISTORY_ENDPOINT = 'me/history';
+const HISTORY_ENDPOINT = 'me/history';
 /** Events per page (the API's default). */
-export const HISTORY_PAGE_SIZE = 50;
+const HISTORY_PAGE_SIZE = 50;
 
 const ALL_FILTER: HistoryFilter = {
   id: 'alle',
@@ -106,10 +106,6 @@ export class HistoryService {
 
   readonly filters = HISTORY_FILTERS;
   readonly filter: Signal<HistoryFilterId> = computed(() => this.filterState().id);
-  /** Every loaded event, in the API's order (newest first). */
-  readonly events: Signal<readonly HistoryEventDto[]> = this.eventsState.asReadonly();
-  readonly nextCursor: Signal<string | null> = this.nextCursorState.asReadonly();
-  readonly hasMore: Signal<boolean> = this.hasMoreState.asReadonly();
   /** The latest page request: `error` keeps the loaded pages, and `retry()` asks for the page again. */
   readonly status: Signal<StoreStatus> = this.statusState.asReadonly();
 
@@ -355,7 +351,7 @@ function goalLabel(t: Translate, goal: UserGoalDto): string {
 }
 
 /** `'1.970 kcal · P 120 g · K 210 g · F 60 g'` */
-export function formatFoodSummary(t: Translate, totals: Macros): string {
+function formatFoodSummary(t: Translate, totals: Macros): string {
   return t('history.entries.foodSummary', {
     kcal: formatInteger(totals.kcal),
     protein: formatInteger(totals.protein),

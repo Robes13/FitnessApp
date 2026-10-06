@@ -31,7 +31,7 @@ interface RecipeStat {
 }
 
 /**
- * The recipe screen of one collection (`col:<id>`): its macros and items, "Log X kcal" under the
+ * The recipe screen of one collection: its macros and items, "Log X kcal" under the
  * chosen meal (spec 3.2) and – via the header's pencil and the button at the bottom – edit and
  * delete (spec 4.1/4.2). One action runs at a time (`pending`); a failure is shown above the log
  * button. A failed edit closes the sheet: the collection has been fetched again, so a new

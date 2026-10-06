@@ -15,10 +15,9 @@ slettes.
 
 ## Rutens id
 
-Opskriftsskærmen nås med `col:<mealCollectionId>` (`BUNDLE_ID_PREFIX`), så ruterne er de samme
-som før. `CollectionsViewService.detailFor()` svarer `null` for alt andet – så viser skærmen en
-tom tilstand med en vej tilbage (eller en spinner/fejl, mens samlingerne hentes).
-`APP_PATH.recipe(id)` bygger stien; kolon er et lovligt tegn i et rute-segment.
+Opskriftsskærmen nås med samlingens id (`<mealCollectionId>`). `CollectionsViewService.detailFor()`
+svarer `null` for et ukendt id – så viser skærmen en tom tilstand med en vej tilbage (eller en
+spinner/fejl, mens samlingerne hentes). `APP_PATH.recipe(id)` bygger stien.
 
 Opskriften er en fuldskærm: ruten sætter `data: { [ROUTE_DATA.HIDE_TAB_BAR]: true }`, og
 shell'en fjerner tab baren (designets `navVisible`).

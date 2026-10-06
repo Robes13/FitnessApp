@@ -8,7 +8,7 @@ import {
 } from '../../../core/testing/fixtures';
 import { CollectionsService } from '../../../core/services/collections/collections';
 import { provideCoreTestEnvironment } from '../../../core/testing/test-providers';
-import { BUNDLE_ID_PREFIX, CollectionsViewService } from './collections-view';
+import { CollectionsViewService } from './collections-view';
 
 const COLLECTIONS_URL = '/api/v1/me/meal-collections?limit=100';
 const MEAL_PREP = testCollection(3, 'Meal prep', [
@@ -52,7 +52,7 @@ describe('CollectionsViewService', () => {
 
     expect(view.entries()).toEqual([
       {
-        id: `${BUNDLE_ID_PREFIX}3`,
+        id: '3',
         title: 'Meal prep',
         subtitle: 'Tunsalat, Rugbrød',
         meta: '2 varer',
@@ -77,7 +77,7 @@ describe('CollectionsViewService', () => {
   it('looks up a bundle id and sums its items', () => {
     loadMealPrep();
 
-    const detail = view.detailFor(`${BUNDLE_ID_PREFIX}3`);
+    const detail = view.detailFor('3');
 
     expect(detail).toMatchObject({
       title: 'Meal prep',
@@ -88,15 +88,14 @@ describe('CollectionsViewService', () => {
       ['Tunsalat', '200 g'],
       ['Rugbrød', '2 stk'],
     ]);
-    expect(view.collectionFor(`${BUNDLE_ID_PREFIX}3`)?.name).toBe('Meal prep');
+    expect(view.collectionFor('3')?.name).toBe('Meal prep');
   });
 
-  it('gives null for an unknown id or one without the bundle prefix', () => {
+  it('gives null for an unknown id', () => {
     loadMealPrep();
 
-    expect(view.detailFor(`${BUNDLE_ID_PREFIX}99`)).toBeNull();
-    expect(view.detailFor('3')).toBeNull();
-    expect(view.collectionFor('3')).toBeNull();
+    expect(view.detailFor('99')).toBeNull();
+    expect(view.collectionFor('99')).toBeNull();
   });
 
   it('fails when a store fails, and "Prøv igen" reloads only that one', () => {
