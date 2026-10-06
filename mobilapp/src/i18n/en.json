@@ -885,30 +885,13 @@
     "birthdayStep": {
       "ageCaption": "Age",
       "ageUnit": "years",
+      "dateLabel": "Date of birth",
       "hintNoDate": "Choose your date of birth above.",
       "hintTooOld": "Check the date again.",
       "hintTooYoung": "You must be at least {{minAge}} to use Nutrify.",
-      "labelNoDate": "No date selected yet",
-      "monthLabel": "Month",
-      "nextMonth": "Next month",
-      "nextYear": "One year forward",
-      "previousMonth": "Previous month",
-      "previousYear": "One year back",
-      "selected": "Selected: {{day}} {{month}} {{year}}",
       "subtitle": "Your age is part of calculating your calorie needs.",
       "titleAccent": "birthday?",
-      "titleStart": "When is your",
-      "weekday": {
-        "fri": "fr",
-        "mon": "mo",
-        "sat": "sa",
-        "sun": "su",
-        "thu": "th",
-        "tue": "tu",
-        "wed": "we"
-      },
-      "yearInput": "Year",
-      "yearLabel": "Year"
+      "titleStart": "When is your"
     },
     "chapters": {
       "activity": "Activity",

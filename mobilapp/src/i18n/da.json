@@ -885,30 +885,13 @@
     "birthdayStep": {
       "ageCaption": "Alder",
       "ageUnit": "år",
+      "dateLabel": "Fødselsdato",
       "hintNoDate": "Vælg din fødselsdato ovenfor.",
       "hintTooOld": "Tjek datoen igen.",
       "hintTooYoung": "Du skal være mindst {{minAge}} år for at bruge Nutrify.",
-      "labelNoDate": "Ingen dato valgt endnu",
-      "monthLabel": "Måned",
-      "nextMonth": "Næste måned",
-      "nextYear": "Et år frem",
-      "previousMonth": "Forrige måned",
-      "previousYear": "Et år tilbage",
-      "selected": "Valgt: {{day}}. {{month}} {{year}}",
       "subtitle": "Din alder indgår i beregningen af dit kaloriebehov.",
       "titleAccent": "fødselsdag?",
-      "titleStart": "Hvornår har du",
-      "weekday": {
-        "fri": "fr",
-        "mon": "ma",
-        "sat": "lø",
-        "sun": "sø",
-        "thu": "to",
-        "tue": "ti",
-        "wed": "on"
-      },
-      "yearInput": "Årstal",
-      "yearLabel": "År"
+      "titleStart": "Hvornår har du"
     },
     "chapters": {
       "activity": "Aktivitet",

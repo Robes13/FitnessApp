@@ -6,92 +6,15 @@
 </h1>
 <p class="birthday-step__subtitle">{{ 'signup.birthdayStep.subtitle' | translate }}</p>
 
-<div class="birthday-step__controls">
-  <div class="birthday-step__control">
-    <button
-      type="button"
-      class="birthday-step__nav"
-      [attr.aria-label]="'signup.birthdayStep.previousYear' | translate"
-      (click)="shift(-1, 0)"
-    >
-      −
-    </button>
-    <span class="birthday-step__field">
-      <span class="birthday-step__field-label">{{
-        'signup.birthdayStep.yearLabel' | translate
-      }}</span>
-      <input
-        class="birthday-step__year"
-        type="text"
-        inputmode="numeric"
-        maxlength="4"
-        [attr.aria-label]="'signup.birthdayStep.yearInput' | translate"
-        [formControl]="yearControl"
-        (blur)="onYearBlur()"
-      />
-    </span>
-    <button
-      type="button"
-      class="birthday-step__nav"
-      [attr.aria-label]="'signup.birthdayStep.nextYear' | translate"
-      (click)="shift(1, 0)"
-    >
-      +
-    </button>
-  </div>
-
-  <div class="birthday-step__control">
-    <button
-      type="button"
-      class="birthday-step__nav"
-      [attr.aria-label]="'signup.birthdayStep.previousMonth' | translate"
-      (click)="shift(0, -1)"
-    >
-      ‹
-    </button>
-    <span class="birthday-step__field">
-      <span class="birthday-step__field-label">{{
-        'signup.birthdayStep.monthLabel' | translate
-      }}</span>
-      <span class="birthday-step__month">{{ monthName() }}</span>
-    </span>
-    <button
-      type="button"
-      class="birthday-step__nav"
-      [attr.aria-label]="'signup.birthdayStep.nextMonth' | translate"
-      (click)="shift(0, 1)"
-    >
-      ›
-    </button>
-  </div>
-</div>
-
-<div class="birthday-step__calendar">
-  <div class="birthday-step__weekdays">
-    @for (weekdayKey of weekdayKeys; track weekdayKey) {
-      <span class="birthday-step__weekday">{{ weekdayKey | translate }}</span>
-    }
-  </div>
-  <div class="birthday-step__grid">
-    @for (cell of cells(); track cell.iso) {
-      <button
-        type="button"
-        class="birthday-step__day"
-        [class.birthday-step__day--ghost]="cell.ghost"
-        [class.birthday-step__day--selected]="cell.selected"
-        [class.birthday-step__day--future]="cell.future"
-        [disabled]="cell.future"
-        (click)="pick(cell)"
-      >
-        {{ cell.label }}
-      </button>
-    }
-  </div>
-</div>
-
-<p class="birthday-step__selection" [class.birthday-step__selection--chosen]="hasBirthday()">
-  {{ birthdayLabel() }}
-</p>
+<app-ui-text-input
+  class="birthday-step__date"
+  type="date"
+  autocomplete="bday"
+  [ariaLabel]="'signup.birthdayStep.dateLabel' | translate"
+  [min]="minDate()"
+  [max]="maxDate()"
+  [formControl]="dateControl"
+/>
 
 <div class="birthday-step__stage">
   <div class="birthday-step__readout">
