@@ -6,6 +6,7 @@ import { UserProfileService } from '../../../core/services/user-profile/user-pro
 import { WeightLogService } from '../../../core/services/weight-log/weight-log';
 import { Translate, injectTranslate } from '../../../core/services/language/translate';
 import { formatDecimal, formatInteger } from '../../../core/utils/date-format';
+import { shareOf } from '../../../core/utils/math';
 import { IconName } from '../../../shared/components/ui-icon/icon-registry';
 
 /** The color family behind a badge. Used for the ring, border, fill, and text alike. */
@@ -88,7 +89,7 @@ export class AchievementsService {
   private readonly weekStats: Signal<WeekStats> = computed(() => {
     const { kcal: kcalTarget, protein: proteinGoalPerDay } = this.profiles.targets();
     const totals = this.foodLog.totals();
-    const kcalPart = kcalTarget > 0 ? Math.min(1, totals.kcal / kcalTarget) : 0;
+    const kcalPart = shareOf(totals.kcal, kcalTarget);
     const kcalHitToday = kcalPart >= DAY_HIT_THRESHOLD;
     const proteinHitToday =
       proteinGoalPerDay > 0 && totals.protein >= proteinGoalPerDay * DAY_HIT_THRESHOLD;

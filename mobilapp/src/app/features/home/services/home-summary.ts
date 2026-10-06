@@ -22,7 +22,7 @@ import {
   isSameDay,
   mondayIndex,
 } from '../../../core/utils/date-format';
-import { clamp } from '../../../core/utils/math';
+import { clamp, shareOf } from '../../../core/utils/math';
 import { Translate, injectTranslate } from '../../../core/services/language/translate';
 import { ProgressBarTone } from '../../../shared/components/ui-progress-bar/ui-progress-bar';
 
@@ -492,11 +492,6 @@ function dayTitle(t: Translate, dayName: string, selected: number, today: number
     return t('home.summary.dayTitle.today', { dayName });
   }
   return selected === today - 1 ? t('home.summary.dayTitle.yesterday', { dayName }) : dayName;
-}
-
-/** Share of `goal`, 0..1 – 0 while there is no goal. */
-function shareOf(value: number, goal: number): number {
-  return goal > 0 ? Math.min(1, value / goal) : 0;
 }
 
 /** Whole kcal or grams with a thousands separator: `1850.4` → `'1.850'`. */

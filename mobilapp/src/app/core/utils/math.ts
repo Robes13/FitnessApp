@@ -12,6 +12,11 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+/** Share 0..1 of a goal. A goal of 0 gives 0 instead of `Infinity`/`NaN`. */
+export function shareOf(value: number, goal: number): number {
+  return goal > 0 ? Math.min(1, value / goal) : 0;
+}
+
 /**
  * A typed number with a decimal comma or point (`'45,5'` and `'45.5'` → 45.5), for number
  * fields that are `type="text"`: Android's WebView drops the comma in a `type="number"` field

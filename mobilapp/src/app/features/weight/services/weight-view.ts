@@ -92,16 +92,7 @@ const MAINTAIN_PROGRESS_BONUS_KG = 0.3;
  * rewards a small movement, everything else rewards a decrease. Near-zero is neutral.
  */
 export function weightChangeTone(deltaKg: number, goal: GoalId | null): WeightChangeTone {
-  if (Math.abs(deltaKg) < NEUTRAL_DELTA_KG) {
-    return 'muted';
-  }
-  const good =
-    goal === 'tage'
-      ? deltaKg > 0
-      : goal === 'hold'
-        ? Math.abs(deltaKg) < MAINTAIN_TOLERANCE_KG
-        : deltaKg < 0;
-  return good ? 'positive' : 'negative';
+  return Math.abs(deltaKg) < NEUTRAL_DELTA_KG ? 'muted' : toneForGoal(deltaKg, goal);
 }
 
 /**
@@ -124,18 +115,14 @@ export class WeightViewService {
 
   /** `null` = the user hasn't touched the draft yet; so it follows the profile's weight. */
   private readonly draftTenths = signal<number | null>(null);
-  private readonly rangeState = signal<WeightRange>(DEFAULT_WEIGHT_RANGE);
-  private readonly logExpandedState = signal(false);
   private readonly editingId = signal<string | null>(null);
-  private readonly overwriteIdState = signal<string | null>(null);
-  private readonly savingState = signal(false);
-  private readonly editBusyState = signal(false);
   /** Keys, so a shown error follows a language switch. */
   private readonly saveErrorKey = signal<string | null>(null);
   private readonly overwriteErrorKey = signal<string | null>(null);
   private readonly editErrorKey = signal<string | null>(null);
 
-  readonly range: Signal<WeightRange> = this.rangeState.asReadonly();
+  /** The selected chart range. Only this service sets it – the page reads it. */
+  readonly range = signal<WeightRange>(DEFAULT_WEIGHT_RANGE);
   readonly rangeOptions = WEIGHT_RANGE_OPTIONS;
 
   /**
@@ -151,13 +138,13 @@ export class WeightViewService {
   });
 
   /** "Gem vejning" (and "Ja, overskriv") is running – the buttons show a spinner. */
-  readonly saving: Signal<boolean> = this.savingState.asReadonly();
+  readonly saving = signal(false);
   readonly saveError = this.translated(this.saveErrorKey);
   /** Today's weigh-in the overwrite question is about; `null` = the sheet is closed. */
-  readonly overwriteId: Signal<string | null> = this.overwriteIdState.asReadonly();
+  readonly overwriteId = signal<string | null>(null);
   readonly overwriteError = this.translated(this.overwriteErrorKey);
   /** The edit sheet's save or delete is running. */
-  readonly editBusy: Signal<boolean> = this.editBusyState.asReadonly();
+  readonly editBusy = signal(false);
   readonly editError = this.translated(this.editErrorKey);
 
   readonly profileWeightKg = computed(() => this.profile.profile().weightKg);
@@ -228,14 +215,12 @@ export class WeightViewService {
    * The chart's weigh-ins in the selected range, oldest first, each placed by its time in the
    * range. Empty until the user has weighed in.
    */
-  readonly series = computed<readonly WeightPoint[]>(() => this.log.seriesFor(this.rangeState()));
+  readonly series = computed<readonly WeightPoint[]>(() => this.log.seriesFor(this.range()));
 
   /** `'Sidste 3 uger'` – the heading on the right in the chart card. */
-  readonly rangeLabel = computed(() => this.log.rangeLabel(this.rangeState()));
+  readonly rangeLabel = computed(() => this.log.rangeLabel(this.range()));
   /** `'-3 uger'` – the chart's left-hand footer. */
-  readonly rangeStartLabel = computed(() =>
-    this.t(WEIGHT_RANGE_START_LABEL_KEY[this.rangeState()]),
-  );
+  readonly rangeStartLabel = computed(() => this.t(WEIGHT_RANGE_START_LABEL_KEY[this.range()]));
 
   /** The difference between the chart's first and last point. */
   readonly rangeDeltaKg = computed(() => {
@@ -252,7 +237,7 @@ export class WeightViewService {
   );
   /** Neutral until the range holds two weigh-ins – a lone point has no change to judge. */
   readonly rangeDeltaTone = computed<WeightChangeTone>(() =>
-    this.series().length < 2 ? 'muted' : rangeTone(this.rangeDeltaKg(), this.goal()),
+    this.series().length < 2 ? 'muted' : toneForGoal(this.rangeDeltaKg(), this.goal()),
   );
 
   /** The profile's weight without a redundant `,0` – design's `weightText`. */
@@ -288,12 +273,12 @@ export class WeightViewService {
     });
   });
 
-  readonly logExpanded: Signal<boolean> = this.logExpandedState.asReadonly();
+  readonly logExpanded = signal(false);
 
   /** The rows shown: the six newest, or all from the last 3 months when expanded. */
   readonly logRows = computed<readonly WeighLogRow[]>(() => {
     const rows = this.allLogRows();
-    return this.logExpandedState() ? rows : rows.slice(0, COLLAPSED_LOG_ROWS);
+    return this.logExpanded() ? rows : rows.slice(0, COLLAPSED_LOG_ROWS);
   });
 
   /** How many rows "Vis alle" would add; 0 hides the toggle. */
@@ -324,11 +309,11 @@ export class WeightViewService {
   }
 
   selectRange(range: WeightRange): void {
-    this.rangeState.set(range);
+    this.range.set(range);
   }
 
   toggleLogExpanded(): void {
-    this.logExpandedState.update((expanded) => !expanded);
+    this.logExpanded.update((expanded) => !expanded);
   }
 
   /** "Prøv igen": reloads the store(s) that failed. Never errors. */
@@ -369,7 +354,7 @@ export class WeightViewService {
    */
   save(): Observable<void> {
     return this.track(
-      this.savingState,
+      this.saving,
       this.saveErrorKey,
       () => SAVE_ERROR_KEY,
       () =>
@@ -379,7 +364,7 @@ export class WeightViewService {
               return of(undefined);
             }
             this.overwriteErrorKey.set(null);
-            this.overwriteIdState.set(result.id);
+            this.overwriteId.set(result.id);
             return EMPTY;
           }),
         ),
@@ -389,23 +374,23 @@ export class WeightViewService {
   /** "Ja, overskriv": today's weigh-in gets the draft and the time now. Emits once overwritten. */
   confirmOverwrite(): Observable<void> {
     return this.track(
-      this.savingState,
+      this.saving,
       this.overwriteErrorKey,
       () => SAVE_ERROR_KEY,
       () => {
-        const id = this.overwriteIdState();
+        const id = this.overwriteId();
         return id === null
           ? EMPTY
           : this.log
               .update(id, this.draftKg(), this.now())
-              .pipe(map(() => this.overwriteIdState.set(null)));
+              .pipe(map(() => this.overwriteId.set(null)));
       },
     );
   }
 
   /** "Annuller" (spec 6.0-4b): nothing is sent, today's weigh-in stays. */
   cancelOverwrite(): void {
-    this.overwriteIdState.set(null);
+    this.overwriteId.set(null);
     this.overwriteErrorKey.set(null);
   }
 
@@ -415,7 +400,7 @@ export class WeightViewService {
    */
   private editing(mutation: (id: string) => Observable<void>): Observable<void> {
     return this.track(
-      this.editBusyState,
+      this.editBusy,
       this.editErrorKey,
       (error) => toApiError(error).messageKey,
       () => {
@@ -449,7 +434,7 @@ export class WeightViewService {
           if (this.log.entries() === before) {
             errorKey.set(keyFor(error));
           } else {
-            this.overwriteIdState.set(null);
+            this.overwriteId.set(null);
             this.editingId.set(null);
             this.saveErrorKey.set(toApiError(error).messageKey);
           }
@@ -469,10 +454,11 @@ export class WeightViewService {
 }
 
 /**
- * The chart's delta is colored like a weight change, but "maintain weight" is satisfied as long
- * as the curve stays within ±0.5 kg – even when the movement is zero (design's `deltaColor`).
+ * Green when the movement goes the right way for the goal, red when it doesn't – "maintain
+ * weight" is satisfied as long as it stays within ±0.5 kg, even when the movement is zero (the
+ * chart's delta, design's `deltaColor`).
  */
-function rangeTone(deltaKg: number, goal: GoalId | null): WeightChangeTone {
+function toneForGoal(deltaKg: number, goal: GoalId | null): WeightChangeTone {
   const good =
     goal === 'tage'
       ? deltaKg > 0

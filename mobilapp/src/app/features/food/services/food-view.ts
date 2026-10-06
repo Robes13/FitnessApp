@@ -5,6 +5,7 @@ import { MealId } from '../../../core/models/meal';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
 import { formatDayLabel, formatGrams, formatInteger } from '../../../core/utils/date-format';
+import { shareOf } from '../../../core/utils/math';
 import { NOW } from '../../../core/utils/now';
 import { injectTranslate } from '../../../core/services/language/translate';
 import { ProgressBarTone } from '../../../shared/components/ui-progress-bar/ui-progress-bar';
@@ -84,7 +85,7 @@ export class FoodViewService {
     }),
   );
   /** The design's `kcalRing` rewritten as a share 0..1. */
-  readonly kcalProgress = computed(() => fraction(this.kcalEaten(), this.kcalTarget()));
+  readonly kcalProgress = computed(() => shareOf(this.kcalEaten(), this.kcalTarget()));
 
   readonly macroCards = computed<readonly MacroCardView[]>(() => {
     const goals = this.targets();
@@ -92,7 +93,7 @@ export class FoodViewService {
     return MACRO_DEFINITIONS.map(({ key, labelKey, tone }) => {
       const value = totals[key];
       const goal = goals[key];
-      const progress = fraction(value, goal);
+      const progress = shareOf(value, goal);
       return {
         key,
         label: this.t(labelKey),
@@ -123,8 +124,3 @@ export class FoodViewService {
 }
 
 const PERCENT = 100;
-
-/** Share 0..1 of a target. A target of 0 gives 0 instead of `Infinity`/`NaN`. */
-function fraction(value: number, goal: number): number {
-  return goal > 0 ? Math.min(1, value / goal) : 0;
-}

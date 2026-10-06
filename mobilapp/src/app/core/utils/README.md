@@ -132,6 +132,7 @@ nøgle og logges med `console.error`, så den ikke forsvinder.
 `clamp(value, min, max)` klemmer et tal fast til intervallet `[min, max]`.
 `roundTo(value, decimals)` runder til et antal decimaler og normaliserer `-0` til `0`, så
 afrundede værdier kan sammenlignes strengt.
+`shareOf(value, goal)` er værdien som andel 0..1 af et mål (højst 1; 0 uden mål, aldrig `Infinity`).
 `parseDecimal(text)` læser et indtastet tal med komma eller punktum (`'45,5'` → 45,5) og giver
 `null` for et tomt felt eller tekst, der ikke er et tal. Talfelterne er `type="text"` med
 `inputmode="decimal"`, fordi Androids WebView smider kommaet væk i et `type="number"`-felt
