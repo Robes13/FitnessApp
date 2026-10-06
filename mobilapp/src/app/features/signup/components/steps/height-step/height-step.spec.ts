@@ -43,7 +43,7 @@ describe('HeightStep', () => {
     expect(content).toContain('Højde og vægt giver');
     expect(content).toContain('i BMI');
     expect(content).toContain('Bruges til dit kaloriebehov');
-    expect(text('.height-step__number')).toBe('178');
+    expect(text('.measure-stage__number')).toBe('178');
     // 75 kg ved 1,78 m = 23,7.
     expect(text('.height-step__bmi-number')).toBe('23,7');
   });
@@ -53,7 +53,7 @@ describe('HeightStep', () => {
     fixture.detectChanges();
 
     expect(state.heightCm()).toBe(179);
-    expect(text('.height-step__number')).toBe('179');
+    expect(text('.measure-stage__number')).toBe('179');
     expect(text('.height-step__bmi-number')).toBe('23,4');
   });
 

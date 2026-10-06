@@ -23,7 +23,7 @@ describe('WeightStep', () => {
   }
 
   function number(): string {
-    return root().querySelector('.weight-step__number')?.textContent?.trim() ?? '';
+    return root().querySelector('.measure-stage__number')?.textContent?.trim() ?? '';
   }
 
   function stepper(label: string): HTMLButtonElement {

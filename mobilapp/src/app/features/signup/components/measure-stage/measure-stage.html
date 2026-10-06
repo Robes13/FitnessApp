@@ -1,0 +1,46 @@
+<div class="measure-stage__row">
+  <div class="measure-stage__readout">
+    <p class="measure-stage__value">
+      <span class="measure-stage__number">{{ display() }}</span>
+      <span class="measure-stage__unit">{{ unitKey() | translate }}</span>
+    </p>
+    <div class="measure-stage__steppers">
+      <button
+        type="button"
+        class="measure-stage__stepper"
+        [attr.aria-label]="decreaseKey() | translate"
+        (click)="adjust(-1)"
+      >
+        −
+      </button>
+      <button
+        type="button"
+        class="measure-stage__stepper"
+        [attr.aria-label]="increaseKey() | translate"
+        (click)="adjust(1)"
+      >
+        +
+      </button>
+    </div>
+    <ng-content />
+  </div>
+
+  <app-figure
+    class="measure-stage__figure"
+    [weightKg]="state.weightKg()"
+    [heightCm]="state.heightCm()"
+    [bandTone]="bandTone()"
+    [ariaLabel]="figureKey() | translate"
+    showDumbbell
+    [showCeiling]="showCeiling()"
+  />
+</div>
+
+<app-ui-ruler
+  class="measure-stage__ruler"
+  [min]="min()"
+  [max]="max()"
+  [(value)]="value"
+  [glowStrength]="rulerGlowStrength"
+  [ariaLabel]="rulerKey() | translate"
+/>

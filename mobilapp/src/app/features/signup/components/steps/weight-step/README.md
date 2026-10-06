@@ -13,11 +13,10 @@ Signup-trin 4 (`weight`, designets `s2`): vægten.
   følger det valgte køn (`bandToneForGender` fra `shared/components/figure`).
 - `app-ui-ruler` (30–300 kg, 8 px pr. streg) ligger ud til begge skærmkanter og er
   tovejsbundet til `SignupStateService.weightKg`.
+- Tal, knapper, figur og lineal er den fælles [`MeasureStage`](../../measure-stage/README.md);
+  trinnet leverer overskrift, undertekst og hintet under knapperne.
 
 ## Beslutninger
 
-- Designets faste px-bredder på hint og figur er oversat til relative værdier
-  (`12.5em` = 150 px ved 12 px tekst, `66 %` ≈ 215 px af indholdsbredden), så der
-  ikke står px-litteraler i komponentens SCSS.
-- `−`/`+`-knapperne er 52 × 44 px rektangler og findes ikke i `shared/`
-  (`UiIconButton` er rund), så de er trinnets egne.
+- Designets faste px-bredde på hintet er oversat til en relativ værdi (`12.5em` = 150 px
+  ved 12 px tekst), så der ikke står px-litteraler i komponentens SCSS.

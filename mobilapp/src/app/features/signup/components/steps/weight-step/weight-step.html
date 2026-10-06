@@ -4,48 +4,16 @@
 </h1>
 <p class="weight-step__subtitle">{{ 'signup.weightStep.subtitle' | translate }}</p>
 
-<div class="weight-step__stage">
-  <div class="weight-step__readout">
-    <p class="weight-step__value">
-      <span class="weight-step__number">{{ weightText() }}</span>
-      <span class="weight-step__unit">{{ 'common.unit.kg' | translate }}</span>
-    </p>
-    <div class="weight-step__steppers">
-      <button
-        type="button"
-        class="weight-step__stepper"
-        [attr.aria-label]="'signup.weightStep.decrease' | translate"
-        (click)="adjust(-1)"
-      >
-        −
-      </button>
-      <button
-        type="button"
-        class="weight-step__stepper"
-        [attr.aria-label]="'signup.weightStep.increase' | translate"
-        (click)="adjust(1)"
-      >
-        +
-      </button>
-    </div>
-    <p class="weight-step__hint">{{ 'signup.weightStep.hint' | translate }}</p>
-  </div>
-
-  <app-figure
-    class="weight-step__figure"
-    [weightKg]="state.weightKg()"
-    [heightCm]="state.heightCm()"
-    [bandTone]="bandTone()"
-    [ariaLabel]="'signup.weightStep.figureLabel' | translate"
-    showDumbbell
-  />
-</div>
-
-<app-ui-ruler
-  class="weight-step__ruler"
+<app-measure-stage
+  [(value)]="state.weightKg"
   [min]="minKg"
   [max]="maxKg"
-  [(value)]="state.weightKg"
-  [glowStrength]="rulerGlowStrength"
-  [ariaLabel]="'signup.weightStep.rulerLabel' | translate"
-/>
+  [display]="weightText()"
+  unitKey="common.unit.kg"
+  decreaseKey="signup.weightStep.decrease"
+  increaseKey="signup.weightStep.increase"
+  rulerKey="signup.weightStep.rulerLabel"
+  figureKey="signup.weightStep.figureLabel"
+>
+  <p class="weight-step__hint">{{ 'signup.weightStep.hint' | translate }}</p>
+</app-measure-stage>

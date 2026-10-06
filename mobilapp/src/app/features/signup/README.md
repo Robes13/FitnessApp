@@ -8,6 +8,7 @@ træning, mål og notifikationer og lander på en opsummering, der opretter kont
 | `signup.routes.ts`            | `SIGNUP_ROUTES`: ruten til `SignupPage`, som selv leverer `SignupStateService`.   |
 | `services/`                   | `SignupStateService` – kladden, trin-navigationen og oprettelsen.                 |
 | `pages/signup-page/`          | Siden: fremdrift øverst, det aktive trin i midten, tilbage/videre nederst.        |
+| `components/measure-stage/`   | Scenen vægt- og højdetrinnet deler: stort tal, −/+, figur og lineal.              |
 | `components/signup-progress/` | Ringen med trinnummeret, kapitelnavn og kapitelbjælkerne.                         |
 | `components/steps/`           | Ét trin pr. mappe (`app-<trin>-step`). Trinnene læser og skriver kladden direkte. |
 

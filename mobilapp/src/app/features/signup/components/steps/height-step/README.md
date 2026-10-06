@@ -14,10 +14,10 @@ Signup-trin 5 (`height`, designets `s3`): højden.
   `computeFigureGeometry` i `shared/components/figure`.
 - `app-ui-ruler` (100–250 cm) ud til begge skærmkanter, tovejsbundet til
   `SignupStateService.heightCm`.
+- Tal, knapper, figur og lineal er den fælles [`MeasureStage`](../../measure-stage/README.md);
+  trinnet leverer overskrift, undertekst og BMI-blokken under knapperne.
 
 ## Beslutninger
 
 - BMI vises med dansk komma (`23,7`) via `formatDecimal`, hvor prototypen skrev
   punktum. Resten af appen bruger komma.
-- Designets faste px-bredde på figuren er oversat til `66 %` af indholdsbredden, så
-  der ikke står px-litteraler i SCSS'en.
