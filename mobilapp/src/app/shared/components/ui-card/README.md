@@ -5,15 +5,13 @@ Standardkortet fra designet: glas-fyld (`--color-surface`), blød hairline og 16
 makrokortene på Mad, grafkortet på Vægt og samlingskortene.
 
 ```html
-<app-ui-card>…</app-ui-card>
-<app-ui-card padding="lg" tone="accent">Til mål …</app-ui-card>
-<app-ui-card padding="none" tone="soft">…</app-ui-card>
+<app-ui-card>…</app-ui-card> <app-ui-card padding="lg" tone="accent">Til mål …</app-ui-card>
 ```
 
-| Input     | Standard    | Betydning                                                                                                                |
-| --------- | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `padding` | `'md'`      | `none` 0 · `sm` 12 px · `md` 16/18 px · `lg` 20 px                                                                       |
-| `tone`    | `'surface'` | `surface` glas · `soft` lidt kraftigere glas (`--color-surface-2`) · `accent` orange gradient med mørk tekst ("Til mål") |
+| Input     | Standard    | Betydning                                                            |
+| --------- | ----------- | -------------------------------------------------------------------- |
+| `padding` | `'md'`      | `md` 16/18 px · `lg` 20 px                                           |
+| `tone`    | `'surface'` | `surface` glas · `accent` orange gradient med mørk tekst ("Til mål") |
 
 ## Beslutninger
 

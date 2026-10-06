@@ -91,7 +91,6 @@ describe('UiProgressRing', () => {
     expect(Number(value.getAttribute('stroke-dasharray'))).toBeCloseTo(2 * Math.PI * 22, 6);
     expect(Number(value.getAttribute('stroke-dashoffset'))).toBeCloseTo(2 * Math.PI * 22 * 0.75, 6);
     expect(value.classList.contains('ui-progress-ring__value--positive')).toBe(true);
-    expect(value.classList.contains('ui-progress-ring__value--animated')).toBe(true);
     expect(host.style.getPropertyValue('--ring-size')).toBe('48px');
     expect(host.getAttribute('aria-valuenow')).toBe('25');
     expect(host.querySelector('.center')?.textContent).toBe('3');

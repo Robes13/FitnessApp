@@ -14,10 +14,9 @@ export const TAB_BAR_ITEMS: readonly TabBarItem[] = [
 ];
 ```
 
-| Input       | Standard            | Betydning                                                   |
-| ----------- | ------------------- | ----------------------------------------------------------- |
-| `items`     | (påkrævet)          | `readonly TabBarItem[]` – `{ label, icon: IconName, path }` |
-| `ariaLabel` | `'Hovednavigation'` | Navigationens navn (`role="navigation"`)                    |
+| Input   | Standard   | Betydning                                                   |
+| ------- | ---------- | ----------------------------------------------------------- |
+| `items` | (påkrævet) | `readonly TabBarItem[]` – `{ label, icon: IconName, path }` |
 
 `activeIndex` er offentligt (−1 når ingen sti matcher), så shell'en kan læse det, hvis den
 får brug for det.

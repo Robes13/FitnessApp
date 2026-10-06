@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  booleanAttribute,
   computed,
   input,
   numberAttribute,
@@ -50,7 +49,6 @@ export class UiProgressRing {
   readonly strokeWidth = input(DEFAULT_STROKE_WIDTH, { transform: numberAttribute });
   readonly tone = input<ProgressRingTone>('accent');
   readonly trackTone = input<ProgressRingTrackTone>('line');
-  readonly animated = input(true, { transform: booleanAttribute });
 
   protected readonly percentMin = 0;
   protected readonly percentMax = PERCENT_MAX;
@@ -66,9 +64,5 @@ export class UiProgressRing {
   protected readonly viewBox = computed(() => `0 0 ${this.diameter()} ${this.diameter()}`);
   protected readonly hasTrack = computed(() => this.trackTone() !== 'none');
   protected readonly trackClass = computed(() => `ui-progress-ring__track--${this.trackTone()}`);
-  protected readonly valueClass = computed(() =>
-    this.animated()
-      ? `ui-progress-ring__value--${this.tone()} ui-progress-ring__value--animated`
-      : `ui-progress-ring__value--${this.tone()}`,
-  );
+  protected readonly valueClass = computed(() => `ui-progress-ring__value--${this.tone()}`);
 }

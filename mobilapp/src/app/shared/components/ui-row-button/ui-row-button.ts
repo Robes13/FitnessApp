@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { UiIcon } from '../ui-icon/ui-icon';
 
-export type RowButtonValueTone = 'default' | 'muted' | 'accent';
+export type RowButtonValueTone = 'default' | 'accent';
 export type RowButtonDensity = 'regular' | 'compact';
 
 /**

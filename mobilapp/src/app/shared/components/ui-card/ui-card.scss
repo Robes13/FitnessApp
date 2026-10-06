@@ -7,20 +7,8 @@
   padding: var(--space-4) var(--space-4-5);
 }
 
-:host(.ui-card--padding-none) {
-  padding: 0;
-}
-
-:host(.ui-card--padding-sm) {
-  padding: var(--space-3);
-}
-
 :host(.ui-card--padding-lg) {
   padding: var(--space-5);
-}
-
-:host(.ui-card--soft) {
-  background: var(--color-surface-2);
 }
 
 :host(.ui-card--accent) {

@@ -32,10 +32,6 @@
   font-size: var(--font-size-sm);
 }
 
-:host(.ui-chip--filled) {
-  background: var(--color-surface);
-}
-
 :host(.ui-chip--selected) {
   border-color: var(--color-accent);
   background: var(--color-accent-soft);

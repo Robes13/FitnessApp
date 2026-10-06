@@ -55,6 +55,5 @@ Alt mellem taggene projiceres i et absolut centreret lag over SVG'en:
 | `strokeWidth` | `4`        | Stregtykkelse i px                                                                      |
 | `tone`        | `'accent'` | Fyldets farve (`ProgressRingTone`: `accent`, `positive`, `negative`, `info`, `neutral`) |
 | `trackTone`   | `'line'`   | Skinne: `line` (hairline), `neutral` (grå 30 %), `none` (ingen)                         |
-| `animated`    | `true`     | Animerer `stroke-dashoffset` ved ændring                                                |
 
 Host-elementet har `role="progressbar"` med `aria-valuenow` i procent.

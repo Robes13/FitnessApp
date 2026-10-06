@@ -26,10 +26,7 @@
 
   &__value {
     stroke: var(--color-accent);
-
-    &--animated {
-      transition: stroke-dashoffset var(--duration-slowest) var(--easing-standard);
-    }
+    transition: stroke-dashoffset var(--duration-slowest) var(--easing-standard);
 
     &--positive {
       stroke: var(--color-positive);

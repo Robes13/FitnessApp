@@ -34,7 +34,7 @@
 
 /* Sizes – `xl` is the base size above. */
 
-@each $size in 'lg', 'md', 'sm', 'xs', '2xs', '3xs', '4xs' {
+@each $size in 'lg', 'md', 'sm', 'xs', '2xs', '4xs' {
   :host(.ui-icon-button--#{$size}) {
     width: var(--size-control-#{$size});
     height: var(--size-control-#{$size});
@@ -80,15 +80,4 @@
 
 :host(.ui-icon-button--outline) {
   border: var(--border-width-thin) solid var(--color-border-stronger);
-}
-
-:host(.ui-icon-button--danger-soft) {
-  background: var(--color-negative-soft);
-  color: var(--color-negative);
-}
-
-@include mixins.hover {
-  :host(.ui-icon-button--danger-soft:hover) {
-    background: var(--color-negative-soft-strong);
-  }
 }

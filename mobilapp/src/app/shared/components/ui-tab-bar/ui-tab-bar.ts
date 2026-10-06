@@ -52,14 +52,11 @@ const ACTIVE_MATCH: IsActiveMatchOptions = {
 })
 export class UiTabBar {
   readonly items = input.required<readonly TabBarItem[]>();
-  readonly ariaLabel = input<string>();
 
   private readonly router = inject(Router);
   private readonly t = injectTranslate();
 
-  protected readonly ariaLabelText = computed(
-    () => this.ariaLabel() ?? this.t(DEFAULT_ARIA_LABEL_KEY),
-  );
+  protected readonly ariaLabelText = computed(() => this.t(DEFAULT_ARIA_LABEL_KEY));
 
   /** The latest URL after a completed navigation – used only as a trigger for `activeIndex`. */
   private readonly currentUrl = toSignal(

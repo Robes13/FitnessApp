@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
-export type CardTone = 'surface' | 'soft' | 'accent';
+export type CardPadding = 'md' | 'lg';
+export type CardTone = 'surface' | 'accent';
 
 /**
  * Standard card: glass fill, soft hairline and 16 px radius. `accent` is the orange

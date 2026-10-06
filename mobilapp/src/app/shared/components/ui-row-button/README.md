@@ -27,7 +27,7 @@ attribut på en `<button>`, så hele rækken er ét klikbart element.
 | `label`     | (påkrævet)  | Tekst til venstre                                                                       |
 | `ariaLabel` | `null`      | Erstatter rækkens oplæste navn, fx "Ret vægt" på opsummeringens rækker                  |
 | `value`     | `''`        | Tekst til højre (brydes over flere linjer, hvis den ikke kan stå på én)                 |
-| `valueTone` | `'default'` | `default` sekundær · `muted` dæmpet · `accent` orange (fx "Mål" i opsummeringen)        |
+| `valueTone` | `'default'` | `default` sekundær · `accent` orange (fx "Mål" i opsummeringen)                         |
 | `density`   | `'regular'` | `regular` 14 px padding, 14 px medium label, 13 px værdi · `compact` 44 px, 13 px tekst |
 | `chevron`   | `true`      | Chevron til højre for værdien                                                           |
 | `divider`   | `true`      | Hairline øverst (rækkerne stables uden mellemrum)                                       |

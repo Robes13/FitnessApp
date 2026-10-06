@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-/** 56 / 52 / 48 / 44 / 40 / 36 / 28 / 26 px – `--size-control-xl` … `-4xs`. */
-export type UiIconButtonSize = 'xl' | 'lg' | 'md' | 'sm' | 'xs' | '2xs' | '3xs' | '4xs';
+/** 56 / 52 / 48 / 44 / 40 / 36 / 26 px – `--size-control-xl` … `-2xs` and `-4xs`. */
+export type UiIconButtonSize = 'xl' | 'lg' | 'md' | 'sm' | 'xs' | '2xs' | '4xs';
 /** `ghost` is fully transparent (the design's small re-log button in history). */
-export type UiIconButtonTone =
-  'neutral' | 'ghost' | 'accent' | 'translucent' | 'outline' | 'danger-soft';
+export type UiIconButtonTone = 'neutral' | 'ghost' | 'accent' | 'translucent' | 'outline';
 
 /**
  * The design's round `.circ` button. Used as an attribute on a native `<button>` with an
