@@ -11,10 +11,9 @@
 > mail pr. konto pr. minut; uden for Development sendes mails via Roberts `SmtpEmailService` (Resend)
 > med teksterne fra `AccountEmails`. Detaljer i `README.md` ("Merge med main").
 
-Kravene står i `kravspec.md`. Hvor `map/*.md`, `map/critic.md` eller `api-gaps.md` siger noget andet
-end dette dokument, gælder dette dokument. `map/*.md` er baggrund om koden fra før integrationen, men
-ikke om beslutningerne. (Den første plan, `plan.md`, og `wave1-workflow.js` er slettet; de ligger i
-git-historikken.)
+Kravene står i `kravspec.md`. Hvor `api-gaps.md` siger noget andet end dette dokument, gælder dette
+dokument. (Den første plan, `plan.md`, `wave1-workflow.js`, mapping-rapporterne i `map/` og
+opgaveteksterne i `tasks/` er slettet; de ligger i git-historikken.)
 
 ## 0. Rammer
 
@@ -200,7 +199,7 @@ Defaults – Janick kan ændre dem (åbne spørgsmål i §7).
   (`REFRESH_TOKEN.TokenId` = jti, `PASSWORD_RESET_TOKEN.TokenId` = hash, `FOOD.CreatedByUserId` =
   rollebaseret FK) dokumenteres og omdøbes ikke.
 - **P23 Springes over:** ~~2.6 og 9.2-3a (Health Connect/Apple Health: nye native pakker, ikke
-  browser-testbart)~~ – senere bygget efter beslutning (`tasks/health.md`, ét plugin:
+  browser-testbart)~~ – senere bygget efter beslutning (ét plugin:
   `@capgo/capacitor-health`; API'et uændret), push/Firebase, deep links, offline-kø, idempotens-nøgler, tidszone-sync,
   makrofordeling pr. måltype, rotation af committede hemmeligheder og SAS i `profileImageUrl`
   (ops-opgaver, se §7), lockout på forgot/resend.
@@ -707,4 +706,4 @@ ops før enhver rigtig udrulning (se `README.md` "Før produktion").
 7. "Frokost" eller spec'ens "middagsmad" som label?
 8. OK at samtykkeoversigten er én række for vilkårene (inkl. sundheds- og profildata)? (**Ja**,
    P20.) Skridt fra Apple Sundhed / Health Connect (2.6, 9.2-3a) er bygget som en egen række med
-   kontakt (`tasks/health.md`).
+   kontakt.

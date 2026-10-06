@@ -24,7 +24,7 @@ domæne-branches (`wave<N>/<domæne>`) og rettelserne fra UI-testen (`uifix<N>/<
 | `history` (3)        | `GET /me/history` med payload og løbende indlæsning.                                                                                      |
 | `profile-extras` (3) | Profilbillede (upload/slet), dataeksport som download, tilbagetrækning af samtykke (= slet konto).                                        |
 
-Påmindelser og præstationer er stadig lokale på enheden (P18, P21). Opgaveteksterne står i `tasks/`.
+Påmindelser og præstationer er stadig lokale på enheden (P18, P21).
 
 ### API-ændringer
 
@@ -119,7 +119,7 @@ Fra plan-v2 §7. Appen er bygget med standardvalget i parentes.
 7. "Frokost" eller spec'ens "middagsmad"? (**Frokost**.)
 8. Samtykkeoversigten som én række (vilkår inkl. sundheds- og profildata)? (**Ja**, P20.) Skridt
    fra Apple Sundhed / Health Connect (2.6, 9.2-3a) er siden bygget som en egen række med kontakt
-   (`tasks/health.md`).
+   (se `../../README.md`).
 
 ## Før produktion
 
@@ -203,10 +203,6 @@ Se også `API/Migrations/README.md`. Appens kontrakter står i `core/services/RE
 | `plan-v2.md`          | **Bindende plan** (implementeret): rammer, produktbeslutninger, API-kontrakten (§3), bølger (§4), tests.  |
 | `kravspec.md`         | Kravspecifikationen (use cases, ikke-funktionelle krav, acceptkriterier).                                 |
 | `api-gaps.md`         | Mangelliste til API-teamet: hvad der er løst, hvad der stadig mangler, og noter fra UI-testen.            |
-| `tasks/*.md`          | Opgaveteksterne pr. domæne og til UI-testen, som de blev sendt (historik; nævner filer, der er slettet).  |
-| `map/api-contract.md` | Tværgående API-kontrakt fra før ændringerne: JSON, fejlformer, auth, paginering (baggrund; §3 går forud). |
-| `map/<domæne>.md`     | Mapping app ↔ API pr. domæne fra før integrationen (baggrund om koden, ikke om beslutningerne).           |
-| `map/critic.md`       | Rettelser til mapping-rapporterne. Går forud for dem, men ikke for `plan-v2.md`.                          |
 | `docker/compose.yml`  | Postgres + migration + API i Development.                                                                 |
 | `docker/outbox/`      | Dev-mails som tekstfiler (ignoreret af git).                                                              |
 
