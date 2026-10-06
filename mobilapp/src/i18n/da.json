@@ -821,8 +821,7 @@
       "saveWithoutLogging": "Gem uden at logge",
       "standardPortion": "Standard: {{portion}}",
       "decrease": "Mindre",
-      "increase": "Mere",
-      "dragHint": "Hold på tallet og træk til siden for at justere."
+      "increase": "Mere"
     },
     "barcodeScanner": {
       "title": "Scan stregkode",

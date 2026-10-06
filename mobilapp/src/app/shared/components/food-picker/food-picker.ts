@@ -123,11 +123,9 @@ const PER_100 = 100;
 
 /** Units measured like grams (5-steps, chips from the base portion); any other unit is counted. */
 const MEASURED_UNITS: readonly string[] = [DEFAULT_QUANTITY_UNIT, PRODUCT_BASE_UNIT.MILLILITRES];
-/** Step for −/+ and drag: 5 for grams and ml, otherwise 1 (design's `pickStep`). */
+/** Step for −/+: 5 for grams and ml, otherwise 1 (design's `pickStep`). */
 const GRAM_STEP = 5;
 const PIECE_STEP = 1;
-/** Pixels per step when the number is dragged sideways (design's `pickDragMove`). */
-const DRAG_PX_PER_STEP = 8;
 /** Quick picks for piece-based items (design's `pickChipVals`). */
 const PIECE_CHIP_VALUES: readonly number[] = [1, 2, 3, 4];
 /** Quick picks for grams: ½, 1×, 2× and 3× the default portion. */
@@ -189,11 +187,6 @@ const CTA_LABEL_KEY: Readonly<Record<FoodPickerCtaVerb, string>> = {
   Tilføj: 'shared.foodPicker.ctaAdd',
   Gem: 'shared.foodPicker.ctaSave',
 };
-
-interface DragState {
-  readonly startX: number;
-  readonly startAmount: number | null;
-}
 
 /**
  * The upper bounds keep the food's per-100 values and one log of its portion inside the API's
@@ -559,9 +552,6 @@ export class FoodPicker {
     }),
   );
   protected readonly canConfirm = computed(() => (this.amount() ?? 0) > 0 && !this.exceedsLogCap());
-  protected readonly dragging = signal(false);
-
-  private drag: DragState | null = null;
 
   constructor() {
     effect(() => {
@@ -673,42 +663,6 @@ export class FoodPicker {
   protected onAmountInput(rawValue: string): void {
     const parsed = parseDecimal(rawValue);
     this.amount.set(parsed === null ? null : Math.max(0, parsed));
-  }
-
-  /**
-   * The drag starts anywhere on the box, also on the digits: the field ignores pointers
-   * (`pointer-events: none`), so a hold never starts a text selection, and a tap focuses it
-   * through the box's `<label>`.
-   */
-  protected onDragStart(event: PointerEvent, box: HTMLElement): void {
-    box.setPointerCapture(event.pointerId);
-    this.drag = { startX: event.clientX, startAmount: this.amount() };
-    this.dragging.set(true);
-  }
-
-  protected onDragMove(event: PointerEvent): void {
-    if (!this.drag) {
-      return;
-    }
-    const step = this.amountStep();
-    const steps = Math.round((event.clientX - this.drag.startX) / DRAG_PX_PER_STEP);
-    // A tap moves a pixel or two: under one step the amount stays as typed (e.g. 0,5 stk).
-    this.amount.set(
-      steps === 0
-        ? this.drag.startAmount
-        : Math.max(step, (this.drag.startAmount ?? 0) + steps * step),
-    );
-  }
-
-  protected onDragEnd(event: PointerEvent, box: HTMLElement): void {
-    if (!this.drag) {
-      return;
-    }
-    this.drag = null;
-    if (box.hasPointerCapture(event.pointerId)) {
-      box.releasePointerCapture(event.pointerId);
-    }
-    this.dragging.set(false);
   }
 
   /** Emits the portion. The step stays until the parent closes the picker (a failed save can be retried). */

@@ -821,8 +821,7 @@
       "saveWithoutLogging": "Save without logging",
       "standardPortion": "Default: {{portion}}",
       "decrease": "Less",
-      "increase": "More",
-      "dragHint": "Hold the number and drag sideways to adjust."
+      "increase": "More"
     },
     "barcodeScanner": {
       "title": "Scan barcode",

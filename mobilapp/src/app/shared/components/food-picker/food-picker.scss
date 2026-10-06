@@ -293,7 +293,6 @@
     gap: var(--space-3);
   }
 
-  /* The number can be dragged sideways; only the field itself responds to regular typing. */
   &__amount {
     display: flex;
     flex: 1;
@@ -305,17 +304,6 @@
     border: var(--border-width-thin) solid var(--color-border-soft);
     border-radius: var(--radius-xl);
     background: var(--color-surface);
-    cursor: ew-resize;
-    touch-action: none;
-    user-select: none;
-    transition:
-      background-color var(--duration-fast) var(--easing-standard),
-      border-color var(--duration-fast) var(--easing-standard);
-
-    &--dragging {
-      border-color: var(--color-accent);
-      background: var(--color-accent-tint-2);
-    }
   }
 
   &__amount-field {
@@ -330,23 +318,12 @@
     font-size: var(--font-size-display-4xl);
     text-align: right;
     outline: none;
-
-    /* The box takes every pointer, so dragging works on the digits; a tap focuses via the label. */
-    pointer-events: none;
   }
 
   &__amount-unit {
     color: var(--color-text-secondary);
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
-  }
-
-  &__hint {
-    /* The design pulls the hint text 6 px closer to the number. */
-    margin-top: calc(-1 * var(--space-1-5));
-    color: var(--color-text-muted);
-    font-size: var(--font-size-xs);
-    text-align: center;
   }
 
   &__chips {

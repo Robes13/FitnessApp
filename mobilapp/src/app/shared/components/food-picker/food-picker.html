@@ -253,15 +253,7 @@
           >
             <app-ui-icon name="minus" size="lg" [strokeWidth]="3" />
           </button>
-          <label
-            #amountBox
-            class="food-picker__amount"
-            [class.food-picker__amount--dragging]="dragging()"
-            (pointerdown)="onDragStart($event, amountBox)"
-            (pointermove)="onDragMove($event)"
-            (pointerup)="onDragEnd($event, amountBox)"
-            (pointercancel)="onDragEnd($event, amountBox)"
-          >
+          <label class="food-picker__amount">
             <input
               #amountField
               class="food-picker__amount-field"
@@ -285,7 +277,6 @@
             <app-ui-icon name="plus" size="lg" [strokeWidth]="3" />
           </button>
         </div>
-        <p class="food-picker__hint">{{ 'shared.foodPicker.dragHint' | translate }}</p>
 
         <div class="food-picker__chips">
           @for (chip of chips(); track chip.value) {

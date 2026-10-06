@@ -403,53 +403,6 @@ describe('FoodPicker', () => {
       expect(host.picked[0]).toMatchObject({ amount: 1.5, item: { quantity: '1.5 stk' } });
     });
 
-    describe('dragging the amount', () => {
-      function pointer(type: string, clientX: number): Event {
-        const Ctor = globalThis.PointerEvent ?? MouseEvent;
-        return new Ctor(type, { clientX, bubbles: true });
-      }
-
-      /** jsdom has no pointer capture; the drag only needs the calls to exist. */
-      function amountBox(root: HTMLElement): HTMLElement {
-        const box = root.querySelector<HTMLElement>('.food-picker__amount');
-        if (!box) {
-          throw new Error('Boksen findes ikke.');
-        }
-        box.setPointerCapture = () => undefined;
-        box.hasPointerCapture = () => false;
-        return box;
-      }
-
-      it('starts on the digits too, which is the field the hint says to hold', async () => {
-        const { root, settle } = await setup({ configure: (h) => h.editItem.set(SALAD) });
-        const box = amountBox(root);
-        const field = root.querySelector<HTMLInputElement>('.food-picker__amount-field');
-
-        field?.dispatchEvent(pointer('pointerdown', 100));
-        field?.dispatchEvent(pointer('pointermove', 116)); // 2 steps of 8 px = +10 g
-        field?.dispatchEvent(pointer('pointerup', 116));
-        await settle();
-
-        expect(box.tagName).toBe('LABEL');
-        expect(field?.value).toBe('260');
-      });
-
-      it('leaves a typed amount under one step alone when the finger barely moves', async () => {
-        const { root, click, typeInto, settle } = await setup({ prepare: seedOwnFoods });
-        await click('.food-picker__result', 2); // Banana, 1 pc steps
-        const box = amountBox(root);
-        const field = () => root.querySelector<HTMLInputElement>('.food-picker__amount-field');
-        await typeInto(field(), '0,5');
-
-        box.dispatchEvent(pointer('pointerdown', 100));
-        box.dispatchEvent(pointer('pointermove', 102));
-        box.dispatchEvent(pointer('pointerup', 102));
-        await settle();
-
-        expect(field()?.value).toBe('0.5');
-      });
-    });
-
     it('scales a catalogue food from its own values, so it rounds only once', async () => {
       const { host, root, click, typeInto, text, texts } = await setup({
         prepare: () => flushTestFoodLog([own(8, 'Yoghurt', [61.5, 2.67, 4.5, 3.49])]),
