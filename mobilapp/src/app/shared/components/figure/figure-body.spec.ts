@@ -15,7 +15,7 @@ const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
         [geometry]="geometry()"
         [bandTone]="bandTone()"
         [showDumbbell]="showDumbbell()"
-        [showLeftArm]="showLeftArm()"
+        [showRightArm]="showRightArm()"
         [shaded]="shaded()"
         [expression]="expression()"
       />
@@ -26,7 +26,7 @@ class Host {
   readonly geometry = signal(computeFigureGeometry(75, 178));
   readonly bandTone = signal<FigureBandTone>('accent');
   readonly showDumbbell = signal(false);
-  readonly showLeftArm = signal(true);
+  readonly showRightArm = signal(true);
   readonly shaded = signal(false);
   readonly expression = signal<Partial<FigureExpression>>({});
 }
@@ -85,14 +85,14 @@ describe('FigureBody', () => {
     expect(order[9]).toContain('figure-body__head');
   });
 
-  it('slår håndvægt og venstre arm til og fra', async () => {
+  it('slår håndvægt og højre arm til og fra', async () => {
     const { fixture, host, queryAll } = await setup();
 
     expect(queryAll('.figure-body__dumbbell-bar')).toHaveLength(0);
     expect(queryAll('.figure-body__dumbbell-cap')).toHaveLength(0);
 
     host.showDumbbell.set(true);
-    host.showLeftArm.set(false);
+    host.showRightArm.set(false);
     await fixture.whenStable();
 
     expect(queryAll('.figure-body__dumbbell-bar')).toHaveLength(1);
@@ -100,7 +100,7 @@ describe('FigureBody', () => {
     expect(queryAll('.figure-body__dumbbell-bar')[0]?.getAttribute('x')).toBe('118');
     expect(queryAll('.figure-body__dumbbell-bar')[0]?.getAttribute('y')).toBe('217.7');
     expect(queryAll('.figure-body__arm')).toHaveLength(1);
-    expect(queryAll('.figure-body__arm')[0]?.getAttribute('d')).toBe('M120 188 Q152 210 138 220.7');
+    expect(queryAll('.figure-body__arm')[0]?.getAttribute('d')).toBe(host.geometry().armL);
   });
 
   it('skifter pandebåndets tone og dybdeskygge via BEM-modifiers', async () => {

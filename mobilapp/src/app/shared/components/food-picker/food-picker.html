@@ -11,19 +11,17 @@
           [placeholder]="'shared.foodPicker.searchPlaceholder' | translate"
           [ariaLabel]="'shared.foodPicker.searchPlaceholder' | translate"
         />
-        @if (showScan()) {
-          <button
-            app-ui-icon-button
-            size="md"
-            tone="accent"
-            type="button"
-            class="food-picker__scan"
-            [attr.aria-label]="'shared.foodPicker.scanBarcode' | translate"
-            (click)="requestScan()"
-          >
-            <app-ui-icon name="scan" size="xl" [strokeWidth]="2.2" />
-          </button>
-        }
+        <button
+          app-ui-icon-button
+          size="md"
+          tone="accent"
+          type="button"
+          class="food-picker__scan"
+          [attr.aria-label]="'shared.foodPicker.scanBarcode' | translate"
+          (click)="requestScan()"
+        >
+          <app-ui-icon name="scan" size="xl" [strokeWidth]="2.2" />
+        </button>
       </div>
 
       <div class="food-picker__results">

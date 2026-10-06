@@ -1,4 +1,4 @@
-import { Component, Provider, signal } from '@angular/core';
+import { Component, Provider, signal, viewChild } from '@angular/core';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FoodItem } from '../../../core/models/food';
@@ -10,7 +10,6 @@ import {
   FoodPickerCtaVerb,
   FoodPickerSelection,
   FoodPickerStartStep,
-  FoodPickerStep,
 } from './food-picker';
 import { provideComponentTestEnvironment } from '../../../core/testing/test-providers';
 
@@ -72,33 +71,28 @@ function seedOwnFoods(): void {
   imports: [FoodPicker],
   template: `
     <app-food-picker
-      [initialQuery]="initialQuery()"
       [startStep]="startStep()"
       [barcode]="barcode()"
       [editItem]="editItem()"
       [ctaVerb]="ctaVerb()"
-      [showScan]="showScan()"
       [busy]="busy()"
       saveAndLogLabel="Gem og log under morgenmad"
       (picked)="picked.push($event)"
       (customFoodCreated)="created.push($event)"
       (scanRequested)="scans = scans + 1"
-      (stepChange)="steps.push($event)"
       (cancelled)="cancels = cancels + 1"
     />
   `,
 })
 class Host {
-  readonly initialQuery = signal('');
+  readonly picker = viewChild.required(FoodPicker);
   readonly startStep = signal<FoodPickerStartStep>('search');
   readonly barcode = signal<string | null>(null);
   readonly editItem = signal<FoodItem | null>(null);
   readonly ctaVerb = signal<FoodPickerCtaVerb>('Tilføj');
-  readonly showScan = signal(true);
   readonly busy = signal(false);
   readonly picked: FoodPickerSelection[] = [];
   readonly created: FoodItem[] = [];
-  readonly steps: FoodPickerStep[] = [];
   scans = 0;
   cancels = 0;
 }
@@ -191,7 +185,7 @@ describe('FoodPicker', () => {
     it('shows the first six of the user own foods and the blank create row', async () => {
       const { host, texts, text } = await setup({ prepare: seedOwnFoods });
 
-      expect(host.steps).toEqual([]);
+      expect(host.picker().currentStep()).toBe('search');
       expect(texts('.food-picker__result-name')).toEqual([
         'Havregryn Egen vare',
         'Skyr naturel Egen vare',
@@ -257,26 +251,11 @@ describe('FoodPicker', () => {
       );
     });
 
-    it('prefills the query from initialQuery and marks the user own foods', async () => {
-      const { root, texts } = await setup({
-        prepare: seedOwnFoods,
-        configure: (host) => host.initialQuery.set('bar'),
-      });
-
-      expect(searchField(root)?.value).toBe('bar');
-      expect(texts('.food-picker__result-name')).toEqual(['Proteinbar Egen vare']);
-      expect(root.querySelectorAll('.food-picker__own')).toHaveLength(1);
-    });
-
-    it('emits scanRequested from the scan button and hides it when showScan is false', async () => {
-      const { fixture, host, root, click } = await setup();
+    it('emits scanRequested from the scan button', async () => {
+      const { host, click } = await setup();
 
       await click('.food-picker__scan');
       expect(host.scans).toBe(1);
-
-      host.showScan.set(false);
-      await fixture.whenStable();
-      expect(root.querySelector('.food-picker__scan')).toBeNull();
     });
   });
 
@@ -286,7 +265,7 @@ describe('FoodPicker', () => {
 
       await click('.food-picker__result', 2); // Banana, 1 pc
 
-      expect(host.steps).toEqual(['portion']);
+      expect(host.picker().currentStep()).toBe('portion');
       expect(text('.food-picker__title')).toBe('Banan');
       expect(text('.food-picker__subtitle')).toBe('Standard: 1 stk · 105 kcal');
       expect(root.querySelector<HTMLInputElement>('.food-picker__amount-field')?.value).toBe('1');
@@ -342,7 +321,7 @@ describe('FoodPicker', () => {
         },
       });
 
-      expect(host.steps).toEqual([]);
+      expect(host.picker().currentStep()).toBe('portion');
       expect(text('.food-picker__title')).toBe('Kyllingesalat');
       expect(text('.food-picker__subtitle')).toBe('Standard: 250 g · 380 kcal');
       expect(texts('.food-picker__chip')).toEqual(['125 g', '250 g', '500 g', '750 g']);
@@ -363,7 +342,7 @@ describe('FoodPicker', () => {
           unit: 'g',
         },
       ]);
-      expect(host.steps).toEqual([]);
+      expect(host.picker().currentStep()).toBe('portion');
     });
 
     it('steps grams by 5 with the minus/plus buttons and typed values', async () => {
@@ -431,7 +410,7 @@ describe('FoodPicker', () => {
       await click('.food-picker__result');
       await click('.food-picker__back');
 
-      expect(host.steps).toEqual(['portion', 'search']);
+      expect(host.picker().currentStep()).toBe('search');
       expect(host.cancels).toBe(0);
       expect(root.querySelector('.food-picker__search')).not.toBeNull();
     });
@@ -442,7 +421,7 @@ describe('FoodPicker', () => {
       await click('.food-picker__back');
 
       expect(host.cancels).toBe(1);
-      expect(host.steps).toEqual([]);
+      expect(host.picker().currentStep()).toBe('portion');
       expect(root.querySelector('.food-picker__title')).not.toBeNull();
     });
   });
@@ -779,7 +758,7 @@ describe('FoodPicker', () => {
       await typeInto(searchField(root), 'Mormors frikadeller');
       await click('.food-picker__create');
 
-      expect(host.steps).toEqual(['new-food']);
+      expect(host.picker().currentStep()).toBe('new-food');
       expect(text('.food-picker__title')).toBe('Ny egen vare');
       expect(text('.food-picker__subtitle')).toBe('Gemmes under Mine varer');
       expect(formFields(root)[0]?.value).toBe('Mormors frikadeller');
@@ -808,7 +787,7 @@ describe('FoodPicker', () => {
       await settle();
 
       // The form stays until the parent has saved the food, so a failed save keeps what was typed.
-      expect(host.steps).toEqual(['new-food']);
+      expect(host.picker().currentStep()).toBe('new-food');
       expect(host.created).toHaveLength(1);
       expect(host.created[0]).toMatchObject({
         name: 'Mormors frikadeller',
@@ -831,7 +810,7 @@ describe('FoodPicker', () => {
         .flush(testFood({ foodId: 9, name: 'Mormors frikadeller' }));
       await settle();
 
-      expect(host.steps).toEqual(['new-food', 'search']);
+      expect(host.picker().currentStep()).toBe('search');
       expect(searchField(root)?.value).toBe('');
     });
 
@@ -897,7 +876,7 @@ describe('FoodPicker', () => {
       // POST foods succeeded, but the piece serving failed: the food shows as 100 g.
       flushTestFoodLog([testFood({ foodId: 9, name: 'Kiks', caloriesPer100: 80 })]);
       await settle();
-      expect(host.steps).toEqual(['new-food']);
+      expect(host.picker().currentStep()).toBe('new-food');
       expect(root.textContent).not.toContain('allerede en egen vare med det navn');
 
       // The same tap again: the parent's addCustomFood only adds the serving.
@@ -909,7 +888,7 @@ describe('FoodPicker', () => {
       ]);
       await settle();
 
-      expect(host.steps).toEqual(['new-food', 'search']);
+      expect(host.picker().currentStep()).toBe('search');
     });
 
     it('puts the barcode on the food from the form the scanner opened, not on a later one', async () => {
@@ -958,7 +937,7 @@ describe('FoodPicker', () => {
         isCustom: true,
       });
       expect(host.picked[0]?.item.id).toMatch(/^food-/);
-      expect(host.steps).toEqual(['new-food']);
+      expect(host.picker().currentStep()).toBe('new-food');
       expect(formFields(root)[0]?.value).toBe('Proteinpandekage');
     });
   });

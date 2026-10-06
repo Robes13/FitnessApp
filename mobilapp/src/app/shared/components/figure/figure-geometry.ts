@@ -59,8 +59,6 @@ export interface FigureGeometry {
   readonly lampRot: number;
   /** The head's tilt in degrees when the figure ducks under the ceiling (from 230 cm). */
   readonly headRot: number;
-  /** The hand's y position – used by scenes that draw their own arms or props. */
-  readonly handY: number;
 }
 
 /** The floor line in the figure's viewBox. */
@@ -150,6 +148,5 @@ export function computeFigureGeometry(
     lampY2: r(ceilY + 30),
     lampRot: r(-28 * duck),
     headRot: r(-26 * duck),
-    handY: r(handY),
   };
 }

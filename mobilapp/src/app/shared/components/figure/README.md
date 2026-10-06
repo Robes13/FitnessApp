@@ -49,17 +49,16 @@ elementer, så Angular opretter dem i SVG-navnerummet.
 Tegnerækkefølgen er designets: skygge → ben → sko → arme → krop → bælte → (håndvægt) → hoved
 (hovedet er en `<g>`, der drejer med `headRot`).
 
-| Input                          | Standard   | Betydning                                                                                                              |
-| ------------------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `geometry`                     | påkrævet   | `FigureGeometry`                                                                                                       |
-| `bandTone`                     | `'accent'` | Pandebånd: `accent`, `pink` (kvinde), `white` (andet), `positive`, `negative`, `muted`, `accent-strong`, `accent-deep` |
-| `showDumbbell`                 | `false`    | Håndvægt i højre hånd                                                                                                  |
-| `showLeftArm` / `showRightArm` | `true`     | Slå en arm fra, når scenen tegner sin egen animerede arm                                                               |
-| `showHead`                     | `true`     | Slå hovedet fra (fx når scenen tegner hoved med hat)                                                                   |
-| `showShadow`                   | `true`     | Skyggeellipsen under figuren                                                                                           |
-| `shaded`                       | `false`    | Dybdeskygge som i træningsscenerne: venstre ben/arm/sko mørkere, højre arm lysere                                      |
-| `animated`                     | `true`     | Farve- og opacitetsovergange; scenens geometri styres samlet af `animatedFigure`                                       |
-| `expression`                   | `{}`       | `Partial<FigureExpression>` – overskriver ansigtet felt for felt                                                       |
+| Input          | Standard   | Betydning                                                                                                              |
+| -------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `geometry`     | påkrævet   | `FigureGeometry`                                                                                                       |
+| `bandTone`     | `'accent'` | Pandebånd: `accent`, `pink` (kvinde), `white` (andet), `positive`, `negative`, `muted`, `accent-strong`, `accent-deep` |
+| `showDumbbell` | `false`    | Håndvægt i højre hånd                                                                                                  |
+| `showRightArm` | `true`     | Slå højre arm fra, når scenen tegner sin egen animerede arm                                                            |
+| `showShadow`   | `true`     | Skyggeellipsen under figuren                                                                                           |
+| `shaded`       | `false`    | Dybdeskygge som i træningsscenerne: venstre ben/arm/sko mørkere, højre arm lysere                                      |
+| `animated`     | `true`     | Farve- og opacitetsovergange; scenens geometri styres samlet af `animatedFigure`                                       |
+| `expression`   | `{}`       | `Partial<FigureExpression>` – overskriver ansigtet felt for felt                                                       |
 
 `FigureExpression` dækker smil-opacitet, åben mund/tunge, bryn (rotation + opacitet), kinder
 (`cheekTone: accent | accent-soft | negative | negative-strong`, `cheekRadius`), pupilforskydning

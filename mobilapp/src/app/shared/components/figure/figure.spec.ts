@@ -8,7 +8,6 @@ import { Figure } from './figure';
     <app-figure
       [weightKg]="weightKg()"
       [heightCm]="heightCm()"
-      [mood]="mood()"
       [showCeiling]="showCeiling()"
       showDumbbell
     />
@@ -17,7 +16,6 @@ import { Figure } from './figure';
 class Host {
   readonly weightKg = signal(75);
   readonly heightCm = signal(178);
-  readonly mood = signal(0);
   readonly showCeiling = signal(false);
 }
 
@@ -63,22 +61,6 @@ describe('Figure', () => {
     expect(lamp.getAttribute('transform')).toBe('rotate(-28 140 92)');
     expect(svg.querySelector('.figure-body__head')?.getAttribute('transform')).toBe(
       'rotate(-26 100 116.2)',
-    );
-  });
-
-  it('lader humøret styre smilet', async () => {
-    const { fixture, host, svg } = await setup();
-
-    host.mood.set(1);
-    await fixture.whenStable();
-    expect(svg.querySelector('.figure-body__smile')?.getAttribute('d')).toBe(
-      'M91 161 Q100 174 109 161',
-    );
-
-    host.mood.set(-1);
-    await fixture.whenStable();
-    expect(svg.querySelector('.figure-body__smile')?.getAttribute('d')).toBe(
-      'M91 167 Q100 158 109 167',
     );
   });
 });

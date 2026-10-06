@@ -75,7 +75,7 @@ export function defaultFigureExpression(geometry: FigureGeometry): FigureExpress
  *
  * Draws shadow, legs, shoes, arms, body, belt, (dumbbell) and head in the design's order.
  * All colors are `--color-figure-*` tokens via classes; scenes turn off individual parts
- * (`showLeftArm`, `showRightArm`, `showHead`, `showShadow`) and draw their own animated
+ * (`showRightArm`, `showShadow`) and draw their own animated
  * variants on top. `expression` overrides the face's default expression field by field.
  */
 @Component({
@@ -92,9 +92,7 @@ export class FigureBody {
   readonly geometry = input.required<FigureGeometry>();
   readonly bandTone = input<FigureBandTone>('accent');
   readonly showDumbbell = input(false, { transform: booleanAttribute });
-  readonly showLeftArm = input(true, { transform: booleanAttribute });
   readonly showRightArm = input(true, { transform: booleanAttribute });
-  readonly showHead = input(true, { transform: booleanAttribute });
   readonly showShadow = input(true, { transform: booleanAttribute });
   /** Depth shading as in the training scenes: left leg/arm/shoe darker, right arm lighter. */
   readonly shaded = input(false, { transform: booleanAttribute });

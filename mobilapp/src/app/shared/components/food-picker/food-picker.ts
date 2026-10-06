@@ -228,8 +228,8 @@ function notBlank(control: AbstractControl<string>): ValidationErrors | null {
 /**
  * The item picker from "Add food" (design's `addFoodsOpen` / `newFoodOpen` / `pickOpen`):
  * search → pick a portion, or create a custom item. The component owns the step and announces
- * it via `currentStep` (and with `stepChange` on change), so the parent can hide the meal
- * selector and tabs outside the search step.
+ * it via `currentStep`, so the parent can hide the meal selector and tabs outside the search
+ * step.
  *
  * Search goes through `FoodSearchService`; scaling and portion parsing through
  * `NutritionCalculator`. The macros in `picked.item` are already scaled, and `quantity` is
@@ -255,8 +255,6 @@ function notBlank(control: AbstractControl<string>): ValidationErrors | null {
   host: { class: 'food-picker' },
 })
 export class FoodPicker {
-  /** Pre-filled search text. */
-  readonly initialQuery = input('');
   /** Start on the search or directly on "New custom item" (the scanner's "The item has no barcode"). */
   readonly startStep = input<FoodPickerStartStep>('search');
   /**
@@ -271,7 +269,6 @@ export class FoodPicker {
   readonly saveAndLogLabel = input.required<string>();
   /** Its secondary, save-only button; `null` (the default) is "Gem uden at logge". */
   readonly saveOnlyLabel = input<string | null>(null);
-  readonly showScan = input(true, { transform: booleanAttribute });
   /** The parent is saving the pick: the primary buttons show a spinner and block further taps. */
   readonly busy = input(false, { transform: booleanAttribute });
 
@@ -280,7 +277,6 @@ export class FoodPicker {
   /** New custom item from "Save without logging". */
   readonly customFoodCreated = output<FoodItem>();
   readonly scanRequested = output<void>();
-  readonly stepChange = output<FoodPickerStep>();
   /** Back from the portion step when there's no search to return to (editing). */
   readonly cancelled = output<void>();
 
@@ -292,10 +288,7 @@ export class FoodPicker {
   protected readonly step = linkedSignal<FoodPickerStep>(() =>
     this.editItem() ? 'portion' : this.startStep(),
   );
-  /**
-   * The step the picker is on – including the first one. `stepChange` is only emitted on
-   * change, so a parent that needs to know the step from the start reads this signal instead of guessing.
-   */
+  /** The step the picker is on, from the first one – so the parent can hide the meal selector and tabs. */
   readonly currentStep: Signal<FoodPickerStep> = this.step.asReadonly();
 
   // --- Search --------------------------------------------------------------------------------
@@ -554,9 +547,6 @@ export class FoodPicker {
   protected readonly canConfirm = computed(() => (this.amount() ?? 0) > 0 && !this.exceedsLogCap());
 
   constructor() {
-    effect(() => {
-      this.queryControl.setValue(this.initialQuery());
-    });
     // Only an unchanged form is a retry of the food already sent (see `submitted`).
     this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.submitted.set(null));
     effect(() => {
@@ -573,7 +563,7 @@ export class FoodPicker {
 
   protected pick(item: FoodItem): void {
     this.portionItem.set(item);
-    this.goTo('portion');
+    this.step.set('portion');
   }
 
   protected requestScan(): void {
@@ -594,13 +584,13 @@ export class FoodPicker {
       fat: null,
     });
     this.showMore.set(false);
-    this.goTo('new-food');
+    this.step.set('new-food');
   }
 
   // --- New custom item -------------------------------------------------------------------
 
   protected closeNewFood(): void {
-    this.goTo('search');
+    this.step.set('search');
   }
 
   protected selectUnit(unit: FoodUnitId): void {
@@ -644,7 +634,7 @@ export class FoodPicker {
       return;
     }
     this.portionItem.set(null);
-    this.goTo('search');
+    this.step.set('search');
   }
 
   protected decrease(): void {
@@ -682,14 +672,6 @@ export class FoodPicker {
 
   // --- Shared --------------------------------------------------------------------------------
 
-  private goTo(step: FoodPickerStep): void {
-    if (this.step() === step) {
-      return;
-    }
-    this.step.set(step);
-    this.stepChange.emit(step);
-  }
-
   /**
    * The catalogue has the food under its name and in its unit. A food whose serving failed shows
    * as `100 g`, so the form stays and the same save can heal it.
@@ -710,7 +692,7 @@ export class FoodPicker {
   private finishNewFood(): void {
     this.submitted.set(null);
     this.queryControl.setValue('');
-    this.goTo('search');
+    this.step.set('search');
   }
 
   /**
