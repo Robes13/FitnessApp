@@ -7,12 +7,10 @@ import {
   OPEN_FOOD_FACTS,
   PRODUCT_BASE_GRAMS,
   PRODUCT_BASE_UNIT,
-  PRODUCT_CACHE_LIMIT,
   PRODUCT_ID_PREFIX,
   PRODUCT_LOOKUP_TIMEOUT_MS,
   openFoodFactsProductUrl,
 } from '../../constants/barcode';
-import { STORAGE_KEY } from '../../constants/storage-key';
 import { ProductBaseUnit, ProductLookupResult, ScannedProduct } from '../../models/barcode';
 import {
   OpenFoodFactsNutriments,
@@ -20,14 +18,6 @@ import {
   OpenFoodFactsProductResponse,
 } from '../../models/open-food-facts';
 import { Translate, injectTranslate } from '../language/translate';
-import { StorageService } from '../storage/storage';
-
-/** Barcode → product. Insertion order is the age, so the oldest entry is dropped first. */
-type ProductCache = Readonly<Record<string, ScannedProduct>>;
-/** A cached product as stored; entries from before liquids were detected have no `unit`. */
-type StoredProduct = Omit<ScannedProduct, 'unit'> & { readonly unit?: ProductBaseUnit };
-
-const PRODUCT_BASE_UNITS: readonly string[] = Object.values(PRODUCT_BASE_UNIT);
 
 /** Grams in a serving text: `'30 g'`, `'1 bar (40 g)'`, `'12,5g'`. Not `'250 ml'`. */
 const SERVING_GRAMS_PATTERN = /(\d+(?:[.,]\d+)?)\s*g\b/i;
@@ -40,8 +30,8 @@ const MACRO_DECIMALS_FACTOR = 10;
  * Looks products up by barcode in Open Food Facts (API v2) and maps them to `ScannedProduct`
  * with macros per 100 g.
  *
- * Found products are cached locally (`STORAGE_KEY.PRODUCT_CACHE`), and the cache is asked
- * first, so a product scanned before also works offline. Never errors: an unknown product or
+ * Found products are cached in memory for the session, and the cache is asked first, so logging
+ * a product right after scanning it does not fetch it again. Never errors: an unknown product or
  * one without kcal is `not-found`, a network error or timeout is `error`.
  *
  * Browsers don't allow setting `User-Agent`, and the app's requests go through the WebView,
@@ -50,11 +40,11 @@ const MACRO_DECIMALS_FACTOR = 10;
 @Injectable({ providedIn: 'root' })
 export class ProductLookupService {
   private readonly http = inject(HttpClient);
-  private readonly storage = inject(StorageService);
+  private readonly cache = new Map<string, ScannedProduct>();
   private readonly t = injectTranslate();
 
   lookup(barcode: string): Observable<ProductLookupResult> {
-    const cached = this.readCache()[barcode];
+    const cached = this.cache.get(barcode);
     if (cached) {
       return of({ status: 'found', product: cached });
     }
@@ -67,39 +57,11 @@ export class ProductLookupService {
         map((response) => toLookupResult(this.t, barcode, response)),
         tap((result) => {
           if (result.status === 'found') {
-            this.writeCache(result.product);
+            this.cache.set(barcode, result.product);
           }
         }),
         catchError((error: unknown) => of(toErrorResult(barcode, error))),
       );
-  }
-
-  /** Drops malformed entries (an old app version or edited storage) instead of trusting them. */
-  private readCache(): ProductCache {
-    const stored = this.storage.read<unknown>(STORAGE_KEY.PRODUCT_CACHE);
-    if (!isRecord(stored)) {
-      return {};
-    }
-    return Object.fromEntries(
-      Object.entries(stored)
-        .filter(
-          (entry): entry is [string, StoredProduct] =>
-            isStoredProduct(entry[1]) && entry[1].barcode === entry[0],
-        )
-        .map(([barcode, product]) => [
-          barcode,
-          { ...product, unit: product.unit ?? PRODUCT_BASE_UNIT.GRAMS },
-        ]),
-    );
-  }
-
-  private writeCache(product: ScannedProduct): void {
-    const entries = Object.entries(this.readCache()).filter(([code]) => code !== product.barcode);
-    const kept = entries.slice(Math.max(0, entries.length - PRODUCT_CACHE_LIMIT + 1));
-    this.storage.write<ProductCache>(STORAGE_KEY.PRODUCT_CACHE, {
-      ...Object.fromEntries(kept),
-      [product.barcode]: product,
-    });
   }
 }
 
@@ -190,33 +152,4 @@ function toNumber(value: number | string | undefined): number | null {
 
 function roundMacro(value: number): number {
   return Math.round(value * MACRO_DECIMALS_FACTOR) / MACRO_DECIMALS_FACTOR;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function isNonNegativeNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
-}
-
-function isStoredProduct(value: unknown): value is StoredProduct {
-  if (!isRecord(value) || typeof value['barcode'] !== 'string' || !isRecord(value['item'])) {
-    return false;
-  }
-  const item = value['item'];
-  const servingGrams = value['servingGrams'];
-  const unit = value['unit'];
-  return (
-    (unit === undefined || (typeof unit === 'string' && PRODUCT_BASE_UNITS.includes(unit))) &&
-    typeof item['id'] === 'string' &&
-    typeof item['name'] === 'string' &&
-    typeof item['quantity'] === 'string' &&
-    (item['brand'] === undefined || typeof item['brand'] === 'string') &&
-    isNonNegativeNumber(item['kcal']) &&
-    isNonNegativeNumber(item['protein']) &&
-    isNonNegativeNumber(item['carbs']) &&
-    isNonNegativeNumber(item['fat']) &&
-    (servingGrams === null || isNonNegativeNumber(servingGrams))
-  );
 }

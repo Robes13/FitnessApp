@@ -6,7 +6,6 @@ export const STORAGE_KEY = {
   THEME: 'nutrify.theme',
   LANGUAGE: 'nutrify.language',
   SCAN_COUNT: 'nutrify.scan-count',
-  PRODUCT_CACHE: 'nutrify.product-cache',
   REMINDERS: 'nutrify.reminders',
   /**
    * The latest step sync (`StepSyncRecord`). On the device, not in the API, because the health

@@ -41,9 +41,6 @@ export const PRODUCT_BASE_GRAMS = 100;
 /** Prefix for ids of items looked up by barcode: `off-<barcode>`. */
 export const PRODUCT_ID_PREFIX = 'off';
 
-/** Max number of looked-up products kept in the local cache (oldest are dropped first). */
-export const PRODUCT_CACHE_LIMIT = 100;
-
 /** Amount the user may log from a scanned product, in grams. */
 export const SCAN_AMOUNT_MIN_GRAMS = 1;
 export const SCAN_AMOUNT_MAX_GRAMS = 5000;

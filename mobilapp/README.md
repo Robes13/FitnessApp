@@ -274,8 +274,8 @@ npm run sync   # ng build + cap sync
   CocoaPods (med `platform :ios, '15.5'` i `Podfile`) eller pluginet skiftes ud.
 - **Browser:** Intet kamera. Scanneren viser et felt til stregkodens tal (8–14 cifre), og
   opslaget kører som i appen – så hele forløbet kan testes med `npm start`.
-- Fundne varer gemmes lokalt pr. stregkode (`nutrify.product-cache`, højst 100), så en vare,
-  der er scannet før, også virker offline.
+- Fundne varer huskes i hukommelsen pr. stregkode, så opslaget ved logning lige efter en
+  scanning ikke henter varen igen.
 
 ## Skridt fra Apple Sundhed / Health Connect
 

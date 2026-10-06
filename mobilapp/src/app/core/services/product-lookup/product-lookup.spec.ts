@@ -7,10 +7,8 @@ import {
   PRODUCT_LOOKUP_TIMEOUT_MS,
   openFoodFactsProductUrl,
 } from '../../constants/barcode';
-import { STORAGE_KEY } from '../../constants/storage-key';
 import { ProductLookupResult, ScannedProduct } from '../../models/barcode';
 import { OpenFoodFactsProductResponse } from '../../models/open-food-facts';
-import { FakeStorage, createFakeStorage } from '../../testing/fake-document';
 import { Translate, injectTranslate } from '../language/translate';
 import { provideCoreTestEnvironment } from '../../testing/test-providers';
 import { ProductLookupService, toScannedProduct } from './product-lookup';
@@ -52,18 +50,12 @@ const EXPECTED_PRODUCT: ScannedProduct = {
 };
 
 describe('ProductLookupService', () => {
-  let storage: FakeStorage;
   let http: HttpTestingController;
   let service: ProductLookupService;
 
   beforeEach(() => {
-    storage = createFakeStorage();
     TestBed.configureTestingModule({
-      providers: [
-        ...provideCoreTestEnvironment({ storage }),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [...provideCoreTestEnvironment(), provideHttpClient(), provideHttpClientTesting()],
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(ProductLookupService);
@@ -77,17 +69,14 @@ describe('ProductLookupService', () => {
     return firstValueFrom(service.lookup(BARCODE));
   }
 
-  it('maps a found product to 100 g and caches it', async () => {
+  it('maps a found product to 100 g', async () => {
     const result = lookup();
     http.expectOne(REQUEST_URL).flush(FOUND_RESPONSE);
 
     await expect(result).resolves.toEqual({ status: 'found', product: EXPECTED_PRODUCT });
-    expect(JSON.parse(storage.getItem(STORAGE_KEY.PRODUCT_CACHE) ?? '{}')).toEqual({
-      [BARCODE]: EXPECTED_PRODUCT,
-    });
   });
 
-  it('answers a repeated lookup from the cache without a request (offline)', async () => {
+  it('answers a repeated lookup from the cache without a request', async () => {
     const first = lookup();
     http.expectOne(REQUEST_URL).flush(FOUND_RESPONSE);
     await first;
@@ -104,7 +93,6 @@ describe('ProductLookupService', () => {
     const by404 = lookup();
     http.expectOne(REQUEST_URL).flush({ status: 0 }, { status: 404, statusText: 'Not Found' });
     await expect(by404).resolves.toEqual({ status: 'not-found', barcode: BARCODE });
-    expect(storage.getItem(STORAGE_KEY.PRODUCT_CACHE)).toBeNull();
   });
 
   it('is not-found when the product has no kcal', async () => {
@@ -115,41 +103,6 @@ describe('ProductLookupService', () => {
     });
 
     await expect(result).resolves.toEqual({ status: 'not-found', barcode: BARCODE });
-  });
-
-  it('drops malformed cache entries and looks them up again', async () => {
-    storage.setItem(
-      STORAGE_KEY.PRODUCT_CACHE,
-      JSON.stringify({
-        [BARCODE]: { barcode: BARCODE, item: { name: 'Uden kcal' }, servingGrams: null },
-        '12345678': 'not a product',
-      }),
-    );
-
-    const result = lookup();
-    http.expectOne(REQUEST_URL).flush(FOUND_RESPONSE);
-
-    await expect(result).resolves.toEqual({ status: 'found', product: EXPECTED_PRODUCT });
-    expect(JSON.parse(storage.getItem(STORAGE_KEY.PRODUCT_CACHE) ?? '{}')).toEqual({
-      [BARCODE]: EXPECTED_PRODUCT,
-    });
-  });
-
-  it('reads a cached product from before liquids had a unit as grams (offline)', async () => {
-    const { unit: _unit, ...legacy } = EXPECTED_PRODUCT;
-    storage.setItem(STORAGE_KEY.PRODUCT_CACHE, JSON.stringify({ [BARCODE]: legacy }));
-
-    await expect(lookup()).resolves.toEqual({ status: 'found', product: EXPECTED_PRODUCT });
-    http.expectNone(REQUEST_URL);
-  });
-
-  it('ignores a cache that is not an object', async () => {
-    storage.setItem(STORAGE_KEY.PRODUCT_CACHE, JSON.stringify([EXPECTED_PRODUCT]));
-
-    const result = lookup();
-    http.expectOne(REQUEST_URL).flush(FOUND_RESPONSE);
-
-    await expect(result).resolves.toEqual({ status: 'found', product: EXPECTED_PRODUCT });
   });
 
   it('is an error on network failure', async () => {
