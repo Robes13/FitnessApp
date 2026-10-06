@@ -22,25 +22,11 @@ export class StorageService {
     }
   }
 
-  write<T>(key: StorageKey, value: T): boolean {
+  write<T>(key: StorageKey, value: T): void {
     try {
-      const storage = this.storage();
-      if (!storage) {
-        return false;
-      }
-      storage.setItem(key, JSON.stringify(value));
-      return true;
+      this.storage()?.setItem(key, JSON.stringify(value));
     } catch (error: unknown) {
       this.warn('skrive', key, error);
-      return false;
-    }
-  }
-
-  remove(key: StorageKey): void {
-    try {
-      this.storage()?.removeItem(key);
-    } catch (error: unknown) {
-      this.warn('slette', key, error);
     }
   }
 

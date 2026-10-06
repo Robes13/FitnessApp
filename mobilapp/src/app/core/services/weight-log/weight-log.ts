@@ -27,7 +27,7 @@ import {
   readProblemBody,
   toApiError,
 } from '../../utils/api';
-import { addDays, isSameDay } from '../../utils/date-format';
+import { addDays } from '../../utils/date-format';
 import { roundTo } from '../../utils/math';
 import { NOW } from '../../utils/now';
 import { injectTranslate } from '../language/translate';
@@ -59,10 +59,6 @@ export class WeightLogService implements SessionDataStore {
   readonly status: Signal<StoreStatus> = this.statusState.asReadonly();
   readonly entries: Signal<readonly WeighEntry[]> = this.entriesState.asReadonly();
   readonly latest: Signal<WeighEntry | null> = computed(() => this.entriesState()[0] ?? null);
-  readonly weighedToday: Signal<boolean> = computed(() => {
-    const latest = this.latest();
-    return latest !== null && isSameDay(new Date(latest.at), this.now());
-  });
 
   /**
    * Every weigh-in, page by page (one GET until the user has more than 100). Never errors – a

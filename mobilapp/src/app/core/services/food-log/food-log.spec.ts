@@ -143,7 +143,6 @@ describe('FoodLogService', () => {
     ]);
     expect(service.entries().map((entry) => entry.logId)).toEqual([String(breakfast.foodLogId)]);
     expect(service.byMeal().get('morgen')).toHaveLength(1);
-    expect(service.allEntries().map((entry) => entry.meal)).toEqual(['morgen', 'aften']);
     expect(service.dailyTotals(addDays(TEST_NOW, -1), TEST_NOW)).toEqual([
       expect.objectContaining({ entryCount: 1, totals: expect.objectContaining({ kcal: 222 }) }),
       expect.objectContaining({ entryCount: 1, totals: expect.objectContaining({ kcal: 222 }) }),

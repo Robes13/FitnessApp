@@ -128,7 +128,6 @@ describe('WeightLogService', () => {
         kind: 'saved',
         entry: { id: '7', kg: 74.2, at: TEST_NOW.toISOString() },
       });
-      expect(service.weighedToday()).toBe(true);
       expect(profile.profile().weightKg).toBe(74.2);
       expect(profile.targets().kcal).toBe(2500);
     });
@@ -193,7 +192,6 @@ describe('WeightLogService', () => {
 
       expect((await result).kg).toBe(73.5);
       expect(service.entries().map((entry) => entry.kg)).toEqual([73.5, 76]);
-      expect(service.weighedToday()).toBe(true);
       expect(profile.profile().weightKg).toBe(73.5);
     });
 
@@ -243,7 +241,6 @@ describe('WeightLogService', () => {
       await done;
 
       expect(service.entries()).toEqual([]);
-      expect(service.weighedToday()).toBe(false);
       expect(TestBed.inject(UserProfileService).profile().weightKg).toBe(81);
     });
 

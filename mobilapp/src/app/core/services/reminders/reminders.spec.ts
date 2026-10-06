@@ -135,7 +135,6 @@ describe('ReminderService', () => {
 
     expect(notifier.pendingIds()).toEqual([DAILY_LOG_ID]);
     expect(notifier.pending.get(DAILY_LOG_ID)?.time).toEqual({ hour: 21, minute: 0 });
-    expect(service.isDelivering()).toBe(true);
   });
 
   it('reschedules idempotently with stable ids', async () => {
@@ -182,7 +181,6 @@ describe('ReminderService', () => {
     await setMaster(service, false);
     await settle(service);
     expect(notifier.pendingIds()).toEqual([]);
-    expect(service.isDelivering()).toBe(false);
 
     await setMaster(service, true);
     await settle(service);
@@ -240,7 +238,6 @@ describe('ReminderService', () => {
     await settle(service);
 
     expect(session.status()).toBe('pending-verification');
-    expect(service.isDelivering()).toBe(false);
     expect(notifier.pendingIds()).toEqual([]);
   });
 

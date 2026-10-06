@@ -142,7 +142,6 @@ describe('WeightPage', () => {
     await fixture.whenStable();
 
     expect(save?.textContent?.trim()).toBe('Gemt ✓');
-    expect(TestBed.inject(WeightLogService).weighedToday()).toBe(true);
     expect(root.querySelector('.weight-log-list__date')?.textContent?.trim()).toBe('I dag');
   });
 
@@ -224,7 +223,7 @@ describe('WeightPage', () => {
     http.expectOne({ method: 'POST', url: LOGS_URL }).flush(weightLogDto(9, 75, 0, TEST_NOW));
     flushGoal();
 
-    expect(TestBed.inject(WeightLogService).weighedToday()).toBe(true);
+    expect(TestBed.inject(WeightLogService).latest()?.id).toBe('9');
   });
 
   it('har intervalchipsene under grafen og kan skifte periode', async () => {

@@ -168,7 +168,6 @@ describe('WeightViewService', () => {
       expect(view.logRows()).toHaveLength(4);
       expect(view.logRows()[0]?.date).toBe('I dag');
       expect(TestBed.inject(UserProfileService).profile().weightKg).toBe(73.4);
-      expect(TestBed.inject(WeightLogService).weighedToday()).toBe(true);
       expect(view.lastWeighLabel()).toBe('Sidst vejet i dag');
     });
 

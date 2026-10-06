@@ -120,7 +120,7 @@ describe('sammenkobling mellem features', () => {
     theme.set('light');
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
 
-    theme.toggle();
+    theme.set('dark');
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
   });
 });

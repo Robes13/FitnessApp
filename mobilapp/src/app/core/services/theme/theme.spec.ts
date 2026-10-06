@@ -38,24 +38,19 @@ describe('ThemeService', () => {
   it('defaults to dark and applies it to <html>', () => {
     const theme = setup();
 
-    expect(theme.theme()).toBe('dark');
     expect(theme.isLight()).toBe(false);
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(storage.getItem(STORAGE_KEY.THEME)).toBeNull();
   });
 
-  it('toggles to light, updates <html> and persists', () => {
+  it('switches to light, updates <html> and persists', () => {
     const theme = setup();
 
-    theme.toggle();
+    theme.set('light');
 
-    expect(theme.theme()).toBe('light');
     expect(theme.isLight()).toBe(true);
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
     expect(storage.getItem(STORAGE_KEY.THEME)).toBe('"light"');
-
-    theme.toggle();
-    expect(theme.theme()).toBe('dark');
   });
 
   it('sets a theme explicitly', () => {
@@ -64,7 +59,7 @@ describe('ThemeService', () => {
     theme.set('light');
     theme.set('dark');
 
-    expect(theme.theme()).toBe('dark');
+    expect(theme.isLight()).toBe(false);
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(storage.getItem(STORAGE_KEY.THEME)).toBe('"dark"');
   });
@@ -83,13 +78,13 @@ describe('ThemeService', () => {
 
     const theme = setup();
 
-    expect(theme.theme()).toBe('dark');
+    expect(theme.isLight()).toBe(false);
   });
 
   it('styles the native system bars for the applied theme', () => {
     const theme = setup();
 
-    theme.toggle();
+    theme.set('light');
 
     expect(barThemes).toEqual(['dark', 'light']);
   });

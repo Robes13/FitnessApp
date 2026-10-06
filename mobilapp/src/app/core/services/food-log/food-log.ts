@@ -75,8 +75,7 @@ const NO_ENTRIES: readonly LoggedFood[] = [];
  * from the API.
  *
  * `entries` / `totals` / `byMeal` always describe today; when the date changes they switch to
- * the new (empty) day while earlier days stay readable via `entriesFor` / `totalsFor` /
- * `dailyTotals` / `allEntries`.
+ * the new (empty) day while earlier days stay readable via `entriesFor` / `dailyTotals`.
  *
  * Every mutation is pessimistic: memory changes from the API's answer, never before. A failed
  * mutation errors with an `ApiError` (or a `DuplicateCustomFoodNameError`) and changes nothing.
@@ -123,10 +122,6 @@ export class FoodLogService implements SessionDataStore {
     }
     return groups;
   });
-  /** Every loaded entry across all days, newest day first (in logged order within a day). */
-  readonly allEntries: Signal<readonly LoggedFood[]> = computed(() =>
-    [...this.days()].sort(([a], [b]) => (a < b ? 1 : -1)).flatMap(([, entries]) => entries),
-  );
 
   constructor() {
     let midnightTimer: ReturnType<typeof setTimeout>;
@@ -193,10 +188,6 @@ export class FoodLogService implements SessionDataStore {
   /** The entries logged on the given local day. Reactive when read inside `computed()`. */
   entriesFor(date: Date): readonly LoggedFood[] {
     return this.days().get(toIsoDate(date)) ?? NO_ENTRIES;
-  }
-
-  totalsFor(date: Date): Macros {
-    return sumMacros(this.entriesFor(date));
   }
 
   /** One row per day from `from` to `to` (both included), also for days without a log. */

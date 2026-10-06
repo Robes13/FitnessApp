@@ -26,12 +26,7 @@ describe('StorageService', () => {
     expect(storage.getItem(STORAGE_KEY.REMINDERS)).toBe('{"username":"mads","weightKg":75}');
   });
 
-  it('returns null for missing keys and after remove', () => {
-    expect(service.read(STORAGE_KEY.THEME)).toBeNull();
-
-    service.write(STORAGE_KEY.THEME, 'light');
-    service.remove(STORAGE_KEY.THEME);
-
+  it('returns null for missing keys', () => {
     expect(service.read(STORAGE_KEY.THEME)).toBeNull();
   });
 
@@ -91,7 +86,6 @@ describe('StorageService', () => {
 
     expect(() => detached.write(STORAGE_KEY.THEME, 'dark')).not.toThrow();
     expect(detached.read(STORAGE_KEY.THEME)).toBeNull();
-    expect(() => detached.remove(STORAGE_KEY.THEME)).not.toThrow();
     expect(() => detached.clearAll()).not.toThrow();
   });
 });

@@ -109,8 +109,6 @@ export class ReminderService {
   readonly enabledCount = computed(
     () => REMINDER_IDS.filter((id) => this.settingsState()[id].enabled).length,
   );
-  /** Whether enabled reminders actually reach the phone right now. */
-  readonly isDelivering = computed(() => this.shouldDeliver(this.permissionState()));
 
   constructor() {
     effect(() => {

@@ -24,7 +24,6 @@ export class ThemeService {
     this.darkBarHolds() > 0 ? 'dark' : this.state(),
   );
 
-  readonly theme: Signal<Theme> = this.state.asReadonly();
   readonly isLight: Signal<boolean> = computed(() => this.state() === 'light');
 
   constructor() {
@@ -40,10 +39,6 @@ export class ThemeService {
   set(theme: Theme): void {
     this.apply(theme);
     this.storage.write(STORAGE_KEY.THEME, theme);
-  }
-
-  toggle(): void {
-    this.set(this.isLight() ? 'dark' : 'light');
   }
 
   /**
