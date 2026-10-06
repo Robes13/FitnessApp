@@ -4,7 +4,6 @@ import {
   DAY_LETTER_KEYS,
   DAY_NAME_LONG_KEYS,
   DAY_NAME_SHORT_KEYS,
-  MONTH_NAME_LONG_KEYS,
   MONTH_NAME_SHORT_KEYS,
   addDays,
   daysBetween,
@@ -36,7 +35,6 @@ describe('date-format', () => {
     expect(DAY_NAME_SHORT_KEYS).toHaveLength(7);
     expect(t(DAY_NAME_LONG_KEYS[0])).toBe('Mandag');
     expect(DAY_LETTER_KEYS.map((key) => t(key))).toEqual(['M', 'Ti', 'O', 'To', 'F', 'L', 'S']);
-    expect(t(MONTH_NAME_LONG_KEYS[8])).toBe('september');
     expect(t(MONTH_NAME_SHORT_KEYS[8])).toBe('sep');
   });
 

@@ -34,21 +34,6 @@ export const DAY_LETTER_KEYS = [
   'core.date.dayLetter.sat',
   'core.date.dayLetter.sun',
 ] as const;
-/** Translation keys of the months, January first: `'januar'`. */
-export const MONTH_NAME_LONG_KEYS = [
-  'core.date.monthLong.jan',
-  'core.date.monthLong.feb',
-  'core.date.monthLong.mar',
-  'core.date.monthLong.apr',
-  'core.date.monthLong.may',
-  'core.date.monthLong.jun',
-  'core.date.monthLong.jul',
-  'core.date.monthLong.aug',
-  'core.date.monthLong.sep',
-  'core.date.monthLong.oct',
-  'core.date.monthLong.nov',
-  'core.date.monthLong.dec',
-] as const;
 /** Translation keys of the months, January first: `'jan'`. */
 export const MONTH_NAME_SHORT_KEYS = [
   'core.date.monthShort.jan',

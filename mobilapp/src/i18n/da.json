@@ -211,20 +211,6 @@
         "sat": "L",
         "sun": "S"
       },
-      "monthLong": {
-        "jan": "januar",
-        "feb": "februar",
-        "mar": "marts",
-        "apr": "april",
-        "may": "maj",
-        "jun": "juni",
-        "jul": "juli",
-        "aug": "august",
-        "sep": "september",
-        "oct": "oktober",
-        "nov": "november",
-        "dec": "december"
-      },
       "monthShort": {
         "jan": "jan",
         "feb": "feb",

@@ -25,7 +25,7 @@ tekst, tager en `t: Translate` fra `injectTranslate()` som første parameter:
 | `currentTimeZoneId()`                               | `'Europe/Copenhagen'` (IANA, `'UTC'` som fallback) – API'ets `timeZoneId` |
 
 Navnelister (oversættelsesnøgler, mandag/januar først): `DAY_NAME_SHORT_KEYS`,
-`DAY_NAME_LONG_KEYS`, `DAY_LETTER_KEYS`, `MONTH_NAME_LONG_KEYS`, `MONTH_NAME_SHORT_KEYS`.
+`DAY_NAME_LONG_KEYS`, `DAY_LETTER_KEYS`, `MONTH_NAME_SHORT_KEYS`.
 
 Talformateringen er `Number.prototype.toLocaleString(…)` — ikke håndlavede separatorer. Locale
 følger appens sprog via signalet `numberLocale`, som `LanguageService` sætter med
