@@ -203,6 +203,7 @@ komponent importerer mixins uden relative stier:
 | `hover`             | Hover-stil kun med en rigtig pegeenhed, så den ikke klæber efter et tryk på touch      |
 | `short-screen`      | Lave telefoner (viewport ≤ 700px høj, fx 360 × 640 og iPhone SE)                       |
 | `tablet`            | Begge sider mindst 720px – bruges til at skalere telefonlayoutet op                    |
+| `signup-step`       | Signup-trinnets skal: `:host` fylder siden + fælles `__title`/`__subtitle`             |
 
 `scroll-area` indkapsler designerens hårdt lærte regel: en
 scroll-container **skal** have `min-height: 0` og `display: block`, ellers

@@ -1,28 +1,7 @@
 @use 'mixins';
 
-/*
- * The step is a child of the page's flex column and must fill the rest of the
- * height itself, otherwise the content can't scroll.
- */
-:host {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-}
-
 .goal-step {
-  &__title {
-    @include mixins.display-heading;
-
-    margin: 0;
-    font-size: var(--font-size-display-3xl);
-    color: var(--color-text);
-  }
-
-  &__title-accent {
-    color: var(--color-accent);
-  }
+  @include mixins.signup-step($subtitle: false);
 
   &__intro {
     margin: var(--space-3) 0 0;

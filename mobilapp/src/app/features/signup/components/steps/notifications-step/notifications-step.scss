@@ -1,29 +1,11 @@
 @use 'mixins';
 
-/*
- * The step is a child of the page's flex column and must fill the rest of the
- * height itself, otherwise the content can't scroll.
- * --notifications-* is bound from TypeScript (NOTIFICATIONS_LAYOUT).
- */
-:host {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-}
-
+/* --notifications-* is bound from TypeScript (NOTIFICATIONS_LAYOUT). */
 .notifications-step {
+  @include mixins.signup-step($subtitle: false);
+
   &__title {
-    @include mixins.display-heading;
-
-    margin: 0;
-    font-size: var(--font-size-display-3xl);
-    color: var(--color-text);
     text-wrap: balance;
-  }
-
-  &__title-accent {
-    color: var(--color-accent);
   }
 
   /* The height is reserved so the scene doesn't jump when the text changes with the choice. */

@@ -1,18 +1,9 @@
 @use 'mixins';
 
-/*
- * The step is a child of the page's flex column and must fill the rest of the height itself,
- * otherwise the list can't scroll.
- * --summary-* is bound from TypeScript (SUMMARY_LAYOUT).
- */
-:host {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-}
-
+/* --summary-* is bound from TypeScript (SUMMARY_LAYOUT). */
 .summary-step {
+  @include mixins.signup-step($subtitle: false);
+
   &__header {
     display: flex;
     flex: none;
@@ -27,16 +18,8 @@
   }
 
   &__title {
-    @include mixins.display-heading;
-
-    margin: 0;
     font-size: var(--font-size-display-2xl);
-    color: var(--color-text);
     text-wrap: balance;
-  }
-
-  &__title-accent {
-    color: var(--color-accent);
   }
 
   /* The height is reserved so the list doesn't jump when the text changes. */

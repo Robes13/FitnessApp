@@ -83,6 +83,40 @@
   overflow-y: auto;
 }
 
+/// Signup step shell, included at the top of the step's own block (`.x-step { @include mixins.signup-step; }`).
+/// The host fills the rest of the page's flex column itself (otherwise the content can't scroll),
+/// and `__title`, `__title-accent` and `__subtitle` get the shared look. Step-specific tweaks
+/// (`text-wrap`, `max-width`, another font size) are overrides in the step after the include.
+/// Pass `$subtitle: false` for steps whose lead text has another class name.
+@mixin signup-step($subtitle: true) {
+  @at-root :host {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  &__title {
+    @include display-heading;
+
+    margin: 0;
+    font-size: var(--font-size-display-3xl);
+    color: var(--color-text);
+  }
+
+  &__title-accent {
+    color: var(--color-accent);
+  }
+
+  @if $subtitle {
+    &__subtitle {
+      margin: var(--space-2-5) 0 0;
+      font-size: var(--font-size-base);
+      color: var(--color-text-secondary);
+    }
+  }
+}
+
 /// Short phones (e.g. 360 × 640, iPhone SE): the viewport is too low for the design's
 /// full-size display numbers and scenes. Media queries can't read CSS variables, so the
 /// breakpoint lives here. `rem` in a media query is the browser default (16px), not `html`'s.
