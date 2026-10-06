@@ -198,13 +198,13 @@ Se også `API/Migrations/README.md`. Appens kontrakter står i `core/services/RE
 
 ## Filer i denne mappe
 
-| Fil                   | Indhold                                                                                                   |
-| --------------------- | --------------------------------------------------------------------------------------------------------- |
-| `plan-v2.md`          | **Bindende plan** (implementeret): rammer, produktbeslutninger, API-kontrakten (§3), bølger (§4), tests.  |
-| `kravspec.md`         | Kravspecifikationen (use cases, ikke-funktionelle krav, acceptkriterier).                                 |
-| `api-gaps.md`         | Mangelliste til API-teamet: hvad der er løst, hvad der stadig mangler, og noter fra UI-testen.            |
-| `docker/compose.yml`  | Postgres + migration + API i Development.                                                                 |
-| `docker/outbox/`      | Dev-mails som tekstfiler (ignoreret af git).                                                              |
+| Fil                  | Indhold                                                                                                  |
+| -------------------- | -------------------------------------------------------------------------------------------------------- |
+| `plan-v2.md`         | **Bindende plan** (implementeret): rammer, produktbeslutninger, API-kontrakten (§3), bølger (§4), tests. |
+| `kravspec.md`        | Kravspecifikationen (use cases, ikke-funktionelle krav, acceptkriterier).                                |
+| `api-gaps.md`        | Mangelliste til API-teamet: hvad der er løst, hvad der stadig mangler, og noter fra UI-testen.           |
+| `docker/compose.yml` | Postgres + migration + API i Development.                                                                |
+| `docker/outbox/`     | Dev-mails som tekstfiler (ignoreret af git).                                                             |
 
 Sletter du mappen, så flyt `docker/compose.yml` og `api-gaps.md` et sted hen, hvor de bliver ved med
 at være nyttige.
