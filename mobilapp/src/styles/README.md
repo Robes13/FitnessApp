@@ -8,7 +8,7 @@ her — alt andet bor i den komponent, der ejer det.
 | Fil                | Indhold                                                                                                                                                                                     |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `_tokens.scss`     | Design tokens som CSS-variabler. Systemets eneste kilde til farver, spacing, størrelser, typografi, radier, kanter, skygger, motion, blur og layout. Indeholder også lys-temaets overrides. |
-| `_reset.scss`      | Global reset, `color-scheme`, `body`- og `app-root`-regler samt reduced-motion. Kun regler, der reelt gælder hele systemet.                                                                 |
+| `_reset.scss`      | Global reset, `color-scheme`, `body`-regler samt reduced-motion. Kun regler, der reelt gælder hele systemet.                                                                                |
 | `_mixins.scss`     | Genbrugelige SCSS-hjælpere, importeres pr. komponent med `@use 'mixins';`.                                                                                                                  |
 | `_animations.scss` | Globale `@keyframes` kopieret fra designet. Deles af figur-scener, ringe, badges, toasts og spinnere.                                                                                       |
 | `../styles.scss`   | Indgangspunktet. Samler `tokens`, `reset` og `animations` — og intet andet.                                                                                                                 |
@@ -295,5 +295,5 @@ bindestreg (`adgangs&shy;kode`), så bruddet sker ved en stavelse.
 
 `body` har baggrunden `--color-background-deep`, og `app-root` fylder
 viewporten (`100dvh`) og begrænses til `--layout-max-width` af
-shell-komponenten. På en telefon er de to baggrunde derfor kun synlige som
+`App`-komponenten (`app.scss`). På en telefon er de to baggrunde derfor kun synlige som
 én flade.

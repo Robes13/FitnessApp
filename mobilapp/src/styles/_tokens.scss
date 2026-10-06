@@ -56,9 +56,6 @@
   --color-text-soft-strong: var(--palette-slate-200);
   /* All green text: the light theme needs a darker green to stay readable. */
   --color-positive-text: var(--palette-success);
-
-  /* Not yet occurred (the week rings' upcoming days) — weaker than `muted`. */
-  --color-text-inactive: var(--palette-slate-600);
 }
 
 :root {
@@ -162,8 +159,6 @@
   /* Selected (blue) — chosen option, active filter. */
   --color-selected: var(--palette-primary);
   --color-selected-soft: rgb(37 99 235 / 25%);
-  --color-selected-tint: rgb(37 99 235 / 20%);
-  --color-selected-tint-2: rgb(37 99 235 / 22%);
   --color-selected-text: var(--palette-primary-soft);
   --color-selected-border: rgb(147 197 253 / 35%);
 
@@ -188,7 +183,6 @@
   /* Warning, info, neutral. */
   --color-warning: var(--palette-warning);
   --color-info: var(--palette-primary-soft);
-  --color-neutral-soft: rgb(148 163 184 / 15%);
   --color-neutral-tint: rgb(148 163 184 / 18%);
   --color-neutral-soft-25: rgb(148 163 184 / 25%);
   --color-neutral-dim: rgb(148 163 184 / 28%);
@@ -256,7 +250,6 @@
   /* ---------------------------------------------------------------------
    * Spacing — 4px base scale (1rem = 16px).
    * ------------------------------------------------------------------ */
-  --space-0: 0;
   --space-px: 1px;
   --space-0-5: 0.125rem;
   --space-0-75: 0.1875rem; /* 3px – gap between number and unit */
@@ -279,7 +272,6 @@
   --space-8-5: 2.125rem; /* 34px – fade in the chips and ruler masks */
   --space-9: 2.25rem;
   --space-10: 2.5rem;
-  --space-15: 3.75rem;
 
   /* ---------------------------------------------------------------------
    * Sizes — controls, icons, avatars, dots and fixed-size widgets.
@@ -402,7 +394,6 @@
   --letter-spacing-widest: 0.08em;
   --letter-spacing-caps: 0.1em;
   --letter-spacing-caps-wide: 0.12em;
-  --letter-spacing-caps-wider: 0.16em;
   --letter-spacing-code: 0.45em;
 
   /* ---------------------------------------------------------------------
@@ -502,7 +493,6 @@
   --layout-tab-bar-clearance: calc(
     var(--layout-tab-bar-offset) + var(--layout-tab-bar-height) + var(--space-4)
   );
-  --layout-touch-target-min: 2.75rem;
 
   /* Max width of a body text column (the design's 300 px on forgot-password). */
   --layout-text-measure: 18.75rem; /* 300px */
@@ -559,7 +549,6 @@
   --color-text-muted: var(--palette-light-ink-3);
   --color-text-soft: var(--palette-light-ink-soft);
   --color-text-soft-strong: var(--palette-light-ink);
-  --color-text-inactive: var(--palette-slate-400);
   /* `--color-positive` on the light paper is 1.6:1; this green is 4.6:1 (WCAG AA). */
   --color-positive-text: var(--palette-success-strong);
 }
