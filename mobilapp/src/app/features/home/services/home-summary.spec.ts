@@ -522,21 +522,4 @@ describe('HomeSummaryService', () => {
       'Du har ramt dit mål – overvej at skifte til "Holde vægten".',
     );
   });
-
-  it('exposes the profile photo for the shared avatar', () => {
-    const photo = {
-      dataUrl: 'data:image/png;base64,xx',
-      aspectRatio: 0.75,
-      zoom: 1.4,
-      x: 40,
-      y: 60,
-    };
-    storeProfile({ photo });
-
-    expect(setup().photo()).toEqual(photo);
-  });
-
-  it('has no photo when the profile has none', () => {
-    expect(setup().photo()).toBeNull();
-  });
 });

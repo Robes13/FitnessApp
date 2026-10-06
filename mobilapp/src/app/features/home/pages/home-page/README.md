@@ -37,5 +37,5 @@ haptics-plugin (en ny afhængighed), og det er fravalgt for en "hvor enheden kan
 ## Avataren
 
 Headeren bruger den delte `ProfileAvatar` (`shared/components/profile-avatar`) med
-`HomeSummaryService.photo()`. Komponenten ejer designets beskæringsformler, så Hjem og Profil
+profilbilledet fra `UserProfileService`. Komponenten ejer designets beskæringsformler, så Hjem og Profil
 viser nøjagtig samme udsnit. Er der intet billede, vises forbogstavet på den blå cirkel.

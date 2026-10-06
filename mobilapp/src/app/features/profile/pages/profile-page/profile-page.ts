@@ -93,35 +93,22 @@ const WITHDRAW_CONSENT_BODY_KEY = 'profile.deleteAccountSheet.withdrawBody';
 })
 export class ProfilePage {
   private readonly router = inject(Router);
-  private readonly profiles = inject(UserProfileService);
+  protected readonly profiles = inject(UserProfileService);
   private readonly session = inject(SessionService);
-  private readonly theme = inject(ThemeService);
-  private readonly languageService = inject(LanguageService);
-  private readonly rows = inject(ProfileRowsService);
-  private readonly achievementsService = inject(AchievementsService);
+  protected readonly theme = inject(ThemeService);
+  protected readonly languageService = inject(LanguageService);
+  protected readonly rows = inject(ProfileRowsService);
+  protected readonly achievementsService = inject(AchievementsService);
   private readonly reminders = inject(ReminderService);
   private readonly privacy = inject(PrivacyService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly t = injectTranslate();
 
-  protected readonly status = this.profiles.status;
   /** The profile's own data is hidden while it loads or after it failed to load. */
   protected readonly profileShown = computed(
-    () => this.status() !== 'loading' && this.status() !== 'error',
+    () => this.profiles.status() !== 'loading' && this.profiles.status() !== 'error',
   );
-  protected readonly displayName = this.profiles.displayName;
-  protected readonly initial = this.profiles.initial;
-  protected readonly photo = computed(() => this.profiles.profile().photo);
-  protected readonly email = this.rows.email;
-  protected readonly weightText = this.rows.weightText;
-  protected readonly heightText = this.rows.heightText;
-  protected readonly bmiText = this.rows.bmiText;
-  protected readonly planRows = this.rows.planRows;
-  protected readonly accountRows = this.rows.accountRows;
-  protected readonly achievements = this.achievementsService.achievements;
-  protected readonly isLight = this.theme.isLight;
   protected readonly languages = LANGUAGE_OPTIONS;
-  protected readonly language = this.languageService.language;
   /** The value the "Notifikationer" switch is saving, else `null` – the switch shows it meanwhile. */
   private readonly savingNotifications = signal<boolean | null>(null);
   protected readonly notificationsEnabled = computed(
@@ -175,34 +162,6 @@ export class ProfilePage {
   /** Never fails – a new failure shows the error again. */
   protected retryLoad(): void {
     this.profiles.load().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
-  }
-
-  protected closeEdit(): void {
-    this.editRow.set(null);
-  }
-
-  protected openPhoto(): void {
-    this.photoOpen.set(true);
-  }
-
-  protected closePhoto(): void {
-    this.photoOpen.set(false);
-  }
-
-  protected openReminders(): void {
-    this.remindersOpen.set(true);
-  }
-
-  protected closeReminders(): void {
-    this.remindersOpen.set(false);
-  }
-
-  protected askLogout(): void {
-    this.logoutOpen.set(true);
-  }
-
-  protected closeLogout(): void {
-    this.logoutOpen.set(false);
   }
 
   protected askDeleteAccount(): void {

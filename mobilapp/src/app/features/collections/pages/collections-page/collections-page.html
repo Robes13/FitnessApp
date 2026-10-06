@@ -12,14 +12,14 @@
       tone="accent"
       type="button"
       [attr.aria-label]="'collections.page.create' | translate"
-      [disabled]="status() !== 'ready'"
+      [disabled]="view.status() !== 'ready'"
       (click)="openSheet()"
     >
       <app-ui-icon name="plus" size="xl" [strokeWidth]="1.9" />
     </button>
   </header>
 
-  @switch (status()) {
+  @switch (view.status()) {
     @case ('loading') {
       <div class="collections-page__status">
         <app-ui-spinner size="lg" />
@@ -31,20 +31,20 @@
           class="collections-page__status-message"
           [message]="'collections.page.loadError' | translate"
         />
-        <button app-ui-button type="button" variant="outline" size="md" (click)="retry()">
+        <button app-ui-button type="button" variant="outline" size="md" (click)="view.retry()">
           {{ 'collections.page.retry' | translate }}
         </button>
       </div>
     }
     @default {
-      @if (entries().length === 0) {
+      @if (view.entries().length === 0) {
         <app-ui-empty-state
           class="collections-page__empty"
           [message]="'collections.page.empty' | translate"
         />
       } @else {
         <ul class="collections-page__list">
-          @for (entry of entries(); track entry.id) {
+          @for (entry of view.entries(); track entry.id) {
             <li class="collections-page__item">
               <button type="button" class="collections-page__card" (click)="open(entry)">
                 <span class="collections-page__icon">

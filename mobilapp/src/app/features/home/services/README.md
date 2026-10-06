@@ -20,7 +20,6 @@ templates.
 | `celebrationDue`, `markCelebrated()`  | Målet er nået efter indlæsning og endnu ikke fejret af `HomePage`   |
 | `loadFailed`, `reload()`              | En af de tre stores fejlede; `reload()` henter kun dem igen         |
 | `dayRows`                             | De seneste `HOME_HISTORY_DAYS` (30) dage til arket, nyeste først    |
-| `photo`                               | Profilbilledet til avataren i headeren (`null` = vis forbogstavet)  |
 | `selectDay(index)`                    | Vælger dagen, ringene og dagskortet viser                           |
 
 **Hvorfor `root`:** den valgte dag skal overleve et faneskift, præcis som i designet, hvor
@@ -48,8 +47,3 @@ egen dag (`FoodLogService.today`), så "Husk at veje dig i dag" kommer igen efte
 **Seneste 30 dage:** `dayRows` er `dailyTotals(i dag − 29, i dag)` vendt om: `id` (ISO-dato),
 `label` (`Tor. 24. sep`), `kcalText` (`1.850 / 2.100 kcal`, `–` uden poster) og `macroText`
 (`P 120 g · K 200 g · F 60 g`, tom uden poster). Kalorier og gram vises som hele tal.
-
-`photo()` giver profilbilledet videre til den delte `ProfileAvatar`
-(`shared/components/profile-avatar`), som ejer designets beskæringsformler
-(`logic.js` `photoBg`/`photoSize`/`photoPos`). Hjem og Profil viser derfor nøjagtig samme
-udsnit uden at duplikere formlerne.

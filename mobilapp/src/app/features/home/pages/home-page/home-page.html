@@ -5,7 +5,7 @@
       <h1 class="home-page__greeting">
         {{ summary.greeting() }}
         @if (summary.hasName()) {
-          <span class="home-page__name">{{ summary.displayName() }}</span>
+          <span class="home-page__name">{{ profile.displayName() }}</span>
         }
       </h1>
     </div>
@@ -14,7 +14,11 @@
       [routerLink]="profilePath"
       [attr.aria-label]="'home.page.profileAriaLabel' | translate"
     >
-      <app-profile-avatar size="sm" [photo]="summary.photo()" [initial]="summary.initial()" />
+      <app-profile-avatar
+        size="sm"
+        [photo]="profile.profile().photo"
+        [initial]="profile.initial()"
+      />
     </a>
   </header>
 

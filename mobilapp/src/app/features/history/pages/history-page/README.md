@@ -2,12 +2,12 @@
 
 `app-history-page` – fanen Historik. Designets `tabHistorik` (HTML-linje 1066–1096).
 
-| Fil                    | Indhold                                                                                                     |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `history-page.ts`      | Komponenten. Leverer `HistoryService`, henter første side og beder om næste side ved scroll.                |
-| `history-page.html`    | Overskrift, filter-chips, dagsgrupper, spinner/fejl nederst og tom tilstand.                                |
-| `history-page.scss`    | `:host` er `page-screen`; resten er BEM-klasser under `.history-page`.                                      |
-| `history-page.spec.ts` | Spinner → grupper, scroll nær bunden henter næste side, filter + tom tilstand, fejl + "Prøv igen", gen-log. |
+| Fil                    | Indhold                                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `history-page.ts`      | Komponenten. Leverer `HistoryService`, henter første side og beder om næste side ved scroll.                 |
+| `history-page.html`    | Overskrift, filter-chips, dagsgrupper, spinner/fejl nederst og tom tilstand; læser `HistoryService` direkte. |
+| `history-page.scss`    | `:host` er `page-screen`; resten er BEM-klasser under `.history-page`.                                       |
+| `history-page.spec.ts` | Spinner → grupper, scroll nær bunden henter næste side, filter + tom tilstand, fejl + "Prøv igen", gen-log.  |
 
 ## Opbygning
 

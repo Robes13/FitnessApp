@@ -143,6 +143,19 @@ describe('HomePage', () => {
     expect(avatar?.textContent?.trim()).toBe('');
   });
 
+  it('shows the profile photo in the avatar instead of the initial', async () => {
+    const { settle, page } = await setup();
+    const avatar = page.querySelector('app-profile-avatar');
+    expect(avatar?.classList).not.toContain('profile-avatar--photo');
+
+    TestBed.inject(UserProfileService).update({
+      photo: { dataUrl: 'data:image/png;base64,xx', aspectRatio: 0.75, zoom: 1.4, x: 40, y: 60 },
+    });
+    await settle();
+
+    expect(avatar?.classList).toContain('profile-avatar--photo');
+  });
+
   it('puts the comma right after "Hej" when the name is known', async () => {
     const { settle, page } = await setup();
 

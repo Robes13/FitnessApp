@@ -37,13 +37,11 @@ import { CollectionEntry, CollectionsViewService } from '../../services/collecti
   host: { class: 'collections-page' },
 })
 export class CollectionsPage {
-  private readonly view = inject(CollectionsViewService);
+  protected readonly view = inject(CollectionsViewService);
   private readonly collections = inject(CollectionsService);
   private readonly router = inject(Router);
   private readonly t = injectTranslate();
 
-  protected readonly status = this.view.status;
-  protected readonly entries = computed(() => this.view.entries());
   protected readonly sheetOpen = signal(false);
   /** The create is running – the sheet's button shows a spinner and ignores taps. */
   protected readonly saving = signal(false);
@@ -56,10 +54,6 @@ export class CollectionsPage {
   protected openSheet(): void {
     this.failureKey.set(null);
     this.sheetOpen.set(true);
-  }
-
-  protected retry(): void {
-    this.view.retry();
   }
 
   protected open(entry: CollectionEntry): void {

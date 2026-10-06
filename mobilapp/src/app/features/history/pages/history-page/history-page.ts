@@ -7,7 +7,7 @@ import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form
 import { UiIcon } from '../../../../shared/components/ui-icon/ui-icon';
 import { UiIconButton } from '../../../../shared/components/ui-icon-button/ui-icon-button';
 import { UiSpinner } from '../../../../shared/components/ui-spinner/ui-spinner';
-import { HistoryEntry, HistoryFilter } from '../../models/history';
+import { HistoryEntry } from '../../models/history';
 import { HistoryService, RelogState } from '../../services/history';
 
 /** The stroke width on the re-log icon in SVG units (the design's `stroke-width="2.4"`). */
@@ -40,20 +40,15 @@ export const HISTORY_LOAD_MORE_THRESHOLD_PX = 400;
   host: { class: 'history-page' },
 })
 export class HistoryPage {
-  private readonly history = inject(HistoryService);
+  protected readonly history = inject(HistoryService);
 
   protected readonly relogIconStrokeWidth = RELOG_ICON_STROKE_WIDTH;
-  protected readonly filters = this.history.filters;
-  protected readonly filter = this.history.filter;
-  protected readonly groups = this.history.groups;
-  protected readonly status = this.history.status;
-  protected readonly isEmpty = this.history.isEmpty;
   /**
    * When any visible row has a re-log button, the rows without one keep its space free, so all
    * values end in the same column.
    */
   protected readonly reservesRelogSpace = computed(() =>
-    this.groups().some((group) => group.entries.some((entry) => entry.food)),
+    this.history.groups().some((group) => group.entries.some((entry) => entry.food)),
   );
 
   constructor() {
@@ -66,14 +61,6 @@ export class HistoryPage {
     if (list.scrollTop + list.clientHeight >= list.scrollHeight - HISTORY_LOAD_MORE_THRESHOLD_PX) {
       this.history.loadMore();
     }
-  }
-
-  protected selectFilter(filter: HistoryFilter): void {
-    this.history.setFilter(filter);
-  }
-
-  protected retry(): void {
-    this.history.retry();
   }
 
   protected relog(entry: HistoryEntry): void {

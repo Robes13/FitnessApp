@@ -13,6 +13,7 @@ import { APP_PATH } from '../../../../core/constants/app-route';
 import { STEP_SYNC_TEXT_KEY } from '../../../../core/constants/step-sync';
 import { SessionService } from '../../../../core/services/session/session';
 import { StepSyncService } from '../../../../core/services/step-sync/step-sync';
+import { UserProfileService } from '../../../../core/services/user-profile/user-profile';
 import { ProfileAvatar } from '../../../../shared/components/profile-avatar/profile-avatar';
 import { UiButton } from '../../../../shared/components/ui-button/ui-button';
 import { UiFormError } from '../../../../shared/components/ui-form-error/ui-form-error';
@@ -64,6 +65,7 @@ const CELEBRATION_VIBRATION_MS: readonly number[] = [16, 45, 28];
 })
 export class HomePage {
   protected readonly summary = inject(HomeSummaryService);
+  protected readonly profile = inject(UserProfileService);
   private readonly session = inject(SessionService);
   private readonly stepSync = inject(StepSyncService);
 

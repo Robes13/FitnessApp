@@ -5,7 +5,7 @@
 />
 
 <div class="profile-page__scroll">
-  @switch (status()) {
+  @switch (profiles.status()) {
     @case ('loading') {
       <div class="profile-page__status">
         <app-ui-spinner size="lg" />
@@ -25,19 +25,23 @@
     @default {
       <section class="profile-page__identity">
         <div class="profile-page__avatar">
-          <app-profile-avatar size="md" [photo]="photo()" [initial]="initial()" />
+          <app-profile-avatar
+            size="md"
+            [photo]="profiles.profile().photo"
+            [initial]="profiles.initial()"
+          />
           <button
             type="button"
             class="profile-page__photo-button"
             [attr.aria-label]="'profile.page.changePhoto' | translate"
-            (click)="openPhoto()"
+            (click)="photoOpen.set(true)"
           >
             <app-ui-icon name="pencil" size="2xs" [strokeWidth]="3" />
           </button>
         </div>
         <div class="profile-page__who">
-          <h2 class="profile-page__name">{{ displayName() }}</h2>
-          <p class="profile-page__email">{{ email() }}</p>
+          <h2 class="profile-page__name">{{ profiles.displayName() }}</h2>
+          <p class="profile-page__email">{{ rows.email() }}</p>
         </div>
       </section>
 
@@ -45,26 +49,26 @@
         <div class="profile-page__stat">
           <p class="profile-page__stat-label">{{ 'profile.page.weight' | translate }}</p>
           <p class="profile-page__stat-value profile-page__stat-value--accent">
-            {{ weightText()
+            {{ rows.weightText()
             }}<span class="profile-page__stat-unit">{{ 'common.unit.kg' | translate }}</span>
           </p>
         </div>
         <div class="profile-page__stat">
           <p class="profile-page__stat-label">{{ 'profile.page.height' | translate }}</p>
           <p class="profile-page__stat-value">
-            {{ heightText()
+            {{ rows.heightText()
             }}<span class="profile-page__stat-unit">{{ 'common.unit.cm' | translate }}</span>
           </p>
         </div>
         <div class="profile-page__stat">
           <p class="profile-page__stat-label">{{ 'profile.page.bmi' | translate }}</p>
-          <p class="profile-page__stat-value">{{ bmiText() }}</p>
+          <p class="profile-page__stat-value">{{ rows.bmiText() }}</p>
         </div>
       </section>
 
       <section class="profile-page__section">
         <h2 class="profile-page__section-title">{{ 'profile.page.myPlan' | translate }}</h2>
-        @for (row of planRows(); track row.id) {
+        @for (row of rows.planRows(); track row.id) {
           <button
             app-ui-row-button
             [label]="row.label"
@@ -81,7 +85,7 @@
   <section class="profile-page__section">
     <h2 class="profile-page__section-title">{{ 'profile.page.account' | translate }}</h2>
     @if (profileShown()) {
-      @for (row of accountRows(); track row.id) {
+      @for (row of rows.accountRows(); track row.id) {
         <button
           app-ui-row-button
           [label]="row.label"
@@ -94,7 +98,7 @@
       <span class="profile-page__toggle-label">{{ 'profile.page.lightMode' | translate }}</span>
       <app-ui-switch
         [ariaLabel]="'profile.page.lightMode' | translate"
-        [checked]="isLight()"
+        [checked]="theme.isLight()"
         (checkedChange)="setLight($event)"
       />
     </div>
@@ -105,7 +109,7 @@
         variant="compact"
         [ariaLabel]="'profile.page.language' | translate"
         [options]="languages"
-        [value]="language()"
+        [value]="languageService.language()"
         (valueChange)="setLanguage($event)"
       />
     </div>
@@ -125,13 +129,13 @@
       app-ui-row-button
       [label]="'profile.page.reminders' | translate"
       [value]="remindersValue()"
-      (click)="openReminders()"
+      (click)="remindersOpen.set(true)"
     ></button>
   </section>
 
   <section class="profile-page__section">
     <h2 class="profile-page__section-title">{{ 'profile.page.achievements' | translate }}</h2>
-    <app-achievements [achievements]="achievements()" />
+    <app-achievements [achievements]="achievementsService.achievements()" />
   </section>
 
   <section class="profile-page__section">
@@ -160,7 +164,7 @@
     variant="outline-danger"
     block
     class="profile-page__logout"
-    (click)="askLogout()"
+    (click)="logoutOpen.set(true)"
   >
     {{ 'profile.page.logout' | translate }}
   </button>
@@ -177,9 +181,9 @@
   </button>
 </div>
 
-<app-profile-edit-sheet [row]="editRow()" (closed)="closeEdit()" />
-<app-profile-photo-sheet [open]="photoOpen()" (closed)="closePhoto()" />
-<app-profile-reminders-sheet [open]="remindersOpen()" (closed)="closeReminders()" />
+<app-profile-edit-sheet [row]="editRow()" (closed)="editRow.set(null)" />
+<app-profile-photo-sheet [open]="photoOpen()" (closed)="photoOpen.set(false)" />
+<app-profile-reminders-sheet [open]="remindersOpen()" (closed)="remindersOpen.set(false)" />
 <app-ui-confirm-sheet
   [open]="logoutOpen()"
   titleKey="profile.logoutSheet.titleStart"
@@ -188,7 +192,7 @@
   confirmKey="profile.logoutSheet.confirm"
   cancelKey="profile.logoutSheet.cancel"
   [busy]="loggingOut()"
-  (closed)="closeLogout()"
+  (closed)="logoutOpen.set(false)"
   (confirmed)="logout()"
 />
 <app-ui-confirm-sheet

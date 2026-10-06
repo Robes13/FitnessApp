@@ -65,7 +65,7 @@ export class RecipePage {
    */
   readonly recipeId = input('');
 
-  private readonly view = inject(CollectionsViewService);
+  protected readonly view = inject(CollectionsViewService);
   private readonly collections = inject(CollectionsService);
   private readonly router = inject(Router);
   private readonly t = injectTranslate();
@@ -117,10 +117,6 @@ export class RecipePage {
 
   protected back(): void {
     void this.router.navigateByUrl(APP_PATH.COLLECTIONS);
-  }
-
-  protected retry(): void {
-    this.view.retry();
   }
 
   protected openEdit(): void {

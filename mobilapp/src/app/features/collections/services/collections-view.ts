@@ -71,8 +71,8 @@ export class CollectionsViewService {
   }
 
   /** The list's rows, newest collection first. */
-  entries(): readonly CollectionEntry[] {
-    return this.collections.collections().map((collection) => {
+  readonly entries = computed<readonly CollectionEntry[]>(() =>
+    this.collections.collections().map((collection) => {
       const totals = this.collections.collectionTotals(collection);
       return {
         id: `${BUNDLE_ID_PREFIX}${collection.id}`,
@@ -84,8 +84,8 @@ export class CollectionsViewService {
           protein: formatGrams(totals.protein),
         }),
       };
-    });
-  }
+    }),
+  );
 
   /** The recipe screen's data for a route id, or `null` when no collection has it. */
   detailFor(routeId: string): RecipeDetail | null {

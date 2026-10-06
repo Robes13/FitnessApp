@@ -3,7 +3,6 @@ import { APP_PATH, QUERY_PARAM } from '../../../core/constants/app-route';
 import { MEALS } from '../../../core/constants/meals';
 import { WEIGHT_MAX_KG, WEIGHT_MIN_KG } from '../../../core/constants/nutrition';
 import { DailyFoodTotals, Macros } from '../../../core/models/food';
-import { ProfilePhoto } from '../../../core/models/profile';
 import { FoodLogService } from '../../../core/services/food-log/food-log';
 import { NutritionCalculator } from '../../../core/services/nutrition-calculator/nutrition-calculator';
 import { UserProfileService } from '../../../core/services/user-profile/user-profile';
@@ -183,13 +182,8 @@ export class HomeSummaryService {
    */
   readonly loadFailed = computed(() => this.stores.some((store) => store.status() === 'error'));
 
-  readonly displayName = this.profileService.displayName;
-  readonly initial = this.profileService.initial;
-  readonly kcalTarget = computed(() => this.profileService.targets().kcal);
+  private readonly kcalTarget = computed(() => this.profileService.targets().kcal);
   readonly todayLabel = computed(() => formatDayLabel(this.t, this.today()));
-
-  /** The profile photo for the header avatar; `null` shows the initial instead. */
-  readonly photo: Signal<ProfilePhoto | null> = computed(() => this.profileService.profile().photo);
 
   /** The rolling week's days, oldest first – today is `TODAY_INDEX`. */
   private readonly weekDays = computed<readonly DailyFoodTotals[]>(() =>
@@ -220,7 +214,7 @@ export class HomeSummaryService {
   readonly celebrationDue: Signal<boolean> = this.celebrationPending.asReadonly();
 
   /** False until the app knows the user's name – until then Home just greets with `'Hej'`. */
-  readonly hasName = computed(() => this.displayName() !== '');
+  readonly hasName = computed(() => this.profileService.displayName() !== '');
   /** "Hej," when a name follows, so the comma sits right after the word and not before the name. */
   readonly greeting = computed(() =>
     this.t(this.hasName() ? GREETING_BEFORE_NAME_KEY : GREETING_KEY),

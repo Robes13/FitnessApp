@@ -9,13 +9,13 @@
     role="group"
     [attr.aria-label]="'history.page.filtersAriaLabel' | translate"
   >
-    @for (item of filters; track item.id) {
+    @for (item of history.filters; track item.id) {
       <button
         app-ui-chip
         size="sm"
         class="history-page__filter"
-        [selected]="item.id === filter()"
-        (click)="selectFilter(item)"
+        [selected]="item.id === history.filter()"
+        (click)="history.setFilter(item)"
       >
         {{ item.labelKey | translate }}
       </button>
@@ -23,7 +23,7 @@
   </div>
 
   <div class="history-page__groups">
-    @for (group of groups(); track group.id) {
+    @for (group of history.groups(); track group.id) {
       <section class="history-page__group">
         <h2 class="history-page__group-label">{{ group.label }}</h2>
         @if (group.foodSummary) {
@@ -74,7 +74,7 @@
       </section>
     }
 
-    @switch (status()) {
+    @switch (history.status()) {
       @case ('loading') {
         <div class="history-page__status">
           <app-ui-spinner />
@@ -87,14 +87,14 @@
             tone="negative"
             [message]="'history.page.error' | translate"
           />
-          <button app-ui-button type="button" variant="outline" size="md" (click)="retry()">
+          <button app-ui-button type="button" variant="outline" size="md" (click)="history.retry()">
             {{ 'history.page.retry' | translate }}
           </button>
         </div>
       }
     }
 
-    @if (isEmpty()) {
+    @if (history.isEmpty()) {
       <app-ui-empty-state [message]="'history.page.empty' | translate" />
     }
   </div>
