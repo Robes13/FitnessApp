@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, defer, of, switchMap } from 'rxjs';
 import { PRODUCT_BASE_GRAMS, PRODUCT_BASE_UNIT } from '../../constants/barcode';
-import { BarcodeScanOutcome, ProductLookupResult, ScannedProduct } from '../../models/barcode';
+import { ProductLookupResult, ScannedProduct } from '../../models/barcode';
 import { FoodItem } from '../../models/food';
 import { FoodDto } from '../../models/food-api';
 import { BarcodeScannerService } from '../barcode-scanner/barcode-scanner';
@@ -11,9 +11,9 @@ import { ProductLookupService } from '../product-lookup/product-lookup';
 
 /**
  * The domain side of the barcode scanner (`shared/components/barcode-scanner`), so the shared
- * component only holds presentation and form state: scanning with the camera, looking the
- * barcode up (each lookup counts one scan for the "10 scans" badge) and scaling a product to an
- * amount.
+ * component only holds presentation and form state: looking the barcode up (each lookup counts
+ * one scan for the "10 scans" badge) and scaling a product to an amount. The camera itself is
+ * `BarcodeScannerService`, which the component uses directly.
  *
  * Nothing is logged or saved here – the component emits the item and its parent does that.
  */
@@ -23,17 +23,6 @@ export class BarcodeFlowService {
   private readonly productLookup = inject(ProductLookupService);
   private readonly foodLog = inject(FoodLogService);
   private readonly calculator = inject(NutritionCalculator);
-
-  /** `false` in the browser: the UI offers typing the barcode instead. */
-  readonly canScan: boolean = this.scanner.canScan;
-
-  scan(): Promise<BarcodeScanOutcome> {
-    return this.scanner.scan();
-  }
-
-  openSettings(): Promise<void> {
-    return this.scanner.openSettings();
-  }
 
   /**
    * Counts the scan when subscribed, then looks the barcode up: first in the user's own

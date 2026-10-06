@@ -138,8 +138,9 @@ grænsen i mængdefejlen skrives med `formatInteger` (`'2.245 kcal'`, `'… mell
   fra `UiSheet`; ligger et ark ovenpå, ejer `UiSheet` fælden.
 - **Fokus gives tilbage** til elementet, der åbnede scanneren, når den lukker eller
   destrueres. Tog overlayet aldrig fokus, rører komponenten ikke fokus.
-- **Domænelogikken ligger i core.** Komponenten injicerer kun facaden `BarcodeFlowService`
-  (`core/services/barcode-flow/barcode-flow.ts`), der samler kamera, opslag, scanningstælleren og
+- **Domænelogikken ligger i core.** Komponenten bruger kameraet direkte via
+  `BarcodeScannerService` og resten via `BarcodeFlowService`
+  (`core/services/barcode-flow/barcode-flow.ts`), der samler opslag, scanningstælleren og
   skalering. Komponenten holder selv kun præsentation og
   formular-state (skærm, status, timere, annullering af et sent svar). Det er den
   mindste ændring, der overholder "shared har ingen forretningslogik": at sende alt ind som

@@ -43,6 +43,7 @@ import { MEALS } from '../../../core/constants/meals';
 import { FoodItem } from '../../../core/models/food';
 import { MealId } from '../../../core/models/meal';
 import { BarcodeFlowService, formatAmount } from '../../../core/services/barcode-flow/barcode-flow';
+import { BarcodeScannerService } from '../../../core/services/barcode-scanner/barcode-scanner';
 import { Translate, injectTranslate } from '../../../core/services/language/translate';
 import { formatInteger } from '../../../core/utils/date-format';
 import { UiButton } from '../ui-button/ui-button';
@@ -181,9 +182,9 @@ export function buildScanVerdict(t: Translate, kcalRemaining: number, item: Food
 
 /**
  * The barcode scanner: a full-screen overlay that opens the native camera, looks the barcode
- * up and shows the product with an adjustable amount. All domain work (camera, lookup, scan
- * count, scaling) goes through the core facade `BarcodeFlowService`; the component holds only
- * presentation and form state. An unknown product says so on the overlay, whose "Enter
+ * up and shows the product with an adjustable amount. The domain work goes through core: the
+ * camera is `BarcodeScannerService`, lookup (with the scan count) and scaling are
+ * `BarcodeFlowService`; the component holds only presentation and form state. An unknown product says so on the overlay, whose "Enter
  * manually" and "Create it yourself" lead to the picker (the latter to its full new-food form,
  * with the barcode). In the browser – and after a failed scan – the barcode can be typed instead.
  *
@@ -249,6 +250,7 @@ export class BarcodeScanner {
   readonly noBarcodeRequested = output<string | null>();
 
   private readonly flow = inject(BarcodeFlowService);
+  private readonly scanner = inject(BarcodeScannerService);
   private readonly document = inject(DOCUMENT);
   private readonly t = injectTranslate();
   private readonly overlay = viewChild<ElementRef<HTMLElement>>('overlay');
@@ -260,7 +262,8 @@ export class BarcodeScanner {
   /** The element that had focus when the scanner opened – focus returns there on close. */
   private previouslyFocused: HTMLElement | null = null;
 
-  protected readonly canScan = this.flow.canScan;
+  /** `false` in the browser: the UI offers typing the barcode instead. */
+  protected readonly canScan = this.scanner.canScan;
   protected readonly barcodeMaxLength = BARCODE_MAX_DIGITS;
   protected readonly mealOptions = MEALS;
 
@@ -497,7 +500,7 @@ export class BarcodeScanner {
     }
     const run = ++this.scanRun;
     this.status.set('scanning');
-    const outcome = await this.flow.scan();
+    const outcome = await this.scanner.scan();
     if (run === this.scanRun) {
       this.onScanOutcome(outcome);
     }
@@ -518,7 +521,7 @@ export class BarcodeScanner {
   }
 
   protected openSettings(): void {
-    void this.flow.openSettings();
+    void this.scanner.openSettings();
   }
 
   protected pickPortion(grams: number): void {
