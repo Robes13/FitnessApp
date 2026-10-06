@@ -7,17 +7,15 @@ uppercase-titel og en højre plads til en handling. Bruges på samlingsskærmen 
 ```html
 <app-ui-page-header title="Profil" (back)="goHome()" />
 
-<app-ui-page-header title="Opskrift" backIcon="close" backLabel="Luk" (back)="close()">
+<app-ui-page-header title="Opskrift" backLabel="Luk" (back)="close()">
   <button headerAction app-ui-icon-button size="sm" aria-label="Del">…</button>
 </app-ui-page-header>
 ```
 
-| Input       | Standard         | Betydning                                |
-| ----------- | ---------------- | ---------------------------------------- |
-| `title`     | (påkrævet)       | Titlen, vist som 12 px uppercase caption |
-| `backIcon`  | `'chevron-left'` | `chevron-left` eller `close`             |
-| `backLabel` | `'Tilbage'`      | `aria-label` på tilbage-knappen          |
-| `hideBack`  | `false`          | Skjul tilbage-knappen (pladsen bevares)  |
+| Input       | Standard    | Betydning                                |
+| ----------- | ----------- | ---------------------------------------- |
+| `title`     | (påkrævet)  | Titlen, vist som 12 px uppercase caption |
+| `backLabel` | `'Tilbage'` | `aria-label` på tilbage-knappen          |
 
 | Output | Betydning                    |
 | ------ | ---------------------------- |

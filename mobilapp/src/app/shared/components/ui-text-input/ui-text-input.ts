@@ -5,7 +5,6 @@ import {
   computed,
   forwardRef,
   input,
-  output,
   signal,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -68,7 +67,6 @@ const VERBATIM_TYPES: ReadonlySet<TextInputType> = new Set(['email', 'password']
     '[class]': 'hostClasses()',
     '[class.ui-text-input--invalid]': 'invalid()',
     '[class.ui-text-input--translucent]': 'translucent()',
-    '[class.ui-text-input--centered]': 'centered()',
     '[class.ui-text-input--revealable]': 'hasRevealToggle()',
     '[class.ui-text-input--disabled]': 'disabled()',
   },
@@ -89,14 +87,9 @@ export class UiTextInput implements ControlValueAccessor {
   readonly invalidTone = input<TextInputInvalidTone>('negative');
   /** Dark, semi-transparent background for fields on top of photos (forgot password). */
   readonly translucent = input(false, { transform: booleanAttribute });
-  /** Code field: centered, display font and wide letter spacing. */
-  readonly centered = input(false, { transform: booleanAttribute });
   /** Show/hide button on password fields. */
   readonly revealable = input(true, { transform: booleanAttribute });
   readonly size = input<TextInputSize>('lg');
-
-  /** The field has lost focus (after `onTouched` has been called). */
-  readonly blurred = output<void>();
 
   protected readonly value = signal('');
   protected readonly disabled = signal(false);
@@ -154,7 +147,6 @@ export class UiTextInput implements ControlValueAccessor {
 
   protected onBlur(): void {
     this.onTouched();
-    this.blurred.emit();
   }
 
   protected toggleReveal(): void {

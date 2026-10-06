@@ -42,8 +42,6 @@ og målvægt i opret-flowet samt til ny vejning (0,1 kg-trin) på Vægt-siden.
 | `step`           | `1`              | Opløsning for den committede værdi                                       |
 | `tickUnit`       | `1`              | Værdi pr. streg                                                          |
 | `pxPerTick`      | `8`              | Pixel pr. streg                                                          |
-| `majorEvery`     | `10`             | Hver n'te streg (absolut streg-nummer) er stor                           |
-| `midEvery`       | `5`              | Hver n'te streg er mellemhøj                                             |
 | `labelEvery`     | `10`             | Hver n'te streg får etiket                                               |
 | `labelFormatter` | `String(v)`      | `(tickValue) => string` – fx `2000 → '2k'`                               |
 | `glowReach`      | `6`              | Hvor mange streger gløden rækker (designets skridt-lineal bruger 8)      |

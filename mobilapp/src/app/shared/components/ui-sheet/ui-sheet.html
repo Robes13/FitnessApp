@@ -27,10 +27,7 @@
                 >
               }
             </h2>
-          } @else {
-            <div class="ui-sheet__title-slot"><ng-content select="[sheetTitle]" /></div>
           }
-          <div class="ui-sheet__header-extra"><ng-content select="[sheetHeaderExtra]" /></div>
           @if (dismissible()) {
             <button
               app-ui-icon-button

@@ -27,13 +27,8 @@ Implementerer `ControlValueAccessor`, så feltet bruges med typed reactive forms
 | `invalid`      | `false`      | Farvet kant + `aria-invalid`                                                                                                                                                    |
 | `invalidTone`  | `'negative'` | `negative` rød kant · `accent` orange kant (uens adgangskoder)                                                                                                                  |
 | `translucent`  | `false`      | Mørk 55 % bund til felter oven på fotos (glemt adgangskode)                                                                                                                     |
-| `centered`     | `false`      | Kodefeltet: centreret, display-skrift 26 px, bred spatiering                                                                                                                    |
 | `revealable`   | `true`       | Øje-knap på `type="password"` (`aria-label="Vis adgangskode"`, `aria-pressed`)                                                                                                  |
 | `size`         | `'lg'`       | `lg` 52 px · `md` 48 px                                                                                                                                                         |
-
-| Output    | Betydning                                |
-| --------- | ---------------------------------------- |
-| `blurred` | Feltet mistede fokus (efter `onTouched`) |
 
 ## Beslutninger
 

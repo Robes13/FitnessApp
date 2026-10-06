@@ -35,8 +35,9 @@ interface DragStart {
 const DEFAULT_STEP = 1;
 const DEFAULT_TICK_UNIT = 1;
 const DEFAULT_PX_PER_TICK = 8;
-const DEFAULT_MAJOR_EVERY = 10;
-const DEFAULT_MID_EVERY = 5;
+/** Every 10th tick is tall, every 5th medium (the design's absolute tick number). */
+const MAJOR_EVERY = 10;
+const MID_EVERY = 5;
 const DEFAULT_LABEL_EVERY = 10;
 /** The design rounds the committed value to three decimals (`Math.round(q * 1000) / 1000`). */
 const COMMIT_PRECISION = 1000;
@@ -95,8 +96,6 @@ export class UiRuler {
   readonly tickUnit = input(DEFAULT_TICK_UNIT);
   /** Pixels per tick. */
   readonly pxPerTick = input(DEFAULT_PX_PER_TICK);
-  readonly majorEvery = input(DEFAULT_MAJOR_EVERY);
-  readonly midEvery = input(DEFAULT_MID_EVERY);
   readonly labelEvery = input(DEFAULT_LABEL_EVERY);
   readonly labelFormatter = input<RulerLabelFormatter>(formatRulerLabel);
   /** How many ticks the glow reaches (the design: 6 for kg/cm, 8 for steps). */
@@ -123,8 +122,8 @@ export class UiRuler {
       value: this.value(),
       tickUnit: this.tickUnit(),
       pxPerTick: this.pxPerTick(),
-      majorEvery: this.majorEvery(),
-      midEvery: this.midEvery(),
+      majorEvery: MAJOR_EVERY,
+      midEvery: MID_EVERY,
       labelEvery: this.labelEvery(),
       bleed: this.dragging() ? RULER_BLEED_DRAGGING : this.glowStrength(),
       reach: this.glowReach(),

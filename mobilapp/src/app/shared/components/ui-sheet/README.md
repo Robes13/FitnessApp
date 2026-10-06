@@ -19,7 +19,7 @@ Arket lever inde i `@if (open())`: når det er lukket, findes intet af det i DOM
 Forælderen ejer tilstanden. `open` er et krævet input, og arket udsender `closed`, når
 brugeren
 
-- klikker på luk-knappen (`aria-label` = `closeLabel`, standard `common.close` – "Luk"),
+- klikker på luk-knappen (`aria-label` = `common.close` – "Luk"),
 - klikker på scrimmen uden for panelet, eller
 - trykker Escape.
 
@@ -82,18 +82,16 @@ Mellemrummet mellem de to dele er et `&ngsp;` i templaten (Angular fjerner eller
 mellemrum mellem elementer); `titleAccentJoined` udelader det. `aria-label` på dialogen følger
 samme sammensætning.
 
-Er både `title` og `titleAccent` tomme, tegnes der ingen `<h2>`; i stedet vises
-`[sheetTitle]`-slotten i titlens plads, så fx en badge kan stå til venstre for luk-knappen.
+Er både `title` og `titleAccent` tomme, tegnes der ingen `<h2>`, og luk-knappen står alene til
+højre i overskriften.
 
 ## Slots
 
-| Slot                 | Placering                                                         |
-| -------------------- | ----------------------------------------------------------------- |
-| `[sheetLeading]`     | **Over** overskriften, centreret (designets ikon-cirkel og mærke) |
-| standardindhold      | Panelets krop                                                     |
-| `[sheetTitle]`       | Titlens plads – kun når `title` og `titleAccent` er tomme         |
-| `[sheetHeaderExtra]` | Til højre for titlen, før luk-knappen                             |
-| `[sheetFooter]`      | Nederst, uden for det scrollbare indhold                          |
+| Slot             | Placering                                                         |
+| ---------------- | ----------------------------------------------------------------- |
+| `[sheetLeading]` | **Over** overskriften, centreret (designets ikon-cirkel og mærke) |
+| standardindhold  | Panelets krop                                                     |
+| `[sheetFooter]`  | Nederst, uden for det scrollbare indhold                          |
 
 Tomme slots fylder ikke (`:empty`), så `gap` mellem header, krop og footer forbliver korrekt.
 
@@ -114,7 +112,6 @@ der skal scrolle.
 | `titleSize`         | `'sm'`     | `sm` 26 · `md` 28 · `lg` 30 px (`--font-size-display-sm/md/lg`)           |
 | `titleAccentTone`   | `'accent'` | `accent` orange · `negative` rød ("Log ud?")                              |
 | `titleAccentJoined` | `false`    | Intet mellemrum mellem `title` og `titleAccent` ("Profilbillede")         |
-| `closeLabel`        | `'Luk'`    | `aria-label` på luk-knappen                                               |
 | `hideClose`         | `false`    | Skjul luk-knap og slå luk via scrim/Escape fra                            |
 | `closeOnEscape`     | `false`    | Med `hideClose`: Escape/Android-tilbage udsender stadig `closed`          |
 | `layer`             | `'sheet'`  | z-index: `sheet` 20 · `sheet-high` 25 · `overlay` 30 · `top` 40           |

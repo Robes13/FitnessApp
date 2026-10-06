@@ -17,7 +17,6 @@ import { UiSheet } from './ui-sheet';
       (closed)="onClosed()"
     >
       <span class="leading" sheetLeading>Mærke</span>
-      <button class="extra" sheetHeaderExtra type="button">Ekstra</button>
       <p class="body">Indhold</p>
       <button class="footer" sheetFooter type="button">Opret samling</button>
     </app-ui-sheet>
@@ -58,19 +57,6 @@ class StackHost {
   onUpperClosed(): void {
     this.upperClosed++;
   }
-}
-
-@Component({
-  imports: [UiSheet],
-  template: `
-    <app-ui-sheet [open]="true" (closed)="closedCount = closedCount + 1">
-      <span class="badge" sheetTitle>Ukendt vare</span>
-      <p>Indhold</p>
-    </app-ui-sheet>
-  `,
-})
-class TitleSlotHost {
-  closedCount = 0;
 }
 
 @Component({
@@ -150,7 +136,6 @@ describe('UiSheet', () => {
     expect(scrim()?.classList.contains('ui-sheet__scrim--sheet-high')).toBe(true);
     expect(closeButton()?.getAttribute('aria-label')).toBe('Luk');
     expect(root.querySelector('.ui-sheet__leading .leading')?.textContent).toBe('Mærke');
-    expect(root.querySelector('.ui-sheet__header-extra .extra')).not.toBeNull();
     expect(root.querySelector('.ui-sheet__body .body')?.textContent).toBe('Indhold');
     expect(root.querySelector('.ui-sheet__footer .footer')).not.toBeNull();
   });
@@ -199,7 +184,7 @@ describe('UiSheet', () => {
 
   it('wraps Tab and Shift+Tab inside the panel', async () => {
     const { root, dialog } = await setup();
-    const first = root.querySelector<HTMLButtonElement>('.extra');
+    const first = root.querySelector<HTMLButtonElement>('.ui-sheet__close');
     const last = root.querySelector<HTMLButtonElement>('.footer');
 
     last?.focus();
@@ -222,7 +207,7 @@ describe('UiSheet', () => {
 
     pressTab();
 
-    expect(document.activeElement).toBe(root.querySelector('.extra'));
+    expect(document.activeElement).toBe(root.querySelector('.ui-sheet__close'));
     outside.remove();
   });
 
@@ -282,18 +267,6 @@ describe('UiSheet', () => {
     document.dispatchEvent(escape);
     expect(host.closedCount).toBe(1);
     expect(escape.defaultPrevented).toBe(true);
-  });
-
-  it('renders the sheetTitle slot instead of an empty heading when there is no title', async () => {
-    TestBed.configureTestingModule({ imports: [TitleSlotHost] });
-    const fixture = TestBed.createComponent(TitleSlotHost);
-    await fixture.whenStable();
-    const root = fixture.nativeElement as HTMLElement;
-
-    expect(root.querySelector('.ui-sheet__title')).toBeNull();
-    expect(root.querySelector('.ui-sheet__title-slot .badge')?.textContent).toBe('Ukendt vare');
-    expect(root.querySelector('[role="dialog"]')?.hasAttribute('aria-label')).toBe(false);
-    expect(root.querySelector('.ui-sheet__close')).not.toBeNull();
   });
 
   it('joins title and accent without a space and applies size and tone modifiers', async () => {

@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  booleanAttribute,
-  computed,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { injectTranslate } from '../../../core/services/language/translate';
 import { UiIcon } from '../ui-icon/ui-icon';
 import { UiIconButton } from '../ui-icon-button/ui-icon-button';
@@ -29,14 +22,9 @@ import { UiIconButton } from '../ui-icon-button/ui-icon-button';
 export class UiPageHeader {
   readonly title = input.required<string>();
   readonly backLabel = input<string>();
-  readonly hideBack = input(false, { transform: booleanAttribute });
 
   readonly back = output<void>();
 
   private readonly t = injectTranslate();
   protected readonly backLabelText = computed(() => this.backLabel() ?? this.t('common.back'));
-
-  protected onBack(): void {
-    this.back.emit();
-  }
 }

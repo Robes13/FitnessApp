@@ -12,7 +12,6 @@ import { TextInputType, TextInputValue, UiTextInput } from './ui-text-input';
       placeholder="Brugernavn"
       ariaLabel="Brugernavn"
       [invalid]="invalid()"
-      (blurred)="blurCount = blurCount + 1"
     />
   `,
 })
@@ -20,7 +19,6 @@ class Host {
   readonly control = new FormControl<TextInputValue>('');
   readonly type = signal<TextInputType>('text');
   readonly invalid = signal(false);
-  blurCount = 0;
 }
 
 describe('UiTextInput', () => {
@@ -61,7 +59,6 @@ describe('UiTextInput', () => {
     await fixture.whenStable();
 
     expect(host.control.touched).toBe(true);
-    expect(host.blurCount).toBe(1);
   });
 
   it('follows the disabled state of the control', async () => {

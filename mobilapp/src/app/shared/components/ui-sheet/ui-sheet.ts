@@ -79,9 +79,7 @@ function isTopmost(sheet: UiSheet): boolean {
  * three sizes, so all of the design's sheets can be expressed with inputs alone.
  *
  * Slots: default content, `[sheetLeading]` (above the heading – the design's icon circle and
- * log-out badge), `[sheetTitle]` (custom content in the title's spot, when `title` and
- * `titleAccent` are empty – e.g. a badge), `[sheetHeaderExtra]` (to the right of the title,
- * before the close button) and `[sheetFooter]`.
+ * log-out badge) and `[sheetFooter]`.
  */
 @Component({
   selector: 'app-ui-sheet',
@@ -106,7 +104,6 @@ export class UiSheet {
   readonly titleAccentTone = input<SheetTitleAccentTone>('accent');
   /** No space between `title` and `titleAccent`: "Profile" + "picture" → "Profilepicture". */
   readonly titleAccentJoined = input(false, { transform: booleanAttribute });
-  readonly closeLabel = input<string>();
   /** Hides the close button and disables closing via the scrim and Escape. */
   readonly hideClose = input(false, { transform: booleanAttribute });
   /**
@@ -133,7 +130,7 @@ export class UiSheet {
   /** The element that had focus when the sheet opened – focus is returned there on close. */
   private previouslyFocused: HTMLElement | null = null;
 
-  protected readonly closeLabelText = computed(() => this.closeLabel() ?? this.t('common.close'));
+  protected readonly closeLabelText = computed(() => this.t('common.close'));
   protected readonly dismissible = computed(() => !this.hideClose());
   protected readonly hasTitle = computed(() => this.title() !== '' || this.titleAccent() !== '');
   protected readonly hasHeader = computed(() => this.hasTitle() || this.dismissible());

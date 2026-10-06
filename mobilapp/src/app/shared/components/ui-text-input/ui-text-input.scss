@@ -1,7 +1,6 @@
 /*
  * The host carries `ui-text-input` and its modifiers (`--md`, `--invalid`, `--invalid-*`,
- * `--translucent`,
- * `--centered`, `--revealable`); only `:host(…)` targets it under emulated encapsulation.
+ * `--translucent`, `--revealable`); only `:host(…)` targets it under emulated encapsulation.
  */
 
 @use 'mixins';
@@ -21,16 +20,6 @@
 /* Dark 55% background on photo screens (login, forgot password). */
 :host(.ui-text-input--translucent) .ui-text-input__field {
   background: var(--color-surface-translucent);
-}
-
-/* The code field: 4 digits centered with wide letter spacing; left padding offsets the spacing. */
-:host(.ui-text-input--centered) .ui-text-input__field {
-  padding: 0 0 0 var(--letter-spacing-code);
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-display-sm);
-  font-weight: var(--font-weight-extrabold);
-  letter-spacing: var(--letter-spacing-code);
-  text-align: center;
 }
 
 :host(.ui-text-input--invalid.ui-text-input--invalid-negative) .ui-text-input__field {

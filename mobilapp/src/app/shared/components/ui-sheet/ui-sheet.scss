@@ -102,28 +102,11 @@
     }
   }
 
-  /* Custom content in the title's spot (badge, own heading), when the sheet has no `title`. */
-  &__title-slot {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    gap: var(--space-2);
-    min-width: 0;
-  }
-
-  &__header-extra {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: var(--space-2);
-
-    &:empty {
-      display: none;
-    }
-  }
-
   &__close {
     flex: none;
+
+    /* Stays on the right, also when the sheet has no title to push it there. */
+    margin-inline-start: auto;
   }
 
   &__body {

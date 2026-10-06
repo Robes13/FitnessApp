@@ -228,8 +228,6 @@ export class BarcodeScanner {
    * collection's draft has no meal.
    */
   readonly meal = model<MealId | null>(null);
-  /** Open the camera automatically when the overlay opens (native only). Otherwise the user taps "Scan". */
-  readonly autoStart = input(true, { transform: booleanAttribute });
   /** The parent is storing the `found` item: "Add" shows a spinner, and the result can't be left. */
   readonly busy = input(false, { transform: booleanAttribute });
   /** Why the parent couldn't store the `found` item, shown above the result's buttons. */
@@ -620,7 +618,7 @@ export class BarcodeScanner {
 
   private begin(): void {
     this.reset();
-    if (this.autoStart() && this.canScan) {
+    if (this.canScan) {
       void this.startScan();
     }
   }

@@ -28,7 +28,6 @@ vare med stregkoden (3.1-6a → 3.0), så næste scanning finder den.
 | `open`          | –        | Krævet. Forælderen ejer tilstanden                                                                                                                                                                 |
 | `kcalRemaining` | `null`   | Dagens mål minus det spiste. Bruges til verdict-boksen; `null` skjuler den                                                                                                                         |
 | `meal`          | `null`   | Måltidet varen logges under (`model`, tovejs). Sat viser resultat-arket måltids-chips, så måltidet ses og kan skiftes før "Tilføj" (3.2); `null` skjuler dem (en samlings kladde har intet måltid) |
-| `autoStart`     | `true`   | Åbn kameraet med det samme (kun native). Ellers trykker brugeren "Scan stregkode"                                                                                                                  |
 | `busy`          | `false`  | Forælderen gemmer `found`-varen: "Tilføj" viser spinner, og resultat-arket kan ikke forlades                                                                                                       |
 | `error`         | `null`   | Hvorfor forælderen ikke kunne gemme varen – vises over resultat-arkets knapper                                                                                                                     |
 
@@ -50,7 +49,7 @@ lægger den i kladden og lukker straks.
 
 ## Forløb
 
-1. **Åbn.** Native og `autoStart`: `BarcodeScannerService.scan()` åbner kameraet med det
+1. **Åbn.** Native: `BarcodeScannerService.scan()` åbner kameraet med det
    samme, og hintet er _Læser stregkode…_. I browseren er `canScan` `false`: der vises et felt
    til stregkoden og hintet _Kameraet kan ikke bruges her …_ (browseren, eller en app uden kamera-plugin, fx iOS indtil ML Kit er med).
 2. **Kameraets udfald** (`BarcodeScanOutcome`):
