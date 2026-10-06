@@ -1,23 +1,15 @@
-import { COLLECTION_ICON_NAMES } from '../../../core/constants/collection-icons';
-import { ICON_NAMES, ICON_PATHS, UI_ICON_NAMES } from './icon-registry';
+import { ICON_PATHS, UI_ICON_NAMES } from './icon-registry';
 
 describe('icon registry', () => {
-  it('has path data for every collection icon', () => {
-    for (const name of COLLECTION_ICON_NAMES) {
-      expect(ICON_PATHS[name].length, name).toBeGreaterThan(0);
-    }
-  });
-
-  it('has path data for every UI icon', () => {
+  it('has path data for every icon', () => {
     for (const name of UI_ICON_NAMES) {
       expect(ICON_PATHS[name].length, name).toBeGreaterThan(0);
     }
   });
 
   it('lists every registered icon exactly once', () => {
-    expect(new Set(ICON_NAMES).size).toBe(ICON_NAMES.length);
-    expect(ICON_NAMES.length).toBe(Object.keys(ICON_PATHS).length);
-    expect(ICON_NAMES.length).toBe(COLLECTION_ICON_NAMES.length + UI_ICON_NAMES.length);
+    expect(new Set(UI_ICON_NAMES).size).toBe(UI_ICON_NAMES.length);
+    expect(UI_ICON_NAMES.length).toBe(Object.keys(ICON_PATHS).length);
   });
 
   it('only contains SVG path data starting with a move command', () => {

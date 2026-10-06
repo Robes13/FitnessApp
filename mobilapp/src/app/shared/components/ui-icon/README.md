@@ -19,12 +19,13 @@ betydningen.
 
 ## Registret (`icon-registry.ts`)
 
-- `IconName = CollectionIconName | UiIconName`. Samlingsikonerne er de 30 navne i
-  `core/constants/collection-icons.ts` med stier fra designets `colIconDefs`; `UI_ICON_NAMES`
-  er chevrons, luk, plus/minus, øje, scan, flueben, blyant, billede, mail, opdater, gentag,
-  log ud, pil og de fem tab-ikoner (`tab-*`, designets `tabDefs`).
+- `IconName` er navnene i `UI_ICON_NAMES`: chevrons, luk, plus/minus, øje, scan, flueben,
+  blyant, billede, mail, gentag, log ud, skraldespand, de fire ikoner, der faktisk vises
+  (`utensils`, `bolt`, `moon`, `star` – API'et har intet ikon på en samling, så alle
+  samlinger viser `utensils`) og de fem tab-ikoner (`tab-*`, designets `tabDefs`; `tab-food`
+  deler sti med `utensils`).
 - `ICON_PATHS: Record<IconName, readonly string[]>` – én streng pr. `<path>`.
 - Designets `<rect>`/`<circle>`-elementer (billede, mail, øjets pupil) er skrevet om til
   stier, så komponenten kun har én tegne-vej.
-- `icon-registry.spec.ts` sikrer, at alle samlingsikoner og UI-ikoner har stier, og at
-  ingen navne mangler eller er dobbelte.
+- `icon-registry.spec.ts` sikrer, at alle ikoner har stier, og at ingen navne mangler eller
+  er dobbelte.
