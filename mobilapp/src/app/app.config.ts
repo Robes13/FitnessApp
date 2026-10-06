@@ -11,7 +11,6 @@ import { provideTranslateLoader, provideTranslateService } from '@ngx-translate/
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { BackButtonService } from './core/services/back-button/back-button';
-import { KeyboardService } from './core/services/keyboard/keyboard';
 import { ReminderService } from './core/services/reminders/reminders';
 import { SessionDataService } from './core/services/session-data/session-data';
 import { SessionService } from './core/services/session/session';
@@ -42,23 +41,18 @@ export const appConfig: ApplicationConfig = {
     // HttpClient on the Fetch API (our API and Open Food Facts). The interceptor adds the bearer
     // and refreshes the token – for our API only.
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
-    // Renews a restored session once (spec 1.5), then loads the signed-in user's data from the
-    // API – the loads share that refresh if they need a token – and forgets it on log out.
-    provideAppInitializer(() => {
-      inject(SessionService).renewOnOpen();
-      inject(SessionDataService);
-    }),
     // Component input binding: route and query parameters are bound directly to `input()` on pages.
     provideRouter(routes, withComponentInputBinding()),
-    // Restores the saved theme (`data-theme` on <html>) before the first screen renders.
-    provideAppInitializer(() => inject(ThemeService).initialize()),
-    // Starts listening to the on-screen keyboard, so the layout makes room for it.
+    // Services that must exist from the start. The theme sets `data-theme` on <html> before the
+    // first screen renders; Android back closes the open sheet or goes back, instead of closing
+    // the app. The session is renewed once if restored (spec 1.5), then the signed-in user's data
+    // is loaded from the API – the loads share that refresh if they need a token – and forgotten
+    // on log out.
     provideAppInitializer(() => {
-      inject(KeyboardService);
-    }),
-    // Android back closes the open sheet or goes back, instead of closing the app.
-    provideAppInitializer(() => {
+      inject(ThemeService);
       inject(BackButtonService);
+      inject(SessionService).renewOnOpen();
+      inject(SessionDataService);
     }),
   ],
 };

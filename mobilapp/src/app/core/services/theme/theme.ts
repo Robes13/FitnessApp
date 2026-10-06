@@ -26,12 +26,8 @@ export class ThemeService {
 
   readonly isLight: Signal<boolean> = computed(() => this.state() === 'light');
 
+  /** Restores the saved theme and applies it to the document; an app initializer creates the service. */
   constructor() {
-    this.initialize();
-  }
-
-  /** Restores the saved theme and applies it to the document. Idempotent – can be called from an app initializer. */
-  initialize(): void {
     const stored = this.storage.read<unknown>(STORAGE_KEY.THEME);
     this.apply(isTheme(stored) ? stored : DEFAULT_THEME);
   }
