@@ -411,7 +411,6 @@
   --border-width-thin: 1px;
   --border-width-medium: 2px;
   --border-width-thick: 3px;
-  --border-width-heavy: 4px;
 
   /* ---------------------------------------------------------------------
    * Elevation.
@@ -420,7 +419,6 @@
   --shadow-nav: 0 12px 30px rgb(0 0 0 / 35%);
   --shadow-toast: 0 18px 40px rgb(0 0 0 / 45%);
   --shadow-accent-glow: 0 10px 24px -14px rgb(249 115 22 / 55%);
-  --shadow-accent-line-glow: 0 0 14px var(--palette-secondary);
   --shadow-thumb: 0 1px 3px rgb(0 0 0 / 35%);
 
   /* ---------------------------------------------------------------------
@@ -434,9 +432,6 @@
   --duration-slow: 350ms;
   --duration-slower: 400ms;
   --duration-slowest: 500ms;
-
-  /* The scanner's line sweeps slowly across the frame (the design: .9s). */
-  --duration-scan-sweep: 900ms;
 
   /* The design's own timings for scenes, rings and toasts — longer than the scale above. */
   --duration-scene-swap: 550ms;

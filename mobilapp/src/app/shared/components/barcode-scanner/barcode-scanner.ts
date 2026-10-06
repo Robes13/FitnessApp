@@ -43,7 +43,6 @@ import { MEALS } from '../../../core/constants/meals';
 import { FoodItem } from '../../../core/models/food';
 import { MealId } from '../../../core/models/meal';
 import { BarcodeFlowService, formatAmount } from '../../../core/services/barcode-flow/barcode-flow';
-import { KeyboardService } from '../../../core/services/keyboard/keyboard';
 import { Translate, injectTranslate } from '../../../core/services/language/translate';
 import { formatInteger } from '../../../core/utils/date-format';
 import { UiButton } from '../ui-button/ui-button';
@@ -106,33 +105,6 @@ interface AmountForm {
 const SCAN_RETRY_DELAY_MS = 300;
 /** The picker's text for the same per-log cap (`exceedsFoodLogCap`). */
 const AMOUNT_TOO_LARGE_KEY = 'shared.foodPicker.amountTooLarge';
-/** The line's idle position (design's `scanLine: 50`). */
-const SCAN_LINE_IDLE_PERCENT = 50;
-/** Design's `runScan`: 88% immediately, 14% after 700 ms, 62% after 1500 ms. */
-const SCAN_LINE_SWEEP: readonly { readonly atMs: number; readonly percent: number }[] = [
-  { atMs: 0, percent: 88 },
-  { atMs: 700, percent: 14 },
-  { atMs: 1500, percent: 62 },
-];
-/** Design's `seed`: the relative widths of 30 bars in the drawn barcode. */
-const BARCODE_BAR_WEIGHTS: readonly number[] = [
-  3, 1, 2, 1, 3, 1, 1, 2, 3, 1, 2, 1, 1, 3, 2, 1, 1, 2, 1, 3, 1, 2, 1, 1, 3, 1, 2, 1, 3, 1,
-];
-
-/**
- * The scan frame's geometry in px from the design (260×170, bars 30 px in / 55 px down / 60 px
- * tall, 3 px gap, the line 16 px in). Bound as CSS variables on the frame – there are no tokens
- * for a camera viewfinder.
- */
-const SCAN_FRAME = {
-  width: 260,
-  height: 170,
-  barsInsetX: 30,
-  barsTop: 55,
-  barsHeight: 60,
-  barGap: 3,
-  lineInsetX: 16,
-} as const;
 
 /** Translation key of the overlay's status line per state (`idle` depends on whether the camera is available). */
 const STATUS_MESSAGE_KEY: Readonly<Record<Exclude<BarcodeScannerStatus, 'idle'>, string>> = {
@@ -279,8 +251,6 @@ export class BarcodeScanner {
   private readonly flow = inject(BarcodeFlowService);
   private readonly document = inject(DOCUMENT);
   private readonly t = injectTranslate();
-  /** While typing a barcode the camera frame is only decoration, so it gives way to the field. */
-  protected readonly keyboardOpen = inject(KeyboardService).isOpen;
   private readonly overlay = viewChild<ElementRef<HTMLElement>>('overlay');
 
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
@@ -290,15 +260,12 @@ export class BarcodeScanner {
   /** The element that had focus when the scanner opened – focus returns there on close. */
   private previouslyFocused: HTMLElement | null = null;
 
-  protected readonly frame = SCAN_FRAME;
-  protected readonly barWeights = BARCODE_BAR_WEIGHTS;
   protected readonly canScan = this.flow.canScan;
   protected readonly barcodeMaxLength = BARCODE_MAX_DIGITS;
   protected readonly mealOptions = MEALS;
 
   protected readonly screen = signal<BarcodeScannerScreen>('scanner');
   protected readonly status = signal<BarcodeScannerStatus>('idle');
-  protected readonly scanLinePercent = signal(SCAN_LINE_IDLE_PERCENT);
   protected readonly product = signal<ScannedProduct | null>(null);
   /** The last barcode looked up – retried after a network error. */
   protected readonly barcode = signal('');
@@ -530,7 +497,6 @@ export class BarcodeScanner {
     }
     const run = ++this.scanRun;
     this.status.set('scanning');
-    this.startSweep();
     const outcome = await this.flow.scan();
     if (run === this.scanRun) {
       this.onScanOutcome(outcome);
@@ -568,7 +534,6 @@ export class BarcodeScanner {
     this.cancelPending();
     this.screen.set('scanner');
     this.status.set('idle');
-    this.scanLinePercent.set(SCAN_LINE_IDLE_PERCENT);
     this.product.set(null);
     if (this.canScan) {
       this.schedule(() => void this.startScan(), SCAN_RETRY_DELAY_MS);
@@ -685,7 +650,6 @@ export class BarcodeScanner {
   private reset(): void {
     this.screen.set('scanner');
     this.status.set('idle');
-    this.scanLinePercent.set(SCAN_LINE_IDLE_PERCENT);
     this.product.set(null);
     this.barcode.set('');
     this.barcodeForm.reset();
@@ -694,7 +658,6 @@ export class BarcodeScanner {
   }
 
   private onScanOutcome(outcome: BarcodeScanOutcome): void {
-    this.scanLinePercent.set(SCAN_LINE_IDLE_PERCENT);
     switch (outcome.status) {
       case 'scanned':
         this.lookup(outcome.barcode);
@@ -712,7 +675,6 @@ export class BarcodeScanner {
     this.cancelPending();
     this.barcode.set(barcode);
     this.status.set('looking-up');
-    this.startSweep();
     this.lookupSubscription = this.flow
       .lookup(barcode)
       .subscribe((result) => this.onLookupResult(result));
@@ -720,7 +682,6 @@ export class BarcodeScanner {
 
   private onLookupResult(result: ProductLookupResult): void {
     this.lookupSubscription = null;
-    this.scanLinePercent.set(SCAN_LINE_IDLE_PERCENT);
     switch (result.status) {
       case 'found':
         this.product.set(result.product);
@@ -733,16 +694,6 @@ export class BarcodeScanner {
         return;
       case 'error':
         this.status.set('lookup-error');
-    }
-  }
-
-  private startSweep(): void {
-    for (const step of SCAN_LINE_SWEEP) {
-      if (step.atMs === 0) {
-        this.scanLinePercent.set(step.percent);
-      } else {
-        this.schedule(() => this.scanLinePercent.set(step.percent), step.atMs);
-      }
     }
   }
 

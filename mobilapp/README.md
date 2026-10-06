@@ -200,7 +200,7 @@ plads: `KeyboardService` sætter `--keyboard-inset` og `data-keyboard="open"` p�
 app-roden bliver `100dvh − --keyboard-inset`. Alle skærme er bygget på `height: 100%`, så de
 lægger sig over tastaturet. Sheets lander lige over det, footer-knapper forbliver synlige, og
 det fokuserede felt scrolles frem i sit eget scroll-område. Tab-baren skjules, mens tastaturet
-er åbent. Kamerarammen i stregkodescanneren og signup-forløbets ring og kapitelnavne gør plads
+er åbent. Signup-forløbets ring og kapitelnavne gør plads
 for felterne, og signup-trinnet scroller, hvis det stadig ikke passer. Et tryk uden for et
 tekstfelt lukker tastaturet, fordi iOS ikke viser en "Færdig"-knap i et WebView. Det sker på
 trykkets `click` og ikke ved nedtryk: ellers falder et løftet ark, før klikket når frem, og

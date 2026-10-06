@@ -26,13 +26,6 @@
     outline: none;
   }
 
-  &__glow {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at 50% 45%, var(--color-selected-soft), transparent 60%);
-    pointer-events: none;
-  }
-
   &__header {
     position: relative;
     display: flex;
@@ -60,88 +53,6 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-6);
-  }
-
-  /*
-   * With the keyboard open the screen is short, and the camera frame is only decoration while
-   * a barcode is typed – it steps aside so the hint and field keep their air.
-   */
-  &__overlay--keyboard &__frame {
-    display: none;
-  }
-
-  /* The frame's geometry (--scan-*) is bound from TypeScript; see SCAN_FRAME in barcode-scanner.ts. */
-  &__frame {
-    position: relative;
-    width: var(--scan-frame-width);
-    height: var(--scan-frame-height);
-  }
-
-  &__corner {
-    position: absolute;
-    width: var(--space-9);
-    height: var(--space-9);
-    border: 0 solid var(--color-accent);
-
-    &--top-left {
-      top: 0;
-      left: 0;
-      border-top-width: var(--border-width-heavy);
-      border-left-width: var(--border-width-heavy);
-      border-top-left-radius: var(--radius-lg);
-    }
-
-    &--top-right {
-      top: 0;
-      right: 0;
-      border-top-width: var(--border-width-heavy);
-      border-right-width: var(--border-width-heavy);
-      border-top-right-radius: var(--radius-lg);
-    }
-
-    &--bottom-left {
-      bottom: 0;
-      left: 0;
-      border-bottom-width: var(--border-width-heavy);
-      border-left-width: var(--border-width-heavy);
-      border-bottom-left-radius: var(--radius-lg);
-    }
-
-    &--bottom-right {
-      right: 0;
-      bottom: 0;
-      border-bottom-width: var(--border-width-heavy);
-      border-right-width: var(--border-width-heavy);
-      border-bottom-right-radius: var(--radius-lg);
-    }
-  }
-
-  &__bars {
-    position: absolute;
-    top: var(--scan-bars-top);
-    right: var(--scan-bars-inset-x);
-    left: var(--scan-bars-inset-x);
-    display: flex;
-    gap: var(--scan-bar-gap);
-    align-items: stretch;
-    height: var(--scan-bars-height);
-    opacity: 0.55;
-  }
-
-  &__bar {
-    flex: var(--bar-weight);
-    background: var(--color-white);
-  }
-
-  &__line {
-    position: absolute;
-    top: var(--scan-line-y);
-    right: var(--scan-line-inset-x);
-    left: var(--scan-line-inset-x);
-    height: var(--border-width-medium);
-    background: var(--color-accent);
-    box-shadow: var(--shadow-accent-line-glow);
-    transition: top var(--duration-scan-sweep) var(--easing-standard);
   }
 
   &__hint {

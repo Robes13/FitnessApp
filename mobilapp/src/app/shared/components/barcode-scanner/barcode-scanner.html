@@ -2,14 +2,11 @@
   <div
     #overlay
     class="barcode-scanner__overlay"
-    [class.barcode-scanner__overlay--keyboard]="keyboardOpen()"
     role="dialog"
     aria-modal="true"
     [attr.aria-label]="'shared.barcodeScanner.title' | translate"
     tabindex="-1"
   >
-    <div class="barcode-scanner__glow" aria-hidden="true"></div>
-
     <header class="barcode-scanner__header">
       <button
         app-ui-icon-button
@@ -26,29 +23,6 @@
     </header>
 
     <div class="barcode-scanner__viewfinder">
-      <div
-        class="barcode-scanner__frame"
-        aria-hidden="true"
-        [style.--scan-frame-width.px]="frame.width"
-        [style.--scan-frame-height.px]="frame.height"
-        [style.--scan-bars-inset-x.px]="frame.barsInsetX"
-        [style.--scan-bars-top.px]="frame.barsTop"
-        [style.--scan-bars-height.px]="frame.barsHeight"
-        [style.--scan-bar-gap.px]="frame.barGap"
-        [style.--scan-line-inset-x.px]="frame.lineInsetX"
-        [style.--scan-line-y.%]="scanLinePercent()"
-      >
-        <span class="barcode-scanner__corner barcode-scanner__corner--top-left"></span>
-        <span class="barcode-scanner__corner barcode-scanner__corner--top-right"></span>
-        <span class="barcode-scanner__corner barcode-scanner__corner--bottom-left"></span>
-        <span class="barcode-scanner__corner barcode-scanner__corner--bottom-right"></span>
-        <div class="barcode-scanner__bars">
-          @for (weight of barWeights; track $index) {
-            <span class="barcode-scanner__bar" [style.--bar-weight]="weight"></span>
-          }
-        </div>
-        <div class="barcode-scanner__line"></div>
-      </div>
       @if (isLookingUp()) {
         <app-ui-spinner size="lg" [ariaLabel]="'shared.barcodeScanner.lookingUp' | translate" />
       }

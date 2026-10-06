@@ -53,7 +53,6 @@ lægger den i kladden og lukker straks.
 1. **Åbn.** Native og `autoStart`: `BarcodeScannerService.scan()` åbner kameraet med det
    samme, og hintet er _Læser stregkode…_. I browseren er `canScan` `false`: der vises et felt
    til stregkoden og hintet _Kameraet kan ikke bruges her …_ (browseren, eller en app uden kamera-plugin, fx iOS indtil ML Kit er med).
-   Mens skærmtastaturet er åbent (`KeyboardService.isOpen`), får overlayet modifieren `--keyboard`, og kamerarammen skjules. Den er kun dekoration, mens man taster, så hint og felt beholder deres luft på den lave skærm.
 2. **Kameraets udfald** (`BarcodeScanOutcome`):
    - `scanned` → opslag (trin 3).
    - `cancelled` → scanneren lukker uden at logge noget (8b).
@@ -124,12 +123,11 @@ grænsen i mængdefejlen skrives med `formatInteger` (`'2.245 kcal'`, `'… mell
   proteinbarer, og Open Food Facts giver tal pr. 100 g.
 - **Stregkodefeltet findes også native**, så en stregkode, kameraet ikke kan læse, eller et
   afslået kamera ikke blokerer brugeren.
-- **Kameraoverlayet er altid mørkt** (`--color-background-scanner`). Stregerne er
-  `--color-white`, og luk-knappen bruger `UiIconButton`s `translucent`-tone.
-- **Rammens geometri** (260×170 px m.m.) findes ikke som tokens og bindes fra `SCAN_FRAME` i
-  TypeScript som `--scan-*`-variabler. Linjens 900 ms transition er tokenet
-  `--duration-scan-sweep`, og dens orange skær `--shadow-accent-line-glow`. Linjen fejer,
-  mens kameraet er åbent og under opslaget.
+- **Kameraoverlayet er altid mørkt** (`--color-background-scanner`), og luk-knappen bruger
+  `UiIconButton`s `translucent`-tone.
+- **Ingen tegnet søger.** Kameraet er pluginets egen native UI, så WebView'en viser aldrig et
+  kamerabillede; en tegnet ramme med scan-linje ville kun være pynt. Overlayet viser hint,
+  spinner (under opslaget), knapperne og stregkodefeltet.
 - **Mængdefliserne er egne knapper**, ikke `UiChip`: de har to linjer (etiket + kcal).
 - **Ingen "Ukendt vare"-formular** (plan-v2 P12): dens fire felter var en ringere udgave af
   vælgerens "Ny egen vare" (3.0), som "Opret varen selv" åbner – med stregkoden, så varen
@@ -143,7 +141,7 @@ grænsen i mængdefejlen skrives med `formatInteger` (`'2.245 kcal'`, `'… mell
 - **Domænelogikken ligger i core.** Komponenten injicerer kun facaden `BarcodeFlowService`
   (`core/services/barcode-flow/barcode-flow.ts`), der samler kamera, opslag, scanningstælleren og
   skalering. Komponenten holder selv kun præsentation og
-  formular-state (skærm, status, scan-linjen, timere, annullering af et sent svar). Det er den
+  formular-state (skærm, status, timere, annullering af et sent svar). Det er den
   mindste ændring, der overholder "shared har ingen forretningslogik": at sende alt ind som
   inputs ville flytte hele scan → opslag → resultat-flowet ud i begge forældre (Mad og
   Samlinger) og duplikere det. Komponenten logger og gemmer intet selv – det gør forælderen
