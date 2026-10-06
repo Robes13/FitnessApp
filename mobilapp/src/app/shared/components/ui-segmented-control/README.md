@@ -38,5 +38,8 @@ readonly notifications = signal<boolean | null>(null);
 - **Knoppen er ren CSS.** Komponenten binder `--segment-count` og `--segment-index` som
   CSS-variabler; stylesheetet regner `left`/`width` ud fra dem og den indre padding. Det
   generaliserer designets `calc(50% − 6px)` til vilkårligt mange segmenter.
-- **Tastatur som en native radiogruppe:** piletaster flytter valget (med wrap-around) og
-  fokus, og kun det valgte segment (eller det første, når intet er valgt) er i tab-rækkefølgen.
+- **Native radioknapper.** Hvert segment er en `<label>` med en `<input type="radio">`, der
+  deler `name` (`ui-segmented-control-N`) med de andre i gruppen. Browseren giver dermed
+  piletaster (med wrap-around), roving tab-stop og checked-tilstand uden eget tastaturcode.
+  Inputtet er `appearance: none` og ligger usynligt over hele segmentet, så det både er
+  trykfladen og bærer fokusringen. `aria-checked`/`tabindex` sættes ikke selv.

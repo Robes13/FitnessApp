@@ -4,16 +4,17 @@
   aria-hidden="true"
 ></span>
 @for (option of options(); track option.value; let i = $index) {
-  <button
-    #segment
-    type="button"
-    role="radio"
+  <label
     class="ui-segmented-control__option"
     [class.ui-segmented-control__option--selected]="isSelected(i)"
-    [attr.aria-checked]="isSelected(i)"
-    [tabindex]="tabIndexFor(i)"
-    (click)="select(option)"
   >
+    <input
+      type="radio"
+      class="ui-segmented-control__input"
+      [name]="groupName"
+      [checked]="isSelected(i)"
+      (change)="select(option)"
+    />
     {{ option.label }}
-  </button>
+  </label>
 }
